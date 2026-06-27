@@ -29,7 +29,7 @@ function EntryCard({ entry }: { entry: RoutineEntry }) {
       </div>
       <button
         onClick={() => toggleRoutineDone(entry.id)}
-        aria-label={entry.done ? 'Desmarcar tarefa' : 'Marcar como feita'}
+        aria-label={entry.done ? `Desmarcar: ${entry.title}` : `Marcar como feita: ${entry.title}`}
         className={`w-7 h-7 rounded-full flex items-center justify-center border-2 transition-colors ${
           entry.done
             ? 'bg-lavender-600 border-lavender-600'
@@ -44,7 +44,10 @@ function EntryCard({ entry }: { entry: RoutineEntry }) {
 
 export function RoutineTimeline() {
   const routineEntries = useAppStore((s) => s.routineEntries);
-  const sorted = [...routineEntries].sort((a, b) => a.time.localeCompare(b.time));
+  const selectedDate = useAppStore((s) => s.selectedDate);
+  const sorted = [...routineEntries]
+    .filter((e) => e.date === selectedDate)
+    .sort((a, b) => a.time.localeCompare(b.time));
 
   if (sorted.length === 0) {
     return (

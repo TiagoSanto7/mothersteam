@@ -29,7 +29,7 @@ export function getHeaderGreeting(
     }
     return `${motherName}, o ${babyName} já está com ${phase.ageInDays} dias!`;
   }
-  const remaining = 40 - phase.week;
+  const remaining = Math.max(0, 40 - phase.week);
   if (remaining === 0) return `${motherName}, é hoje! O parto está próximo 💜`;
   const plural = remaining !== 1;
   return `Olá, ${motherName}! Falt${plural ? 'am' : 'a'} ${remaining} semana${plural ? 's' : ''} para o parto`;

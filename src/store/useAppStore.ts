@@ -2,10 +2,12 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import type { TabId, PregnancyPhase, RoutineEntry, BabyEntry } from '../types';
 
+const today = new Date().toISOString().split('T')[0];
+
 const SEED_ROUTINE: RoutineEntry[] = [
-  { id: '1', time: '08:00', title: 'Tomar Vitamina', category: 'medication', done: false },
-  { id: '2', time: '14:00', title: 'Consulta Obstetra', category: 'appointment', done: false },
-  { id: '3', time: '19:00', title: 'Caminhada leve 20min', category: 'task', done: false },
+  { id: '1', time: '08:00', date: today, title: 'Tomar Vitamina', category: 'medication', done: false },
+  { id: '2', time: '14:00', date: today, title: 'Consulta Obstetra', category: 'appointment', done: false },
+  { id: '3', time: '19:00', date: today, title: 'Caminhada leve 20min', category: 'task', done: false },
 ];
 
 const SEED_BABY: BabyEntry[] = [

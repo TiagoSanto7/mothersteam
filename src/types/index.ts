@@ -9,6 +9,7 @@ export type EvolutionStage = 'embryo' | 'fetus-early' | 'fetus-late' | 'newborn'
 export interface RoutineEntry {
   id: string;
   time: string;
+  date: string;
   title: string;
   category: 'task' | 'appointment' | 'medication';
   done: boolean;
