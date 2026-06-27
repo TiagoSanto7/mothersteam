@@ -46,6 +46,7 @@ export function BottomTabBar() {
           data-testid="baby-central-button"
           onClick={() => setActiveTab('baby')}
           aria-label="Abrir rotina do bebê"
+          aria-pressed={activeTab === 'baby'}
           className={`w-14 h-14 rounded-full flex items-center justify-center text-2xl shadow-lg shadow-lavender-400/30 transition-all active:scale-95 ${
             activeTab === 'baby'
               ? 'bg-lavender-600 ring-2 ring-lavender-400 ring-offset-2'

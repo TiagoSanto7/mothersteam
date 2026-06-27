@@ -1,5 +1,7 @@
+import React from 'react';
 import { useAppStore } from './store/useAppStore';
 import { MobileShell } from './components/layout/MobileShell';
+import { HomeScreen } from './components/home/HomeScreen';
 
 function Placeholder({ name }: { name: string }) {
   return (
@@ -13,8 +15,8 @@ function Placeholder({ name }: { name: string }) {
 export default function App() {
   const activeTab = useAppStore((s) => s.activeTab);
 
-  const screens: Record<typeof activeTab, JSX.Element> = {
-    home:       <Placeholder name="Home — em construção" />,
+  const screens: Record<typeof activeTab, React.ReactElement> = {
+    home:       <HomeScreen />,
     maeIA:      <Placeholder name="MãeIA — em construção" />,
     baby:       <Placeholder name="Rotina do Bebê — em construção" />,
     comunidade: <Placeholder name="Comunidade — em construção" />,
