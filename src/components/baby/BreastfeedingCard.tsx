@@ -1,7 +1,7 @@
 import { useAppStore } from '../../store/useAppStore';
 
 export function BreastfeedingCard() {
-  const { lastFeedSide, toggleFeedSide, addBabyEntry } = useAppStore();
+  const { lastFeedSide, setFeedSide, toggleFeedSide, addBabyEntry } = useAppStore();
 
   function handleRegister() {
     const side = lastFeedSide === 'left' ? 'esquerdo' : 'direito';
@@ -25,7 +25,7 @@ export function BreastfeedingCard() {
         {(['left', 'right'] as const).map((side) => (
           <button
             key={side}
-            onClick={() => useAppStore.setState({ lastFeedSide: side })}
+            onClick={() => setFeedSide(side)}
             aria-pressed={lastFeedSide === side}
             aria-label={side === 'left' ? 'Seio esquerdo' : 'Seio direito'}
             className={`flex-1 py-2 rounded-2xl text-sm font-medium transition-colors ${

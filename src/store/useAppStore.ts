@@ -31,6 +31,7 @@ interface AppState {
   toggleRoutineDone: (id: string) => void;
   incrementDiaper: () => void;
   toggleFeedSide: () => void;
+  setFeedSide: (side: 'left' | 'right') => void;
   addBabyEntry: (entry: BabyEntry) => void;
 }
 
@@ -69,6 +70,7 @@ export const useAppStore = create<AppState>()(
         })),
       toggleFeedSide: () =>
         set((s) => ({ lastFeedSide: s.lastFeedSide === 'left' ? 'right' : 'left' })),
+      setFeedSide: (side) => set({ lastFeedSide: side }),
       addBabyEntry: (entry) =>
         set((s) => ({ babyEntries: [...s.babyEntries, entry] })),
     }),
