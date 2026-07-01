@@ -21,3 +21,35 @@ export interface BabyEntry {
   type: 'sleep' | 'feed' | 'diaper';
   detail: string;
 }
+
+export type Q1Answer = 'A' | 'B' | 'C' | 'D' | 'E';
+export type Q2Answer = 'A' | 'B' | 'C' | 'D';
+export type Q3Answer = 'A' | 'B' | 'C';
+export type Q4Answer = 'A' | 'B' | 'C' | 'D';
+export type Q5Answer = 'A' | 'B' | 'C' | 'D';
+
+export interface OnboardingAnswers {
+  q1: Q1Answer;
+  q2: Q2Answer;
+  q3: Q3Answer;
+  q4: Q4Answer;
+  q5: Q5Answer;
+}
+
+export interface MotherProfile {
+  answers: OnboardingAnswers;
+  profileKey: string;
+  profileLabel: string;
+  insights: string[];
+}
+
+export interface CommunityPost {
+  id: string;
+  category: 'gestação' | 'pós-parto' | 'amamentação' | 'saúde mental';
+  author: string;
+  badge?: 'experiente' | 'profissional';
+  content: string;
+  likes: number;
+  replies: number;
+  time: string;
+}
