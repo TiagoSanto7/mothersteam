@@ -61,6 +61,16 @@ describe('computeProfile', () => {
     expect(p.profileKey).toBe('recuperacao_fisica');
   });
 
+  it('mae_solo: q1=D + q3=C (postpartum sem apoio, q5=A)', () => {
+    const p = computeProfile({ q1: 'D', q2: 'B', q3: 'C', q4: 'A', q5: 'A' });
+    expect(p.profileKey).toBe('mae_solo');
+  });
+
+  it('mae_solo: q1=C + q3=C (postpartum sem apoio, q5=D)', () => {
+    const p = computeProfile({ q1: 'C', q2: 'B', q3: 'C', q4: 'A', q5: 'D' });
+    expect(p.profileKey).toBe('mae_solo');
+  });
+
   it('mae_busca_si_mesma: q5=A quando não há prioridade maior (q1=D, q2=B, q3=B)', () => {
     const p = computeProfile({ q1: 'D', q2: 'B', q3: 'B', q4: 'A', q5: 'A' });
     expect(p.profileKey).toBe('mae_busca_si_mesma');

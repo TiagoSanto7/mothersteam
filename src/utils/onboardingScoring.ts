@@ -151,10 +151,10 @@ export function computeProfile(answers: OnboardingAnswers): MotherProfile {
     key = 'gestante_tranquila';
   } else if (q1 === 'E') {
     key = 'mae_experiente';
+  } else if (q3 === 'C' && (q1 === 'C' || q1 === 'D')) {
+    key = 'mae_solo';
   } else if (q5 === 'A' || q5 === 'D') {
     key = 'mae_busca_si_mesma';
-  } else if (q3 === 'C' && (q1 === 'C' || q1 === 'D' || q1 === 'E')) {
-    key = 'mae_solo';
   } else {
     key = 'mae_em_jornada';
   }

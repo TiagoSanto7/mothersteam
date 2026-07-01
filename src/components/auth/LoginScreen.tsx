@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, type FormEvent } from 'react';
 import { useAppStore } from '../../store/useAppStore';
 
 export function LoginScreen() {
@@ -7,7 +7,7 @@ export function LoginScreen() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState(false);
 
-  function handleSubmit(e: React.FormEvent) {
+  function handleSubmit(e: FormEvent) {
     e.preventDefault();
     const ok = login(email.trim(), password);
     if (!ok) setError(true);
