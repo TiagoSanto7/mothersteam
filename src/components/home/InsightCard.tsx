@@ -30,14 +30,9 @@ export function InsightCard({ profile }: InsightCardProps) {
           <X size={12} className="text-lavender-600" strokeWidth={2} />
         </button>
       </div>
-      <ul className="flex flex-col gap-1.5">
-        {profile.insights.map((insight, i) => (
-          <li key={i} className="text-xs text-graphite-light flex items-start gap-2 leading-relaxed">
-            <span className="text-lavender-400 font-bold mt-0.5 flex-shrink-0">•</span>
-            {insight}
-          </li>
-        ))}
-      </ul>
+      <p className="text-xs text-graphite-light leading-relaxed">
+        {profile.insights[0]}
+      </p>
     </div>
   );
 }
