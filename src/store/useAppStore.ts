@@ -98,9 +98,7 @@ export const useAppStore = create<AppState>()(
       communityPosts: SEED_POSTS,
       // Auth actions
       login: (email, password) => {
-        const validEmail = import.meta.env.VITE_NAVIGATION_USER;
-        const validPass = import.meta.env.VITE_PWD_NAVIGATION_USER;
-        if (email === validEmail && password === validPass) {
+        if (email === 'navegador@mothersteam' && password === 'admin@mothersteam') {
           set({ isLoggedIn: true });
           return true;
         }
