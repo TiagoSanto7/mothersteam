@@ -36,9 +36,19 @@ describe('computeProfile', () => {
     expect(p.profileKey).toBe('gestante_ansiosa_reta_final');
   });
 
-  it('gestante_ansiosa_reta_final: q1=B e q2=D', () => {
-    const p = computeProfile({ ...base, q1: 'B', q2: 'D', q3: 'A', q5: 'A' });
+  it('gestante_ansiosa_reta_final: q1=B e q2=C', () => {
+    const p = computeProfile({ ...base, q1: 'B', q2: 'C', q3: 'A', q5: 'A' });
     expect(p.profileKey).toBe('gestante_ansiosa_reta_final');
+  });
+
+  it('exausta_sem_apoio: gestante (q1=B) sobrecarregada e sem apoio ainda recebe exausta_sem_apoio', () => {
+    const p = computeProfile({ q1: 'B', q2: 'D', q3: 'C', q4: 'A', q5: 'A' });
+    expect(p.profileKey).toBe('exausta_sem_apoio');
+  });
+
+  it('sobrecarregada_amparada: gestante (q1=A) sobrecarregada com apoio', () => {
+    const p = computeProfile({ q1: 'A', q2: 'D', q3: 'A', q4: 'A', q5: 'A' });
+    expect(p.profileKey).toBe('sobrecarregada_amparada');
   });
 
   it('gestante_ansiosa_inicio: q1=A e q2=C', () => {

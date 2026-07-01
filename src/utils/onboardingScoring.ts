@@ -131,8 +131,10 @@ export function computeProfile(answers: OnboardingAnswers): MotherProfile {
 
   let key: string;
 
-  if (q2 === 'D' && q3 === 'C' && q1 !== 'B' && q1 !== 'A') {
+  if (q2 === 'D' && q3 === 'C') {
     key = 'exausta_sem_apoio';
+  } else if (q2 === 'D' && q3 !== 'C') {
+    key = 'sobrecarregada_amparada';
   } else if (q5 === 'C') {
     key = 'desafio_amamentacao';
   } else if (q4 === 'C' || q5 === 'B') {
@@ -141,10 +143,6 @@ export function computeProfile(answers: OnboardingAnswers): MotherProfile {
     key = 'gestante_ansiosa_reta_final';
   } else if (q1 === 'A' && (q2 === 'C' || q2 === 'D')) {
     key = 'gestante_ansiosa_inicio';
-  } else if (q2 === 'D' && q3 === 'C') {
-    key = 'exausta_sem_apoio';
-  } else if (q2 === 'D' && q3 !== 'C') {
-    key = 'sobrecarregada_amparada';
   } else if (q1 === 'C' && q4 === 'B') {
     key = 'recuperacao_fisica';
   } else if (q1 === 'B') {
