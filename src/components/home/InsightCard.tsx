@@ -9,9 +9,9 @@ interface InsightCardProps {
 
 export function InsightCard({ profile }: InsightCardProps) {
   const [dismissed, setDismissed] = useState(false);
-  const archetype = ARCHETYPES[profile.archetypeKey];
+  const archetype = profile.archetypeKey ? ARCHETYPES[profile.archetypeKey] : null;
 
-  if (dismissed) return null;
+  if (dismissed || !archetype) return null;
 
   const initial = archetype.label.split(' ')[1][0];
 

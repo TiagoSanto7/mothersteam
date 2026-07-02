@@ -171,6 +171,6 @@ export const useAppStore = create<AppState>()(
           notifications: s.notifications.map((n) => ({ ...n, read: true })),
         })),
     }),
-    { name: 'mothers-team-v1' },
+    { name: 'mothers-team-v2' },
   ),
 );
