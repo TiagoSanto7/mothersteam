@@ -24,14 +24,14 @@ export function ProfileScreen({ onClose }: ProfileScreenProps) {
 
   if (showSettings) {
     return (
-      <div className="flex flex-col h-screen sm:h-[844px] w-full sm:w-[390px] bg-offwhite sm:rounded-[44px] sm:shadow-2xl overflow-hidden">
+      <div className="flex flex-col w-full h-full sm:w-[390px] sm:h-[844px] bg-offwhite sm:rounded-[44px] sm:shadow-2xl overflow-hidden">
         <SettingsScreen onBack={() => setShowSettings(false)} onClose={onClose} />
       </div>
     );
   }
 
   return (
-    <div className="flex flex-col h-screen sm:h-[844px] w-full sm:w-[390px] bg-offwhite sm:rounded-[44px] sm:shadow-2xl overflow-y-auto">
+    <div className="flex flex-col w-full h-full sm:w-[390px] sm:h-[844px] bg-offwhite sm:rounded-[44px] sm:shadow-2xl overflow-y-auto">
       <div className="flex items-center justify-between px-4 pt-6 pb-3">
         <button onClick={onClose} className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-lavender-50">
           <ChevronLeft size={20} className="text-graphite" />

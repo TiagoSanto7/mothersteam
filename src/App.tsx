@@ -11,8 +11,6 @@ import { OnboardingScreen } from './components/auth/OnboardingScreen';
 import { ProfileScreen } from './components/profile/ProfileScreen';
 import { NotificationsScreen } from './components/notifications/NotificationsScreen';
 
-const SHELL_OUTER = 'sm:min-h-screen sm:bg-[#E8E4DF] sm:flex sm:items-center sm:justify-center';
-
 export default function App() {
   const isLoggedIn = useAppStore((s) => s.isLoggedIn);
   const onboardingDone = useAppStore((s) => s.onboardingDone);
@@ -22,22 +20,6 @@ export default function App() {
 
   if (!isLoggedIn) return <LoginScreen />;
   if (!onboardingDone) return <OnboardingScreen />;
-
-  if (showProfile) {
-    return (
-      <div className={SHELL_OUTER}>
-        <ProfileScreen onClose={() => setShowProfile(false)} />
-      </div>
-    );
-  }
-
-  if (showNotifications) {
-    return (
-      <div className={SHELL_OUTER}>
-        <NotificationsScreen onBack={() => setShowNotifications(false)} />
-      </div>
-    );
-  }
 
   const screens: Record<typeof activeTab, React.ReactElement> = {
     home: (
@@ -52,5 +34,21 @@ export default function App() {
     shopping:   <ShoppingScreen />,
   };
 
-  return <MobileShell>{screens[activeTab]}</MobileShell>;
+  return (
+    <>
+      <MobileShell>{screens[activeTab]}</MobileShell>
+
+      {showProfile && (
+        <div className="fixed inset-0 z-50 sm:bg-black/40 sm:flex sm:items-center sm:justify-center">
+          <ProfileScreen onClose={() => setShowProfile(false)} />
+        </div>
+      )}
+
+      {showNotifications && (
+        <div className="fixed inset-0 z-50 sm:bg-black/40 sm:flex sm:items-center sm:justify-center">
+          <NotificationsScreen onBack={() => setShowNotifications(false)} />
+        </div>
+      )}
+    </>
+  );
 }
