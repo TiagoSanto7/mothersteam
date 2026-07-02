@@ -9,11 +9,9 @@ interface ProfileScreenProps {
 }
 
 export function ProfileScreen({ onClose }: ProfileScreenProps) {
-  const { motherName, motherProfile, communityPosts } = useAppStore((s) => ({
-    motherName: s.motherName,
-    motherProfile: s.motherProfile,
-    communityPosts: s.communityPosts,
-  }));
+  const motherName = useAppStore((s) => s.motherName);
+  const motherProfile = useAppStore((s) => s.motherProfile);
+  const communityPosts = useAppStore((s) => s.communityPosts);
 
   const [showSettings, setShowSettings] = useState(false);
   const [bellActive, setBellActive] = useState(false);

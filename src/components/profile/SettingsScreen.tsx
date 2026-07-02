@@ -8,11 +8,9 @@ interface SettingsScreenProps {
 }
 
 export function SettingsScreen({ onBack, onClose }: SettingsScreenProps) {
-  const { motherName, logout, resetOnboarding } = useAppStore((s) => ({
-    motherName: s.motherName,
-    logout: s.logout,
-    resetOnboarding: s.resetOnboarding,
-  }));
+  const motherName = useAppStore((s) => s.motherName);
+  const logout = useAppStore((s) => s.logout);
+  const resetOnboarding = useAppStore((s) => s.resetOnboarding);
 
   const [notifLikes, setNotifLikes] = useState(true);
   const [notifPosts, setNotifPosts] = useState(false);

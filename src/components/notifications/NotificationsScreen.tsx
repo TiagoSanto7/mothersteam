@@ -12,10 +12,8 @@ const ICON = {
 };
 
 export function NotificationsScreen({ onBack }: NotificationsScreenProps) {
-  const { notifications, markAllNotificationsRead } = useAppStore((s) => ({
-    notifications: s.notifications,
-    markAllNotificationsRead: s.markAllNotificationsRead,
-  }));
+  const notifications = useAppStore((s) => s.notifications);
+  const markAllNotificationsRead = useAppStore((s) => s.markAllNotificationsRead);
 
   const unreadCount = notifications.filter((n) => !n.read).length;
 
