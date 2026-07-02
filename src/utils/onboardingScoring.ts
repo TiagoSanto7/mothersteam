@@ -1,15 +1,25 @@
-import type { OnboardingAnswers, MotherProfile } from '../types';
+import type { OnboardingAnswers, MotherProfile, ArchetypeKey } from '../types';
+
+export const ARCHETYPES: Record<ArchetypeKey, { label: string; attributes: string; color: string }> = {
+  maria:  { label: 'Linha Maria',  attributes: 'Entrega • Vínculo • Presença',          color: '#9D8FCC' },
+  ana:    { label: 'Linha Ana',    attributes: 'Resiliência • Esperança • Perseverança', color: '#8FAF8F' },
+  ester:  { label: 'Linha Ester',  attributes: 'Sabedoria • Influência • Discernimento', color: '#D4A898' },
+  debora: { label: 'Linha Débora', attributes: 'Liderança • Coragem • Direção',          color: '#C9A96E' },
+  rute:   { label: 'Linha Rute',   attributes: 'Lealdade • Pertencimento • Construção',  color: '#9BC4D0' },
+};
 
 interface ProfileDefinition {
   key: string;
   label: string;
   insights: string[];
+  archetypeKey: ArchetypeKey;
 }
 
 const PROFILES: Record<string, ProfileDefinition> = {
   exausta_sem_apoio: {
     key: 'exausta_sem_apoio',
     label: 'Exausta e Sem Apoio',
+    archetypeKey: 'maria',
     insights: [
       'Micro-pausas de 5 minutos valem ouro — programe 3 pausas no seu dia agora',
       'Meditações guiadas de 3 minutos ajudam a resetar mesmo sem silêncio',
@@ -19,6 +29,7 @@ const PROFILES: Record<string, ProfileDefinition> = {
   sobrecarregada_amparada: {
     key: 'sobrecarregada_amparada',
     label: 'Sobrecarregada mas Amparada',
+    archetypeKey: 'maria',
     insights: [
       'Delegue com clareza: liste tarefas específicas e distribua para sua rede de apoio',
       'Comunicar o cansaço é coragem — não hesite em pedir mais ajuda da sua rede',
@@ -28,6 +39,7 @@ const PROFILES: Record<string, ProfileDefinition> = {
   gestante_ansiosa_inicio: {
     key: 'gestante_ansiosa_inicio',
     label: 'Gestante Ansiosa — Início da Jornada',
+    archetypeKey: 'debora',
     insights: [
       'Checklist do 1° e 2° trimestre: o que realmente importa agora',
       'O que esperar de cada consulta pré-natal — sem surpresas no caminho',
@@ -37,6 +49,7 @@ const PROFILES: Record<string, ProfileDefinition> = {
   gestante_ansiosa_reta_final: {
     key: 'gestante_ansiosa_reta_final',
     label: 'Gestante Ansiosa — Reta Final',
+    archetypeKey: 'debora',
     insights: [
       'Monte sua mala da maternidade com a lista validada por mamães experientes',
       'Sinais reais de trabalho de parto vs. falsas contrações — saiba a diferença',
@@ -46,6 +59,7 @@ const PROFILES: Record<string, ProfileDefinition> = {
   preparando_grande_dia: {
     key: 'preparando_grande_dia',
     label: 'Preparando para o Grande Dia',
+    archetypeKey: 'debora',
     insights: [
       'Exercícios seguros no 3° trimestre para preparar o corpo para o parto',
       'Como criar um plano de apoio para o pós-parto já agora',
@@ -55,6 +69,7 @@ const PROFILES: Record<string, ProfileDefinition> = {
   gestante_tranquila: {
     key: 'gestante_tranquila',
     label: 'Gestante Tranquila com Foco',
+    archetypeKey: 'ester',
     insights: [
       'Nutrição e suplementação essencial na gestação por trimestre',
       'Exercícios seguros para gestantes: o que fazer em cada fase',
@@ -64,6 +79,7 @@ const PROFILES: Record<string, ProfileDefinition> = {
   recuperacao_fisica: {
     key: 'recuperacao_fisica',
     label: 'Em Recuperação Física Pós-Parto',
+    archetypeKey: 'rute',
     insights: [
       'Exercícios para diástase abdominal: sequência validada por fisioterapeutas',
       'Fortalecimento do assoalho pélvico: por onde começar com segurança',
@@ -73,6 +89,7 @@ const PROFILES: Record<string, ProfileDefinition> = {
   guerreira_sono: {
     key: 'guerreira_sono',
     label: 'Guerreira do Sono',
+    archetypeKey: 'ana',
     insights: [
       'Janelas de sono do bebê por faixa etária: guia prático e realista',
       'Como criar uma rotina de sono que realmente funciona para vocês dois',
@@ -82,6 +99,7 @@ const PROFILES: Record<string, ProfileDefinition> = {
   desafio_amamentacao: {
     key: 'desafio_amamentacao',
     label: 'Enfrentando o Desafio da Amamentação',
+    archetypeKey: 'ana',
     insights: [
       'Pega correta: os 3 ajustes que mudam tudo na amamentação',
       'Crises de amamentação: o que são, quando passam e como atravessar',
@@ -91,6 +109,7 @@ const PROFILES: Record<string, ProfileDefinition> = {
   mae_busca_si_mesma: {
     key: 'mae_busca_si_mesma',
     label: 'Mãe em Busca de Si Mesma',
+    archetypeKey: 'rute',
     insights: [
       'Identidade materna: você ainda é você, além de mãe',
       'Autocuidado real: micro-momentos de reconexão que cabem na rotina',
@@ -100,6 +119,7 @@ const PROFILES: Record<string, ProfileDefinition> = {
   mae_solo: {
     key: 'mae_solo',
     label: 'Mãe Solo Resiliente',
+    archetypeKey: 'ana',
     insights: [
       'Rotina funcional para mães solo: o que priorizar e o que soltar',
       'Construindo rede de apoio do zero: grupos, comunidades e serviços',
@@ -109,6 +129,7 @@ const PROFILES: Record<string, ProfileDefinition> = {
   mae_experiente: {
     key: 'mae_experiente',
     label: 'Mãe Experiente em Nova Fase',
+    archetypeKey: 'ester',
     insights: [
       'Marcos de desenvolvimento após 1 ano: o que esperar agora',
       'Introdução alimentar avançada e nutrição do bebê maior',
@@ -118,6 +139,7 @@ const PROFILES: Record<string, ProfileDefinition> = {
   mae_em_jornada: {
     key: 'mae_em_jornada',
     label: 'Mãe em Jornada',
+    archetypeKey: 'ester',
     insights: [
       'Organize sua rotina diária com a timeline personalizada do app',
       'Autocuidado integrado à maternidade: pequenos passos, grande diferença',
@@ -160,5 +182,14 @@ export function computeProfile(answers: OnboardingAnswers): MotherProfile {
   }
 
   const def = PROFILES[key];
-  return { answers, profileKey: def.key, profileLabel: def.label, insights: def.insights };
+  const archetype = ARCHETYPES[def.archetypeKey];
+  return {
+    answers,
+    profileKey: def.key,
+    profileLabel: def.label,
+    insights: def.insights,
+    archetypeKey: def.archetypeKey,
+    archetypeLabel: archetype.label,
+    archetypeAttributes: archetype.attributes,
+  };
 }

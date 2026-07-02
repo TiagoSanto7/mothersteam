@@ -36,11 +36,16 @@ export interface OnboardingAnswers {
   q5: Q5Answer;
 }
 
+export type ArchetypeKey = 'maria' | 'ana' | 'ester' | 'debora' | 'rute';
+
 export interface MotherProfile {
   answers: OnboardingAnswers;
   profileKey: string;
   profileLabel: string;
   insights: string[];
+  archetypeKey: ArchetypeKey;
+  archetypeLabel: string;
+  archetypeAttributes: string;
 }
 
 export interface CommunityPost {
@@ -51,5 +56,13 @@ export interface CommunityPost {
   content: string;
   likes: number;
   replies: number;
+  time: string;
+}
+
+export interface AppNotification {
+  id: string;
+  type: 'like' | 'follow' | 'comment';
+  text: string;
+  read: boolean;
   time: string;
 }

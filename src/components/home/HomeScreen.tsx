@@ -9,13 +9,15 @@ import { AddRoutineModal } from './AddRoutineModal';
 
 interface HomeScreenProps {
   onOpenProfile: () => void;
+  onOpenNotifications: () => void;
 }
 
-export function HomeScreen({ onOpenProfile }: HomeScreenProps) {
-  const { phase, motherName, babyName, selectedDate, motherProfile } = useAppStore();
+export function HomeScreen({ onOpenProfile, onOpenNotifications }: HomeScreenProps) {
+  const { phase, motherName, babyName, selectedDate, motherProfile, notifications } = useAppStore();
   const greeting = getHeaderGreeting(phase, motherName, babyName);
   const [showAddModal, setShowAddModal] = useState(false);
   const initial = motherName.charAt(0).toUpperCase();
+  const unreadCount = notifications.filter((n) => !n.read).length;
 
   return (
     <div className="flex flex-col gap-4 pb-6">
@@ -36,10 +38,16 @@ export function HomeScreen({ onOpenProfile }: HomeScreenProps) {
           </div>
         </div>
         <button
+          onClick={onOpenNotifications}
           aria-label="Notificações"
-          className="w-9 h-9 rounded-xl bg-white shadow-sm flex items-center justify-center"
+          className="relative w-9 h-9 rounded-xl bg-white shadow-sm flex items-center justify-center"
         >
           <Bell size={18} className="text-graphite-light" strokeWidth={1.8} />
+          {unreadCount > 0 && (
+            <span className="absolute -top-1 -right-1 w-4 h-4 bg-blush-500 rounded-full flex items-center justify-center text-[9px] font-bold text-white">
+              {unreadCount}
+            </span>
+          )}
         </button>
       </div>
 

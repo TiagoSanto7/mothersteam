@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import type { TabId, PregnancyPhase, RoutineEntry, BabyEntry, OnboardingAnswers, MotherProfile, CommunityPost } from '../types';
+import type { TabId, PregnancyPhase, RoutineEntry, BabyEntry, OnboardingAnswers, MotherProfile, CommunityPost, AppNotification } from '../types';
 import { computeProfile } from '../utils/onboardingScoring';
 
 const today = new Date().toISOString().split('T')[0];
@@ -45,6 +45,12 @@ const SEED_POSTS: CommunityPost[] = [
   },
 ];
 
+const SEED_NOTIFICATIONS: AppNotification[] = [
+  { id: '1', type: 'like',    text: 'Ana curtiu sua publicação na comunidade', read: false, time: '5min' },
+  { id: '2', type: 'follow',  text: 'Você tem 2 novas seguidoras esta semana', read: false, time: '1h' },
+  { id: '3', type: 'comment', text: 'Maria comentou no seu desabafo: "Você não está sozinha 💜"', read: false, time: '3h' },
+];
+
 interface AppState {
   // Auth
   isLoggedIn: boolean;
@@ -61,6 +67,7 @@ interface AppState {
   diaperCount: number;
   lastFeedSide: 'left' | 'right';
   communityPosts: CommunityPost[];
+  notifications: AppNotification[];
   // Actions — Auth
   login: (email: string, password: string) => boolean;
   logout: () => void;
@@ -76,6 +83,7 @@ interface AppState {
   setFeedSide: (side: 'left' | 'right') => void;
   addBabyEntry: (entry: BabyEntry) => void;
   addCommunityPost: (post: Omit<CommunityPost, 'id' | 'likes' | 'replies' | 'time'>) => void;
+  markAllNotificationsRead: () => void;
 }
 
 export const useAppStore = create<AppState>()(
@@ -96,6 +104,7 @@ export const useAppStore = create<AppState>()(
       diaperCount: 0,
       lastFeedSide: 'left',
       communityPosts: SEED_POSTS,
+      notifications: SEED_NOTIFICATIONS,
       // Auth actions
       login: (email, password) => {
         if (email === 'navegador@mothersteam' && password === 'admin@mothersteam') {
@@ -156,6 +165,10 @@ export const useAppStore = create<AppState>()(
             },
             ...s.communityPosts,
           ],
+        })),
+      markAllNotificationsRead: () =>
+        set((s) => ({
+          notifications: s.notifications.map((n) => ({ ...n, read: true })),
         })),
     }),
     { name: 'mothers-team-v1' },
