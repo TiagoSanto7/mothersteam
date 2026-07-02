@@ -1,11 +1,46 @@
 import type { OnboardingAnswers, MotherProfile, ArchetypeKey } from '../types';
 
-export const ARCHETYPES: Record<ArchetypeKey, { label: string; attributes: string; color: string }> = {
-  maria:  { label: 'Linha Maria',  attributes: 'Entrega • Vínculo • Presença',          color: '#9D8FCC' },
-  ana:    { label: 'Linha Ana',    attributes: 'Resiliência • Esperança • Perseverança', color: '#8FAF8F' },
-  ester:  { label: 'Linha Ester',  attributes: 'Sabedoria • Influência • Discernimento', color: '#D4A898' },
-  debora: { label: 'Linha Débora', attributes: 'Liderança • Coragem • Direção',          color: '#C9A96E' },
-  rute:   { label: 'Linha Rute',   attributes: 'Lealdade • Pertencimento • Construção',  color: '#9BC4D0' },
+export const ARCHETYPES: Record<ArchetypeKey, { label: string; attributes: string; color: string; phrases: string[] }> = {
+  maria: {
+    label: 'Linha Maria', attributes: 'Entrega • Vínculo • Presença', color: '#9D8FCC',
+    phrases: [
+      'Estar presente por inteiro é o maior presente que podemos oferecer a quem amamos.',
+      'O vínculo real não se cria com o tempo, mas com a profundidade do afeto compartilhado.',
+      'A entrega genuína transforma a rotina da maternidade em um espaço de pura conexão.',
+    ],
+  },
+  ana: {
+    label: 'Linha Ana', attributes: 'Resiliência • Esperança • Perseverança', color: '#8FAF8F',
+    phrases: [
+      'A resiliência materna é a força silenciosa que reconstrói caminhos todos os dias.',
+      'Perseverar não é apenas caminhar, é manter os olhos firmes no amanhã que estamos construindo.',
+      'Onde há esperança, cada pequeno passo desafiador se torna semente de um novo amadurecimento.',
+    ],
+  },
+  ester: {
+    label: 'Linha Ester', attributes: 'Sabedoria • Influência • Discernimento', color: '#D4A898',
+    phrases: [
+      'A verdadeira sabedoria mora no silêncio que antecede as nossas decisões mais importantes.',
+      'Discernimento é saber acolher o momento certo de agir e a hora exata de observar.',
+      'Sua influência mais poderosa se manifesta no exemplo sutil e na firmeza dos seus valores.',
+    ],
+  },
+  debora: {
+    label: 'Linha Débora', attributes: 'Liderança • Coragem • Direção', color: '#C9A96E',
+    phrases: [
+      'Liderar a própria jornada exige a coragem de assumir as rédeas das nossas próprias escolhas.',
+      'Ter direção não significa prever o futuro, mas caminhar com a certeza do propósito presente.',
+      'A coragem nos move para frente; a clareza nos mantém firmes no rumo certo.',
+    ],
+  },
+  rute: {
+    label: 'Linha Rute', attributes: 'Lealdade • Pertencimento • Construção', color: '#9BC4D0',
+    phrases: [
+      'A lealdade cria laços inquebráveis que sustentam qualquer processo de transformação.',
+      'Pertencer é encontrar um espaço seguro onde nossa história é acolhida e valorizada.',
+      'Cada grande legado começa na construção diária e paciente de bases sólidas com a comunidade.',
+    ],
+  },
 };
 
 interface ProfileDefinition {
