@@ -37,8 +37,8 @@ export function InsightCard({ profile }: InsightCardProps) {
           <p className="text-sm font-semibold text-graphite leading-snug">
             {profile.profileLabel}
           </p>
-          <p className="text-xs text-graphite-light leading-relaxed mt-1.5">
-            {profile.insights[0]}
+          <p className="text-xs text-graphite-light leading-relaxed mt-1.5 italic">
+            "{archetype.phrases[0]}"
           </p>
         </div>
 
