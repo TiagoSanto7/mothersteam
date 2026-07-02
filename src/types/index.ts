@@ -57,6 +57,16 @@ export interface CommunityPost {
   likes: number;
   replies: number;
   time: string;
+  isRepost?: boolean;
+  repostFrom?: string;
+}
+
+export interface PostComment {
+  id: string;
+  author: string;
+  content: string;
+  time: string;
+  likes: number;
 }
 
 export interface AppNotification {
@@ -65,4 +75,20 @@ export interface AppNotification {
   text: string;
   read: boolean;
   time: string;
+}
+
+export interface ChatMessage {
+  id: string;
+  from: string;
+  content: string;
+  time: string;
+}
+
+export interface Chat {
+  id: string;
+  with: string;
+  lastMessage: string;
+  time: string;
+  unread: number;
+  messages: ChatMessage[];
 }

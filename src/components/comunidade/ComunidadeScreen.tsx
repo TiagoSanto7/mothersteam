@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { MessageCircle, Heart } from 'lucide-react';
 import { useAppStore } from '../../store/useAppStore';
 import { CreatePostScreen } from './CreatePostScreen';
+import { PostDetailScreen } from '../post/PostDetailScreen';
 import type { CommunityPost } from '../../types';
 
 type Category = 'todos' | CommunityPost['category'];
@@ -13,7 +14,7 @@ const BADGE_CONFIG = {
 
 const CATEGORY_LABELS: Category[] = ['todos', 'gestação', 'pós-parto', 'amamentação', 'saúde mental'];
 
-function PostCard({ post }: { post: CommunityPost }) {
+function PostCard({ post, onOpen }: { post: CommunityPost; onOpen: () => void }) {
   const [liked, setLiked] = useState(false);
   const badge = post.badge ? BADGE_CONFIG[post.badge] : null;
 
@@ -23,19 +24,20 @@ function PostCard({ post }: { post: CommunityPost }) {
       data-category={post.category}
       className="bg-white rounded-3xl p-4 shadow-sm flex flex-col gap-3"
     >
-      <div className="flex items-start justify-between gap-2">
-        <div className="flex flex-col gap-0.5">
-          <p className="text-sm font-semibold text-graphite">{post.author}</p>
-          {badge && (
-            <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full w-fit ${badge.color}`}>
-              {badge.label}
-            </span>
-          )}
+      <button onClick={onOpen} className="text-left flex flex-col gap-2">
+        <div className="flex items-start justify-between gap-2">
+          <div className="flex flex-col gap-0.5">
+            <p className="text-sm font-semibold text-graphite">{post.author}</p>
+            {badge && (
+              <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full w-fit ${badge.color}`}>
+                {badge.label}
+              </span>
+            )}
+          </div>
+          <span className="text-xs text-graphite-muted flex-shrink-0">{post.time}</span>
         </div>
-        <span className="text-xs text-graphite-muted flex-shrink-0">{post.time}</span>
-      </div>
-
-      <p className="text-sm text-graphite-light leading-relaxed">{post.content}</p>
+        <p className="text-sm text-graphite-light leading-relaxed">{post.content}</p>
+      </button>
 
       <div className="flex items-center gap-4 pt-1">
         <button
@@ -50,6 +52,7 @@ function PostCard({ post }: { post: CommunityPost }) {
           {post.likes + (liked ? 1 : 0)}
         </button>
         <button
+          onClick={onOpen}
           aria-label={`Ver ${post.replies} respostas`}
           className="flex items-center gap-1.5 text-xs text-graphite-muted"
         >
@@ -65,6 +68,11 @@ export function ComunidadeScreen() {
   const communityPosts = useAppStore((s) => s.communityPosts);
   const [activeCategory, setActiveCategory] = useState<Category>('todos');
   const [showCreate, setShowCreate] = useState(false);
+  const [selectedPost, setSelectedPost] = useState<CommunityPost | null>(null);
+
+  if (selectedPost) {
+    return <PostDetailScreen post={selectedPost} onBack={() => setSelectedPost(null)} />;
+  }
 
   if (showCreate) {
     return <CreatePostScreen onBack={() => setShowCreate(false)} />;
@@ -110,7 +118,7 @@ export function ComunidadeScreen() {
 
       <div className="flex flex-col gap-3 px-4">
         {filtered.map((post) => (
-          <PostCard key={post.id} post={post} />
+          <PostCard key={post.id} post={post} onOpen={() => setSelectedPost(post)} />
         ))}
       </div>
     </div>

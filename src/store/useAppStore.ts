@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import type { TabId, PregnancyPhase, RoutineEntry, BabyEntry, OnboardingAnswers, MotherProfile, CommunityPost, AppNotification } from '../types';
+import type { TabId, PregnancyPhase, RoutineEntry, BabyEntry, OnboardingAnswers, MotherProfile, CommunityPost, AppNotification, PostComment, Chat } from '../types';
 import { computeProfile } from '../utils/onboardingScoring';
 
 const today = new Date().toISOString().split('T')[0];
@@ -51,6 +51,56 @@ const SEED_NOTIFICATIONS: AppNotification[] = [
   { id: '3', type: 'comment', text: 'Maria comentou no seu desabafo: "Você não está sozinha 💜"', read: false, time: '3h' },
 ];
 
+const SEED_CHATS: Chat[] = [
+  {
+    id: '1',
+    with: 'Ana Oliveira',
+    lastMessage: 'Adorei seu post sobre amamentação! 💜',
+    time: '5min',
+    unread: 2,
+    messages: [
+      { id: '1', from: 'Ana Oliveira', content: 'Oi! Vi seu post na comunidade e me identifiquei muito 💜', time: '14:20' },
+      { id: '2', from: 'Ana Oliveira', content: 'Adorei seu post sobre amamentação! 💜', time: '14:23' },
+    ],
+  },
+  {
+    id: '2',
+    with: 'Fernanda S.',
+    lastMessage: 'Boa sorte no parto! Você consegue 🌸',
+    time: '2h',
+    unread: 0,
+    messages: [
+      { id: '1', from: 'Fernanda S.', content: 'Vi que você está na reta final. Como está sendo?', time: '12:10' },
+      { id: '2', from: 'Mariana', content: 'Ansiosa mas animada! Obrigada pelo apoio 🥰', time: '12:15' },
+      { id: '3', from: 'Fernanda S.', content: 'Boa sorte no parto! Você consegue 🌸', time: '12:16' },
+    ],
+  },
+  {
+    id: '3',
+    with: 'Dra. Carla Lima',
+    lastMessage: 'Pode me chamar a qualquer momento!',
+    time: '1d',
+    unread: 0,
+    messages: [
+      { id: '1', from: 'Mariana', content: 'Dra. Carla, tenho uma dúvida sobre amamentação', time: '10:00' },
+      { id: '2', from: 'Dra. Carla Lima', content: 'Claro! Me conte o que está acontecendo 😊', time: '10:05' },
+      { id: '3', from: 'Dra. Carla Lima', content: 'Pode me chamar a qualquer momento!', time: '10:06' },
+    ],
+  },
+];
+
+const SEED_POST_COMMENTS: Record<string, PostComment[]> = {
+  '1': [
+    { id: '1', author: 'Juliana M.', content: 'Gengibre salvou minha vida no primeiro trimestre! 🙏', time: '1h', likes: 5 },
+    { id: '2', author: 'Renata P.', content: 'Eu tomei chá de gengibre também, ajuda muito!', time: '30min', likes: 2 },
+  ],
+  '3': [
+    { id: '1', author: 'Ana Oliveira', content: 'Você não está sozinha! Passei exatamente por isso 💜', time: '4h', likes: 12 },
+    { id: '2', author: 'Dra. Carla Lima', content: 'O puerpério é muito desafiador. Procure apoio profissional se precisar.', time: '3h', likes: 8 },
+    { id: '3', author: 'Fernanda S.', content: 'Estou aqui se precisar conversar ❤️', time: '2h', likes: 6 },
+  ],
+};
+
 interface AppState {
   // Auth
   isLoggedIn: boolean;
@@ -68,6 +118,8 @@ interface AppState {
   lastFeedSide: 'left' | 'right';
   communityPosts: CommunityPost[];
   notifications: AppNotification[];
+  chats: Chat[];
+  postComments: Record<string, PostComment[]>;
   // Actions — Auth
   login: (email: string, password: string) => boolean;
   logout: () => void;
@@ -84,6 +136,14 @@ interface AppState {
   addBabyEntry: (entry: BabyEntry) => void;
   addCommunityPost: (post: Omit<CommunityPost, 'id' | 'likes' | 'replies' | 'time'>) => void;
   markAllNotificationsRead: () => void;
+  // Actions — Post
+  likePost: (postId: string) => void;
+  addComment: (postId: string, content: string) => void;
+  repost: (post: CommunityPost) => void;
+  // Actions — Chat
+  sendMessage: (chatId: string, content: string) => void;
+  shareToChat: (chatId: string, content: string) => void;
+  markChatRead: (chatId: string) => void;
 }
 
 export const useAppStore = create<AppState>()(
@@ -105,6 +165,8 @@ export const useAppStore = create<AppState>()(
       lastFeedSide: 'left',
       communityPosts: SEED_POSTS,
       notifications: SEED_NOTIFICATIONS,
+      chats: SEED_CHATS,
+      postComments: SEED_POST_COMMENTS,
       // Auth actions
       login: (email, password) => {
         if (email === 'navegador@mothersteam' && password === 'admin@mothersteam') {
@@ -169,6 +231,97 @@ export const useAppStore = create<AppState>()(
       markAllNotificationsRead: () =>
         set((s) => ({
           notifications: s.notifications.map((n) => ({ ...n, read: true })),
+        })),
+      // Post actions
+      likePost: (postId) =>
+        set((s) => ({
+          communityPosts: s.communityPosts.map((p) =>
+            p.id === postId ? { ...p, likes: p.likes + 1 } : p
+          ),
+        })),
+      addComment: (postId, content) =>
+        set((s) => ({
+          postComments: {
+            ...s.postComments,
+            [postId]: [
+              ...(s.postComments[postId] ?? []),
+              {
+                id: Date.now().toString(),
+                author: s.motherName,
+                content,
+                time: 'agora',
+                likes: 0,
+              },
+            ],
+          },
+          communityPosts: s.communityPosts.map((p) =>
+            p.id === postId ? { ...p, replies: p.replies + 1 } : p
+          ),
+        })),
+      repost: (post) =>
+        set((s) => ({
+          communityPosts: [
+            {
+              ...post,
+              id: Date.now().toString(),
+              author: s.motherName,
+              time: 'agora',
+              likes: 0,
+              replies: 0,
+              isRepost: true,
+              repostFrom: post.author,
+            },
+            ...s.communityPosts,
+          ],
+        })),
+      // Chat actions
+      sendMessage: (chatId, content) =>
+        set((s) => ({
+          chats: s.chats.map((c) =>
+            c.id === chatId
+              ? {
+                  ...c,
+                  lastMessage: content,
+                  time: 'agora',
+                  messages: [
+                    ...c.messages,
+                    {
+                      id: Date.now().toString(),
+                      from: s.motherName,
+                      content,
+                      time: new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
+                    },
+                  ],
+                }
+              : c
+          ),
+        })),
+      shareToChat: (chatId, content) =>
+        set((s) => ({
+          chats: s.chats.map((c) =>
+            c.id === chatId
+              ? {
+                  ...c,
+                  lastMessage: content,
+                  time: 'agora',
+                  messages: [
+                    ...c.messages,
+                    {
+                      id: Date.now().toString(),
+                      from: s.motherName,
+                      content,
+                      time: new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
+                    },
+                  ],
+                }
+              : c
+          ),
+        })),
+      markChatRead: (chatId) =>
+        set((s) => ({
+          chats: s.chats.map((c) =>
+            c.id === chatId ? { ...c, unread: 0 } : c
+          ),
         })),
     }),
     { name: 'mothers-team-v2' },

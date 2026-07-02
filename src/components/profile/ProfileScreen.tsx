@@ -3,6 +3,8 @@ import { ChevronLeft, Settings, Heart, MessageCircle } from 'lucide-react';
 import { useAppStore } from '../../store/useAppStore';
 import { ARCHETYPES } from '../../utils/onboardingScoring';
 import { SettingsScreen } from './SettingsScreen';
+import { PostDetailScreen } from '../post/PostDetailScreen';
+import type { CommunityPost } from '../../types';
 
 interface ProfileScreenProps {
   onClose: () => void;
@@ -16,12 +18,21 @@ export function ProfileScreen({ onClose }: ProfileScreenProps) {
   const [showSettings, setShowSettings] = useState(false);
   const [isVisitorView, setIsVisitorView] = useState(false);
   const [following, setFollowing] = useState(false);
+  const [selectedPost, setSelectedPost] = useState<CommunityPost | null>(null);
 
   const archetype = motherProfile ? ARCHETYPES[motherProfile.archetypeKey] : null;
   const avatarColor = archetype?.color ?? '#9D8FCC';
   const userPosts = communityPosts.filter((p) => p.author === motherName);
 
   const bio = archetype ? archetype.phrases[1] : 'Maternidade com presença e intenção.';
+
+  if (selectedPost) {
+    return (
+      <div className="flex flex-col w-full h-full sm:w-[390px] sm:h-[844px] bg-offwhite sm:rounded-[44px] sm:shadow-2xl overflow-hidden">
+        <PostDetailScreen post={selectedPost} onBack={() => setSelectedPost(null)} />
+      </div>
+    );
+  }
 
   if (showSettings) {
     return (
@@ -124,7 +135,7 @@ export function ProfileScreen({ onClose }: ProfileScreenProps) {
         ) : (
           <ul className="divide-y divide-gray-100">
             {userPosts.map((post) => (
-              <li key={post.id} className="px-4 py-4">
+              <li key={post.id} className="px-4 py-4 active:bg-lavender-50 transition-colors cursor-pointer" onClick={() => setSelectedPost(post)}>
                 <div className="flex items-start gap-3">
                   <div
                     style={{ background: avatarColor }}

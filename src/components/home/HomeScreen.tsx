@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Bell, Plus } from 'lucide-react';
+import { Bell, MessageSquare, Plus } from 'lucide-react';
 import { useAppStore } from '../../store/useAppStore';
 import { getHeaderGreeting } from '../../utils/pregnancyUtils';
 import { WeekCalendar } from './WeekCalendar';
@@ -10,14 +10,16 @@ import { AddRoutineModal } from './AddRoutineModal';
 interface HomeScreenProps {
   onOpenProfile: () => void;
   onOpenNotifications: () => void;
+  onOpenChat: () => void;
 }
 
-export function HomeScreen({ onOpenProfile, onOpenNotifications }: HomeScreenProps) {
-  const { phase, motherName, babyName, selectedDate, motherProfile, notifications } = useAppStore();
+export function HomeScreen({ onOpenProfile, onOpenNotifications, onOpenChat }: HomeScreenProps) {
+  const { phase, motherName, babyName, selectedDate, motherProfile, notifications, chats } = useAppStore();
   const greeting = getHeaderGreeting(phase, motherName, babyName);
   const [showAddModal, setShowAddModal] = useState(false);
   const initial = motherName.charAt(0).toUpperCase();
-  const unreadCount = notifications.filter((n) => !n.read).length;
+  const unreadNotifs = notifications.filter((n) => !n.read).length;
+  const unreadChats = chats.reduce((sum, c) => sum + c.unread, 0);
 
   return (
     <div className="flex flex-col gap-4 pb-6">
@@ -37,18 +39,34 @@ export function HomeScreen({ onOpenProfile, onOpenNotifications }: HomeScreenPro
             </h1>
           </div>
         </div>
-        <button
-          onClick={onOpenNotifications}
-          aria-label="Notificações"
-          className="relative w-9 h-9 rounded-xl bg-white shadow-sm flex items-center justify-center"
-        >
-          <Bell size={18} className="text-graphite-light" strokeWidth={1.8} />
-          {unreadCount > 0 && (
-            <span className="absolute -top-1 -right-1 w-4 h-4 bg-blush-500 rounded-full flex items-center justify-center text-[9px] font-bold text-white">
-              {unreadCount}
-            </span>
-          )}
-        </button>
+
+        <div className="flex items-center gap-2">
+          <button
+            onClick={onOpenChat}
+            aria-label="Mensagens"
+            className="relative w-9 h-9 rounded-xl bg-white shadow-sm flex items-center justify-center"
+          >
+            <MessageSquare size={18} className="text-graphite-light" strokeWidth={1.8} />
+            {unreadChats > 0 && (
+              <span className="absolute -top-1 -right-1 w-4 h-4 bg-lavender-600 rounded-full flex items-center justify-center text-[9px] font-bold text-white">
+                {unreadChats}
+              </span>
+            )}
+          </button>
+
+          <button
+            onClick={onOpenNotifications}
+            aria-label="Notificações"
+            className="relative w-9 h-9 rounded-xl bg-white shadow-sm flex items-center justify-center"
+          >
+            <Bell size={18} className="text-graphite-light" strokeWidth={1.8} />
+            {unreadNotifs > 0 && (
+              <span className="absolute -top-1 -right-1 w-4 h-4 bg-blush-500 rounded-full flex items-center justify-center text-[9px] font-bold text-white">
+                {unreadNotifs}
+              </span>
+            )}
+          </button>
+        </div>
       </div>
 
       {motherProfile && <InsightCard profile={motherProfile} />}
