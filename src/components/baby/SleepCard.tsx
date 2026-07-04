@@ -29,7 +29,7 @@ export function SleepCard() {
   return (
     <div className="bg-white rounded-3xl p-4 shadow-sm flex flex-col gap-3">
       <div className="flex items-center gap-2">
-        <Moon size={18} className="text-lavender-600" strokeWidth={1.8} />
+        <Moon size={18} className="text-sara-gold" strokeWidth={1.8} />
         <span className="text-sm font-semibold text-graphite">Sono</span>
       </div>
 
@@ -48,7 +48,7 @@ export function SleepCard() {
           step={5}
           value={minutes}
           onChange={(e) => setMinutes(Number(e.target.value))}
-          className="flex-1 accent-lavender-600"
+          className="flex-1 accent-sara-gold"
           aria-label="Duração da soneca em minutos"
         />
         <span className="text-xs text-graphite-muted w-10 text-right">{minutes}m</span>
@@ -57,7 +57,7 @@ export function SleepCard() {
       <button
         onClick={handleAdd}
         aria-label="Registrar soneca"
-        className="w-full py-2.5 rounded-2xl bg-lavender-100 text-lavender-600 text-sm font-semibold flex items-center justify-center gap-1.5 active:scale-[0.98] transition-transform"
+        className="w-full py-2.5 rounded-2xl bg-sara-linen text-sara-gold text-sm font-semibold flex items-center justify-center gap-1.5 active:scale-[0.98] transition-transform"
       >
         <Plus size={16} strokeWidth={2.5} />
         Registrar soneca

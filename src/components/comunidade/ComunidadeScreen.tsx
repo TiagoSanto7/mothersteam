@@ -8,8 +8,8 @@ import type { CommunityPost } from '../../types';
 type Category = 'todos' | CommunityPost['category'];
 
 const BADGE_CONFIG = {
-  experiente:   { label: 'Mãe Experiente',       color: 'bg-blush-100 text-blush-500' },
-  profissional: { label: 'Profissional de Saúde', color: 'bg-sage-100 text-sage-600' },
+  experiente:   { label: 'Mãe Experiente',       color: 'bg-sara-linen text-sara-terracotta' },
+  profissional: { label: 'Profissional de Saúde', color: 'bg-sara-cream text-sara-warm' },
 } as const;
 
 const CATEGORY_LABELS: Category[] = ['todos', 'gestação', 'pós-parto', 'amamentação', 'saúde mental'];
@@ -45,7 +45,7 @@ function PostCard({ post, onOpen }: { post: CommunityPost; onOpen: () => void })
           aria-label={liked ? 'Descurtir' : 'Curtir'}
           aria-pressed={liked}
           className={`flex items-center gap-1.5 text-xs transition-colors ${
-            liked ? 'text-blush-500' : 'text-graphite-muted'
+            liked ? 'text-sara-terracotta' : 'text-graphite-muted'
           }`}
         >
           <Heart size={14} fill={liked ? 'currentColor' : 'none'} strokeWidth={1.8} />
@@ -89,7 +89,7 @@ export function ComunidadeScreen() {
         <button
           onClick={() => setShowCreate(true)}
           aria-label="Desabafar"
-          className="px-3 py-1.5 rounded-xl bg-lavender-600 text-white text-xs font-semibold active:scale-95 transition-transform"
+          className="px-3 py-1.5 rounded-xl bg-sara-gold text-white text-xs font-semibold active:scale-95 transition-transform"
         >
           Desabafar 💜
         </button>
@@ -106,7 +106,7 @@ export function ComunidadeScreen() {
               aria-label={label}
               className={`flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
                 activeCategory === cat
-                  ? 'bg-lavender-600 text-white'
+                  ? 'bg-sara-gold text-white'
                   : 'bg-white text-graphite-muted'
               }`}
             >

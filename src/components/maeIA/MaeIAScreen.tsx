@@ -57,18 +57,18 @@ export function MaeIAScreen() {
 
   return (
     <div className="flex flex-col h-full">
-      <div className="px-4 pt-4 pb-3 border-b border-gray-100 bg-white/80 backdrop-blur-sm">
-        <h1 className="text-base font-semibold text-graphite">MãeIA</h1>
+      <div className="px-4 pt-4 pb-3 border-b border-sara-linen/60 bg-sara-cream/80 backdrop-blur-sm">
+        <h1 className="text-base font-semibold font-serif text-graphite">MãeIA</h1>
         <p className="text-xs text-graphite-muted">Assistente de saúde materno-infantil</p>
       </div>
 
-      <div className="flex gap-2 overflow-x-auto scrollbar-hide px-4 py-3 bg-offwhite">
+      <div className="flex gap-2 overflow-x-auto scrollbar-hide px-4 py-3 bg-sara-cream">
         {QUICK_CHIPS.map((chip) => (
           <button
             key={chip}
             onClick={() => sendMessage(chip)}
             aria-label={chip}
-            className="flex-shrink-0 px-3 py-1.5 rounded-full bg-lavender-100 text-lavender-600 text-xs font-medium whitespace-nowrap"
+            className="flex-shrink-0 px-3 py-1.5 rounded-full bg-sara-linen text-sara-gold text-xs font-medium whitespace-nowrap"
           >
             {chip}
           </button>
@@ -84,8 +84,8 @@ export function MaeIAScreen() {
             <div
               className={`max-w-[80%] px-4 py-2.5 rounded-2xl text-sm leading-relaxed ${
                 msg.role === 'user'
-                  ? 'bg-lavender-600 text-white rounded-br-sm'
-                  : 'bg-white text-graphite shadow-sm rounded-bl-sm'
+                  ? 'bg-sara-gold text-white rounded-br-sm'
+                  : `bg-white text-graphite shadow-sm rounded-bl-sm ${msg.id === '0' ? 'font-serif' : ''}`
               }`}
             >
               {msg.text}
@@ -95,7 +95,7 @@ export function MaeIAScreen() {
         <div ref={bottomRef} />
       </div>
 
-      <div className="px-4 pb-4 pt-2 bg-white border-t border-gray-100">
+      <div className="px-4 pb-4 pt-2 bg-sara-linen/80 border-t border-sara-linen/60">
         <div className="flex items-center gap-2 bg-offwhite rounded-2xl px-3 py-2">
           <input
             type="text"
@@ -110,7 +110,7 @@ export function MaeIAScreen() {
             onClick={() => sendMessage(input)}
             disabled={!input.trim()}
             aria-label="Enviar mensagem"
-            className="w-8 h-8 rounded-xl bg-lavender-600 flex items-center justify-center disabled:opacity-40 active:scale-95 transition-all"
+            className="w-8 h-8 rounded-xl bg-sara-gold flex items-center justify-center disabled:opacity-40 active:scale-95 transition-all"
           >
             <Send size={14} className="text-white" strokeWidth={2} />
           </button>

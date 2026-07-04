@@ -15,7 +15,7 @@ export function ShoppingScreen() {
         <p className="text-xs text-graphite-muted">Produtos selecionados para você e seu bebê</p>
       </div>
 
-      <div className="mx-4 rounded-3xl bg-gradient-to-br from-lavender-400 to-lavender-600 p-5 text-white">
+      <div className="mx-4 rounded-3xl bg-gradient-to-br from-sara-terracotta to-sara-gold p-5 text-white">
         <p className="text-xs font-medium opacity-80 mb-1">Em breve</p>
         <p className="text-base font-bold leading-snug">
           Seus produtos Baby Team a um clique
@@ -29,14 +29,14 @@ export function ShoppingScreen() {
             key={product.id}
             className="bg-white rounded-3xl p-4 shadow-sm flex flex-col gap-2"
           >
-            <div className="w-12 h-12 rounded-2xl bg-lavender-50 flex items-center justify-center text-2xl">
+            <div className="w-12 h-12 rounded-2xl bg-sara-linen flex items-center justify-center text-2xl">
               {product.emoji}
             </div>
             <div>
               <p className="text-xs text-graphite-muted">{product.category}</p>
               <p className="text-sm font-medium text-graphite leading-tight">{product.name}</p>
             </div>
-            <p className="text-sm font-bold text-lavender-600">{product.price}</p>
+            <p className="text-sm font-bold text-sara-gold">{product.price}</p>
             <button
               disabled
               aria-label={`${product.name} — disponível em breve`}

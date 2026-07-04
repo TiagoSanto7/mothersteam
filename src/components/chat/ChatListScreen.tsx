@@ -22,12 +22,12 @@ export function ChatListScreen({ onBack }: ChatListScreenProps) {
 
   return (
     <div className="flex flex-col w-full h-full sm:w-[390px] sm:h-[844px] bg-offwhite sm:rounded-[44px] sm:shadow-2xl overflow-hidden">
-      <div className="flex items-center justify-between px-4 pt-6 pb-4 border-b border-gray-100 flex-shrink-0">
-        <button onClick={onBack} className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-lavender-50">
+      <div className="flex items-center justify-between px-4 pt-6 pb-4 border-b border-sara-linen/60 flex-shrink-0">
+        <button onClick={onBack} className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-sara-linen">
           <ChevronLeft size={20} className="text-graphite" />
         </button>
         <p className="text-sm font-semibold text-graphite">Mensagens</p>
-        <button className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-lavender-50">
+        <button className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-sara-linen">
           <Edit size={16} className="text-graphite" />
         </button>
       </div>
@@ -55,9 +55,9 @@ export function ChatListScreen({ onBack }: ChatListScreenProps) {
               <li key={chat.id}>
                 <button
                   onClick={() => setSelectedChat(chat)}
-                  className="w-full flex items-center gap-3 px-4 py-3.5 active:bg-lavender-50 transition-colors text-left"
+                  className="w-full flex items-center gap-3 px-4 py-3.5 active:bg-sara-linen transition-colors text-left"
                 >
-                  <div className="w-12 h-12 rounded-full bg-lavender-200 flex items-center justify-center text-lavender-700 font-bold text-lg flex-shrink-0">
+                  <div className="w-12 h-12 rounded-full bg-sara-terracotta flex items-center justify-center text-white font-bold text-lg flex-shrink-0">
                     {chat.with.charAt(0).toUpperCase()}
                   </div>
                   <div className="flex-1 min-w-0">
@@ -72,7 +72,7 @@ export function ChatListScreen({ onBack }: ChatListScreenProps) {
                     </p>
                   </div>
                   {chat.unread > 0 && (
-                    <div className="w-5 h-5 rounded-full bg-lavender-600 flex items-center justify-center flex-shrink-0">
+                    <div className="w-5 h-5 rounded-full bg-sara-gold flex items-center justify-center flex-shrink-0">
                       <span className="text-[10px] font-bold text-white">{chat.unread}</span>
                     </div>
                   )}

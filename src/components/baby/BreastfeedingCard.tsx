@@ -30,8 +30,8 @@ export function BreastfeedingCard() {
             aria-label={side === 'left' ? 'Seio esquerdo' : 'Seio direito'}
             className={`flex-1 py-2 rounded-2xl text-sm font-medium transition-colors ${
               lastFeedSide === side
-                ? 'bg-blush-500 text-white'
-                : 'bg-blush-100 text-blush-500'
+                ? 'bg-sara-terracotta text-white'
+                : 'bg-sara-linen text-sara-terracotta'
             }`}
           >
             {side === 'left' ? '⬅️ Esquerdo' : 'Direito ➡️'}
@@ -42,7 +42,7 @@ export function BreastfeedingCard() {
       <button
         onClick={handleRegister}
         aria-label="Registrar mamada"
-        className="w-full py-2.5 rounded-2xl bg-lavender-100 text-lavender-600 text-sm font-semibold active:scale-[0.98] transition-transform"
+        className="w-full py-2.5 rounded-2xl bg-sara-linen text-sara-gold text-sm font-semibold active:scale-[0.98] transition-transform"
       >
         Registrar mamada
       </button>

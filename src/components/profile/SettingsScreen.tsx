@@ -27,8 +27,8 @@ export function SettingsScreen({ onBack, onClose }: SettingsScreenProps) {
 
   return (
     <div className="flex flex-col h-full bg-offwhite">
-      <div className="flex items-center gap-3 px-4 pt-6 pb-4 border-b border-gray-100">
-        <button onClick={onBack} className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-lavender-50">
+      <div className="flex items-center gap-3 px-4 pt-6 pb-4 border-b border-sara-linen/60">
+        <button onClick={onBack} className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-sara-linen">
           <ChevronLeft size={20} className="text-graphite" />
         </button>
         <h1 className="text-base font-semibold text-graphite">Configurações</h1>
@@ -56,7 +56,7 @@ export function SettingsScreen({ onBack, onClose }: SettingsScreenProps) {
                 <p className="text-xs text-graphite-muted">Plano</p>
                 <p className="text-sm font-medium text-graphite">Gratuito</p>
               </div>
-              <button className="text-[10px] text-lavender-600 font-semibold flex items-center gap-0.5">
+              <button className="text-[10px] text-sara-gold font-semibold flex items-center gap-0.5">
                 ver planos <ChevronRight size={12} />
               </button>
             </div>
@@ -86,7 +86,7 @@ export function SettingsScreen({ onBack, onClose }: SettingsScreenProps) {
               <p className="text-sm text-graphite">Curtidas e comentários</p>
               <button
                 onClick={() => setNotifLikes(!notifLikes)}
-                className={`w-10 h-6 rounded-full transition-colors relative ${notifLikes ? 'bg-lavender-600' : 'bg-gray-200'}`}
+                className={`w-10 h-6 rounded-full transition-colors relative ${notifLikes ? 'bg-sara-gold' : 'bg-gray-200'}`}
               >
                 <span className={`absolute top-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${notifLikes ? 'translate-x-4' : 'translate-x-0.5'}`} />
               </button>
@@ -95,7 +95,7 @@ export function SettingsScreen({ onBack, onClose }: SettingsScreenProps) {
               <p className="text-sm text-graphite">Novas publicações</p>
               <button
                 onClick={() => setNotifPosts(!notifPosts)}
-                className={`w-10 h-6 rounded-full transition-colors relative ${notifPosts ? 'bg-lavender-600' : 'bg-gray-200'}`}
+                className={`w-10 h-6 rounded-full transition-colors relative ${notifPosts ? 'bg-sara-gold' : 'bg-gray-200'}`}
               >
                 <span className={`absolute top-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${notifPosts ? 'translate-x-4' : 'translate-x-0.5'}`} />
               </button>

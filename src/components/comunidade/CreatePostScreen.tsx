@@ -34,9 +34,9 @@ export function CreatePostScreen({ onBack }: CreatePostScreenProps) {
         <button
           onClick={onBack}
           aria-label="Voltar"
-          className="w-9 h-9 rounded-xl bg-lavender-50 flex items-center justify-center"
+          className="w-9 h-9 rounded-xl bg-sara-linen flex items-center justify-center"
         >
-          <ArrowLeft size={18} className="text-lavender-600" strokeWidth={1.8} />
+          <ArrowLeft size={18} className="text-sara-gold" strokeWidth={1.8} />
         </button>
         <h1 className="text-base font-semibold text-graphite">Desabafar</h1>
       </div>
@@ -48,7 +48,7 @@ export function CreatePostScreen({ onBack }: CreatePostScreenProps) {
           placeholder="O que você está sentindo? Este é um espaço seguro 💜"
           autoFocus
           rows={7}
-          className="w-full px-4 py-3 rounded-2xl bg-white border border-gray-200 text-sm text-graphite placeholder:text-graphite-muted leading-relaxed resize-none focus:outline-none focus:border-lavender-400"
+          className="w-full px-4 py-3 rounded-2xl bg-white border border-sara-linen text-sm text-graphite placeholder:text-graphite-muted leading-relaxed resize-none focus:outline-none focus:border-sara-gold"
         />
 
         <div className="flex flex-col gap-2">
@@ -61,8 +61,8 @@ export function CreatePostScreen({ onBack }: CreatePostScreenProps) {
                 aria-pressed={category === cat.value}
                 className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
                   category === cat.value
-                    ? 'bg-lavender-600 text-white'
-                    : 'bg-white text-graphite-muted border border-gray-200'
+                    ? 'bg-sara-gold text-white'
+                    : 'bg-white text-graphite-muted border border-sara-linen'
                 }`}
               >
                 {cat.label}
@@ -76,7 +76,7 @@ export function CreatePostScreen({ onBack }: CreatePostScreenProps) {
         <button
           onClick={handlePublish}
           disabled={!content.trim()}
-          className="w-full py-3.5 rounded-2xl bg-lavender-600 text-white text-sm font-semibold active:scale-95 transition-transform disabled:opacity-40"
+          className="w-full py-3.5 rounded-2xl bg-sara-gold text-white text-sm font-semibold active:scale-95 transition-transform disabled:opacity-40"
         >
           Publicar 💜
         </button>

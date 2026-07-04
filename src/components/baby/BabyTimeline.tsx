@@ -31,7 +31,7 @@ export function BabyTimeline() {
             key={entry.id}
             className="flex items-center gap-3 bg-white rounded-2xl p-3 shadow-sm"
           >
-            <div className="w-8 h-8 rounded-xl bg-lavender-50 flex items-center justify-center text-lg flex-shrink-0">
+            <div className="w-8 h-8 rounded-xl bg-sara-linen flex items-center justify-center text-lg flex-shrink-0">
               {TYPE_EMOJI[entry.type]}
             </div>
             <div className="flex-1 min-w-0">

@@ -46,11 +46,11 @@ export function ProfileScreen({ onClose }: ProfileScreenProps) {
     <div className="flex flex-col w-full h-full sm:w-[390px] sm:h-[844px] bg-offwhite sm:rounded-[44px] sm:shadow-2xl overflow-hidden">
       {/* Header */}
       <div className="flex items-center justify-between px-4 pt-6 pb-3 flex-shrink-0">
-        <button onClick={onClose} className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-lavender-50">
+        <button onClick={onClose} className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-sara-linen">
           <ChevronLeft size={20} className="text-graphite" />
         </button>
-        <p className="text-sm font-semibold text-graphite">{motherName}</p>
-        <button onClick={() => setShowSettings(true)} className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-lavender-50">
+        <p className="text-sm font-semibold font-serif text-graphite">{motherName}</p>
+        <button onClick={() => setShowSettings(true)} className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-sara-linen">
           <Settings size={18} className="text-graphite" />
         </button>
       </div>
@@ -101,14 +101,14 @@ export function ProfileScreen({ onClose }: ProfileScreenProps) {
         {/* Actions */}
         <div className="flex gap-2 mt-3">
           {!isVisitorView ? (
-            <button className="flex-1 py-2 rounded-xl bg-lavender-100 text-xs font-semibold text-lavender-600 active:scale-95 transition-transform">
+            <button className="flex-1 py-2 rounded-xl bg-sara-linen text-xs font-semibold text-sara-gold active:scale-95 transition-transform">
               Editar perfil
             </button>
           ) : (
             <>
               <button
                 onClick={() => setFollowing(!following)}
-                className={`flex-1 py-2 rounded-xl text-xs font-semibold active:scale-95 transition-all ${following ? 'bg-gray-100 text-graphite border border-gray-200' : 'bg-lavender-600 text-white'}`}
+                className={`flex-1 py-2 rounded-xl text-xs font-semibold active:scale-95 transition-all ${following ? 'bg-gray-100 text-graphite border border-gray-200' : 'bg-sara-gold text-white'}`}
               >
                 {following ? 'Seguindo' : 'Seguir'}
               </button>
@@ -135,7 +135,7 @@ export function ProfileScreen({ onClose }: ProfileScreenProps) {
         ) : (
           <ul className="divide-y divide-gray-100">
             {userPosts.map((post) => (
-              <li key={post.id} className="px-4 py-4 active:bg-lavender-50 transition-colors cursor-pointer" onClick={() => setSelectedPost(post)}>
+              <li key={post.id} className="px-4 py-4 active:bg-sara-linen transition-colors cursor-pointer" onClick={() => setSelectedPost(post)}>
                 <div className="flex items-start gap-3">
                   <div
                     style={{ background: avatarColor }}

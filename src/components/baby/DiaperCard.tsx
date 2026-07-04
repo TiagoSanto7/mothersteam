@@ -24,9 +24,9 @@ export function DiaperCard() {
         <button
           aria-label="Registrar troca de fralda"
           onClick={incrementDiaper}
-          className="w-11 h-11 rounded-2xl bg-lavender-100 flex items-center justify-center active:scale-95 transition-transform"
+          className="w-11 h-11 rounded-2xl bg-sara-linen flex items-center justify-center active:scale-95 transition-transform"
         >
-          <Plus size={20} className="text-lavender-600" strokeWidth={2.5} />
+          <Plus size={20} className="text-sara-gold" strokeWidth={2.5} />
         </button>
       </div>
 
