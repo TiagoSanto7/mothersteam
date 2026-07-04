@@ -28,13 +28,13 @@ export function HomeScreen({ onOpenProfile, onOpenNotifications, onOpenChat }: H
           <button
             onClick={onOpenProfile}
             aria-label="Abrir perfil"
-            className="w-10 h-10 rounded-full bg-lavender-400 flex items-center justify-center text-base font-bold text-white shadow-sm flex-shrink-0 active:scale-95 transition-transform"
+            className="w-10 h-10 rounded-full bg-sara-terracotta flex items-center justify-center text-base font-bold text-white shadow-sm flex-shrink-0 active:scale-95 transition-transform"
           >
             {initial}
           </button>
           <div>
             <p className="text-xs text-graphite-muted font-medium">Bom dia ☀️</p>
-            <h1 className="text-base font-semibold text-graphite leading-snug max-w-[220px]">
+            <h1 className="text-base font-semibold font-serif text-graphite leading-snug max-w-[220px]">
               {greeting}
             </h1>
           </div>
@@ -89,7 +89,7 @@ export function HomeScreen({ onOpenProfile, onOpenNotifications, onOpenChat }: H
       <button
         onClick={() => setShowAddModal(true)}
         aria-label="Adicionar lembrete ou evento"
-        className="fixed bottom-24 right-6 w-12 h-12 rounded-full bg-lavender-600 shadow-lg shadow-lavender-400/40 flex items-center justify-center active:scale-95 transition-transform"
+        className="fixed bottom-24 right-6 w-12 h-12 rounded-full bg-sara-gold shadow-lg shadow-sara-terracotta/30 flex items-center justify-center active:scale-95 transition-transform"
       >
         <Plus size={22} className="text-white" strokeWidth={2.5} />
       </button>

@@ -3,9 +3,9 @@ import { useAppStore } from '../../store/useAppStore';
 import type { RoutineEntry } from '../../types';
 
 const CATEGORY_CONFIG = {
-  medication:  { icon: Pill,        color: 'text-blush-500',    bg: 'bg-blush-100' },
-  appointment: { icon: Calendar,    color: 'text-babyblue-300', bg: 'bg-babyblue-100' },
-  task:        { icon: CheckSquare, color: 'text-sage-400',     bg: 'bg-sage-100' },
+  medication:  { icon: Pill,        color: 'text-sara-terracotta', bg: 'bg-sara-linen' },
+  appointment: { icon: Calendar,    color: 'text-sara-gold',       bg: 'bg-sara-cream' },
+  task:        { icon: CheckSquare, color: 'text-sara-warm',       bg: 'bg-sara-linen' },
 } as const;
 
 function EntryCard({ entry }: { entry: RoutineEntry }) {
@@ -32,8 +32,8 @@ function EntryCard({ entry }: { entry: RoutineEntry }) {
         aria-label={entry.done ? `Desmarcar: ${entry.title}` : `Marcar como feita: ${entry.title}`}
         className={`w-7 h-7 rounded-full flex items-center justify-center border-2 transition-colors ${
           entry.done
-            ? 'bg-lavender-600 border-lavender-600'
-            : 'border-gray-200 bg-white'
+            ? 'bg-sara-gold border-sara-gold'
+            : 'border-sara-linen bg-sara-cream'
         }`}
       >
         {entry.done && <Check size={14} className="text-white" strokeWidth={2.5} />}
