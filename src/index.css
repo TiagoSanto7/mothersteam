@@ -4,8 +4,8 @@
 
 @layer base {
   body {
-    background-color: #E8E4DF;
-    color: #2C2C2C;
+    background-color: #EDE6DC;
+    color: #3D342E;
     font-family: 'Inter', system-ui, -apple-system, sans-serif;
     -webkit-font-smoothing: antialiased;
   }
@@ -18,5 +18,8 @@
   }
   .scrollbar-hide::-webkit-scrollbar {
     display: none;
+  }
+  .font-serif {
+    font-family: 'Playfair Display', Georgia, serif;
   }
 }
