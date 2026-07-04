@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { motion } from 'framer-motion';
 import { useAppStore } from '../../store/useAppStore';
 import type { OnboardingAnswers, Q1Answer, Q2Answer, Q3Answer, Q4Answer, Q5Answer } from '../../types';
 
@@ -129,20 +130,24 @@ export function OnboardingScreen() {
 
         <div className="px-6 pb-10 pt-4 flex gap-3">
           {step > 0 && (
-            <button
+            <motion.button
               onClick={handleBack}
-              className="flex-1 py-3 rounded-2xl border-2 border-sara-gold/40 text-sara-gold text-sm font-semibold active:scale-95 transition-transform"
+              whileTap={{ scale: 0.97 }}
+              transition={{ duration: 0.15, ease: 'easeOut' }}
+              className="flex-1 py-3 rounded-2xl border-2 border-sara-gold/40 text-sara-gold text-sm font-semibold"
             >
               Voltar
-            </button>
+            </motion.button>
           )}
-          <button
+          <motion.button
             onClick={handleNext}
             disabled={!selected}
-            className="flex-1 py-3 rounded-2xl bg-sara-gold text-white text-sm font-semibold active:scale-95 transition-transform disabled:opacity-40"
+            whileTap={{ scale: 0.97 }}
+            transition={{ duration: 0.15, ease: 'easeOut' }}
+            className="flex-1 py-3 rounded-2xl bg-sara-gold text-white text-sm font-semibold disabled:opacity-40"
           >
             {isLast ? 'Ver meu perfil 💜' : 'Continuar'}
-          </button>
+          </motion.button>
         </div>
       </div>
     </div>

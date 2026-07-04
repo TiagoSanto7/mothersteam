@@ -1,3 +1,4 @@
+import { motion } from 'framer-motion';
 import { useAppStore } from '../../store/useAppStore';
 
 const DAYS_PT = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
@@ -31,11 +32,13 @@ export function WeekCalendar({ referenceDate }: { referenceDate: string }) {
         const isToday = iso === today;
 
         return (
-          <button
+          <motion.button
             key={iso}
             aria-pressed={isSelected}
             onClick={() => setSelectedDate(iso)}
-            className={`flex-shrink-0 flex flex-col items-center gap-1 w-11 py-2 rounded-2xl transition-all ${
+            whileTap={{ scale: 0.97 }}
+            transition={{ duration: 0.15, ease: 'easeOut' }}
+            className={`flex-shrink-0 flex flex-col items-center gap-1 w-11 py-2 rounded-2xl transition-colors ${
               isSelected
                 ? 'bg-sara-gold text-white shadow-md shadow-sara-gold/30'
                 : 'bg-white text-graphite'
@@ -50,7 +53,7 @@ export function WeekCalendar({ referenceDate }: { referenceDate: string }) {
             {isToday && (
               <span className={`w-1 h-1 rounded-full ${isSelected ? 'bg-white' : 'bg-sara-terracotta'}`} />
             )}
-          </button>
+          </motion.button>
         );
       })}
     </div>

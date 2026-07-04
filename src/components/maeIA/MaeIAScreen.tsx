@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
+import { motion } from 'framer-motion';
 import { Send } from 'lucide-react';
 
 interface Message {
@@ -106,14 +107,16 @@ export function MaeIAScreen() {
             aria-label="Mensagem para a MãeIA"
             className="flex-1 bg-transparent text-sm text-graphite placeholder:text-graphite-muted outline-none"
           />
-          <button
+          <motion.button
             onClick={() => sendMessage(input)}
             disabled={!input.trim()}
             aria-label="Enviar mensagem"
-            className="w-8 h-8 rounded-xl bg-sara-gold flex items-center justify-center disabled:opacity-40 active:scale-95 transition-all"
+            whileTap={{ scale: 0.97 }}
+            transition={{ duration: 0.15, ease: 'easeOut' }}
+            className="w-8 h-8 rounded-xl bg-sara-gold flex items-center justify-center disabled:opacity-40"
           >
             <Send size={14} className="text-white" strokeWidth={2} />
-          </button>
+          </motion.button>
         </div>
       </div>
     </div>

@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { motion } from 'framer-motion';
 import { Bell, MessageSquare, Plus } from 'lucide-react';
 import { useAppStore } from '../../store/useAppStore';
 import { getHeaderGreeting } from '../../utils/pregnancyUtils';
@@ -86,13 +87,15 @@ export function HomeScreen({ onOpenProfile, onOpenNotifications, onOpenChat }: H
 
       <RoutineTimeline />
 
-      <button
+      <motion.button
         onClick={() => setShowAddModal(true)}
         aria-label="Adicionar lembrete ou evento"
-        className="fixed bottom-24 right-6 w-12 h-12 rounded-full bg-sara-gold shadow-lg shadow-sara-terracotta/30 flex items-center justify-center active:scale-95 transition-transform"
+        whileTap={{ scale: 0.97 }}
+        transition={{ duration: 0.15, ease: 'easeOut' }}
+        className="fixed bottom-24 right-6 w-12 h-12 rounded-full bg-sara-gold shadow-lg shadow-sara-terracotta/30 flex items-center justify-center"
       >
         <Plus size={22} className="text-white" strokeWidth={2.5} />
-      </button>
+      </motion.button>
 
       {showAddModal && (
         <AddRoutineModal

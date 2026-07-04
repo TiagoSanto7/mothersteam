@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { motion } from 'framer-motion';
 import { X } from 'lucide-react';
 import { useAppStore } from '../../store/useAppStore';
 import type { RoutineEntry } from '../../types';
@@ -120,13 +121,15 @@ export function AddRoutineModal({ onClose, defaultDate }: AddRoutineModalProps) 
           </div>
         </div>
 
-        <button
+        <motion.button
           onClick={handleAdd}
           disabled={!title.trim()}
-          className="w-full py-3.5 rounded-2xl bg-sara-gold text-white text-sm font-semibold active:scale-95 transition-transform disabled:opacity-40"
+          whileTap={{ scale: 0.97 }}
+          transition={{ duration: 0.15, ease: 'easeOut' }}
+          className="w-full py-3.5 rounded-2xl bg-sara-gold text-white text-sm font-semibold disabled:opacity-40"
         >
           Adicionar
-        </button>
+        </motion.button>
       </div>
     </>
   );

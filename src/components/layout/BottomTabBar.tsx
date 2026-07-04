@@ -1,3 +1,4 @@
+import { motion } from 'framer-motion';
 import { Home, MessageCircle, Users, ShoppingBag } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { useAppStore } from '../../store/useAppStore';
@@ -42,19 +43,21 @@ export function BottomTabBar() {
       </TabBtn>
 
       <div className="flex flex-col items-center -translate-y-3">
-        <button
+        <motion.button
           data-testid="baby-central-button"
           onClick={() => setActiveTab('baby')}
           aria-label="Abrir rotina do bebê"
           aria-pressed={activeTab === 'baby'}
-          className={`w-14 h-14 rounded-full flex items-center justify-center text-2xl shadow-lg shadow-sara-terracotta/30 transition-all active:scale-95 ${
+          whileTap={{ scale: 0.97 }}
+          transition={{ duration: 0.15, ease: 'easeOut' }}
+          className={`w-14 h-14 rounded-full flex items-center justify-center text-2xl shadow-lg shadow-sara-terracotta/30 transition-colors ${
             activeTab === 'baby'
               ? 'bg-sara-gold ring-2 ring-sara-terracotta ring-offset-2'
               : 'bg-sara-terracotta'
           }`}
         >
           {getEvolutionEmoji(phase)}
-        </button>
+        </motion.button>
         <span className="text-[10px] font-medium text-graphite-muted mt-1">Bebê</span>
       </div>
 
