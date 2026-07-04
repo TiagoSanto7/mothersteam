@@ -48,7 +48,7 @@ export function HomeScreen({ onOpenProfile, onOpenNotifications, onOpenChat }: H
           >
             <MessageSquare size={18} className="text-graphite-light" strokeWidth={1.8} />
             {unreadChats > 0 && (
-              <span className="absolute -top-1 -right-1 w-4 h-4 bg-lavender-600 rounded-full flex items-center justify-center text-[9px] font-bold text-white">
+              <span className="absolute -top-1 -right-1 w-4 h-4 bg-sara-gold rounded-full flex items-center justify-center text-[9px] font-bold text-white">
                 {unreadChats}
               </span>
             )}
@@ -61,7 +61,7 @@ export function HomeScreen({ onOpenProfile, onOpenNotifications, onOpenChat }: H
           >
             <Bell size={18} className="text-graphite-light" strokeWidth={1.8} />
             {unreadNotifs > 0 && (
-              <span className="absolute -top-1 -right-1 w-4 h-4 bg-blush-500 rounded-full flex items-center justify-center text-[9px] font-bold text-white">
+              <span className="absolute -top-1 -right-1 w-4 h-4 bg-sara-terracotta rounded-full flex items-center justify-center text-[9px] font-bold text-white">
                 {unreadNotifs}
               </span>
             )}
