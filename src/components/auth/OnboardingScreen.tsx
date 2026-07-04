@@ -66,108 +66,170 @@ type Answers = Partial<OnboardingAnswers>;
 
 export function OnboardingScreen() {
   const completeOnboarding = useAppStore((s) => s.completeOnboarding);
-  const [step, setStep] = useState(0);
+  // step -1 = Sara intro video; step 0-4 = questions
+  const [step, setStep] = useState<number>(-1);
   const [answers, setAnswers] = useState<Answers>({});
+  // tracks whether the Q1 video is still playing (hides options until it ends/skip)
+  const [q1VideoActive, setQ1VideoActive] = useState(true);
 
-  const question = QUESTIONS[step];
-  const selected = answers[question.id as keyof Answers];
+  const isIntro = step === -1;
+  const question = isIntro ? null : QUESTIONS[step];
+  const selected = question ? answers[question.id as keyof Answers] : undefined;
   const isLast = step === QUESTIONS.length - 1;
+  const showQ1Video = step === 0 && q1VideoActive;
+  const showOptions = !isIntro && !showQ1Video;
 
   function selectOption(value: string) {
+    if (!question) return;
     setAnswers((prev) => ({ ...prev, [question.id]: value }));
   }
 
   function handleNext() {
     if (isLast && isComplete(answers)) {
       completeOnboarding(answers as OnboardingAnswers);
-    } else {
-      setStep((s) => s + 1);
+      return;
     }
+    setStep((s) => s + 1);
   }
 
   function handleBack() {
+    setQ1VideoActive(false); // don't replay Q1 video when navigating back to it
     setStep((s) => s - 1);
   }
 
-  return (
-    <div className="min-h-screen flex items-center justify-center bg-sara-cream sm:bg-[#EDE6DC]">
-      <div className="w-full min-h-screen sm:w-[390px] sm:min-h-[844px] sm:max-h-[844px] bg-sara-cream flex flex-col sm:rounded-[44px] sm:shadow-2xl overflow-y-auto">
-        <div className="px-6 pt-12 pb-4">
-          <div className="flex items-center gap-2 mb-6">
-            {QUESTIONS.map((_, i) => (
-              <div
-                key={i}
-                className={`h-1.5 flex-1 rounded-full transition-colors ${
-                  i <= step ? 'bg-sara-gold' : 'bg-sara-linen'
-                }`}
-              />
-            ))}
-          </div>
-          <p className="text-xs text-graphite-muted font-medium mb-2">
-            Pergunta {step + 1} de {QUESTIONS.length}
-          </p>
-          <AnimatePresence mode="wait">
-            <motion.h2
-              key={`q-${step}`}
-              initial={{ opacity: 0, y: 8 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -8 }}
-              transition={{ duration: 0.3 }}
-              className="text-base font-semibold font-serif text-graphite leading-snug"
-            >
-              {question.text}
-            </motion.h2>
-          </AnimatePresence>
-        </div>
-
-        <div className="flex-1 px-6 flex flex-col gap-3 overflow-y-auto pb-4">
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={`opts-${step}`}
-              className="flex flex-col gap-3"
-            >
-              {question.options.map((opt, index) => (
-                <motion.button
-                  key={opt.value}
-                  initial={{ opacity: 0, y: 16 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: index * 0.08, duration: 0.3 }}
-                  onClick={() => selectOption(opt.value)}
-                  whileTap={{ scale: 0.97 }}
-                  aria-pressed={selected === opt.value}
-                  className={`w-full text-left px-4 py-3.5 rounded-2xl border-2 text-sm transition-colors ${
-                    selected === opt.value
-                      ? 'border-sara-gold bg-sara-linen text-graphite font-medium'
-                      : 'border-sara-linen bg-sara-cream text-graphite-light'
-                  }`}
-                >
-                  {opt.label}
-                </motion.button>
-              ))}
-            </motion.div>
-          </AnimatePresence>
-        </div>
-
-        <div className="px-6 pb-10 pt-4 flex gap-3">
-          {step > 0 && (
-            <motion.button
-              onClick={handleBack}
-              whileTap={{ scale: 0.97 }}
-              transition={{ duration: 0.15, ease: 'easeOut' }}
-              className="flex-1 py-3 rounded-2xl border-2 border-sara-gold/40 text-sara-gold text-sm font-semibold"
-            >
-              Voltar
-            </motion.button>
-          )}
-          <motion.button
-            onClick={handleNext}
-            disabled={!selected}
-            whileTap={{ scale: 0.97 }}
-            transition={{ duration: 0.15, ease: 'easeOut' }}
-            className="flex-1 py-3 rounded-2xl bg-sara-gold text-white text-sm font-semibold disabled:opacity-40"
+  // ── Intro: scene-0 fills the frame ───────────────────────
+  if (isIntro) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-[#1C1510] sm:bg-[#EDE6DC]">
+        <div className="relative w-full min-h-screen sm:w-[390px] sm:min-h-[844px] sm:max-h-[844px] bg-[#1C1510] sm:rounded-[44px] sm:shadow-2xl overflow-hidden">
+          <video
+            src="/videos/onboarding-scene-0.mp4"
+            autoPlay
+            playsInline
+            onEnded={() => setStep(0)}
+            className="absolute inset-0 w-full h-full object-cover"
+          />
+          <button
+            onClick={() => setStep(0)}
+            className="absolute bottom-12 right-6 px-4 py-2 bg-black/30 backdrop-blur-sm rounded-full text-white/70 text-xs font-medium active:scale-95 transition-transform"
           >
-            {isLast ? 'Ver meu perfil ✦' : 'Continuar'}
-          </motion.button>
+            Pular →
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // ── Questions: step 0 may have a video header ─────────────
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-[#1C1510] sm:bg-[#EDE6DC]">
+      <div className="w-full min-h-screen sm:w-[390px] sm:min-h-[844px] sm:max-h-[844px] flex flex-col sm:rounded-[44px] sm:shadow-2xl overflow-hidden bg-gradient-to-b from-[#F5EDE0] via-[#EAD8C8] to-[#D9C4AF]">
+
+        {/* Sara video header — only visible while Q1 video plays */}
+        {showQ1Video && (
+          <div className="relative bg-[#1C1510] flex-shrink-0 h-[42%]">
+            <video
+              src="/videos/onboarding-scene-1.mp4"
+              autoPlay
+              playsInline
+              onEnded={() => setQ1VideoActive(false)}
+              className="w-full h-full object-cover"
+            />
+            <button
+              onClick={() => setQ1VideoActive(false)}
+              className="absolute bottom-3 right-4 px-3 py-1.5 bg-black/30 backdrop-blur-sm rounded-full text-white/70 text-[11px] font-medium active:scale-95 transition-transform"
+            >
+              Pular →
+            </button>
+          </div>
+        )}
+
+        {/* Content area — rounded cap when video is above */}
+        <div className={`flex-1 flex flex-col overflow-hidden ${showQ1Video ? 'bg-sara-cream rounded-t-3xl' : ''}`}>
+
+          {/* Progress + question */}
+          <div className="px-6 pt-6 pb-4 flex-shrink-0">
+            <div className="flex items-center gap-2 mb-6">
+              {QUESTIONS.map((_, i) => (
+                <div
+                  key={i}
+                  className={`h-1.5 flex-1 rounded-full transition-colors ${i <= step ? 'bg-sara-gold' : 'bg-sara-linen'}`}
+                />
+              ))}
+            </div>
+            <p className="text-xs text-graphite-muted font-medium mb-2">
+              Pergunta {step + 1} de {QUESTIONS.length}
+            </p>
+            <AnimatePresence mode="wait">
+              <motion.h2
+                key={`q-${step}`}
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -8 }}
+                transition={{ duration: 0.3 }}
+                className="text-base font-semibold font-serif text-graphite leading-snug"
+              >
+                {question!.text}
+              </motion.h2>
+            </AnimatePresence>
+          </div>
+
+          {/* Options — fade in when video ends or on steps without video */}
+          <AnimatePresence>
+            {showOptions && (
+              <motion.div
+                key={`opts-${step}`}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ duration: 0.35 }}
+                className="flex-1 px-6 flex flex-col gap-3 overflow-y-auto pb-4"
+              >
+                {question!.options.map((opt, index) => (
+                  <motion.button
+                    key={opt.value}
+                    initial={{ opacity: 0, y: 16 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: index * 0.08, duration: 0.3 }}
+                    onClick={() => selectOption(opt.value)}
+                    whileTap={{ scale: 0.97 }}
+                    aria-pressed={selected === opt.value}
+                    className={`w-full text-left px-4 py-3.5 rounded-2xl border-2 text-sm transition-colors ${
+                      selected === opt.value
+                        ? 'border-sara-gold bg-sara-linen text-graphite font-medium'
+                        : 'border-sara-linen bg-white/70 text-graphite-light'
+                    }`}
+                  >
+                    {opt.label}
+                  </motion.button>
+                ))}
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          {/* Nav buttons */}
+          {showOptions && (
+            <div className="px-6 pb-10 pt-4 flex gap-3 flex-shrink-0">
+              {step > 0 && (
+                <motion.button
+                  onClick={handleBack}
+                  whileTap={{ scale: 0.97 }}
+                  transition={{ duration: 0.15, ease: 'easeOut' }}
+                  className="flex-1 py-3 rounded-2xl border-2 border-sara-gold/40 text-sara-gold text-sm font-semibold"
+                >
+                  Voltar
+                </motion.button>
+              )}
+              <motion.button
+                onClick={handleNext}
+                disabled={!selected}
+                whileTap={{ scale: 0.97 }}
+                transition={{ duration: 0.15, ease: 'easeOut' }}
+                className="flex-1 py-3 rounded-2xl bg-sara-gold text-white text-sm font-semibold disabled:opacity-40"
+              >
+                {isLast ? 'Ver meu perfil ✦' : 'Continuar'}
+              </motion.button>
+            </div>
+          )}
         </div>
       </div>
     </div>
