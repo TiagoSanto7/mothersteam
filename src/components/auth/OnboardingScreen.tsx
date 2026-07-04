@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useAppStore } from '../../store/useAppStore';
 import type { OnboardingAnswers, Q1Answer, Q2Answer, Q3Answer, Q4Answer, Q5Answer } from '../../types';
 
@@ -106,26 +106,46 @@ export function OnboardingScreen() {
           <p className="text-xs text-graphite-muted font-medium mb-2">
             Pergunta {step + 1} de {QUESTIONS.length}
           </p>
-          <h2 className="text-base font-semibold font-serif text-graphite leading-snug">
-            {question.text}
-          </h2>
+          <AnimatePresence mode="wait">
+            <motion.h2
+              key={`q-${step}`}
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -8 }}
+              transition={{ duration: 0.3 }}
+              className="text-base font-semibold font-serif text-graphite leading-snug"
+            >
+              {question.text}
+            </motion.h2>
+          </AnimatePresence>
         </div>
 
         <div className="flex-1 px-6 flex flex-col gap-3 overflow-y-auto pb-4">
-          {question.options.map((opt) => (
-            <button
-              key={opt.value}
-              onClick={() => selectOption(opt.value)}
-              aria-pressed={selected === opt.value}
-              className={`w-full text-left px-4 py-3.5 rounded-2xl border-2 text-sm transition-colors ${
-                selected === opt.value
-                  ? 'border-sara-gold bg-sara-linen text-graphite font-medium'
-                  : 'border-sara-linen bg-sara-cream text-graphite-light'
-              }`}
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={`opts-${step}`}
+              className="flex flex-col gap-3"
             >
-              {opt.label}
-            </button>
-          ))}
+              {question.options.map((opt, index) => (
+                <motion.button
+                  key={opt.value}
+                  initial={{ opacity: 0, y: 16 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: index * 0.08, duration: 0.3 }}
+                  onClick={() => selectOption(opt.value)}
+                  whileTap={{ scale: 0.97 }}
+                  aria-pressed={selected === opt.value}
+                  className={`w-full text-left px-4 py-3.5 rounded-2xl border-2 text-sm transition-colors ${
+                    selected === opt.value
+                      ? 'border-sara-gold bg-sara-linen text-graphite font-medium'
+                      : 'border-sara-linen bg-sara-cream text-graphite-light'
+                  }`}
+                >
+                  {opt.label}
+                </motion.button>
+              ))}
+            </motion.div>
+          </AnimatePresence>
         </div>
 
         <div className="px-6 pb-10 pt-4 flex gap-3">
@@ -146,7 +166,7 @@ export function OnboardingScreen() {
             transition={{ duration: 0.15, ease: 'easeOut' }}
             className="flex-1 py-3 rounded-2xl bg-sara-gold text-white text-sm font-semibold disabled:opacity-40"
           >
-            {isLast ? 'Ver meu perfil 💜' : 'Continuar'}
+            {isLast ? 'Ver meu perfil ✦' : 'Continuar'}
           </motion.button>
         </div>
       </div>
