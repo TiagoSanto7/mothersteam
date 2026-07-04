@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAppStore } from '../../store/useAppStore';
 import type { OnboardingAnswers, Q1Answer, Q2Answer, Q3Answer, Q4Answer, Q5Answer } from '../../types';
@@ -69,15 +69,21 @@ export function OnboardingScreen() {
   // step -1 = Sara intro video; step 0-4 = questions
   const [step, setStep] = useState<number>(-1);
   const [answers, setAnswers] = useState<Answers>({});
-  // tracks whether the Q1 video is still playing (hides options until it ends/skip)
-  const [q1VideoActive, setQ1VideoActive] = useState(true);
+  // options only appear after Q1 video ends (or skip); video stays visible/frozen
+  const [q1OptionsVisible, setQ1OptionsVisible] = useState(false);
+  const q1VideoRef = useRef<HTMLVideoElement>(null);
 
   const isIntro = step === -1;
   const question = isIntro ? null : QUESTIONS[step];
   const selected = question ? answers[question.id as keyof Answers] : undefined;
   const isLast = step === QUESTIONS.length - 1;
-  const showQ1Video = step === 0 && q1VideoActive;
-  const showOptions = !isIntro && !showQ1Video;
+  const showQ1Video = step === 0;
+  const showOptions = !isIntro && (step >= 1 || q1OptionsVisible);
+
+  function revealQ1Options() {
+    q1VideoRef.current?.pause();
+    setQ1OptionsVisible(true);
+  }
 
   function selectOption(value: string) {
     if (!question) return;
@@ -93,7 +99,7 @@ export function OnboardingScreen() {
   }
 
   function handleBack() {
-    setQ1VideoActive(false); // don't replay Q1 video when navigating back to it
+    setQ1OptionsVisible(true); // show options immediately; don't autoplay video again
     setStep((s) => s - 1);
   }
 
@@ -125,22 +131,25 @@ export function OnboardingScreen() {
     <div className="min-h-screen flex items-center justify-center bg-[#1C1510] sm:bg-[#EDE6DC]">
       <div className="w-full min-h-screen sm:w-[390px] sm:min-h-[844px] sm:max-h-[844px] flex flex-col sm:rounded-[44px] sm:shadow-2xl overflow-hidden bg-gradient-to-b from-[#F5EDE0] via-[#EAD8C8] to-[#D9C4AF]">
 
-        {/* Sara video header — only visible while Q1 video plays */}
+        {/* Sara video — stays frozen at last frame after Q1 ends */}
         {showQ1Video && (
           <div className="relative bg-[#1C1510] flex-shrink-0 h-[42%]">
             <video
+              ref={q1VideoRef}
               src="/videos/onboarding-scene-1.mp4"
-              autoPlay
+              autoPlay={!q1OptionsVisible}
               playsInline
-              onEnded={() => setQ1VideoActive(false)}
+              onEnded={revealQ1Options}
               className="w-full h-full object-cover"
             />
-            <button
-              onClick={() => setQ1VideoActive(false)}
-              className="absolute bottom-3 right-4 px-3 py-1.5 bg-black/30 backdrop-blur-sm rounded-full text-white/70 text-[11px] font-medium active:scale-95 transition-transform"
-            >
-              Pular →
-            </button>
+            {!q1OptionsVisible && (
+              <button
+                onClick={revealQ1Options}
+                className="absolute bottom-3 right-4 px-3 py-1.5 bg-black/30 backdrop-blur-sm rounded-full text-white/70 text-[11px] font-medium active:scale-95 transition-transform"
+              >
+                Pular →
+              </button>
+            )}
           </div>
         )}
 
