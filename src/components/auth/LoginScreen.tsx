@@ -15,10 +15,10 @@ export function LoginScreen() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-offwhite sm:bg-[#E8E4DF]">
-      <div className="w-full min-h-screen sm:w-[390px] sm:min-h-[844px] sm:max-h-[844px] bg-offwhite flex flex-col items-center justify-center px-8 gap-8 sm:rounded-[44px] sm:shadow-2xl overflow-y-auto">
+    <div className="min-h-screen flex items-center justify-center bg-sara-cream sm:bg-[#EDE6DC]">
+      <div className="w-full min-h-screen sm:w-[390px] sm:min-h-[844px] sm:max-h-[844px] bg-sara-cream flex flex-col items-center justify-center px-8 gap-8 sm:rounded-[44px] sm:shadow-2xl overflow-y-auto">
         <div className="flex flex-col items-center gap-2">
-          <div className="w-16 h-16 rounded-full bg-lavender-400 flex items-center justify-center text-2xl">
+          <div className="w-16 h-16 rounded-full bg-sara-terracotta flex items-center justify-center text-2xl">
             🤱
           </div>
           <h1 className="text-xl font-bold text-graphite">Mothers Team</h1>
@@ -39,7 +39,7 @@ export function LoginScreen() {
               value={email}
               onChange={(e) => { setEmail(e.target.value); setError(false); }}
               placeholder="seu@email.com"
-              className="w-full px-4 py-3 rounded-2xl bg-white border border-gray-200 text-sm text-graphite placeholder:text-gray-300 focus:outline-none focus:border-lavender-400"
+              className="w-full px-4 py-3 rounded-2xl bg-white border border-sara-linen text-sm text-graphite placeholder:text-sara-muted focus:outline-none focus:border-sara-gold"
             />
           </div>
 
@@ -54,19 +54,19 @@ export function LoginScreen() {
               value={password}
               onChange={(e) => { setPassword(e.target.value); setError(false); }}
               placeholder="••••••••"
-              className="w-full px-4 py-3 rounded-2xl bg-white border border-gray-200 text-sm text-graphite placeholder:text-gray-300 focus:outline-none focus:border-lavender-400"
+              className="w-full px-4 py-3 rounded-2xl bg-white border border-sara-linen text-sm text-graphite placeholder:text-sara-muted focus:outline-none focus:border-sara-gold"
             />
           </div>
 
           {error && (
-            <p role="alert" className="text-xs text-blush-500 text-center">
+            <p role="alert" className="text-xs text-sara-terracotta text-center">
               E-mail ou senha incorretos. Tente novamente.
             </p>
           )}
 
           <button
             type="submit"
-            className="w-full py-3 rounded-2xl bg-lavender-600 text-white text-sm font-semibold active:scale-95 transition-transform disabled:opacity-50"
+            className="w-full py-3 rounded-2xl bg-sara-gold text-white text-sm font-semibold active:scale-95 transition-transform disabled:opacity-50"
             disabled={!email || !password}
           >
             Entrar
@@ -75,15 +75,15 @@ export function LoginScreen() {
 
         <div className="w-full flex flex-col gap-3">
           <div className="flex items-center gap-3">
-            <div className="flex-1 h-px bg-gray-200" />
+            <div className="flex-1 h-px bg-sara-linen" />
             <span className="text-xs text-graphite-muted">ou</span>
-            <div className="flex-1 h-px bg-gray-200" />
+            <div className="flex-1 h-px bg-sara-linen" />
           </div>
 
           <button
             type="button"
             onClick={() => setShowComingSoon(true)}
-            className="w-full py-3 rounded-2xl bg-white border border-gray-200 text-sm font-medium text-graphite flex items-center justify-center gap-3 active:scale-95 transition-transform"
+            className="w-full py-3 rounded-2xl bg-white border border-sara-linen text-sm font-medium text-graphite flex items-center justify-center gap-3 active:scale-95 transition-transform"
           >
             <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
               <path d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.875 2.684-6.615z" fill="#4285F4"/>
@@ -106,7 +106,7 @@ export function LoginScreen() {
           </button>
 
           {showComingSoon && (
-            <p className="text-xs text-lavender-600 text-center font-medium">
+            <p className="text-xs text-sara-gold text-center font-medium">
               🚀 Login social disponível em breve
             </p>
           )}

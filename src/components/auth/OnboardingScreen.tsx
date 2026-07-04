@@ -89,15 +89,15 @@ export function OnboardingScreen() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-offwhite sm:bg-[#E8E4DF]">
-      <div className="w-full min-h-screen sm:w-[390px] sm:min-h-[844px] sm:max-h-[844px] bg-offwhite flex flex-col sm:rounded-[44px] sm:shadow-2xl overflow-y-auto">
+    <div className="min-h-screen flex items-center justify-center bg-sara-cream sm:bg-[#EDE6DC]">
+      <div className="w-full min-h-screen sm:w-[390px] sm:min-h-[844px] sm:max-h-[844px] bg-sara-cream flex flex-col sm:rounded-[44px] sm:shadow-2xl overflow-y-auto">
         <div className="px-6 pt-12 pb-4">
           <div className="flex items-center gap-2 mb-6">
             {QUESTIONS.map((_, i) => (
               <div
                 key={i}
                 className={`h-1.5 flex-1 rounded-full transition-colors ${
-                  i <= step ? 'bg-lavender-600' : 'bg-lavender-100'
+                  i <= step ? 'bg-sara-gold' : 'bg-sara-linen'
                 }`}
               />
             ))}
@@ -105,7 +105,7 @@ export function OnboardingScreen() {
           <p className="text-xs text-graphite-muted font-medium mb-2">
             Pergunta {step + 1} de {QUESTIONS.length}
           </p>
-          <h2 className="text-base font-semibold text-graphite leading-snug">
+          <h2 className="text-base font-semibold font-serif text-graphite leading-snug">
             {question.text}
           </h2>
         </div>
@@ -118,8 +118,8 @@ export function OnboardingScreen() {
               aria-pressed={selected === opt.value}
               className={`w-full text-left px-4 py-3.5 rounded-2xl border-2 text-sm transition-colors ${
                 selected === opt.value
-                  ? 'border-lavender-600 bg-lavender-50 text-graphite font-medium'
-                  : 'border-gray-200 bg-white text-graphite-light'
+                  ? 'border-sara-gold bg-sara-linen text-graphite font-medium'
+                  : 'border-sara-linen bg-sara-cream text-graphite-light'
               }`}
             >
               {opt.label}
@@ -131,7 +131,7 @@ export function OnboardingScreen() {
           {step > 0 && (
             <button
               onClick={handleBack}
-              className="flex-1 py-3 rounded-2xl border-2 border-lavender-200 text-lavender-600 text-sm font-semibold active:scale-95 transition-transform"
+              className="flex-1 py-3 rounded-2xl border-2 border-sara-gold/40 text-sara-gold text-sm font-semibold active:scale-95 transition-transform"
             >
               Voltar
             </button>
@@ -139,7 +139,7 @@ export function OnboardingScreen() {
           <button
             onClick={handleNext}
             disabled={!selected}
-            className="flex-1 py-3 rounded-2xl bg-lavender-600 text-white text-sm font-semibold active:scale-95 transition-transform disabled:opacity-40"
+            className="flex-1 py-3 rounded-2xl bg-sara-gold text-white text-sm font-semibold active:scale-95 transition-transform disabled:opacity-40"
           >
             {isLast ? 'Ver meu perfil 💜' : 'Continuar'}
           </button>

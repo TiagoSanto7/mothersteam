@@ -16,7 +16,7 @@ function TabBtn({
       aria-pressed={active}
       aria-label={label}
       className={`flex flex-col items-center gap-0.5 w-14 py-1 rounded-xl transition-colors ${
-        active ? 'text-lavender-600' : 'text-graphite-muted'
+        active ? 'text-sara-gold' : 'text-graphite-muted'
       }`}
     >
       {children}
@@ -31,7 +31,7 @@ export function BottomTabBar() {
   return (
     <nav
       data-testid="bottom-tab-bar"
-      className="flex-shrink-0 bg-white border-t border-gray-100 flex items-center justify-around px-2 pt-1 pb-2 h-[68px]"
+      className="flex-shrink-0 bg-sara-linen/90 backdrop-blur-md border-t border-white/40 flex items-center justify-around px-2 pt-1 pb-2 h-[68px]"
     >
       <TabBtn id="home" label="Home" active={activeTab === 'home'} onClick={() => setActiveTab('home')}>
         <Home size={22} strokeWidth={1.8} />
@@ -47,10 +47,10 @@ export function BottomTabBar() {
           onClick={() => setActiveTab('baby')}
           aria-label="Abrir rotina do bebê"
           aria-pressed={activeTab === 'baby'}
-          className={`w-14 h-14 rounded-full flex items-center justify-center text-2xl shadow-lg shadow-lavender-400/30 transition-all active:scale-95 ${
+          className={`w-14 h-14 rounded-full flex items-center justify-center text-2xl shadow-lg shadow-sara-terracotta/30 transition-all active:scale-95 ${
             activeTab === 'baby'
-              ? 'bg-lavender-600 ring-2 ring-lavender-400 ring-offset-2'
-              : 'bg-lavender-400'
+              ? 'bg-sara-gold ring-2 ring-sara-terracotta ring-offset-2'
+              : 'bg-sara-terracotta'
           }`}
         >
           {getEvolutionEmoji(phase)}
