@@ -1,3 +1,4 @@
+import { motion } from 'framer-motion';
 import { useAppStore } from '../../store/useAppStore';
 import type { BabyEntry } from '../../types';
 
@@ -19,16 +20,19 @@ export function BabyTimeline() {
 
   return (
     <div className="flex flex-col gap-2 px-4">
-      <h3 className="text-sm font-semibold text-graphite">Timeline de hoje</h3>
+      <h3 className="text-sm font-semibold font-serif text-graphite">Timeline de hoje</h3>
       {sorted.length === 0 ? (
         <div className="flex flex-col items-center gap-2 py-8">
           <span className="text-3xl">🌙</span>
           <p className="text-xs text-graphite-muted">Nenhuma atividade registrada</p>
         </div>
       ) : (
-        sorted.map((entry) => (
-          <div
+        sorted.map((entry, index) => (
+          <motion.div
             key={entry.id}
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: index * 0.06, duration: 0.3 }}
             className="flex items-center gap-3 bg-white/70 backdrop-blur-sm border border-white/50 rounded-2xl p-3"
           >
             <div className="w-8 h-8 rounded-xl bg-sara-linen flex items-center justify-center text-lg flex-shrink-0">
@@ -39,7 +43,7 @@ export function BabyTimeline() {
               <p className="text-sm font-medium text-graphite truncate">{entry.detail}</p>
             </div>
             <span className="text-xs text-graphite-muted flex-shrink-0">{entry.time}</span>
-          </div>
+          </motion.div>
         ))
       )}
     </div>

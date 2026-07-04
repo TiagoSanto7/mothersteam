@@ -1,3 +1,4 @@
+import { motion } from 'framer-motion';
 import { Check, Pill, Calendar, CheckSquare } from 'lucide-react';
 import { useAppStore } from '../../store/useAppStore';
 import type { RoutineEntry } from '../../types';
@@ -61,8 +62,15 @@ export function RoutineTimeline() {
 
   return (
     <div className="flex flex-col gap-2 px-4">
-      {sorted.map((entry) => (
-        <EntryCard key={entry.id} entry={entry} />
+      {sorted.map((entry, index) => (
+        <motion.div
+          key={entry.id}
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: index * 0.06, duration: 0.3 }}
+        >
+          <EntryCard entry={entry} />
+        </motion.div>
       ))}
     </div>
   );
