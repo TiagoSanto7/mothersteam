@@ -26,7 +26,7 @@ export function SettingsScreen({ onBack, onClose }: SettingsScreenProps) {
   }
 
   return (
-    <div className="flex flex-col h-full bg-offwhite">
+    <div className="flex flex-col h-full bg-transparent">
       <div className="flex items-center gap-3 px-4 pt-6 pb-4 border-b border-sara-linen/60">
         <button onClick={onBack} className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-sara-linen">
           <ChevronLeft size={20} className="text-graphite" />

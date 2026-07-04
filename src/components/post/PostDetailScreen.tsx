@@ -62,7 +62,7 @@ export function PostDetailScreen({ post, onBack }: PostDetailScreenProps) {
   }
 
   return (
-    <div className="flex flex-col w-full h-full sm:w-[390px] sm:h-[844px] bg-offwhite sm:rounded-[44px] sm:shadow-2xl overflow-hidden relative">
+    <div className="flex flex-col w-full h-full sm:w-[390px] sm:h-[844px] bg-gradient-to-b from-[#F5EDE0] via-[#EAD8C8] to-[#D9C4AF] sm:rounded-[44px] sm:shadow-2xl overflow-hidden relative">
       <div className="flex items-center gap-3 px-4 pt-6 pb-4 border-b border-sara-linen/60 flex-shrink-0">
         <button onClick={onBack} className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-sara-linen">
           <ChevronLeft size={20} className="text-graphite" />
@@ -155,7 +155,7 @@ export function PostDetailScreen({ post, onBack }: PostDetailScreenProps) {
       </div>
 
       {/* Comment input */}
-      <div className="px-4 py-3 border-t border-sara-linen/60 flex-shrink-0 bg-offwhite">
+      <div className="px-4 py-3 border-t border-sara-linen/60 flex-shrink-0 bg-sara-linen/80 backdrop-blur-sm">
         <div className="flex items-center gap-2">
           <div className="w-8 h-8 rounded-full bg-sara-terracotta flex items-center justify-center text-white font-bold text-xs flex-shrink-0">
             {motherName.charAt(0)}

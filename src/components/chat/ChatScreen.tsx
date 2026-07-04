@@ -33,7 +33,7 @@ export function ChatScreen({ chat, onBack }: ChatScreenProps) {
   }
 
   return (
-    <div className="flex flex-col w-full h-full bg-offwhite overflow-hidden">
+    <div className="flex flex-col w-full h-full bg-gradient-to-b from-[#F5EDE0] via-[#EAD8C8] to-[#D9C4AF] overflow-hidden">
       <div className="flex items-center gap-3 px-4 pt-6 pb-4 border-b border-sara-linen/60 flex-shrink-0">
         <button onClick={onBack} className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-sara-linen">
           <ChevronLeft size={20} className="text-graphite" />
@@ -72,7 +72,7 @@ export function ChatScreen({ chat, onBack }: ChatScreenProps) {
         <div ref={bottomRef} />
       </div>
 
-      <div className="px-4 py-3 border-t border-sara-linen/60 flex-shrink-0 bg-offwhite">
+      <div className="px-4 py-3 border-t border-sara-linen/60 flex-shrink-0 bg-sara-linen/80 backdrop-blur-sm">
         <div className="flex items-center gap-2 bg-white rounded-2xl border border-sara-linen px-3 py-2">
           <input
             type="text"
