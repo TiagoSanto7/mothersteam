@@ -44,7 +44,7 @@ export function HomeScreen({ onOpenProfile, onOpenNotifications, onOpenChat }: H
           <button
             onClick={onOpenChat}
             aria-label="Mensagens"
-            className="relative w-9 h-9 rounded-xl bg-white shadow-sm flex items-center justify-center"
+            className="relative w-9 h-9 rounded-xl bg-white/70 backdrop-blur-sm border border-white/50 flex items-center justify-center"
           >
             <MessageSquare size={18} className="text-graphite-light" strokeWidth={1.8} />
             {unreadChats > 0 && (
@@ -57,7 +57,7 @@ export function HomeScreen({ onOpenProfile, onOpenNotifications, onOpenChat }: H
           <button
             onClick={onOpenNotifications}
             aria-label="Notificações"
-            className="relative w-9 h-9 rounded-xl bg-white shadow-sm flex items-center justify-center"
+            className="relative w-9 h-9 rounded-xl bg-white/70 backdrop-blur-sm border border-white/50 flex items-center justify-center"
           >
             <Bell size={18} className="text-graphite-light" strokeWidth={1.8} />
             {unreadNotifs > 0 && (

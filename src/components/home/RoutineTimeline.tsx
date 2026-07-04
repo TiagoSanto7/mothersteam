@@ -14,7 +14,7 @@ function EntryCard({ entry }: { entry: RoutineEntry }) {
 
   return (
     <div
-      className={`flex items-center gap-3 p-3 rounded-2xl bg-white shadow-sm transition-opacity ${
+      className={`flex items-center gap-3 p-3 rounded-2xl bg-white/70 backdrop-blur-sm border border-white/50 transition-opacity ${
         entry.done ? 'opacity-50' : 'opacity-100'
       }`}
     >

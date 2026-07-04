@@ -29,7 +29,7 @@ export function BabyTimeline() {
         sorted.map((entry) => (
           <div
             key={entry.id}
-            className="flex items-center gap-3 bg-white rounded-2xl p-3 shadow-sm"
+            className="flex items-center gap-3 bg-white/70 backdrop-blur-sm border border-white/50 rounded-2xl p-3"
           >
             <div className="w-8 h-8 rounded-xl bg-sara-linen flex items-center justify-center text-lg flex-shrink-0">
               {TYPE_EMOJI[entry.type]}

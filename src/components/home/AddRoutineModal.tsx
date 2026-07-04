@@ -47,7 +47,7 @@ export function AddRoutineModal({ onClose, defaultDate }: AddRoutineModalProps) 
         role="dialog"
         aria-modal="true"
         aria-label="Adicionar à rotina"
-        className="fixed bottom-0 left-1/2 -translate-x-1/2 w-[390px] bg-sara-cream rounded-t-[32px] z-50 px-6 pt-5 pb-10 flex flex-col gap-5 shadow-2xl"
+        className="fixed bottom-0 left-1/2 -translate-x-1/2 w-[390px] bg-sara-linen/90 backdrop-blur-md rounded-t-[32px] z-50 px-6 pt-5 pb-10 flex flex-col gap-5 shadow-2xl"
       >
         <div className="flex items-center justify-between">
           <div className="w-10 h-1 bg-gray-200 rounded-full mx-auto absolute left-1/2 -translate-x-1/2 top-3" />

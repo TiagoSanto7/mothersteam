@@ -16,7 +16,7 @@ export function InsightCard({ profile }: InsightCardProps) {
   const initial = archetype.label.split(' ')[1][0];
 
   return (
-    <div className="mx-4 bg-sara-linen border border-sara-linen rounded-3xl p-4">
+    <div className="mx-4 bg-sara-cream/75 backdrop-blur-md border border-white/50 rounded-3xl p-4">
       <div className="flex items-start gap-3">
         <div className="flex flex-col items-center gap-1 flex-shrink-0">
           <div
