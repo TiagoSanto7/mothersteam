@@ -62,27 +62,35 @@ const QUESTIONS = [
   },
 ] satisfies Question<string>[];
 
+// scene index = step + 1 (step 0 → scene-1, step 4 → scene-5)
+const QUESTION_VIDEOS: Record<number, string> = {
+  0: '/videos/onboarding-scene-1.mp4',
+  1: '/videos/onboarding-scene-2.mp4',
+  2: '/videos/onboarding-scene-3.mp4',
+  3: '/videos/onboarding-scene-4.mp4',
+  4: '/videos/onboarding-scene-5.mp4',
+};
+
 type Answers = Partial<OnboardingAnswers>;
 
 export function OnboardingScreen() {
   const completeOnboarding = useAppStore((s) => s.completeOnboarding);
-  // step -1 = Sara intro video; step 0-4 = questions
+  // -1 = intro  |  0-4 = Q1–Q5  |  5 = closing
   const [step, setStep] = useState<number>(-1);
   const [answers, setAnswers] = useState<Answers>({});
-  // options only appear after Q1 video ends (or skip); video stays visible/frozen
-  const [q1OptionsVisible, setQ1OptionsVisible] = useState(false);
-  const q1VideoRef = useRef<HTMLVideoElement>(null);
+  const [optionsVisible, setOptionsVisible] = useState(false);
+  const [closingReady, setClosingReady] = useState(false);
+  const questionVideoRef = useRef<HTMLVideoElement>(null);
 
   const isIntro = step === -1;
-  const question = isIntro ? null : QUESTIONS[step];
+  const isClosing = step === 5;
+  const question = (!isIntro && !isClosing) ? QUESTIONS[step] : null;
   const selected = question ? answers[question.id as keyof Answers] : undefined;
-  const isLast = step === QUESTIONS.length - 1;
-  const showQ1Video = step === 0;
-  const showOptions = !isIntro && (step >= 1 || q1OptionsVisible);
+  const isLastQuestion = step === QUESTIONS.length - 1;
 
-  function revealQ1Options() {
-    q1VideoRef.current?.pause();
-    setQ1OptionsVisible(true);
+  function revealOptions() {
+    questionVideoRef.current?.pause();
+    setOptionsVisible(true);
   }
 
   function selectOption(value: string) {
@@ -91,19 +99,16 @@ export function OnboardingScreen() {
   }
 
   function handleNext() {
-    if (isLast && isComplete(answers)) {
-      completeOnboarding(answers as OnboardingAnswers);
-      return;
-    }
+    setOptionsVisible(false);
     setStep((s) => s + 1);
   }
 
   function handleBack() {
-    setQ1OptionsVisible(true); // show options immediately; don't autoplay video again
+    setOptionsVisible(true); // skip video replay on return
     setStep((s) => s - 1);
   }
 
-  // ── Intro: scene-0 fills the frame ───────────────────────
+  // ── Intro: scene-0 em tela cheia ──────────────────────────
   if (isIntro) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-[#1C1510] sm:bg-[#EDE6DC]">
@@ -126,37 +131,85 @@ export function OnboardingScreen() {
     );
   }
 
-  // ── Questions: step 0 may have a video header ─────────────
+  // ── Closing: scene-6 + painel que sobe ao terminar ────────
+  if (isClosing) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-[#1C1510] sm:bg-[#EDE6DC]">
+        <div className="relative w-full min-h-screen sm:w-[390px] sm:min-h-[844px] sm:max-h-[844px] bg-[#1C1510] sm:rounded-[44px] sm:shadow-2xl overflow-hidden">
+          <video
+            src="/videos/onboarding-scene-6.mp4"
+            autoPlay
+            playsInline
+            onEnded={() => setClosingReady(true)}
+            className="absolute inset-0 w-full h-full object-cover"
+          />
+
+          {!closingReady && (
+            <button
+              onClick={() => setClosingReady(true)}
+              className="absolute bottom-12 right-6 px-4 py-2 bg-black/30 backdrop-blur-sm rounded-full text-white/70 text-xs font-medium active:scale-95 transition-transform"
+            >
+              Pular →
+            </button>
+          )}
+
+          <AnimatePresence>
+            {closingReady && (
+              <motion.div
+                initial={{ y: 120, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                transition={{ duration: 0.45, ease: 'easeOut' }}
+                className="absolute bottom-0 left-0 right-0 bg-sara-cream rounded-t-3xl px-6 pt-6 pb-12 flex flex-col items-center gap-5"
+              >
+                <p className="text-base font-serif font-semibold text-graphite text-center leading-snug">
+                  ✦ Seu perfil está pronto!
+                </p>
+                <motion.button
+                  onClick={() => completeOnboarding(answers as OnboardingAnswers)}
+                  whileTap={{ scale: 0.97 }}
+                  transition={{ duration: 0.15, ease: 'easeOut' }}
+                  className="w-full py-4 rounded-2xl bg-sara-gold text-white text-sm font-semibold"
+                >
+                  Ver meu perfil ✦
+                </motion.button>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+      </div>
+    );
+  }
+
+  // ── Perguntas Q1–Q5: vídeo fixo no topo + opções ─────────
   return (
     <div className="min-h-screen flex items-center justify-center bg-[#1C1510] sm:bg-[#EDE6DC]">
-      <div className="w-full min-h-screen sm:w-[390px] sm:min-h-[844px] sm:max-h-[844px] flex flex-col sm:rounded-[44px] sm:shadow-2xl overflow-hidden bg-gradient-to-b from-[#F5EDE0] via-[#EAD8C8] to-[#D9C4AF]">
+      <div className="w-full min-h-screen sm:w-[390px] sm:min-h-[844px] sm:max-h-[844px] flex flex-col sm:rounded-[44px] sm:shadow-2xl overflow-hidden bg-[#1C1510]">
 
-        {/* Sara video — stays frozen at last frame after Q1 ends */}
-        {showQ1Video && (
-          <div className="relative bg-[#1C1510] flex-shrink-0 h-[42%]">
-            <video
-              ref={q1VideoRef}
-              src="/videos/onboarding-scene-1.mp4"
-              autoPlay={!q1OptionsVisible}
-              playsInline
-              onEnded={revealQ1Options}
-              className="w-full h-full object-cover"
-            />
-            {!q1OptionsVisible && (
-              <button
-                onClick={revealQ1Options}
-                className="absolute bottom-3 right-4 px-3 py-1.5 bg-black/30 backdrop-blur-sm rounded-full text-white/70 text-[11px] font-medium active:scale-95 transition-transform"
-              >
-                Pular →
-              </button>
-            )}
-          </div>
-        )}
+        {/* Vídeo da Sara — para no último frame ao terminar */}
+        <div className="relative flex-shrink-0 h-[42%]">
+          <video
+            ref={questionVideoRef}
+            key={step}
+            src={QUESTION_VIDEOS[step]}
+            autoPlay={!optionsVisible}
+            playsInline
+            onEnded={revealOptions}
+            className="w-full h-full object-cover"
+          />
+          {!optionsVisible && (
+            <button
+              onClick={revealOptions}
+              className="absolute bottom-3 right-4 px-3 py-1.5 bg-black/30 backdrop-blur-sm rounded-full text-white/70 text-[11px] font-medium active:scale-95 transition-transform"
+            >
+              Pular →
+            </button>
+          )}
+        </div>
 
-        {/* Content area — rounded cap when video is above */}
-        <div className={`flex-1 flex flex-col overflow-hidden ${showQ1Video ? 'bg-sara-cream rounded-t-3xl' : ''}`}>
+        {/* Painel cream com perguntas */}
+        <div className="flex-1 flex flex-col overflow-hidden bg-sara-cream rounded-t-3xl">
 
-          {/* Progress + question */}
+          {/* Barra de progresso + texto da pergunta */}
           <div className="px-6 pt-6 pb-4 flex-shrink-0">
             <div className="flex items-center gap-2 mb-6">
               {QUESTIONS.map((_, i) => (
@@ -183,9 +236,9 @@ export function OnboardingScreen() {
             </AnimatePresence>
           </div>
 
-          {/* Options — fade in when video ends or on steps without video */}
+          {/* Opções — aparecem quando vídeo termina ou skip */}
           <AnimatePresence>
-            {showOptions && (
+            {optionsVisible && (
               <motion.div
                 key={`opts-${step}`}
                 initial={{ opacity: 0 }}
@@ -215,8 +268,8 @@ export function OnboardingScreen() {
             )}
           </AnimatePresence>
 
-          {/* Nav buttons */}
-          {showOptions && (
+          {/* Navegação */}
+          {optionsVisible && (
             <div className="px-6 pb-10 pt-4 flex gap-3 flex-shrink-0">
               {step > 0 && (
                 <motion.button
@@ -235,7 +288,7 @@ export function OnboardingScreen() {
                 transition={{ duration: 0.15, ease: 'easeOut' }}
                 className="flex-1 py-3 rounded-2xl bg-sara-gold text-white text-sm font-semibold disabled:opacity-40"
               >
-                {isLast ? 'Ver meu perfil ✦' : 'Continuar'}
+                {isLastQuestion ? 'Continuar' : 'Continuar'}
               </motion.button>
             </div>
           )}
@@ -245,6 +298,3 @@ export function OnboardingScreen() {
   );
 }
 
-function isComplete(a: Answers): a is OnboardingAnswers {
-  return !!(a.q1 && a.q2 && a.q3 && a.q4 && a.q5);
-}
