@@ -59,6 +59,7 @@ export interface CommunityPost {
   time: string;
   isRepost?: boolean;
   repostFrom?: string;
+  communityId?: string;
 }
 
 export interface PostComment {
@@ -91,4 +92,15 @@ export interface Chat {
   time: string;
   unread: number;
   messages: ChatMessage[];
+}
+
+export type CommunityColorKey = 'gold' | 'terracotta' | 'warm' | 'linen' | 'cream';
+
+export interface Community {
+  id: string;
+  name: string;
+  description: string;
+  category: CommunityPost['category'];
+  memberCount: number;
+  colorKey: CommunityColorKey;
 }
