@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import type { TabId, PregnancyPhase, RoutineEntry, BabyEntry, OnboardingAnswers, MotherProfile, CommunityPost, AppNotification, PostComment, Chat } from '../types';
+import type { TabId, PregnancyPhase, RoutineEntry, BabyEntry, OnboardingAnswers, MotherProfile, CommunityPost, Community, AppNotification, PostComment, Chat } from '../types';
 import { computeProfile } from '../utils/onboardingScoring';
 
 const today = new Date().toISOString().split('T')[0];
@@ -21,27 +21,78 @@ const SEED_POSTS: CommunityPost[] = [
   {
     id: '1', category: 'gestação', author: 'Fernanda S.', badge: 'experiente',
     content: 'Dicas para aliviar o enjoo do primeiro trimestre: gengibre em cápsulas ajudou muito!',
-    likes: 24, replies: 8, time: '2h',
+    likes: 24, replies: 8, time: '2h', communityId: 'gestacao-primeiro-tri',
   },
   {
     id: '2', category: 'amamentação', author: 'Dra. Carla Lima', badge: 'profissional',
     content: 'Posição correta para amamentar: costas apoiadas, bebê de frente para o peito, barriga com barriga.',
-    likes: 67, replies: 12, time: '4h',
+    likes: 67, replies: 12, time: '4h', communityId: 'amamentacao-apoio',
   },
   {
     id: '3', category: 'saúde mental', author: 'Juliana M.',
     content: 'Alguém mais sentiu que a solidão do puerpério é diferente de tudo? Precisava desabafar.',
-    likes: 89, replies: 31, time: '5h',
+    likes: 89, replies: 31, time: '5h', communityId: 'saude-mental',
   },
   {
     id: '4', category: 'pós-parto', author: 'Renata P.', badge: 'experiente',
     content: 'Cinta pós-cesárea: comecei a usar no hospital e fez diferença na recuperação.',
-    likes: 45, replies: 9, time: '8h',
+    likes: 45, replies: 9, time: '8h', communityId: 'pos-parto-real',
   },
   {
     id: '5', category: 'amamentação', author: 'Priscila T.',
     content: 'Meu bebê estava com dificuldade de pegar o bico. A fonoaudióloga resolveu em 2 sessões!',
-    likes: 33, replies: 14, time: '10h',
+    likes: 33, replies: 14, time: '10h', communityId: 'amamentacao-apoio',
+  },
+];
+
+const SEED_COMMUNITIES: Community[] = [
+  {
+    id: 'gestacao-primeiro-tri',
+    name: 'Gestantes — 1° Trimestre',
+    description: 'Compartilhe as descobertas e dúvidas dos primeiros meses.',
+    category: 'gestação',
+    memberCount: 1840,
+    colorKey: 'terracotta',
+  },
+  {
+    id: 'reta-final',
+    name: 'Reta Final',
+    description: 'Para quem está nas últimas semanas e se preparando para o grande dia.',
+    category: 'gestação',
+    memberCount: 923,
+    colorKey: 'gold',
+  },
+  {
+    id: 'amamentacao-apoio',
+    name: 'Amamentação com Apoio',
+    description: 'Dúvidas, desafios e conquistas da amamentação, sem julgamentos.',
+    category: 'amamentação',
+    memberCount: 3210,
+    colorKey: 'warm',
+  },
+  {
+    id: 'pos-parto-real',
+    name: 'Pós-parto Real',
+    description: 'O quarto trimestre sem filtros: corpo, mente e recomeço.',
+    category: 'pós-parto',
+    memberCount: 2670,
+    colorKey: 'linen',
+  },
+  {
+    id: 'saude-mental',
+    name: 'Saúde Mental na Maternidade',
+    description: 'Espaço seguro para falar sobre ansiedade, depressão pós-parto e bem-estar.',
+    category: 'saúde mental',
+    memberCount: 4120,
+    colorKey: 'cream',
+  },
+  {
+    id: 'maes-solo',
+    name: 'Mães Solo',
+    description: 'Força, troca e comunidade para quem caminha pela maternidade sozinha.',
+    category: 'pós-parto',
+    memberCount: 1560,
+    colorKey: 'terracotta',
   },
 ];
 
@@ -120,6 +171,11 @@ interface AppState {
   notifications: AppNotification[];
   chats: Chat[];
   postComments: Record<string, PostComment[]>;
+  communities: Community[];
+  followedCommunityIds: string[];
+  // Actions — Communities
+  joinCommunity: (id: string) => void;
+  leaveCommunity: (id: string) => void;
   // Actions — Auth
   login: (email: string, password: string) => boolean;
   logout: () => void;
@@ -167,6 +223,8 @@ export const useAppStore = create<AppState>()(
       notifications: SEED_NOTIFICATIONS,
       chats: SEED_CHATS,
       postComments: SEED_POST_COMMENTS,
+      communities: SEED_COMMUNITIES,
+      followedCommunityIds: ['amamentacao-apoio'],
       // Auth actions
       login: (email, password) => {
         if (email === 'navegador@mothersteam' && password === 'admin@mothersteam') {
@@ -322,6 +380,16 @@ export const useAppStore = create<AppState>()(
           chats: s.chats.map((c) =>
             c.id === chatId ? { ...c, unread: 0 } : c
           ),
+        })),
+      joinCommunity: (id) =>
+        set((s) => ({
+          followedCommunityIds: s.followedCommunityIds.includes(id)
+            ? s.followedCommunityIds
+            : [...s.followedCommunityIds, id],
+        })),
+      leaveCommunity: (id) =>
+        set((s) => ({
+          followedCommunityIds: s.followedCommunityIds.filter((cid) => cid !== id),
         })),
     }),
     { name: 'mothers-team-v2' },
