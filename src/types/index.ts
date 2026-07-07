@@ -1,4 +1,4 @@
-export type TabId = 'home' | 'maeIA' | 'baby' | 'comunidade' | 'shopping';
+export type TabId = 'home' | 'maeIA' | 'baby' | 'rotina' | 'comunidade' | 'shopping';
 
 export type PregnancyPhase =
   | { stage: 'pregnant'; week: number }
@@ -60,6 +60,7 @@ export interface CommunityPost {
   isRepost?: boolean;
   repostFrom?: string;
   communityId?: string;
+  imageUrl?: string;
 }
 
 export interface PostComment {

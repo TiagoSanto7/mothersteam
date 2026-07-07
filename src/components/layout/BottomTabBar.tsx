@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { Home, MessageCircle, Users, ShoppingBag } from 'lucide-react';
+import { Home, MessageCircle, Calendar, ShoppingBag } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { useAppStore } from '../../store/useAppStore';
 import { getEvolutionEmoji } from '../../utils/pregnancyUtils';
@@ -61,8 +61,8 @@ export function BottomTabBar() {
         <span className="text-[10px] font-medium text-graphite-muted mt-1">Bebê</span>
       </div>
 
-      <TabBtn id="comunidade" label="Comunidade" active={activeTab === 'comunidade'} onClick={() => setActiveTab('comunidade')}>
-        <Users size={22} strokeWidth={1.8} />
+      <TabBtn id="rotina" label="Rotina" active={activeTab === 'rotina'} onClick={() => setActiveTab('rotina')}>
+        <Calendar size={22} strokeWidth={1.8} />
       </TabBtn>
 
       <TabBtn id="shopping" label="Shopping" active={activeTab === 'shopping'} onClick={() => setActiveTab('shopping')}>

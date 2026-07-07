@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useAppStore } from './store/useAppStore';
+import type { TabId } from './types';
 import { MobileShell } from './components/layout/MobileShell';
 import { HomeScreen } from './components/home/HomeScreen';
 import { BabyScreen } from './components/baby/BabyScreen';
@@ -23,16 +24,17 @@ export default function App() {
   if (!isLoggedIn) return <LoginScreen />;
   if (!onboardingDone) return <OnboardingScreen />;
 
-  const screens: Record<typeof activeTab, React.ReactElement> = {
-    home: (
+  const screens: Record<TabId, React.ReactElement> = {
+    home:       <ComunidadeScreen />,
+    maeIA:      <MaeIAScreen />,
+    baby:       <BabyScreen />,
+    rotina: (
       <HomeScreen
         onOpenProfile={() => setShowProfile(true)}
         onOpenNotifications={() => setShowNotifications(true)}
         onOpenChat={() => setShowChat(true)}
       />
     ),
-    maeIA:      <MaeIAScreen />,
-    baby:       <BabyScreen />,
     comunidade: <ComunidadeScreen />,
     shopping:   <ShoppingScreen />,
   };
