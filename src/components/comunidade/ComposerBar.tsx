@@ -1,0 +1,27 @@
+import { Camera } from 'lucide-react';
+import { useAppStore } from '../../store/useAppStore';
+
+interface ComposerBarProps {
+  onOpen: () => void;
+}
+
+export function ComposerBar({ onOpen }: ComposerBarProps) {
+  const motherName = useAppStore((s) => s.motherName);
+  const initial = motherName[0]?.toUpperCase() ?? 'M';
+
+  return (
+    <button
+      onClick={onOpen}
+      aria-label="Escrever post"
+      className="mx-4 mb-3 bg-white/70 backdrop-blur-sm border border-white/50 rounded-2xl p-3 flex items-center gap-3 w-[calc(100%-2rem)]"
+    >
+      <div className="w-8 h-8 rounded-full bg-sara-terracotta text-white text-sm font-bold flex items-center justify-center flex-shrink-0">
+        {initial}
+      </div>
+      <span className="flex-1 text-left text-graphite-muted text-sm">
+        O que você está sentindo hoje?
+      </span>
+      <Camera size={20} className="text-sara-gold flex-shrink-0" />
+    </button>
+  );
+}
