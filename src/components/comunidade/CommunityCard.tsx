@@ -43,7 +43,7 @@ export function CommunityCard({ community, isFollowing, onToggle }: CommunityCar
 
       <button
         onClick={() => onToggle(community.id)}
-        aria-label={isFollowing ? 'Seguindo' : 'Seguir'}
+        aria-label={isFollowing ? 'Deixar de seguir' : 'Seguir'}
         className={`flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-semibold transition-colors ${
           isFollowing
             ? 'bg-sara-linen text-sara-warm border border-sara-linen'

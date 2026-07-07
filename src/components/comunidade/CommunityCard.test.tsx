@@ -33,7 +33,7 @@ describe('CommunityCard', () => {
 
   it('shows "Seguindo" button when following', () => {
     render(<CommunityCard community={MOCK_COMMUNITY} isFollowing={true} onToggle={vi.fn()} />);
-    expect(screen.getByRole('button', { name: /seguindo/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /deixar de seguir/i })).toBeInTheDocument();
   });
 
   it('calls onToggle with community id on button click', () => {
