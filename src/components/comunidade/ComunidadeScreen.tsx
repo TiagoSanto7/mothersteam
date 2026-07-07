@@ -3,8 +3,10 @@ import { MessageCircle, Heart } from 'lucide-react';
 import { useAppStore } from '../../store/useAppStore';
 import { CreatePostScreen } from './CreatePostScreen';
 import { PostDetailScreen } from '../post/PostDetailScreen';
+import { ComunidadesScreen } from './ComunidadesScreen';
 import type { CommunityPost } from '../../types';
 
+type TopTab = 'para-voce' | 'comunidades';
 type Category = 'todos' | CommunityPost['category'];
 
 const BADGE_CONFIG = {
@@ -24,7 +26,7 @@ function PostCard({ post, onOpen }: { post: CommunityPost; onOpen: () => void })
       data-category={post.category}
       className="bg-white rounded-3xl p-4 shadow-sm flex flex-col gap-3"
     >
-      <button onClick={onOpen} className="text-left flex flex-col gap-2">
+      <button onClick={onOpen} aria-label={`Ver post de ${post.author}`} className="text-left flex flex-col gap-2">
         <div className="flex items-start justify-between gap-2">
           <div className="flex flex-col gap-0.5">
             <p className="text-sm font-semibold text-graphite">{post.author}</p>
@@ -66,6 +68,8 @@ function PostCard({ post, onOpen }: { post: CommunityPost; onOpen: () => void })
 
 export function ComunidadeScreen() {
   const communityPosts = useAppStore((s) => s.communityPosts);
+  const followedCommunityIds = useAppStore((s) => s.followedCommunityIds);
+  const [topTab, setTopTab] = useState<TopTab>('para-voce');
   const [activeCategory, setActiveCategory] = useState<Category>('todos');
   const [showCreate, setShowCreate] = useState(false);
   const [selectedPost, setSelectedPost] = useState<CommunityPost | null>(null);
@@ -78,49 +82,88 @@ export function ComunidadeScreen() {
     return <CreatePostScreen onBack={() => setShowCreate(false)} />;
   }
 
+  const prioritized = [
+    ...communityPosts.filter((p) => p.communityId && followedCommunityIds.includes(p.communityId)),
+    ...communityPosts.filter((p) => !p.communityId || !followedCommunityIds.includes(p.communityId)),
+  ];
+
   const filtered = activeCategory === 'todos'
-    ? communityPosts
-    : communityPosts.filter((p) => p.category === activeCategory);
+    ? prioritized
+    : prioritized.filter((p) => p.category === activeCategory);
 
   return (
     <div className="flex flex-col gap-4 pb-6">
+      {/* Header */}
       <div className="px-4 pt-4 flex items-center justify-between">
         <h1 className="text-base font-semibold text-graphite">Comunidade</h1>
-        <button
-          onClick={() => setShowCreate(true)}
-          aria-label="Desabafar"
-          className="px-3 py-1.5 rounded-xl bg-sara-gold text-white text-xs font-semibold active:scale-95 transition-transform"
-        >
-          Desabafar 💜
-        </button>
+        {topTab === 'para-voce' && (
+          <button
+            onClick={() => setShowCreate(true)}
+            aria-label="Desabafar"
+            className="px-3 py-1.5 rounded-xl bg-sara-gold text-white text-xs font-semibold active:scale-95 transition-transform"
+          >
+            Desabafar 💜
+          </button>
+        )}
       </div>
 
-      <div className="flex gap-2 overflow-x-auto scrollbar-hide px-4">
-        {CATEGORY_LABELS.map((cat) => {
-          const label = cat === 'todos' ? 'Todos' : cat.charAt(0).toUpperCase() + cat.slice(1);
+      {/* Top tab bar */}
+      <div className="flex gap-1 px-4 border-b border-sara-linen">
+        {(['para-voce', 'comunidades'] as TopTab[]).map((tab) => {
+          const label = tab === 'para-voce' ? 'Para Você' : 'Comunidades';
+          const active = topTab === tab;
           return (
             <button
-              key={cat}
-              aria-pressed={activeCategory === cat}
-              onClick={() => setActiveCategory(cat)}
+              key={tab}
+              aria-pressed={active}
+              onClick={() => setTopTab(tab)}
               aria-label={label}
-              className={`flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
-                activeCategory === cat
-                  ? 'bg-sara-gold text-white'
-                  : 'bg-white text-graphite-muted'
+              className={`px-4 py-2 text-sm font-semibold transition-colors relative ${
+                active ? 'text-sara-gold' : 'text-graphite-muted'
               }`}
             >
               {label}
+              {active && (
+                <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-sara-gold rounded-full" />
+              )}
             </button>
           );
         })}
       </div>
 
-      <div className="flex flex-col gap-3 px-4">
-        {filtered.map((post) => (
-          <PostCard key={post.id} post={post} onOpen={() => setSelectedPost(post)} />
-        ))}
-      </div>
+      {/* Tab content */}
+      {topTab === 'para-voce' ? (
+        <>
+          <div className="flex gap-2 overflow-x-auto scrollbar-hide px-4">
+            {CATEGORY_LABELS.map((cat) => {
+              const label = cat === 'todos' ? 'Todos' : cat.charAt(0).toUpperCase() + cat.slice(1);
+              return (
+                <button
+                  key={cat}
+                  aria-pressed={activeCategory === cat}
+                  onClick={() => setActiveCategory(cat)}
+                  aria-label={label}
+                  className={`flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
+                    activeCategory === cat
+                      ? 'bg-sara-gold text-white'
+                      : 'bg-white text-graphite-muted'
+                  }`}
+                >
+                  {label}
+                </button>
+              );
+            })}
+          </div>
+
+          <div className="flex flex-col gap-3 px-4">
+            {filtered.map((post) => (
+              <PostCard key={post.id} post={post} onOpen={() => setSelectedPost(post)} />
+            ))}
+          </div>
+        </>
+      ) : (
+        <ComunidadesScreen />
+      )}
     </div>
   );
 }

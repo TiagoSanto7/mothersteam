@@ -1,24 +1,64 @@
 import { render, screen, fireEvent } from '@testing-library/react';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, beforeEach } from 'vitest';
 import { ComunidadeScreen } from './ComunidadeScreen';
+import { useAppStore } from '../../store/useAppStore';
+
+beforeEach(() => {
+  useAppStore.setState({
+    communityPosts: [
+      {
+        id: '1', category: 'gestação', author: 'Fernanda S.', badge: 'experiente',
+        content: 'Post de gestação', likes: 24, replies: 8, time: '2h',
+        communityId: 'gestacao-primeiro-tri',
+      },
+      {
+        id: '2', category: 'amamentação', author: 'Dra. Carla Lima', badge: 'profissional',
+        content: 'Post de amamentação', likes: 67, replies: 12, time: '4h',
+        communityId: 'amamentacao-apoio',
+      },
+    ],
+    communities: [
+      {
+        id: 'amamentacao-apoio',
+        name: 'Amamentação com Apoio',
+        description: 'Dúvidas da amamentação.',
+        category: 'amamentação',
+        memberCount: 3210,
+        colorKey: 'warm',
+      },
+    ],
+    followedCommunityIds: ['amamentacao-apoio'],
+    phase: { stage: 'pregnant', week: 28 },
+    motherProfile: null,
+  });
+});
 
 describe('ComunidadeScreen', () => {
-  it('renders category filter buttons', () => {
+  it('renders Para Você and Comunidades top tabs', () => {
+    render(<ComunidadeScreen />);
+    expect(screen.getByRole('button', { name: /para você/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /comunidades/i })).toBeInTheDocument();
+  });
+
+  it('defaults to Para Você tab showing the feed', () => {
+    render(<ComunidadeScreen />);
+    expect(screen.getAllByTestId('post-card').length).toBeGreaterThan(0);
+  });
+
+  it('switches to communities list when Comunidades tab is clicked', () => {
+    render(<ComunidadeScreen />);
+    fireEvent.click(screen.getByRole('button', { name: /comunidades/i }));
+    expect(screen.getByRole('button', { name: /seguindo/i })).toBeInTheDocument();
+    expect(screen.queryAllByTestId('post-card')).toHaveLength(0);
+  });
+
+  it('shows category filter buttons in Para Você tab', () => {
     render(<ComunidadeScreen />);
     expect(screen.getByRole('button', { name: /todos/i })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /gestação/i })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /pós-parto/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /amamentação/i })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /saúde mental/i })).toBeInTheDocument();
   });
 
-  it('shows all posts when Todos is selected', () => {
-    render(<ComunidadeScreen />);
-    fireEvent.click(screen.getByRole('button', { name: /todos/i }));
-    expect(screen.getAllByTestId('post-card').length).toBeGreaterThan(1);
-  });
-
-  it('filters posts by category', () => {
+  it('filters posts by category in Para Você', () => {
     render(<ComunidadeScreen />);
     fireEvent.click(screen.getByRole('button', { name: /amamentação/i }));
     const posts = screen.getAllByTestId('post-card');
@@ -27,8 +67,14 @@ describe('ComunidadeScreen', () => {
     });
   });
 
-  it('shows Desabafar button', () => {
+  it('shows Desabafar button in Para Você tab', () => {
     render(<ComunidadeScreen />);
-    expect(screen.getByRole('button', { name: /desabafar/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Desabafar' })).toBeInTheDocument();
+  });
+
+  it('hides Desabafar button when on Comunidades tab', () => {
+    render(<ComunidadeScreen />);
+    fireEvent.click(screen.getByRole('button', { name: /comunidades/i }));
+    expect(screen.queryByRole('button', { name: 'Desabafar' })).not.toBeInTheDocument();
   });
 });
