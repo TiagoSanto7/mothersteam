@@ -1,14 +1,14 @@
-import { useState } from 'react';
-import { ArrowLeft } from 'lucide-react';
+import { useState, useRef } from 'react';
+import { ArrowLeft, ImagePlus, X } from 'lucide-react';
 import { useAppStore } from '../../store/useAppStore';
 import type { CommunityPost } from '../../types';
 
 type PostCategory = CommunityPost['category'];
 
 const CATEGORIES: { value: PostCategory; label: string }[] = [
-  { value: 'gestação',     label: 'Gestação' },
-  { value: 'pós-parto',   label: 'Pós-parto' },
-  { value: 'amamentação', label: 'Amamentação' },
+  { value: 'gestação',      label: 'Gestação' },
+  { value: 'pós-parto',    label: 'Pós-parto' },
+  { value: 'amamentação',  label: 'Amamentação' },
   { value: 'saúde mental', label: 'Saúde Mental' },
 ];
 
@@ -21,10 +21,25 @@ export function CreatePostScreen({ onBack }: CreatePostScreenProps) {
   const motherName = useAppStore((s) => s.motherName);
   const [content, setContent] = useState('');
   const [category, setCategory] = useState<PostCategory>('saúde mental');
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => setImagePreview(reader.result as string);
+    reader.readAsDataURL(file);
+  }
 
   function handlePublish() {
     if (!content.trim()) return;
-    addCommunityPost({ author: motherName, content: content.trim(), category });
+    addCommunityPost({
+      author: motherName,
+      content: content.trim(),
+      category,
+      imageUrl: imagePreview ?? undefined,
+    });
     onBack();
   }
 
@@ -50,6 +65,40 @@ export function CreatePostScreen({ onBack }: CreatePostScreenProps) {
           rows={7}
           className="w-full px-4 py-3 rounded-2xl bg-white border border-sara-linen text-sm text-graphite placeholder:text-graphite-muted leading-relaxed resize-none focus:outline-none focus:border-sara-gold"
         />
+
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/*"
+          className="hidden"
+          onChange={handleFileChange}
+        />
+
+        <button
+          onClick={() => fileInputRef.current?.click()}
+          aria-label="Adicionar foto"
+          className="flex items-center gap-2 text-sm text-sara-gold font-medium"
+        >
+          <ImagePlus size={18} />
+          Adicionar foto
+        </button>
+
+        {imagePreview && (
+          <div className="relative mt-1">
+            <img
+              src={imagePreview}
+              alt="Preview"
+              className="w-full rounded-xl object-cover max-h-48"
+            />
+            <button
+              onClick={() => setImagePreview(null)}
+              aria-label="Remover imagem"
+              className="absolute top-2 right-2 bg-black/50 text-white rounded-full p-1"
+            >
+              <X size={14} />
+            </button>
+          </div>
+        )}
 
         <div className="flex flex-col gap-2">
           <p className="text-xs font-medium text-graphite-muted">Categoria</p>
