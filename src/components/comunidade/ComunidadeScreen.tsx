@@ -116,7 +116,10 @@ export function ComunidadeScreen() {
             <button
               key={tab}
               aria-pressed={active}
-              onClick={() => setTopTab(tab)}
+              onClick={() => {
+                setTopTab(tab);
+                if (tab !== 'para-voce') setActiveCategory('todos');
+              }}
               aria-label={label}
               className={`px-4 py-2 text-sm font-semibold transition-colors relative ${
                 active ? 'text-sara-gold' : 'text-graphite-muted'
