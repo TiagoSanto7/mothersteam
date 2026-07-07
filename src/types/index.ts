@@ -1,3 +1,4 @@
+// 'comunidade' kept for backward-compat with persisted Zustand sessions
 export type TabId = 'home' | 'maeIA' | 'baby' | 'rotina' | 'comunidade' | 'shopping';
 
 export type PregnancyPhase =

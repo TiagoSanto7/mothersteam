@@ -25,6 +25,7 @@ export default function App() {
   if (!onboardingDone) return <OnboardingScreen />;
 
   const screens: Record<TabId, React.ReactElement> = {
+    // 'home' routes to the feed — community IS the home experience by design
     home:       <ComunidadeScreen />,
     maeIA:      <MaeIAScreen />,
     baby:       <BabyScreen />,
@@ -35,7 +36,7 @@ export default function App() {
         onOpenChat={() => setShowChat(true)}
       />
     ),
-    comunidade: <ComunidadeScreen />,
+    comunidade: <ComunidadeScreen />, // alias for stale persisted activeTab
     shopping:   <ShoppingScreen />,
   };
 

@@ -7,6 +7,7 @@ beforeEach(() => {
   useAppStore.setState({
     isLoggedIn: true,
     onboardingDone: true,
+    activeTab: 'home',   // reset to a known tab so test order doesn't matter
     motherName: 'Mariana',
     phase: { stage: 'pregnant', week: 28 },
     communityPosts: [],
