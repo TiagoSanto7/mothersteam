@@ -118,7 +118,7 @@ export function ComunidadeScreen() {
               aria-pressed={active}
               onClick={() => {
                 setTopTab(tab);
-                if (tab !== 'para-voce') setActiveCategory('todos');
+                setActiveCategory('todos');
               }}
               aria-label={label}
               className={`px-4 py-2 text-sm font-semibold transition-colors relative ${

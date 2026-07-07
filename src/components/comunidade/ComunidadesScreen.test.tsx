@@ -70,4 +70,20 @@ describe('ComunidadesScreen', () => {
     render(<ComunidadesScreen />);
     expect(screen.getByText(/você ainda não segue/i)).toBeInTheDocument();
   });
+
+  it('clicking Seguir on a suggestion adds it to followed communities', () => {
+    render(<ComunidadesScreen />);
+    fireEvent.click(screen.getByRole('button', { name: /sugestões/i }));
+    fireEvent.click(screen.getAllByRole('button', { name: /^seguir$/i })[0]);
+    expect(useAppStore.getState().followedCommunityIds).toContain('pos-parto-real');
+  });
+
+  it('suggestions show postpartum communities first for a postpartum phase', () => {
+    render(<ComunidadesScreen />);
+    fireEvent.click(screen.getByRole('button', { name: /sugestões/i }));
+    const communityNames = screen.getAllByRole('heading', { level: 3 }).map((h) => h.textContent);
+    const postpartumIndex = communityNames.findIndex((name) => name === 'Pós-parto Real');
+    const mentalHealthIndex = communityNames.findIndex((name) => name === 'Saúde Mental na Maternidade');
+    expect(postpartumIndex).toBeLessThan(mentalHealthIndex);
+  });
 });
