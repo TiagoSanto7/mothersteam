@@ -35,7 +35,7 @@ describe('CreatePostScreen', () => {
 
   it('shows image preview after file is selected', async () => {
     render(<CreatePostScreen onBack={vi.fn()} />);
-    const input = document.querySelector('input[type="file"]') as HTMLInputElement;
+    const input = screen.getByTestId('file-input') as HTMLInputElement;
     const file = new File(['hello'], 'photo.png', { type: 'image/png' });
     await act(async () => {
       fireEvent.change(input, { target: { files: [file] } });
@@ -47,7 +47,7 @@ describe('CreatePostScreen', () => {
 
   it('removes preview when X button is clicked', async () => {
     render(<CreatePostScreen onBack={vi.fn()} />);
-    const input = document.querySelector('input[type="file"]') as HTMLInputElement;
+    const input = screen.getByTestId('file-input') as HTMLInputElement;
     const file = new File(['hello'], 'photo.png', { type: 'image/png' });
     await act(async () => {
       fireEvent.change(input, { target: { files: [file] } });
@@ -59,7 +59,7 @@ describe('CreatePostScreen', () => {
 
   it('submits post with imageUrl when image is selected', async () => {
     render(<CreatePostScreen onBack={vi.fn()} />);
-    const input = document.querySelector('input[type="file"]') as HTMLInputElement;
+    const input = screen.getByTestId('file-input') as HTMLInputElement;
     const file = new File(['hello'], 'photo.png', { type: 'image/png' });
     await act(async () => {
       fireEvent.change(input, { target: { files: [file] } });

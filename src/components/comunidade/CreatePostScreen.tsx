@@ -29,6 +29,7 @@ export function CreatePostScreen({ onBack }: CreatePostScreenProps) {
     if (!file) return;
     const reader = new FileReader();
     reader.onload = () => setImagePreview(reader.result as string);
+    reader.onerror = () => console.error('Falha ao carregar imagem');
     reader.readAsDataURL(file);
   }
 
@@ -72,6 +73,7 @@ export function CreatePostScreen({ onBack }: CreatePostScreenProps) {
           accept="image/*"
           className="hidden"
           onChange={handleFileChange}
+          data-testid="file-input"
         />
 
         <button
@@ -91,7 +93,10 @@ export function CreatePostScreen({ onBack }: CreatePostScreenProps) {
               className="w-full rounded-xl object-cover max-h-48"
             />
             <button
-              onClick={() => setImagePreview(null)}
+              onClick={() => {
+                setImagePreview(null);
+                if (fileInputRef.current) fileInputRef.current.value = '';
+              }}
               aria-label="Remover imagem"
               className="absolute top-2 right-2 bg-black/50 text-white rounded-full p-1"
             >
