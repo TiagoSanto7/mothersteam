@@ -5,6 +5,7 @@ import { useAppStore } from '../../store/useAppStore';
 
 beforeEach(() => {
   useAppStore.setState({
+    motherName: 'Mariana',
     communityPosts: [
       {
         id: '1', category: 'gestação', author: 'Fernanda S.', badge: 'experiente',
@@ -15,6 +16,7 @@ beforeEach(() => {
         id: '2', category: 'amamentação', author: 'Dra. Carla Lima', badge: 'profissional',
         content: 'Post de amamentação', likes: 67, replies: 12, time: '4h',
         communityId: 'amamentacao-apoio',
+        imageUrl: 'data:image/png;base64,fakedata',
       },
     ],
     communities: [
@@ -67,14 +69,42 @@ describe('ComunidadeScreen', () => {
     });
   });
 
-  it('shows Desabafar button in Para Você tab', () => {
+  it('does not show Desabafar button', () => {
     render(<ComunidadeScreen />);
-    expect(screen.getByRole('button', { name: 'Desabafar' })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Desabafar' })).not.toBeInTheDocument();
   });
 
-  it('hides Desabafar button when on Comunidades tab', () => {
+  it('shows ComposerBar in Para Você tab', () => {
+    render(<ComunidadeScreen />);
+    expect(screen.getByText('O que você está sentindo hoje?')).toBeInTheDocument();
+  });
+
+  it('hides ComposerBar in Comunidades tab', () => {
     render(<ComunidadeScreen />);
     fireEvent.click(screen.getByRole('button', { name: /comunidades/i }));
-    expect(screen.queryByRole('button', { name: 'Desabafar' })).not.toBeInTheDocument();
+    expect(screen.queryByText('O que você está sentindo hoje?')).not.toBeInTheDocument();
+  });
+
+  it('shows FAB in Para Você tab', () => {
+    render(<ComunidadeScreen />);
+    expect(screen.getByRole('button', { name: 'Criar post' })).toBeInTheDocument();
+  });
+
+  it('hides FAB in Comunidades tab', () => {
+    render(<ComunidadeScreen />);
+    fireEvent.click(screen.getByRole('button', { name: /comunidades/i }));
+    expect(screen.queryByRole('button', { name: 'Criar post' })).not.toBeInTheDocument();
+  });
+
+  it('renders image when post has imageUrl', () => {
+    render(<ComunidadeScreen />);
+    const img = screen.getByAltText('Imagem do post');
+    expect(img).toBeInTheDocument();
+    expect(img).toHaveAttribute('src', 'data:image/png;base64,fakedata');
+  });
+
+  it('renders exactly one image for the one post with imageUrl', () => {
+    render(<ComunidadeScreen />);
+    expect(screen.getAllByAltText('Imagem do post')).toHaveLength(1);
   });
 });

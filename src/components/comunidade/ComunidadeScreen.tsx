@@ -1,9 +1,11 @@
 import { useState } from 'react';
-import { MessageCircle, Heart } from 'lucide-react';
+import { MessageCircle, Heart, Plus } from 'lucide-react';
+import { motion } from 'framer-motion';
 import { useAppStore } from '../../store/useAppStore';
 import { CreatePostScreen } from './CreatePostScreen';
 import { PostDetailScreen } from '../post/PostDetailScreen';
 import { ComunidadesScreen } from './ComunidadesScreen';
+import { ComposerBar } from './ComposerBar';
 import type { CommunityPost } from '../../types';
 
 type TopTab = 'para-voce' | 'comunidades';
@@ -39,6 +41,13 @@ function PostCard({ post, onOpen }: { post: CommunityPost; onOpen: () => void })
           <span className="text-xs text-graphite-muted flex-shrink-0">{post.time}</span>
         </div>
         <p className="text-sm text-graphite-light leading-relaxed">{post.content}</p>
+        {post.imageUrl && (
+          <img
+            src={post.imageUrl}
+            alt="Imagem do post"
+            className="w-full rounded-xl object-cover max-h-64 mt-2"
+          />
+        )}
       </button>
 
       <div className="flex items-center gap-4 pt-1">
@@ -93,21 +102,10 @@ export function ComunidadeScreen() {
 
   return (
     <div className="flex flex-col gap-4 pb-6">
-      {/* Header */}
-      <div className="px-4 pt-4 flex items-center justify-between">
+      <div className="px-4 pt-4">
         <h1 className="text-base font-semibold text-graphite">Comunidade</h1>
-        {topTab === 'para-voce' && (
-          <button
-            onClick={() => setShowCreate(true)}
-            aria-label="Desabafar"
-            className="px-3 py-1.5 rounded-xl bg-sara-gold text-white text-xs font-semibold active:scale-95 transition-transform"
-          >
-            Desabafar 💜
-          </button>
-        )}
       </div>
 
-      {/* Top tab bar */}
       <div className="flex gap-1 px-4 border-b border-sara-linen">
         {(['para-voce', 'comunidades'] as TopTab[]).map((tab) => {
           const label = tab === 'para-voce' ? 'Para Você' : 'Comunidades';
@@ -134,9 +132,10 @@ export function ComunidadeScreen() {
         })}
       </div>
 
-      {/* Tab content */}
       {topTab === 'para-voce' ? (
         <>
+          <ComposerBar onOpen={() => setShowCreate(true)} />
+
           <div className="flex gap-2 overflow-x-auto scrollbar-hide px-4">
             {CATEGORY_LABELS.map((cat) => {
               const label = cat === 'todos' ? 'Todos' : cat.charAt(0).toUpperCase() + cat.slice(1);
@@ -163,6 +162,18 @@ export function ComunidadeScreen() {
               <PostCard key={post.id} post={post} onOpen={() => setSelectedPost(post)} />
             ))}
           </div>
+
+          <motion.button
+            initial={{ scale: 0, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            whileTap={{ scale: 0.92 }}
+            transition={{ type: 'spring', duration: 0.3 }}
+            onClick={() => setShowCreate(true)}
+            className="fixed bottom-24 right-4 z-20 w-14 h-14 rounded-full bg-sara-gold text-white shadow-lg flex items-center justify-center"
+            aria-label="Criar post"
+          >
+            <Plus size={24} />
+          </motion.button>
         </>
       ) : (
         <ComunidadesScreen />
