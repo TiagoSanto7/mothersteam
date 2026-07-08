@@ -189,6 +189,13 @@ describe('ComunidadeScreen', () => {
     expect(onOpenChat).toHaveBeenCalledOnce();
   });
 
+  it('calls onOpenNotifications when Notificações button is clicked', () => {
+    const onOpenNotifications = vi.fn();
+    render(<ComunidadeScreen onOpenNotifications={onOpenNotifications} />);
+    fireEvent.click(screen.getByRole('button', { name: /notificações/i }));
+    expect(onOpenNotifications).toHaveBeenCalledOnce();
+  });
+
   it('does not render icon buttons when props are not provided', () => {
     render(<ComunidadeScreen />);
     expect(screen.queryByRole('button', { name: /mensagens/i })).not.toBeInTheDocument();

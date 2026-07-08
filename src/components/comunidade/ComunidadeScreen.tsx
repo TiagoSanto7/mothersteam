@@ -127,8 +127,8 @@ export function ComunidadeScreen({ onOpenChat, onOpenNotifications }: Comunidade
   const shareToChat = useAppStore((s) => s.shareToChat);
   const chats = useAppStore((s) => s.chats);
   const notifications = useAppStore((s) => s.notifications);
-  const unreadNotifs = notifications.filter((n) => !n.read).length;
-  const unreadChats = chats.reduce((sum, c) => sum + c.unread, 0);
+  const unreadNotifs = onOpenNotifications ? notifications.filter((n) => !n.read).length : 0;
+  const unreadChats = onOpenChat ? chats.reduce((sum, c) => sum + c.unread, 0) : 0;
 
   const [topTab, setTopTab] = useState<TopTab>('para-voce');
   const [activeCategory, setActiveCategory] = useState<Category>('todos');
