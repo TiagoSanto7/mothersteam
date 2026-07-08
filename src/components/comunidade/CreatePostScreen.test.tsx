@@ -96,7 +96,9 @@ describe('CreatePostScreen', () => {
     render(<CreatePostScreen onBack={() => {}} />);
     const input = screen.getByTestId('file-input');
     const file = new File(['img'], 'photo.png', { type: 'image/png' });
-    fireEvent.change(input, { target: { files: [file] } });
+    await act(async () => {
+      fireEvent.change(input, { target: { files: [file] } });
+    });
     const pubBtn = screen.getAllByRole('button', { name: /publicar/i })[0];
     expect(pubBtn).not.toBeDisabled();
   });

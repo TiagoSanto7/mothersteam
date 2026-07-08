@@ -1,5 +1,5 @@
 import { render, screen, fireEvent } from '@testing-library/react';
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { PostDetailScreen } from './PostDetailScreen';
 import { useAppStore } from '../../store/useAppStore';
 import type { CommunityPost } from '../../types';
@@ -22,6 +22,10 @@ beforeEach(() => {
     postComments: {},
     chats: [],
   });
+});
+
+afterEach(() => {
+  useAppStore.setState({ communityPosts: [], postComments: {}, chats: [] });
 });
 
 describe('PostDetailScreen', () => {
