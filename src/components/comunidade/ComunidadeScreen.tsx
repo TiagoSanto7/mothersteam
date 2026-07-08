@@ -279,6 +279,9 @@ export function ComunidadeScreen() {
         {showCreate && (
           <motion.div
             key="composer-modal"
+            role="dialog"
+            aria-modal="true"
+            aria-label="Nova publicação"
             initial={{ opacity: 0, y: 40 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 40 }}
