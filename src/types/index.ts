@@ -85,6 +85,7 @@ export interface ChatMessage {
   from: string;
   content: string;
   time: string;
+  sharedPost?: { id: string; author: string; excerpt: string; imageUrl?: string };
 }
 
 export interface Chat {

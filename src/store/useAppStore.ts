@@ -198,7 +198,7 @@ interface AppState {
   repost: (post: CommunityPost) => void;
   // Actions — Chat
   sendMessage: (chatId: string, content: string) => void;
-  shareToChat: (chatId: string, content: string) => void;
+  shareToChat: (chatId: string, content: string, sharedPost?: { id: string; author: string; excerpt: string; imageUrl?: string }) => void;
   markChatRead: (chatId: string) => void;
 }
 
@@ -354,13 +354,13 @@ export const useAppStore = create<AppState>()(
               : c
           ),
         })),
-      shareToChat: (chatId, content) =>
+      shareToChat: (chatId, content, sharedPost) =>
         set((s) => ({
           chats: s.chats.map((c) =>
             c.id === chatId
               ? {
                   ...c,
-                  lastMessage: content,
+                  lastMessage: content || (sharedPost ? `Post de ${sharedPost.author}` : ''),
                   time: 'agora',
                   messages: [
                     ...c.messages,
@@ -369,6 +369,7 @@ export const useAppStore = create<AppState>()(
                       from: s.motherName,
                       content,
                       time: new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
+                      ...(sharedPost ? { sharedPost } : {}),
                     },
                   ],
                 }
