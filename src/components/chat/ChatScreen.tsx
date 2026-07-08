@@ -72,6 +72,7 @@ export function ChatScreen({ chat, onBack }: ChatScreenProps) {
                       <img
                         src={msg.sharedPost.imageUrl}
                         alt="Imagem do post"
+                        loading="lazy"
                         className="w-full rounded-lg object-cover max-h-24"
                       />
                     )}

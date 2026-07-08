@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import type { TabId, PregnancyPhase, RoutineEntry, BabyEntry, OnboardingAnswers, MotherProfile, CommunityPost, Community, AppNotification, PostComment, Chat } from '../types';
+import type { TabId, PregnancyPhase, RoutineEntry, BabyEntry, OnboardingAnswers, MotherProfile, CommunityPost, Community, AppNotification, PostComment, Chat, SharedPost } from '../types';
 import { computeProfile } from '../utils/onboardingScoring';
 
 const today = new Date().toISOString().split('T')[0];
@@ -198,7 +198,7 @@ interface AppState {
   repost: (post: CommunityPost) => void;
   // Actions — Chat
   sendMessage: (chatId: string, content: string) => void;
-  shareToChat: (chatId: string, content: string, sharedPost?: { id: string; author: string; excerpt: string; imageUrl?: string }) => void;
+  shareToChat: (chatId: string, content: string, sharedPost?: SharedPost) => void;
   markChatRead: (chatId: string) => void;
 }
 

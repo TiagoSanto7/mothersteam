@@ -72,6 +72,13 @@ export interface PostComment {
   likes: number;
 }
 
+export interface SharedPost {
+  id: string;
+  author: string;
+  excerpt: string;
+  imageUrl?: string;
+}
+
 export interface AppNotification {
   id: string;
   type: 'like' | 'follow' | 'comment';
@@ -85,7 +92,7 @@ export interface ChatMessage {
   from: string;
   content: string;
   time: string;
-  sharedPost?: { id: string; author: string; excerpt: string; imageUrl?: string };
+  sharedPost?: SharedPost;
 }
 
 export interface Chat {
