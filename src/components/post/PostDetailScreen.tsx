@@ -64,7 +64,7 @@ export function PostDetailScreen({ post, onBack }: PostDetailScreenProps) {
   return (
     <div className="flex flex-col w-full h-full sm:w-[390px] sm:h-[844px] bg-gradient-to-b from-[#F5EDE0] via-[#EAD8C8] to-[#D9C4AF] sm:rounded-[44px] sm:shadow-2xl overflow-hidden relative">
       <div className="flex items-center gap-3 px-4 pt-6 pb-4 border-b border-sara-linen/60 flex-shrink-0">
-        <button onClick={onBack} className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-sara-linen">
+        <button onClick={onBack} aria-label="Voltar" className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-sara-linen">
           <ChevronLeft size={20} className="text-graphite" />
         </button>
         <p className="text-sm font-semibold text-graphite">Publicação</p>
@@ -98,6 +98,14 @@ export function PostDetailScreen({ post, onBack }: PostDetailScreenProps) {
           </div>
 
           <p className="text-sm text-graphite leading-relaxed mb-4">{currentPost.content}</p>
+
+          {currentPost.imageUrl && (
+            <img
+              src={currentPost.imageUrl}
+              alt="Imagem do post"
+              className="w-full rounded-xl object-cover max-h-64 mb-4"
+            />
+          )}
 
           <div className="flex items-center gap-6 pt-3 border-t border-sara-linen/60">
             <button

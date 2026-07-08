@@ -34,7 +34,7 @@ export function CreatePostScreen({ onBack }: CreatePostScreenProps) {
   }
 
   function handlePublish() {
-    if (!content.trim()) return;
+    if (!content.trim() && !imagePreview) return;
     addCommunityPost({
       author: motherName,
       content: content.trim(),
@@ -56,7 +56,7 @@ export function CreatePostScreen({ onBack }: CreatePostScreenProps) {
         <h1 className="text-sm font-semibold text-graphite">Publicação</h1>
         <button
           onClick={handlePublish}
-          disabled={!content.trim()}
+          disabled={!content.trim() && !imagePreview}
           className="text-sm font-semibold text-sara-gold disabled:opacity-40 px-1 py-1"
         >
           Publicar

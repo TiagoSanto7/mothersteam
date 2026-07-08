@@ -91,4 +91,13 @@ describe('CreatePostScreen', () => {
     const pubBtns = screen.getAllByRole('button', { name: /publicar/i });
     expect(pubBtns.length).toBeGreaterThan(0);
   });
+
+  it('enables Publicar when only imagePreview is set (no text)', async () => {
+    render(<CreatePostScreen onBack={() => {}} />);
+    const input = screen.getByTestId('file-input');
+    const file = new File(['img'], 'photo.png', { type: 'image/png' });
+    fireEvent.change(input, { target: { files: [file] } });
+    const pubBtn = screen.getAllByRole('button', { name: /publicar/i })[0];
+    expect(pubBtn).not.toBeDisabled();
+  });
 });
