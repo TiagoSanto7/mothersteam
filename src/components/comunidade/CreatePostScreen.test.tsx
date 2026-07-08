@@ -78,4 +78,17 @@ describe('CreatePostScreen', () => {
     const posts = useAppStore.getState().communityPosts;
     expect(posts[0].imageUrl).toBeUndefined();
   });
+
+  it('renders Cancelar button instead of arrow-back button', () => {
+    render(<CreatePostScreen onBack={() => {}} />);
+    expect(screen.getByRole('button', { name: /cancelar/i })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /voltar/i })).not.toBeInTheDocument();
+  });
+
+  it('renders header Publicar button', () => {
+    render(<CreatePostScreen onBack={() => {}} />);
+    // The Publicar button is now in the header, not a full-width bottom button
+    const pubBtns = screen.getAllByRole('button', { name: /publicar/i });
+    expect(pubBtns.length).toBeGreaterThan(0);
+  });
 });

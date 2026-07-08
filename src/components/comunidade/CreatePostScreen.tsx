@@ -1,5 +1,5 @@
 import { useState, useRef } from 'react';
-import { ArrowLeft, ImagePlus, X } from 'lucide-react';
+import { ImagePlus, X } from 'lucide-react';
 import { useAppStore } from '../../store/useAppStore';
 import type { CommunityPost } from '../../types';
 
@@ -46,15 +46,21 @@ export function CreatePostScreen({ onBack }: CreatePostScreenProps) {
 
   return (
     <div className="flex flex-col gap-4 pb-6 h-full">
-      <div className="flex items-center gap-3 px-4 pt-4">
+      <div className="flex items-center justify-between px-4 pt-4 pb-2">
         <button
           onClick={onBack}
-          aria-label="Voltar"
-          className="w-9 h-9 rounded-xl bg-sara-linen flex items-center justify-center"
+          className="text-sm text-graphite-muted font-medium px-1 py-1"
         >
-          <ArrowLeft size={18} className="text-sara-gold" strokeWidth={1.8} />
+          Cancelar
         </button>
-        <h1 className="text-base font-semibold text-graphite">Desabafar</h1>
+        <h1 className="text-sm font-semibold text-graphite">Publicação</h1>
+        <button
+          onClick={handlePublish}
+          disabled={!content.trim()}
+          className="text-sm font-semibold text-sara-gold disabled:opacity-40 px-1 py-1"
+        >
+          Publicar
+        </button>
       </div>
 
       <div className="px-4 flex flex-col gap-3 flex-1">
@@ -126,15 +132,6 @@ export function CreatePostScreen({ onBack }: CreatePostScreenProps) {
         </div>
       </div>
 
-      <div className="px-4">
-        <button
-          onClick={handlePublish}
-          disabled={!content.trim()}
-          className="w-full py-3.5 rounded-2xl bg-sara-gold text-white text-sm font-semibold active:scale-95 transition-transform disabled:opacity-40"
-        >
-          Publicar 💜
-        </button>
-      </div>
     </div>
   );
 }

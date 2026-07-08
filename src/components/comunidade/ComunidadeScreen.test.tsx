@@ -1,7 +1,16 @@
 import { render, screen, fireEvent } from '@testing-library/react';
-import { describe, expect, it, beforeEach } from 'vitest';
+import { describe, expect, it, beforeEach, vi } from 'vitest';
 import { ComunidadeScreen } from './ComunidadeScreen';
 import { useAppStore } from '../../store/useAppStore';
+
+// Make AnimatePresence synchronous so exit tests work without awaiting animations
+vi.mock('framer-motion', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('framer-motion')>();
+  return {
+    ...actual,
+    AnimatePresence: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+  };
+});
 
 beforeEach(() => {
   useAppStore.setState({
@@ -145,5 +154,20 @@ describe('ComunidadeScreen', () => {
     const [firstRepost] = screen.getAllByRole('button', { name: /republicar/i });
     fireEvent.click(firstRepost);
     expect(screen.getAllByRole('button', { name: /republicado/i })[0]).toBeInTheDocument();
+  });
+
+  it('shows CreatePost modal when ComposerBar is clicked (feed still mounted)', () => {
+    render(<ComunidadeScreen />);
+    fireEvent.click(screen.getByRole('button', { name: /escrever post/i }));
+    // Feed is still in DOM (modal overlays, doesn't replace)
+    expect(screen.getByText('O que você está sentindo hoje?')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /cancelar/i })).toBeInTheDocument();
+  });
+
+  it('closes CreatePost modal when Cancelar is clicked', () => {
+    render(<ComunidadeScreen />);
+    fireEvent.click(screen.getByRole('button', { name: /escrever post/i }));
+    fireEvent.click(screen.getByRole('button', { name: /cancelar/i }));
+    expect(screen.queryByRole('button', { name: /cancelar/i })).not.toBeInTheDocument();
   });
 });

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { MessageCircle, Heart, Plus, Repeat2, Share2, X } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useAppStore } from '../../store/useAppStore';
 import { CreatePostScreen } from './CreatePostScreen';
 import { PostDetailScreen } from '../post/PostDetailScreen';
@@ -130,10 +130,6 @@ export function ComunidadeScreen() {
 
   if (selectedPost) {
     return <PostDetailScreen post={selectedPost} onBack={() => setSelectedPost(null)} />;
-  }
-
-  if (showCreate) {
-    return <CreatePostScreen onBack={() => setShowCreate(false)} />;
   }
 
   const prioritized = [
@@ -278,6 +274,21 @@ export function ComunidadeScreen() {
           </div>
         </div>
       )}
+
+      <AnimatePresence>
+        {showCreate && (
+          <motion.div
+            key="composer-modal"
+            initial={{ opacity: 0, y: 40 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 40 }}
+            transition={{ type: 'spring', duration: 0.35, bounce: 0.1 }}
+            className="fixed inset-0 z-50 bg-gradient-to-b from-[#F5EDE0] via-[#EAD8C8] to-[#D9C4AF] flex flex-col"
+          >
+            <CreatePostScreen onBack={() => setShowCreate(false)} />
+          </motion.div>
+        )}
+      </AnimatePresence>
     </>
   );
 }
