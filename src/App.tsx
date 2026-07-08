@@ -26,17 +26,25 @@ export default function App() {
 
   const screens: Record<TabId, React.ReactElement> = {
     // 'home' routes to the feed — community IS the home experience by design
-    home:       <ComunidadeScreen />,
+    home: (
+      <ComunidadeScreen
+        onOpenChat={() => setShowChat(true)}
+        onOpenNotifications={() => setShowNotifications(true)}
+      />
+    ),
     maeIA:      <MaeIAScreen />,
     baby:       <BabyScreen />,
     rotina: (
       <HomeScreen
         onOpenProfile={() => setShowProfile(true)}
-        onOpenNotifications={() => setShowNotifications(true)}
-        onOpenChat={() => setShowChat(true)}
       />
     ),
-    comunidade: <ComunidadeScreen />, // alias for stale persisted activeTab
+    comunidade: ( // alias for stale persisted activeTab
+      <ComunidadeScreen
+        onOpenChat={() => setShowChat(true)}
+        onOpenNotifications={() => setShowNotifications(true)}
+      />
+    ),
     shopping:   <ShoppingScreen />,
   };
 

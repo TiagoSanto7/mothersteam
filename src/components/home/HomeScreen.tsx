@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Bell, MessageSquare, Plus } from 'lucide-react';
+import { Plus } from 'lucide-react';
 import { useAppStore } from '../../store/useAppStore';
 import { getHeaderGreeting } from '../../utils/pregnancyUtils';
 import { WeekCalendar } from './WeekCalendar';
@@ -10,63 +10,33 @@ import { AddRoutineModal } from './AddRoutineModal';
 
 interface HomeScreenProps {
   onOpenProfile: () => void;
-  onOpenNotifications: () => void;
-  onOpenChat: () => void;
 }
 
-export function HomeScreen({ onOpenProfile, onOpenNotifications, onOpenChat }: HomeScreenProps) {
-  const { phase, motherName, babyName, selectedDate, motherProfile, notifications, chats } = useAppStore();
+export function HomeScreen({ onOpenProfile }: HomeScreenProps) {
+  const phase = useAppStore((s) => s.phase);
+  const motherName = useAppStore((s) => s.motherName);
+  const babyName = useAppStore((s) => s.babyName);
+  const selectedDate = useAppStore((s) => s.selectedDate);
+  const motherProfile = useAppStore((s) => s.motherProfile);
   const greeting = getHeaderGreeting(phase, motherName, babyName);
   const [showAddModal, setShowAddModal] = useState(false);
   const initial = motherName.charAt(0).toUpperCase();
-  const unreadNotifs = notifications.filter((n) => !n.read).length;
-  const unreadChats = chats.reduce((sum, c) => sum + c.unread, 0);
 
   return (
     <div className="flex flex-col gap-4 pb-6">
-      <div className="flex items-start justify-between px-4 pt-4">
-        <div className="flex items-center gap-3">
-          <button
-            onClick={onOpenProfile}
-            aria-label="Abrir perfil"
-            className="w-10 h-10 rounded-full bg-sara-terracotta flex items-center justify-center text-base font-bold text-white shadow-sm flex-shrink-0 active:scale-95 transition-transform"
-          >
-            {initial}
-          </button>
-          <div>
-            <p className="text-xs text-graphite-muted font-medium">Bom dia ☀️</p>
-            <h1 className="text-base font-semibold font-serif text-graphite leading-snug max-w-[220px]">
-              {greeting}
-            </h1>
-          </div>
-        </div>
-
-        <div className="flex items-center gap-2">
-          <button
-            onClick={onOpenChat}
-            aria-label="Mensagens"
-            className="relative w-9 h-9 rounded-xl bg-white/70 backdrop-blur-sm border border-white/50 flex items-center justify-center"
-          >
-            <MessageSquare size={18} className="text-graphite-light" strokeWidth={1.8} />
-            {unreadChats > 0 && (
-              <span className="absolute -top-1 -right-1 w-4 h-4 bg-sara-gold rounded-full flex items-center justify-center text-[9px] font-bold text-white">
-                {unreadChats}
-              </span>
-            )}
-          </button>
-
-          <button
-            onClick={onOpenNotifications}
-            aria-label="Notificações"
-            className="relative w-9 h-9 rounded-xl bg-white/70 backdrop-blur-sm border border-white/50 flex items-center justify-center"
-          >
-            <Bell size={18} className="text-graphite-light" strokeWidth={1.8} />
-            {unreadNotifs > 0 && (
-              <span className="absolute -top-1 -right-1 w-4 h-4 bg-sara-terracotta rounded-full flex items-center justify-center text-[9px] font-bold text-white">
-                {unreadNotifs}
-              </span>
-            )}
-          </button>
+      <div className="flex items-center gap-3 px-4 pt-4">
+        <button
+          onClick={onOpenProfile}
+          aria-label="Abrir perfil"
+          className="w-10 h-10 rounded-full bg-sara-terracotta flex items-center justify-center text-base font-bold text-white shadow-sm flex-shrink-0 active:scale-95 transition-transform"
+        >
+          {initial}
+        </button>
+        <div>
+          <p className="text-xs text-graphite-muted font-medium">Bom dia ☀️</p>
+          <h1 className="text-base font-semibold font-serif text-graphite leading-snug max-w-[220px]">
+            {greeting}
+          </h1>
         </div>
       </div>
 
