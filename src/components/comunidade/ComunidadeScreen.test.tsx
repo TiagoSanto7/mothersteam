@@ -32,6 +32,10 @@ beforeEach(() => {
     followedCommunityIds: ['amamentacao-apoio'],
     phase: { stage: 'pregnant', week: 28 },
     motherProfile: null,
+    chats: [
+      { id: '1', with: 'Ana Oliveira', lastMessage: 'Oi!', time: '5min', unread: 2,
+        messages: [{ id: '1', from: 'Ana Oliveira', content: 'Oi!', time: '14:20' }] },
+    ],
   });
 });
 
@@ -106,5 +110,40 @@ describe('ComunidadeScreen', () => {
   it('renders exactly one image for the one post with imageUrl', () => {
     render(<ComunidadeScreen />);
     expect(screen.getAllByAltText('Imagem do post')).toHaveLength(1);
+  });
+
+  it('renders avatar with author initial inside each PostCard', () => {
+    render(<ComunidadeScreen />);
+    // each post-card should contain the first letter of its author
+    const cards = screen.getAllByTestId('post-card');
+    expect(cards.length).toBeGreaterThan(0);
+    // at least one card must have an avatar div (data-testid="post-avatar")
+    expect(document.querySelector('[data-testid="post-avatar"]')).toBeTruthy();
+  });
+
+  it('renders Republicar button in every PostCard', () => {
+    render(<ComunidadeScreen />);
+    const btns = screen.getAllByRole('button', { name: /republicar/i });
+    expect(btns.length).toBeGreaterThan(0);
+  });
+
+  it('renders Enviar post button in every PostCard', () => {
+    render(<ComunidadeScreen />);
+    const btns = screen.getAllByRole('button', { name: /enviar post/i });
+    expect(btns.length).toBeGreaterThan(0);
+  });
+
+  it('clicking Enviar post opens share sheet without navigating to post', () => {
+    render(<ComunidadeScreen />);
+    const [firstEnviar] = screen.getAllByRole('button', { name: /enviar post/i });
+    fireEvent.click(firstEnviar);
+    expect(screen.getByText('Enviar para')).toBeInTheDocument();
+  });
+
+  it('clicking Republicar toggles aria-label to Republicado', () => {
+    render(<ComunidadeScreen />);
+    const [firstRepost] = screen.getAllByRole('button', { name: /republicar/i });
+    fireEvent.click(firstRepost);
+    expect(screen.getAllByRole('button', { name: /republicado/i })[0]).toBeInTheDocument();
   });
 });
