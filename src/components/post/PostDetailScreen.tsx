@@ -79,7 +79,7 @@ export function PostDetailScreen({ post, onBack }: PostDetailScreenProps) {
 
   return (
     <div className="flex flex-col w-full h-full sm:w-[390px] sm:h-[844px] bg-gradient-to-b from-[#F5EDE0] via-[#EAD8C8] to-[#D9C4AF] sm:rounded-[44px] sm:shadow-2xl overflow-hidden relative">
-      {!showShareSheet && <div className="flex flex-col flex-1 overflow-hidden">
+      <div className="flex flex-col flex-1 overflow-hidden">
       <div className="flex items-center gap-3 px-4 pt-6 pb-4 border-b border-sara-linen/60 flex-shrink-0">
         <button onClick={onBack} aria-label="Voltar" className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-sara-linen">
           <ChevronLeft size={20} className="text-graphite" />
@@ -205,7 +205,7 @@ export function PostDetailScreen({ post, onBack }: PostDetailScreenProps) {
         </div>
       </div>
 
-      </div>}{/* end conditional content wrapper */}
+      </div>
 
       {/* Share sheet */}
       {showShareSheet && (

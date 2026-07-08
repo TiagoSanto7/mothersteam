@@ -1,4 +1,4 @@
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, within } from '@testing-library/react';
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { PostDetailScreen } from './PostDetailScreen';
 import { useAppStore } from '../../store/useAppStore';
@@ -66,8 +66,9 @@ describe('PostDetailScreen', () => {
   it('shows all chats in share sheet as checkboxes', () => {
     render(<PostDetailScreen post={POST_WITH_IMAGE} onBack={() => {}} />);
     fireEvent.click(screen.getByRole('button', { name: /enviar/i }));
-    expect(screen.getByText('Ana Oliveira')).toBeInTheDocument();
-    expect(screen.getByText('Fernanda S.')).toBeInTheDocument();
+    const list = screen.getByRole('list');
+    expect(within(list).getByText('Ana Oliveira')).toBeInTheDocument();
+    expect(within(list).getByText('Fernanda S.')).toBeInTheDocument();
   });
 
   it('Enviar button is disabled when no recipient selected', () => {
@@ -97,5 +98,28 @@ describe('PostDetailScreen', () => {
     fireEvent.click(screen.getByText('Ana Oliveira'));
     fireEvent.click(screen.getByTestId('share-send-btn'));
     expect(screen.queryByText('Enviar para')).not.toBeInTheDocument();
+  });
+
+  it('calls shareToChat for each selected recipient', () => {
+    const spy = vi.fn();
+    useAppStore.setState({ shareToChat: spy });
+    render(<PostDetailScreen post={POST_WITH_IMAGE} onBack={() => {}} />);
+    fireEvent.click(screen.getByRole('button', { name: /enviar/i }));
+    // Select both chats
+    fireEvent.click(screen.getByText('Ana Oliveira'));
+    const list = screen.getByRole('list');
+    fireEvent.click(within(list).getByText('Fernanda S.'));
+    fireEvent.click(screen.getByTestId('share-send-btn'));
+    expect(spy).toHaveBeenCalledTimes(2);
+    expect(spy).toHaveBeenCalledWith(
+      '1',
+      '',
+      expect.objectContaining({ id: '1', author: 'Fernanda S.' }),
+    );
+    expect(spy).toHaveBeenCalledWith(
+      '2',
+      '',
+      expect.objectContaining({ id: '1', author: 'Fernanda S.' }),
+    );
   });
 });
