@@ -44,6 +44,7 @@ function PostCard({
           <div className="flex items-center gap-2.5">
             <div
               data-testid="post-avatar"
+              aria-hidden="true"
               className="w-9 h-9 rounded-full bg-sara-terracotta flex items-center justify-center text-white text-sm font-bold flex-shrink-0"
             >
               {post.author.charAt(0)}
@@ -237,6 +238,9 @@ export function ComunidadeScreen() {
           onClick={() => setSharingPost(null)}
         >
           <div
+            role="dialog"
+            aria-modal="true"
+            aria-label="Enviar post para conversa"
             className="w-full bg-white rounded-t-3xl px-4 pt-4 pb-10 max-w-[390px] mx-auto"
             onClick={(e) => e.stopPropagation()}
           >
@@ -244,6 +248,7 @@ export function ComunidadeScreen() {
               <p className="text-sm font-semibold text-graphite">Enviar para</p>
               <button
                 onClick={() => setSharingPost(null)}
+                aria-label="Fechar"
                 className="w-7 h-7 rounded-full bg-gray-100 flex items-center justify-center"
               >
                 <X size={14} className="text-graphite" />
