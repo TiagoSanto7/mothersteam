@@ -318,17 +318,27 @@ export function ComunidadeScreen({ onOpenChat, onOpenNotifications }: Comunidade
       <AnimatePresence>
         {showCreate && (
           <motion.div
-            key="composer-modal"
-            role="dialog"
-            aria-modal="true"
-            aria-label="Nova publicação"
-            initial={{ opacity: 0, y: 40 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 40 }}
-            transition={{ type: 'spring', duration: 0.35, bounce: 0.1 }}
-            className="fixed inset-0 z-50 bg-gradient-to-b from-[#F5EDE0] via-[#EAD8C8] to-[#D9C4AF] flex flex-col"
+            key="composer-backdrop"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            className="fixed inset-0 z-50 bg-black/40 flex items-end"
+            onClick={() => setShowCreate(false)}
           >
-            <CreatePostScreen onBack={() => setShowCreate(false)} />
+            <motion.div
+              initial={{ y: 40, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              exit={{ y: 40, opacity: 0 }}
+              transition={{ type: 'spring', duration: 0.35, bounce: 0.1 }}
+              role="dialog"
+              aria-modal="true"
+              aria-label="Nova publicação"
+              className="w-full max-w-[390px] mx-auto h-[90%] bg-gradient-to-b from-[#F5EDE0] via-[#EAD8C8] to-[#D9C4AF] rounded-t-3xl flex flex-col overflow-hidden"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <CreatePostScreen onBack={() => setShowCreate(false)} />
+            </motion.div>
           </motion.div>
         )}
       </AnimatePresence>
