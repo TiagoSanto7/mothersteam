@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, fireEvent } from '@testing-library/react';
 import { describe, it, expect, beforeEach } from 'vitest';
 import { ChatScreen } from './ChatScreen';
 import { useAppStore } from '../../store/useAppStore';
@@ -28,7 +28,7 @@ const SHARED_CHAT: Chat = {
       from: 'Mariana',
       content: 'Olha isso!',
       time: '09:00',
-      sharedPost: { id: 'p1', author: 'Juliana M.', excerpt: 'Puerpério é difícil', imageUrl: 'data:image/png;base64,abc' },
+      sharedPost: { id: 'p1', author: 'Juliana M.', excerpt: 'Puerpério é difícil' },
     },
     {
       id: '2',
@@ -41,7 +41,22 @@ const SHARED_CHAT: Chat = {
 };
 
 beforeEach(() => {
-  useAppStore.setState({ motherName: 'Mariana', chats: [PLAIN_CHAT, SHARED_CHAT] });
+  useAppStore.setState({
+    motherName: 'Mariana',
+    chats: [PLAIN_CHAT, SHARED_CHAT],
+    communityPosts: [
+      {
+        id: 'p1',
+        category: 'pós-parto' as const,
+        author: 'Juliana M.',
+        content: 'Puerpério é difícil',
+        likes: 10,
+        replies: 3,
+        time: '1h',
+        imageUrl: 'data:image/png;base64,abc',
+      },
+    ],
+  });
 });
 
 describe('ChatScreen', () => {
@@ -75,5 +90,18 @@ describe('ChatScreen', () => {
   it('renders comment text when sharedPost message also has content', () => {
     render(<ChatScreen chat={SHARED_CHAT} onBack={() => {}} />);
     expect(screen.getByText('Olha isso!')).toBeInTheDocument();
+  });
+
+  it('clicking shared post card opens PostDetailScreen', () => {
+    render(<ChatScreen chat={SHARED_CHAT} onBack={() => {}} />);
+    fireEvent.click(screen.getByRole('button', { name: /ver post de Juliana M\./i }));
+    expect(screen.getByText('Publicação')).toBeInTheDocument();
+  });
+
+  it('does not open PostDetailScreen when shared post is not in communityPosts', () => {
+    render(<ChatScreen chat={SHARED_CHAT} onBack={() => {}} />);
+    // p2 is NOT in communityPosts (only p1 is) — button is disabled
+    fireEvent.click(screen.getByRole('button', { name: /ver post de Fernanda S\./i }));
+    expect(screen.queryByText('Publicação')).not.toBeInTheDocument();
   });
 });

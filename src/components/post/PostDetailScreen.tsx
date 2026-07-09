@@ -62,7 +62,6 @@ export function PostDetailScreen({ post, onBack }: PostDetailScreenProps) {
           id: currentPost.id,
           author: currentPost.author,
           excerpt: currentPost.content.slice(0, 80),
-          imageUrl: currentPost.imageUrl,
         },
       );
     });

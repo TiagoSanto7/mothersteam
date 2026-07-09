@@ -1,7 +1,8 @@
 import { useState, useRef, useEffect } from 'react';
 import { ChevronLeft, Send } from 'lucide-react';
 import { useAppStore } from '../../store/useAppStore';
-import type { Chat } from '../../types';
+import { PostDetailScreen } from '../post/PostDetailScreen';
+import type { Chat, CommunityPost } from '../../types';
 
 interface ChatScreenProps {
   chat: Chat;
@@ -11,11 +12,13 @@ interface ChatScreenProps {
 export function ChatScreen({ chat, onBack }: ChatScreenProps) {
   const motherName = useAppStore((s) => s.motherName);
   const chats = useAppStore((s) => s.chats);
+  const communityPosts = useAppStore((s) => s.communityPosts);
   const sendMessage = useAppStore((s) => s.sendMessage);
   const markChatRead = useAppStore((s) => s.markChatRead);
 
   const currentChat = chats.find((c) => c.id === chat.id) ?? chat;
   const [text, setText] = useState('');
+  const [viewingPost, setViewingPost] = useState<CommunityPost | null>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -27,6 +30,10 @@ export function ChatScreen({ chat, onBack }: ChatScreenProps) {
       bottomRef.current.scrollIntoView({ behavior: 'smooth' });
     }
   }, [currentChat.messages.length]);
+
+  if (viewingPost) {
+    return <PostDetailScreen post={viewingPost} onBack={() => setViewingPost(null)} />;
+  }
 
   function handleSend() {
     if (!text.trim()) return;
@@ -51,6 +58,9 @@ export function ChatScreen({ chat, onBack }: ChatScreenProps) {
       <div className="flex-1 overflow-y-auto px-4 py-4 flex flex-col gap-3">
         {currentChat.messages.map((msg) => {
           const isMe = msg.from === motherName;
+          const linkedPost = msg.sharedPost
+            ? communityPosts.find((p) => p.id === msg.sharedPost!.id)
+            : undefined;
           return (
             <div key={msg.id} className={`flex ${isMe ? 'justify-end' : 'justify-start'}`}>
               {!isMe && (
@@ -64,13 +74,18 @@ export function ChatScreen({ chat, onBack }: ChatScreenProps) {
                   : 'bg-white text-graphite shadow-sm rounded-bl-sm'
               }`}>
                 {msg.sharedPost ? (
-                  <div className="p-3 flex flex-col gap-1.5">
+                  <button
+                    aria-label={`Ver post de ${msg.sharedPost.author}`}
+                    onClick={() => { if (linkedPost) setViewingPost(linkedPost); }}
+                    className="p-3 flex flex-col gap-1.5 w-full text-left disabled:cursor-default"
+                    disabled={!linkedPost}
+                  >
                     <p className={`text-[10px] font-semibold uppercase tracking-wide ${isMe ? 'text-white/70' : 'text-graphite-muted'}`}>
                       Post compartilhado
                     </p>
-                    {msg.sharedPost.imageUrl && (
+                    {linkedPost?.imageUrl && (
                       <img
-                        src={msg.sharedPost.imageUrl}
+                        src={linkedPost.imageUrl}
                         alt="Imagem do post"
                         loading="lazy"
                         className="w-full rounded-lg object-cover max-h-24"
@@ -88,7 +103,7 @@ export function ChatScreen({ chat, onBack }: ChatScreenProps) {
                       </p>
                     )}
                     <p className={`text-[10px] mt-0.5 ${isMe ? 'text-white/70' : 'text-graphite-muted'}`}>{msg.time}</p>
-                  </div>
+                  </button>
                 ) : (
                   <div className="px-4 py-2.5">
                     <p className="text-sm leading-relaxed">{msg.content}</p>

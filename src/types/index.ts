@@ -76,7 +76,6 @@ export interface SharedPost {
   id: string;
   author: string;
   excerpt: string;
-  imageUrl?: string;
 }
 
 export interface AppNotification {

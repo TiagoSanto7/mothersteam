@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
+import { persist, createJSONStorage } from 'zustand/middleware';
 import type { TabId, PregnancyPhase, RoutineEntry, BabyEntry, OnboardingAnswers, MotherProfile, CommunityPost, Community, AppNotification, PostComment, Chat, SharedPost } from '../types';
 import { computeProfile } from '../utils/onboardingScoring';
 
@@ -202,6 +202,21 @@ interface AppState {
   markChatRead: (chatId: string) => void;
 }
 
+const safeLocalStorage = {
+  getItem: (key: string): string | null => {
+    try { return localStorage.getItem(key); }
+    catch { return null; }
+  },
+  setItem: (key: string, value: string): void => {
+    try { localStorage.setItem(key, value); }
+    catch (e) { console.warn('[persist] localStorage full:', e); }
+  },
+  removeItem: (key: string): void => {
+    try { localStorage.removeItem(key); }
+    catch { /* ignore */ }
+  },
+};
+
 export const useAppStore = create<AppState>()(
   persist(
     (set) => ({
@@ -393,6 +408,6 @@ export const useAppStore = create<AppState>()(
           followedCommunityIds: s.followedCommunityIds.filter((cid) => cid !== id),
         })),
     }),
-    { name: 'mothers-team-v2' },
+    { name: 'mothers-team-v2', storage: createJSONStorage(() => safeLocalStorage) },
   ),
 );
