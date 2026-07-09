@@ -31,14 +31,14 @@ export function ChatScreen({ chat, onBack }: ChatScreenProps) {
     }
   }, [currentChat.messages.length]);
 
-  if (viewingPost) {
-    return <PostDetailScreen post={viewingPost} onBack={() => setViewingPost(null)} />;
-  }
-
   function handleSend() {
     if (!text.trim()) return;
     sendMessage(chat.id, text.trim());
     setText('');
+  }
+
+  if (viewingPost) {
+    return <PostDetailScreen post={viewingPost} onBack={() => setViewingPost(null)} />;
   }
 
   return (
@@ -59,7 +59,7 @@ export function ChatScreen({ chat, onBack }: ChatScreenProps) {
         {currentChat.messages.map((msg) => {
           const isMe = msg.from === motherName;
           const linkedPost = msg.sharedPost
-            ? communityPosts.find((p) => p.id === msg.sharedPost!.id)
+            ? communityPosts.find((p) => p.id === msg.sharedPost?.id)
             : undefined;
           return (
             <div key={msg.id} className={`flex ${isMe ? 'justify-end' : 'justify-start'}`}>

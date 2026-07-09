@@ -81,7 +81,7 @@ describe('ChatScreen', () => {
     expect(screen.getByText('Puerpério é difícil')).toBeInTheDocument();
   });
 
-  it('renders image when sharedPost has imageUrl', () => {
+  it('renders image when linkedPost has imageUrl', () => {
     render(<ChatScreen chat={SHARED_CHAT} onBack={() => {}} />);
     const img = screen.getByAltText('Imagem do post');
     expect(img).toHaveAttribute('src', 'data:image/png;base64,abc');
