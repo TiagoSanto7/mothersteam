@@ -1,11 +1,12 @@
 import { useState } from 'react';
-import { MessageCircle, Heart, Plus, Repeat2, Share2, X, MessageSquare, Bell } from 'lucide-react';
+import { MessageCircle, Heart, Plus, Repeat2, Share2, MessageSquare, Bell } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAppStore } from '../../store/useAppStore';
 import { CreatePostScreen } from './CreatePostScreen';
 import { PostDetailScreen } from '../post/PostDetailScreen';
 import { ComunidadesScreen } from './ComunidadesScreen';
 import { ComposerBar } from './ComposerBar';
+import { SharePostSheet } from './SharePostSheet';
 import type { CommunityPost } from '../../types';
 
 type TopTab = 'para-voce' | 'comunidades';
@@ -45,7 +46,7 @@ function PostCard({
             <div
               data-testid="post-avatar"
               aria-hidden="true"
-              className="w-9 h-9 rounded-full bg-sara-terracotta flex items-center justify-center text-white text-sm font-bold flex-shrink-0"
+              className="w-10 h-10 rounded-full bg-sara-terracotta flex items-center justify-center text-white text-sm font-bold flex-shrink-0"
             >
               {post.author.charAt(0)}
             </div>
@@ -124,7 +125,6 @@ export function ComunidadeScreen({ onOpenChat, onOpenNotifications }: Comunidade
   const communityPosts = useAppStore((s) => s.communityPosts);
   const followedCommunityIds = useAppStore((s) => s.followedCommunityIds);
   const repost = useAppStore((s) => s.repost);
-  const shareToChat = useAppStore((s) => s.shareToChat);
   const chats = useAppStore((s) => s.chats);
   const notifications = useAppStore((s) => s.notifications);
   const unreadNotifs = onOpenNotifications ? notifications.filter((n) => !n.read).length : 0;
@@ -269,50 +269,7 @@ export function ComunidadeScreen({ onOpenChat, onOpenNotifications }: Comunidade
       </div>
 
       {sharingPost && (
-        <div
-          className="fixed inset-0 bg-black/40 flex items-end z-30"
-          onClick={() => setSharingPost(null)}
-        >
-          <div
-            role="dialog"
-            aria-modal="true"
-            aria-label="Enviar post para conversa"
-            className="w-full bg-white rounded-t-3xl px-4 pt-4 pb-10 max-w-[390px] mx-auto"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="flex items-center justify-between mb-4">
-              <p className="text-sm font-semibold text-graphite">Enviar para</p>
-              <button
-                onClick={() => setSharingPost(null)}
-                aria-label="Fechar"
-                className="w-7 h-7 rounded-full bg-gray-100 flex items-center justify-center"
-              >
-                <X size={14} className="text-graphite" />
-              </button>
-            </div>
-            <ul className="flex flex-col gap-1">
-              {chats.map((chat) => (
-                <li key={chat.id}>
-                  <button
-                    onClick={() => {
-                      shareToChat(
-                        chat.id,
-                        `📌 ${sharingPost.author}: "${sharingPost.content.slice(0, 80)}${sharingPost.content.length > 80 ? '…' : ''}"`,
-                      );
-                      setSharingPost(null);
-                    }}
-                    className="w-full flex items-center gap-3 px-2 py-3 rounded-xl active:bg-sara-linen transition-colors"
-                  >
-                    <div className="w-10 h-10 rounded-full bg-sara-terracotta flex items-center justify-center text-white font-bold text-base">
-                      {chat.with.charAt(0)}
-                    </div>
-                    <p className="text-sm font-medium text-graphite">{chat.with}</p>
-                  </button>
-                </li>
-              ))}
-            </ul>
-          </div>
-        </div>
+        <SharePostSheet post={sharingPost} onClose={() => setSharingPost(null)} />
       )}
 
       <AnimatePresence>

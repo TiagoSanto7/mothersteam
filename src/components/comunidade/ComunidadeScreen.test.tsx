@@ -201,4 +201,18 @@ describe('ComunidadeScreen', () => {
     expect(screen.queryByRole('button', { name: /mensagens/i })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /notificações/i })).not.toBeInTheDocument();
   });
+
+  it('feed share sheet shows comment textarea', () => {
+    render(<ComunidadeScreen />);
+    const [firstEnviar] = screen.getAllByRole('button', { name: /enviar post/i });
+    fireEvent.click(firstEnviar);
+    expect(screen.getByPlaceholderText(/adicionar um comentário/i)).toBeInTheDocument();
+  });
+
+  it('feed share sheet has disabled Enviar button until recipient selected', () => {
+    render(<ComunidadeScreen />);
+    const [firstEnviar] = screen.getAllByRole('button', { name: /enviar post/i });
+    fireEvent.click(firstEnviar);
+    expect(screen.getByTestId('share-send-btn')).toBeDisabled();
+  });
 });
