@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { MessageCircle, Heart, Plus, Repeat2, Share2, MessageSquare, Bell } from 'lucide-react';
+import { MessageCircle, Heart, Plus, Repeat2, Share2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAppStore } from '../../store/useAppStore';
 import { CreatePostScreen } from './CreatePostScreen';
@@ -116,19 +116,10 @@ function PostCard({
   );
 }
 
-interface ComunidadeScreenProps {
-  onOpenChat?: () => void;
-  onOpenNotifications?: () => void;
-}
-
-export function ComunidadeScreen({ onOpenChat, onOpenNotifications }: ComunidadeScreenProps) {
+export function ComunidadeScreen() {
   const communityPosts = useAppStore((s) => s.communityPosts);
   const followedCommunityIds = useAppStore((s) => s.followedCommunityIds);
   const repost = useAppStore((s) => s.repost);
-  const chats = useAppStore((s) => s.chats);
-  const notifications = useAppStore((s) => s.notifications);
-  const unreadNotifs = onOpenNotifications ? notifications.filter((n) => !n.read).length : 0;
-  const unreadChats = onOpenChat ? chats.reduce((sum, c) => sum + c.unread, 0) : 0;
 
   const [topTab, setTopTab] = useState<TopTab>('para-voce');
   const [activeCategory, setActiveCategory] = useState<Category>('todos');
@@ -152,42 +143,6 @@ export function ComunidadeScreen({ onOpenChat, onOpenNotifications }: Comunidade
   return (
     <>
       <div className="flex flex-col gap-4 pb-6">
-        <div className="px-4 pt-4 flex items-center justify-between">
-          <h1 className="text-base font-semibold text-graphite">Comunidade</h1>
-          {(onOpenChat || onOpenNotifications) && (
-            <div className="flex items-center gap-2">
-              {onOpenChat && (
-                <button
-                  onClick={onOpenChat}
-                  aria-label="Mensagens"
-                  className="relative w-9 h-9 rounded-xl bg-white/70 backdrop-blur-sm border border-white/50 flex items-center justify-center"
-                >
-                  <MessageSquare size={18} className="text-graphite-light" strokeWidth={1.8} />
-                  {unreadChats > 0 && (
-                    <span className="absolute -top-1 -right-1 w-4 h-4 bg-sara-gold rounded-full flex items-center justify-center text-[9px] font-bold text-white">
-                      {unreadChats}
-                    </span>
-                  )}
-                </button>
-              )}
-              {onOpenNotifications && (
-                <button
-                  onClick={onOpenNotifications}
-                  aria-label="Notificações"
-                  className="relative w-9 h-9 rounded-xl bg-white/70 backdrop-blur-sm border border-white/50 flex items-center justify-center"
-                >
-                  <Bell size={18} className="text-graphite-light" strokeWidth={1.8} />
-                  {unreadNotifs > 0 && (
-                    <span className="absolute -top-1 -right-1 w-4 h-4 bg-sara-terracotta rounded-full flex items-center justify-center text-[9px] font-bold text-white">
-                      {unreadNotifs}
-                    </span>
-                  )}
-                </button>
-              )}
-            </div>
-          )}
-        </div>
-
         <div className="flex gap-1 px-4 border-b border-sara-linen">
           {(['para-voce', 'comunidades'] as TopTab[]).map((tab) => {
             const label = tab === 'para-voce' ? 'Para Você' : 'Comunidades';
