@@ -1,13 +1,23 @@
 import { useState } from 'react';
 import { ChevronLeft, Heart, MessageCircle, Share2, Repeat2, Send } from 'lucide-react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAppStore } from '../../store/useAppStore';
+import { apiFetch } from '../../lib/api';
 import { SharePostSheet } from '../comunidade/SharePostSheet';
-import type { CommunityPost } from '../../types';
+import type { CommunityPost, PostComment } from '../../types';
 
 const BADGE_CONFIG = {
   experiente:   { label: 'Mãe Experiente',       color: 'bg-sara-linen text-sara-terracotta' },
   profissional: { label: 'Profissional de Saúde', color: 'bg-sara-cream text-sara-warm' },
 } as const;
+
+interface ApiComment {
+  id: string;
+  content: string;
+  author: { id: string; name: string };
+  _count: { likes: number };
+  createdAt: string;
+}
 
 interface PostDetailScreenProps {
   post: CommunityPost;
@@ -16,37 +26,61 @@ interface PostDetailScreenProps {
 
 export function PostDetailScreen({ post, onBack }: PostDetailScreenProps) {
   const motherName = useAppStore((s) => s.motherName);
-  const postComments = useAppStore((s) => s.postComments);
-  const communityPosts = useAppStore((s) => s.communityPosts);
-  const addComment = useAppStore((s) => s.addComment);
-  const repost = useAppStore((s) => s.repost);
-  const likePost = useAppStore((s) => s.likePost);
-
-  const currentPost = communityPosts.find((p) => p.id === post.id) ?? post;
+  const queryClient = useQueryClient();
 
   const [liked, setLiked] = useState(false);
   const [reposted, setReposted] = useState(false);
   const [commentText, setCommentText] = useState('');
   const [showShareSheet, setShowShareSheet] = useState(false);
 
-  const comments = postComments[post.id] ?? [];
-  const badge = currentPost.badge ? BADGE_CONFIG[currentPost.badge] : null;
+  const { data: commentsData } = useQuery<ApiComment[]>({
+    queryKey: ['comments', post.id],
+    queryFn: () => apiFetch<ApiComment[]>(`/posts/${post.id}/comments`),
+    initialData: [],
+  });
+
+  const comments: PostComment[] = (commentsData ?? []).map((c) => ({
+    id: c.id,
+    author: c.author.name,
+    content: c.content,
+    time: '',
+    likes: c._count.likes,
+  }));
+
+  const likeMutation = useMutation({
+    mutationFn: (isLiked: boolean) =>
+      apiFetch(`/posts/${post.id}/like`, { method: isLiked ? 'POST' : 'DELETE' }),
+  });
+
+  const repostMutation = useMutation({
+    mutationFn: () => apiFetch(`/posts/${post.id}/repost`, { method: 'POST' }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['posts'] }),
+  });
+
+  const commentMutation = useMutation({
+    mutationFn: (content: string) =>
+      apiFetch(`/posts/${post.id}/comments`, { method: 'POST', body: JSON.stringify({ content }) }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['comments', post.id] }),
+  });
+
+  const badge = post.badge ? BADGE_CONFIG[post.badge] : null;
 
   function handleLike() {
-    if (!liked) likePost(post.id);
-    setLiked((v) => !v);
+    const next = !liked;
+    setLiked(next);
+    likeMutation.mutate(next);
   }
 
   function handleRepost() {
     if (!reposted) {
-      repost(currentPost);
+      repostMutation.mutate();
       setReposted(true);
     }
   }
 
   function handleComment() {
     if (!commentText.trim()) return;
-    addComment(post.id, commentText.trim());
+    commentMutation.mutate(commentText.trim());
     setCommentText('');
   }
 
@@ -63,20 +97,20 @@ export function PostDetailScreen({ post, onBack }: PostDetailScreenProps) {
       <div className="flex-1 overflow-y-auto">
         {/* Post */}
         <div className="bg-white px-4 py-4 border-b border-sara-linen/60">
-          {currentPost.isRepost && (
+          {post.isRepost && (
             <div className="flex items-center gap-1.5 mb-2">
               <Repeat2 size={12} className="text-graphite-muted" />
-              <span className="text-[11px] text-graphite-muted">Republicado de {currentPost.repostFrom}</span>
+              <span className="text-[11px] text-graphite-muted">Republicado de {post.repostFrom}</span>
             </div>
           )}
 
           <div className="flex items-start justify-between gap-2 mb-3">
             <div className="flex items-center gap-2.5">
               <div className="w-10 h-10 rounded-full bg-sara-terracotta flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
-                {currentPost.author.charAt(0)}
+                {post.author.charAt(0)}
               </div>
               <div>
-                <p className="text-sm font-semibold text-graphite">{currentPost.author}</p>
+                <p className="text-sm font-semibold text-graphite">{post.author}</p>
                 {badge && (
                   <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full ${badge.color}`}>
                     {badge.label}
@@ -84,14 +118,14 @@ export function PostDetailScreen({ post, onBack }: PostDetailScreenProps) {
                 )}
               </div>
             </div>
-            <span className="text-xs text-graphite-muted flex-shrink-0">{currentPost.time}</span>
+            <span className="text-xs text-graphite-muted flex-shrink-0">{post.time}</span>
           </div>
 
-          <p className="text-sm text-graphite leading-relaxed mb-4">{currentPost.content}</p>
+          <p className="text-sm text-graphite leading-relaxed mb-4">{post.content}</p>
 
-          {currentPost.imageUrl && (
+          {post.imageUrl && (
             <img
-              src={currentPost.imageUrl}
+              src={post.imageUrl}
               alt="Imagem do post"
               className="w-full rounded-xl object-cover max-h-64 mb-4"
             />
@@ -103,11 +137,11 @@ export function PostDetailScreen({ post, onBack }: PostDetailScreenProps) {
               className={`flex items-center gap-1.5 text-xs transition-colors ${liked ? 'text-sara-terracotta' : 'text-graphite-muted'}`}
             >
               <Heart size={16} fill={liked ? 'currentColor' : 'none'} strokeWidth={1.8} />
-              <span>{currentPost.likes + (liked ? 1 : 0)}</span>
+              <span>{post.likes + (liked ? 1 : 0)}</span>
             </button>
             <button className="flex items-center gap-1.5 text-xs text-graphite-muted">
               <MessageCircle size={16} strokeWidth={1.8} />
-              <span>{currentPost.replies + comments.length}</span>
+              <span>{post.replies + comments.length}</span>
             </button>
             <button
               onClick={handleRepost}
@@ -181,7 +215,7 @@ export function PostDetailScreen({ post, onBack }: PostDetailScreenProps) {
       </div>
 
       {showShareSheet && (
-        <SharePostSheet post={currentPost} onClose={() => setShowShareSheet(false)} />
+        <SharePostSheet post={post} onClose={() => setShowShareSheet(false)} />
       )}
     </div>
   );

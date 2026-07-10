@@ -1,6 +1,10 @@
 import { useState } from 'react';
 import { X } from 'lucide-react';
+import { useQuery, useMutation } from '@tanstack/react-query';
 import { useAppStore } from '../../store/useAppStore';
+import { apiFetch } from '../../lib/api';
+import type { ApiChat } from '../../lib/types';
+import { apiChatToChat } from '../../lib/helpers';
 import type { CommunityPost } from '../../types';
 
 interface SharePostSheetProps {
@@ -9,8 +13,28 @@ interface SharePostSheetProps {
 }
 
 export function SharePostSheet({ post, onClose }: SharePostSheetProps) {
-  const chats = useAppStore((s) => s.chats);
-  const shareToChat = useAppStore((s) => s.shareToChat);
+  const isLoggedIn    = useAppStore((s) => s.isLoggedIn);
+  const currentUserId = useAppStore((s) => s.currentUserId) ?? '';
+
+  const { data: apiChats = [] } = useQuery({
+    queryKey: ['chats'],
+    queryFn: () => apiFetch<ApiChat[]>('/chats'),
+    enabled: isLoggedIn,
+  });
+
+  const chats = apiChats.map((c) => apiChatToChat(c, currentUserId));
+
+  const sendMutation = useMutation({
+    mutationFn: ({ chatId, comment }: { chatId: string; comment: string }) =>
+      apiFetch(`/chats/${chatId}/messages`, {
+        method: 'POST',
+        body: JSON.stringify({
+          content: comment,
+          sharedPostId: post.id,
+        }),
+      }),
+  });
+
   const [selectedChatIds, setSelectedChatIds] = useState<string[]>([]);
   const [shareComment, setShareComment] = useState('');
 
@@ -22,11 +46,7 @@ export function SharePostSheet({ post, onClose }: SharePostSheetProps) {
 
   function handleSend() {
     selectedChatIds.forEach((chatId) => {
-      shareToChat(chatId, shareComment.trim(), {
-        id: post.id,
-        author: post.author,
-        excerpt: post.content.slice(0, 80),
-      });
+      sendMutation.mutate({ chatId, comment: shareComment.trim() });
     });
     onClose();
   }
