@@ -1,19 +1,34 @@
 import { ChevronLeft, Heart, UserPlus, MessageCircle } from 'lucide-react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { apiFetch } from '../../lib/api';
 import { useAppStore } from '../../store/useAppStore';
+import type { ApiNotification } from '../../lib/types';
+import { relativeTime } from '../../lib/helpers';
 
 interface NotificationsScreenProps {
   onBack: () => void;
 }
 
-const ICON = {
+const ICON: Record<ApiNotification['type'], React.ReactElement> = {
   like:    <Heart size={16} className="text-sara-terracotta" />,
   follow:  <UserPlus size={16} className="text-sara-gold" />,
   comment: <MessageCircle size={16} className="text-sara-warm" />,
 };
 
 export function NotificationsScreen({ onBack }: NotificationsScreenProps) {
-  const notifications = useAppStore((s) => s.notifications);
-  const markAllNotificationsRead = useAppStore((s) => s.markAllNotificationsRead);
+  const isLoggedIn = useAppStore((s) => s.isLoggedIn);
+  const queryClient = useQueryClient();
+
+  const { data: notifications = [] } = useQuery({
+    queryKey: ['notifications'],
+    queryFn: () => apiFetch<ApiNotification[]>('/notifications'),
+    enabled: isLoggedIn,
+  });
+
+  const readAllMutation = useMutation({
+    mutationFn: () => apiFetch('/notifications/read-all', { method: 'POST' }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['notifications'] }),
+  });
 
   const unreadCount = notifications.filter((n) => !n.read).length;
 
@@ -26,7 +41,7 @@ export function NotificationsScreen({ onBack }: NotificationsScreenProps) {
         <p className="text-sm font-semibold text-graphite">Notificações</p>
         {unreadCount > 0 ? (
           <button
-            onClick={markAllNotificationsRead}
+            onClick={() => readAllMutation.mutate()}
             className="text-[11px] text-sara-gold font-semibold"
           >
             Marcar lidas
@@ -53,7 +68,7 @@ export function NotificationsScreen({ onBack }: NotificationsScreenProps) {
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-sm text-graphite leading-snug">{n.text}</p>
-                  <p className="text-[11px] text-graphite-muted mt-0.5">{n.time} atrás</p>
+                  <p className="text-[11px] text-graphite-muted mt-0.5">{relativeTime(n.createdAt)} atrás</p>
                 </div>
                 {!n.read && (
                   <div className="w-2 h-2 rounded-full bg-sara-gold flex-shrink-0 mt-1.5" />

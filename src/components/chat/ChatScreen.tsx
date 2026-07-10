@@ -1,8 +1,12 @@
 import { useState, useRef, useEffect } from 'react';
 import { ChevronLeft, Send } from 'lucide-react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { apiFetch } from '../../lib/api';
 import { useAppStore } from '../../store/useAppStore';
 import { PostDetailScreen } from '../post/PostDetailScreen';
-import type { Chat, CommunityPost } from '../../types';
+import { apiPostToCommunityPost } from '../../lib/helpers';
+import type { ApiMessage, ApiPost, PaginatedResult } from '../../lib/types';
+import type { Chat } from '../../types';
 
 interface ChatScreenProps {
   chat: Chat;
@@ -10,35 +14,55 @@ interface ChatScreenProps {
 }
 
 export function ChatScreen({ chat, onBack }: ChatScreenProps) {
-  const motherName = useAppStore((s) => s.motherName);
-  const chats = useAppStore((s) => s.chats);
-  const communityPosts = useAppStore((s) => s.communityPosts);
-  const sendMessage = useAppStore((s) => s.sendMessage);
-  const markChatRead = useAppStore((s) => s.markChatRead);
+  const motherName    = useAppStore((s) => s.motherName);
+  const currentUserId = useAppStore((s) => s.currentUserId);
+  const isLoggedIn    = useAppStore((s) => s.isLoggedIn);
+  const queryClient   = useQueryClient();
 
-  const currentChat = chats.find((c) => c.id === chat.id) ?? chat;
   const [text, setText] = useState('');
-  const [viewingPost, setViewingPost] = useState<CommunityPost | null>(null);
+  const [viewingPostId, setViewingPostId] = useState<string | null>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    markChatRead(chat.id);
-  }, [chat.id, markChatRead]);
+  const { data: messagesData } = useQuery({
+    queryKey: ['messages', chat.id],
+    queryFn: () => apiFetch<PaginatedResult<ApiMessage>>(`/chats/${chat.id}/messages`),
+    enabled: isLoggedIn,
+  });
+
+  const messages = messagesData?.items ?? [];
+
+  const { data: viewingApiPost } = useQuery({
+    queryKey: ['post', viewingPostId],
+    queryFn: () => apiFetch<ApiPost>(`/posts/${viewingPostId}`),
+    enabled: viewingPostId !== null,
+  });
+
+  const sendMutation = useMutation({
+    mutationFn: (content: string) =>
+      apiFetch<ApiMessage>(`/chats/${chat.id}/messages`, {
+        method: 'POST',
+        body: JSON.stringify({ content }),
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['messages', chat.id] });
+      queryClient.invalidateQueries({ queryKey: ['chats'] });
+    },
+  });
 
   useEffect(() => {
     if (typeof bottomRef.current?.scrollIntoView === 'function') {
       bottomRef.current.scrollIntoView({ behavior: 'smooth' });
     }
-  }, [currentChat.messages.length]);
+  }, [messages.length]);
 
   function handleSend() {
     if (!text.trim()) return;
-    sendMessage(chat.id, text.trim());
+    sendMutation.mutate(text.trim());
     setText('');
   }
 
-  if (viewingPost) {
-    return <PostDetailScreen post={viewingPost} onBack={() => setViewingPost(null)} />;
+  if (viewingApiPost) {
+    return <PostDetailScreen post={apiPostToCommunityPost(viewingApiPost)} onBack={() => setViewingPostId(null)} />;
   }
 
   return (
@@ -56,16 +80,13 @@ export function ChatScreen({ chat, onBack }: ChatScreenProps) {
       </div>
 
       <div className="flex-1 overflow-y-auto px-4 py-4 flex flex-col gap-3">
-        {currentChat.messages.map((msg) => {
-          const isMe = msg.from === motherName;
-          const linkedPost = msg.sharedPost
-            ? communityPosts.find((p) => p.id === msg.sharedPost?.id)
-            : undefined;
+        {messages.map((msg) => {
+          const isMe = msg.senderId === currentUserId;
           return (
             <div key={msg.id} className={`flex ${isMe ? 'justify-end' : 'justify-start'}`}>
               {!isMe && (
                 <div className="w-7 h-7 rounded-full bg-sara-terracotta flex items-center justify-center text-white font-bold text-xs flex-shrink-0 mr-2 mt-1">
-                  {msg.from.charAt(0)}
+                  {msg.sender.name.charAt(0)}
                 </div>
               )}
               <div className={`max-w-[72%] rounded-2xl overflow-hidden ${
@@ -73,41 +94,30 @@ export function ChatScreen({ chat, onBack }: ChatScreenProps) {
                   ? 'bg-sara-gold text-white rounded-br-sm'
                   : 'bg-white text-graphite shadow-sm rounded-bl-sm'
               }`}>
-                {msg.sharedPost ? (
+                {msg.sharedPostId ? (
                   <button
-                    aria-label={`Ver post de ${msg.sharedPost.author}`}
-                    onClick={() => { if (linkedPost) setViewingPost(linkedPost); }}
-                    className="p-3 flex flex-col gap-1.5 w-full text-left disabled:cursor-default"
-                    disabled={!linkedPost}
+                    aria-label={`Ver post de ${msg.sharedPostAuthor}`}
+                    onClick={() => setViewingPostId(msg.sharedPostId!)}
+                    className="p-3 flex flex-col gap-1.5 w-full text-left"
                   >
                     <p className={`text-[10px] font-semibold uppercase tracking-wide ${isMe ? 'text-white/70' : 'text-graphite-muted'}`}>
                       Post compartilhado
                     </p>
-                    {linkedPost?.imageUrl && (
-                      <img
-                        src={linkedPost.imageUrl}
-                        alt="Imagem do post"
-                        loading="lazy"
-                        className="w-full rounded-lg object-cover max-h-24"
-                      />
-                    )}
                     <p className={`text-[11px] font-semibold ${isMe ? 'text-white' : 'text-graphite'}`}>
-                      {msg.sharedPost.author}
+                      {msg.sharedPostAuthor}
                     </p>
                     <p className={`text-xs leading-relaxed ${isMe ? 'text-white/90' : 'text-graphite-light'}`}>
-                      {msg.sharedPost.excerpt}
+                      {msg.sharedPostExcerpt}
                     </p>
                     {msg.content && (
                       <p className={`text-xs pt-1.5 border-t ${isMe ? 'border-white/30 text-white/90' : 'border-sara-linen text-graphite-light'}`}>
                         {msg.content}
                       </p>
                     )}
-                    <p className={`text-[10px] mt-0.5 ${isMe ? 'text-white/70' : 'text-graphite-muted'}`}>{msg.time}</p>
                   </button>
                 ) : (
                   <div className="px-4 py-2.5">
                     <p className="text-sm leading-relaxed">{msg.content}</p>
-                    <p className={`text-[10px] mt-0.5 ${isMe ? 'text-white/70' : 'text-graphite-muted'}`}>{msg.time}</p>
                   </div>
                 )}
               </div>

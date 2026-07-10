@@ -1,7 +1,11 @@
 import { useState } from 'react';
 import { ChevronLeft, Search, Edit } from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';
+import { apiFetch } from '../../lib/api';
 import { useAppStore } from '../../store/useAppStore';
 import { ChatScreen } from './ChatScreen';
+import type { ApiChat } from '../../lib/types';
+import { apiChatToChat } from '../../lib/helpers';
 import type { Chat } from '../../types';
 
 interface ChatListScreenProps {
@@ -9,8 +13,17 @@ interface ChatListScreenProps {
 }
 
 export function ChatListScreen({ onBack }: ChatListScreenProps) {
-  const chats = useAppStore((s) => s.chats);
+  const isLoggedIn    = useAppStore((s) => s.isLoggedIn);
+  const currentUserId = useAppStore((s) => s.currentUserId) ?? '';
   const [selectedChat, setSelectedChat] = useState<Chat | null>(null);
+
+  const { data: apiChats = [] } = useQuery({
+    queryKey: ['chats'],
+    queryFn: () => apiFetch<ApiChat[]>('/chats'),
+    enabled: isLoggedIn,
+  });
+
+  const chats = apiChats.map((c) => apiChatToChat(c, currentUserId));
 
   if (selectedChat) {
     return (
@@ -35,12 +48,7 @@ export function ChatListScreen({ onBack }: ChatListScreenProps) {
       <div className="px-4 py-3 flex-shrink-0">
         <div className="flex items-center gap-2 bg-gray-100 rounded-xl px-3 py-2.5">
           <Search size={14} className="text-graphite-muted flex-shrink-0" />
-          <input
-            type="text"
-            placeholder="Buscar conversa..."
-            className="flex-1 bg-transparent text-sm text-graphite placeholder:text-graphite-muted outline-none"
-            readOnly
-          />
+          <input type="text" placeholder="Buscar conversa..." className="flex-1 bg-transparent text-sm text-graphite placeholder:text-graphite-muted outline-none" readOnly />
         </div>
       </div>
 
@@ -62,14 +70,10 @@ export function ChatListScreen({ onBack }: ChatListScreenProps) {
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-baseline justify-between gap-2">
-                      <p className={`text-sm truncate ${chat.unread > 0 ? 'font-semibold text-graphite' : 'font-medium text-graphite'}`}>
-                        {chat.with}
-                      </p>
+                      <p className={`text-sm truncate ${chat.unread > 0 ? 'font-semibold text-graphite' : 'font-medium text-graphite'}`}>{chat.with}</p>
                       <span className="text-[10px] text-graphite-muted flex-shrink-0">{chat.time}</span>
                     </div>
-                    <p className={`text-xs truncate mt-0.5 ${chat.unread > 0 ? 'text-graphite font-medium' : 'text-graphite-muted'}`}>
-                      {chat.lastMessage}
-                    </p>
+                    <p className={`text-xs truncate mt-0.5 ${chat.unread > 0 ? 'text-graphite font-medium' : 'text-graphite-muted'}`}>{chat.lastMessage}</p>
                   </div>
                   {chat.unread > 0 && (
                     <div className="w-5 h-5 rounded-full bg-sara-gold flex items-center justify-center flex-shrink-0">
