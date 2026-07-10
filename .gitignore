@@ -33,3 +33,6 @@ dist-ssr
 # Visual brainstorming sessions (superpowers plugin)
 .superpowers/
 
+# Server
+server/.env
+server/dist/
