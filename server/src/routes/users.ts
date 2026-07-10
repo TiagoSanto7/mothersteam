@@ -1,0 +1,89 @@
+import type { FastifyInstance } from 'fastify'
+import { z } from 'zod'
+
+const updateMeSchema = z.object({
+  name: z.string().min(1).optional(),
+  babyName: z.string().optional(),
+  pregnancyStage: z.enum(['pregnant', 'postpartum']).optional(),
+  pregnancyWeek: z.number().int().min(1).max(42).optional(),
+  babyAgeInDays: z.number().int().min(0).optional(),
+})
+
+export default async function usersRoutes(fastify: FastifyInstance) {
+  fastify.addHook('preHandler', fastify.authenticate)
+
+  fastify.get<{ Params: { id: string } }>('/:id', async (request, reply) => {
+    const user = await fastify.prisma.user.findUnique({
+      where: { id: request.params.id },
+      select: {
+        id: true, name: true,
+        _count: { select: { posts: true, followers: true, following: true } },
+      },
+    })
+    if (!user) return reply.status(404).send({ error: 'User not found' })
+    reply.send(user)
+  })
+
+  fastify.patch('/me', async (request, reply) => {
+    const body = updateMeSchema.safeParse(request.body)
+    if (!body.success) return reply.status(400).send({ error: body.error.flatten() })
+
+    const user = await fastify.prisma.user.update({
+      where: { id: request.userId },
+      data: body.data,
+      select: { id: true, name: true, babyName: true, pregnancyStage: true },
+    })
+    reply.send(user)
+  })
+
+  fastify.post<{ Params: { id: string } }>('/:id/follow', async (request, reply) => {
+    if (request.params.id === request.userId)
+      return reply.status(400).send({ error: 'Cannot follow yourself' })
+
+    await fastify.prisma.follow.upsert({
+      where: { followerId_followingId: { followerId: request.userId, followingId: request.params.id } },
+      update: {},
+      create: { followerId: request.userId, followingId: request.params.id },
+    })
+    reply.status(201).send({ ok: true })
+  })
+
+  fastify.delete<{ Params: { id: string } }>('/:id/follow', async (request, reply) => {
+    await fastify.prisma.follow.deleteMany({
+      where: { followerId: request.userId, followingId: request.params.id },
+    })
+    reply.send({ ok: true })
+  })
+
+  fastify.get<{ Params: { id: string }; Querystring: { cursor?: string; limit?: string } }>(
+    '/:id/followers',
+    async (request, reply) => {
+      const limit = Math.min(Number(request.query.limit ?? 20), 50)
+      const follows = await fastify.prisma.follow.findMany({
+        where: { followingId: request.params.id },
+        take: limit + 1,
+        ...(request.query.cursor ? { cursor: { followerId_followingId: { followerId: request.query.cursor, followingId: request.params.id } }, skip: 1 } : {}),
+        include: { follower: { select: { id: true, name: true } } },
+        orderBy: { createdAt: 'desc' },
+      })
+      const hasMore = follows.length > limit
+      reply.send({ items: follows.slice(0, limit).map((f) => f.follower), hasMore })
+    }
+  )
+
+  fastify.get<{ Params: { id: string }; Querystring: { cursor?: string; limit?: string } }>(
+    '/:id/following',
+    async (request, reply) => {
+      const limit = Math.min(Number(request.query.limit ?? 20), 50)
+      const follows = await fastify.prisma.follow.findMany({
+        where: { followerId: request.params.id },
+        take: limit + 1,
+        ...(request.query.cursor ? { cursor: { followerId_followingId: { followerId: request.params.id, followingId: request.query.cursor } }, skip: 1 } : {}),
+        include: { following: { select: { id: true, name: true } } },
+        orderBy: { createdAt: 'desc' },
+      })
+      const hasMore = follows.length > limit
+      reply.send({ items: follows.slice(0, limit).map((f) => f.following), hasMore })
+    }
+  )
+}
