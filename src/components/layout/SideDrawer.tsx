@@ -11,11 +11,9 @@ interface SideDrawerProps {
 
 export function SideDrawer({ isOpen, onClose, onOpenProfile, onOpenSettings }: SideDrawerProps) {
   const motherName = useAppStore((s) => s.motherName);
-  const communityPosts = useAppStore((s) => s.communityPosts);
-  const logout = useAppStore((s) => s.logout);
+  const clearAuth = useAppStore((s) => s.clearAuth);
 
   const initial = (motherName || 'M').charAt(0).toUpperCase();
-  const postCount = communityPosts.filter((p) => p.author === motherName).length;
 
   function handleItem(action: () => void) {
     onClose();
@@ -52,7 +50,6 @@ export function SideDrawer({ isOpen, onClose, onOpenProfile, onOpenSettings }: S
                 </div>
                 <div>
                   <p className="font-semibold text-graphite text-base">{motherName}</p>
-                  <p className="text-xs text-graphite-muted mt-0.5">{postCount} {postCount === 1 ? 'post' : 'posts'}</p>
                 </div>
               </div>
               <button
@@ -83,7 +80,7 @@ export function SideDrawer({ isOpen, onClose, onOpenProfile, onOpenSettings }: S
 
             <div className="p-4 border-t border-black/5">
               <button
-                onClick={() => handleItem(logout)}
+                onClick={() => handleItem(clearAuth)}
                 className="w-full flex items-center gap-3 px-3 py-3.5 rounded-xl text-sara-terracotta hover:bg-white/50 transition-colors"
               >
                 <LogOut size={20} strokeWidth={1.8} />

@@ -44,7 +44,8 @@ function EntryCard({ entry }: { entry: RoutineEntry }) {
 }
 
 export function RoutineTimeline() {
-  const routineEntries = useAppStore((s) => s.routineEntries);
+  // routineEntries now served by API queries; use empty array as fallback during transition
+  const routineEntries: import('../../types').RoutineEntry[] = [];
   const selectedDate = useAppStore((s) => s.selectedDate);
   const sorted = [...routineEntries]
     .filter((e) => e.date === selectedDate)

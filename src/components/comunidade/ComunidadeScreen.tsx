@@ -117,9 +117,9 @@ function PostCard({
 }
 
 export function ComunidadeScreen() {
-  const communityPosts = useAppStore((s) => s.communityPosts);
+  // communityPosts is now served by API queries; use empty array as fallback during transition
+  const communityPosts: import('../../types').CommunityPost[] = [];
   const followedCommunityIds = useAppStore((s) => s.followedCommunityIds);
-  const repost = useAppStore((s) => s.repost);
 
   const [topTab, setTopTab] = useState<TopTab>('para-voce');
   const [activeCategory, setActiveCategory] = useState<Category>('todos');
@@ -200,7 +200,7 @@ export function ComunidadeScreen() {
                   key={post.id}
                   post={post}
                   onOpen={() => setSelectedPost(post)}
-                  onRepost={() => repost(post)}
+                  onRepost={() => { /* repost will be wired to API in Task 3 */ }}
                   onShare={() => setSharingPost(post)}
                 />
               ))}

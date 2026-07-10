@@ -19,8 +19,6 @@ export default function App() {
   const isLoggedIn       = useAppStore((s) => s.isLoggedIn);
   const onboardingDone   = useAppStore((s) => s.onboardingDone);
   const activeTab        = useAppStore((s) => s.activeTab);
-  const notifications    = useAppStore((s) => s.notifications);
-  const chats            = useAppStore((s) => s.chats);
 
   const [drawerOpen,        setDrawerOpen]        = useState(false);
   const [showProfile,       setShowProfile]       = useState(false);
@@ -31,8 +29,9 @@ export default function App() {
   if (!isLoggedIn)    return <LoginScreen />;
   if (!onboardingDone) return <OnboardingScreen />;
 
-  const unreadNotifs = notifications.filter((n) => !n.read).length;
-  const unreadChats  = chats.reduce((sum, c) => sum + c.unread, 0);
+  // Notification and chat badge counts will come from API queries (Task 3)
+  const unreadNotifs = 0;
+  const unreadChats  = 0;
 
   const isHomeTab = activeTab === 'home' || activeTab === 'comunidade';
 
