@@ -1,6 +1,7 @@
 import { X, User, Settings, LogOut } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAppStore } from '../../store/useAppStore';
+import { apiFetch } from '../../lib/api';
 
 interface SideDrawerProps {
   isOpen: boolean;
@@ -18,6 +19,12 @@ export function SideDrawer({ isOpen, onClose, onOpenProfile, onOpenSettings }: S
   function handleItem(action: () => void) {
     onClose();
     action();
+  }
+
+  function handleLogout() {
+    onClose();
+    apiFetch('/auth/logout', { method: 'POST' }).catch(() => {/* ignore */});
+    clearAuth();
   }
 
   return (
@@ -80,7 +87,7 @@ export function SideDrawer({ isOpen, onClose, onOpenProfile, onOpenSettings }: S
 
             <div className="p-4 border-t border-black/5">
               <button
-                onClick={() => handleItem(clearAuth)}
+                onClick={handleLogout}
                 className="w-full flex items-center gap-3 px-3 py-3.5 rounded-xl text-sara-terracotta hover:bg-white/50 transition-colors"
               >
                 <LogOut size={20} strokeWidth={1.8} />

@@ -1,7 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Bell, MessageSquare } from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';
 import { useAppStore } from './store/useAppStore';
 import type { TabId } from './types';
+import type { ApiNotification, ApiChat } from './lib/types';
+import { apiFetch } from './lib/api';
+import type { ApiUser } from './lib/types';
 import { MobileShell } from './components/layout/MobileShell';
 import { HomeScreen } from './components/home/HomeScreen';
 import { BabyScreen } from './components/baby/BabyScreen';
@@ -16,22 +20,63 @@ import { NotificationsScreen } from './components/notifications/NotificationsScr
 import { ChatListScreen } from './components/chat/ChatListScreen';
 
 export default function App() {
-  const isLoggedIn       = useAppStore((s) => s.isLoggedIn);
-  const onboardingDone   = useAppStore((s) => s.onboardingDone);
-  const activeTab        = useAppStore((s) => s.activeTab);
+  const isLoggedIn     = useAppStore((s) => s.isLoggedIn);
+  const onboardingDone = useAppStore((s) => s.onboardingDone);
+  const activeTab      = useAppStore((s) => s.activeTab);
+  const currentUserId  = useAppStore((s) => s.currentUserId);
+  const setAccessToken = useAppStore((s) => s.setAccessToken);
+  const setAuth        = useAppStore((s) => s.setAuth);
 
+  const [restoring,         setRestoring]         = useState(true);
   const [drawerOpen,        setDrawerOpen]        = useState(false);
   const [showProfile,       setShowProfile]       = useState(false);
   const [showSettings,      setShowSettings]      = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
   const [showChat,          setShowChat]          = useState(false);
 
-  if (!isLoggedIn)    return <LoginScreen />;
+  // Session restore: try refresh cookie on first load
+  useEffect(() => {
+    if (useAppStore.getState().isLoggedIn) {
+      setRestoring(false);
+      return;
+    }
+    (async () => {
+      try {
+        const { accessToken } = await apiFetch<{ accessToken: string }>('/auth/refresh', { method: 'POST' });
+        setAccessToken(accessToken);
+        const user = await apiFetch<ApiUser>('/auth/me');
+        useAppStore.getState().setAuth(accessToken, user);
+      } catch {
+        // no valid session — stay at login
+      } finally {
+        setRestoring(false);
+      }
+    })();
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const { data: notifications } = useQuery({
+    queryKey: ['notifications'],
+    queryFn: () => apiFetch<ApiNotification[]>('/notifications'),
+    enabled: isLoggedIn,
+    staleTime: 60_000,
+  });
+
+  const { data: chats } = useQuery({
+    queryKey: ['chats'],
+    queryFn: () => apiFetch<ApiChat[]>('/chats'),
+    enabled: isLoggedIn,
+    staleTime: 30_000,
+  });
+
+  if (restoring) return null;
+  if (!isLoggedIn) return <LoginScreen />;
   if (!onboardingDone) return <OnboardingScreen />;
 
-  // Notification and chat badge counts will come from API queries (Task 3)
-  const unreadNotifs = 0;
-  const unreadChats  = 0;
+  const unreadNotifs = (notifications ?? []).filter((n) => !n.read).length;
+  const unreadChats  = (chats ?? []).filter((c) => {
+    const last = c.messages[0];
+    return last && last.senderId !== currentUserId && !last.read;
+  }).length;
 
   const isHomeTab = activeTab === 'home' || activeTab === 'comunidade';
 

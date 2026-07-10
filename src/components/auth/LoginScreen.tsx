@@ -1,18 +1,37 @@
 import { useState, type FormEvent } from 'react';
+import { useMutation } from '@tanstack/react-query';
+import { apiFetch, ApiError } from '../../lib/api';
 import { useAppStore } from '../../store/useAppStore';
+import type { ApiUser } from '../../lib/types';
 
 export function LoginScreen() {
-  const login = useAppStore((s) => s.login);
+  const setAuth = useAppStore((s) => s.setAuth);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [error, setError] = useState(false);
   const [showComingSoon, setShowComingSoon] = useState(false);
+
+  const { mutate, isPending, isError, error } = useMutation({
+    mutationFn: () =>
+      apiFetch<{ accessToken: string; user: ApiUser }>('/auth/login', {
+        method: 'POST',
+        body: JSON.stringify({ email: email.trim(), password }),
+      }),
+    onSuccess: ({ accessToken, user }) => {
+      setAuth(accessToken, user);
+    },
+  });
 
   function handleSubmit(e: FormEvent) {
     e.preventDefault();
-    const ok = login(email.trim(), password);
-    if (!ok) setError(true);
+    mutate();
   }
+
+  const errorMsg =
+    isError && error instanceof ApiError && error.status === 401
+      ? 'E-mail ou senha incorretos. Tente novamente.'
+      : isError
+      ? 'Erro de conexão. Tente novamente.'
+      : '';
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-sara-cream sm:bg-[#EDE6DC]">
@@ -37,7 +56,7 @@ export function LoginScreen() {
               type="email"
               autoComplete="email"
               value={email}
-              onChange={(e) => { setEmail(e.target.value); setError(false); }}
+              onChange={(e) => setEmail(e.target.value)}
               placeholder="seu@email.com"
               className="w-full px-4 py-3 rounded-2xl bg-white border border-sara-linen text-sm text-graphite placeholder:text-sara-muted focus:outline-none focus:border-sara-gold"
             />
@@ -52,24 +71,24 @@ export function LoginScreen() {
               type="password"
               autoComplete="current-password"
               value={password}
-              onChange={(e) => { setPassword(e.target.value); setError(false); }}
+              onChange={(e) => setPassword(e.target.value)}
               placeholder="••••••••"
               className="w-full px-4 py-3 rounded-2xl bg-white border border-sara-linen text-sm text-graphite placeholder:text-sara-muted focus:outline-none focus:border-sara-gold"
             />
           </div>
 
-          {error && (
+          {errorMsg && (
             <p role="alert" className="text-xs text-sara-terracotta text-center">
-              E-mail ou senha incorretos. Tente novamente.
+              {errorMsg}
             </p>
           )}
 
           <button
             type="submit"
             className="w-full py-3 rounded-2xl bg-sara-gold text-white text-sm font-semibold active:scale-95 transition-transform disabled:opacity-50"
-            disabled={!email || !password}
+            disabled={!email || !password || isPending}
           >
-            Entrar
+            {isPending ? 'Entrando…' : 'Entrar'}
           </button>
         </form>
 
