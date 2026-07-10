@@ -1,7 +1,11 @@
 import { useState } from 'react';
 import { MessageCircle, Heart, Plus, Repeat2, Share2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAppStore } from '../../store/useAppStore';
+import { apiFetch } from '../../lib/api';
+import type { PaginatedResult, ApiPost } from '../../lib/types';
+import { apiPostToCommunityPost } from '../../lib/helpers';
 import { CreatePostScreen } from './CreatePostScreen';
 import { PostDetailScreen } from '../post/PostDetailScreen';
 import { ComunidadesScreen } from './ComunidadesScreen';
@@ -33,6 +37,11 @@ function PostCard({
   const [liked, setLiked] = useState(false);
   const [reposted, setReposted] = useState(false);
   const badge = post.badge ? BADGE_CONFIG[post.badge] : null;
+
+  const likeMutation = useMutation({
+    mutationFn: (isLiked: boolean) =>
+      apiFetch(`/posts/${post.id}/like`, { method: isLiked ? 'POST' : 'DELETE' }),
+  });
 
   return (
     <div
@@ -73,7 +82,12 @@ function PostCard({
 
       <div className="flex items-center gap-4 pt-1">
         <button
-          onClick={(e) => { e.stopPropagation(); setLiked((v) => !v); }}
+          onClick={(e) => {
+            e.stopPropagation();
+            const next = !liked;
+            setLiked(next);
+            likeMutation.mutate(next);
+          }}
           aria-label={liked ? 'Descurtir' : 'Curtir'}
           aria-pressed={liked}
           className={`flex items-center gap-1.5 text-xs transition-colors ${
@@ -117,9 +131,23 @@ function PostCard({
 }
 
 export function ComunidadeScreen() {
-  // communityPosts is now served by API queries; use empty array as fallback during transition
-  const communityPosts: import('../../types').CommunityPost[] = [];
+  const isLoggedIn = useAppStore((s) => s.isLoggedIn);
   const followedCommunityIds = useAppStore((s) => s.followedCommunityIds);
+  const queryClient = useQueryClient();
+
+  const { data, isLoading } = useQuery({
+    queryKey: ['posts'],
+    queryFn: () => apiFetch<PaginatedResult<ApiPost>>('/posts'),
+    enabled: isLoggedIn,
+  });
+
+  const repostMutation = useMutation({
+    mutationFn: (postId: string) =>
+      apiFetch(`/posts/${postId}/repost`, { method: 'POST' }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['posts'] }),
+  });
+
+  const communityPosts = (data?.items ?? []).map(apiPostToCommunityPost);
 
   const [topTab, setTopTab] = useState<TopTab>('para-voce');
   const [activeCategory, setActiveCategory] = useState<Category>('todos');
@@ -129,6 +157,14 @@ export function ComunidadeScreen() {
 
   if (selectedPost) {
     return <PostDetailScreen post={selectedPost} onBack={() => setSelectedPost(null)} />;
+  }
+
+  if (isLoading && communityPosts.length === 0) {
+    return (
+      <div className="flex items-center justify-center py-20">
+        <div className="w-8 h-8 rounded-full border-2 border-sara-gold border-t-transparent animate-spin" />
+      </div>
+    );
   }
 
   const prioritized = [
@@ -200,7 +236,7 @@ export function ComunidadeScreen() {
                   key={post.id}
                   post={post}
                   onOpen={() => setSelectedPost(post)}
-                  onRepost={() => { /* repost will be wired to API in Task 3 */ }}
+                  onRepost={() => repostMutation.mutate(post.id)}
                   onShare={() => setSharingPost(post)}
                 />
               ))}

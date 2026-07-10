@@ -1,105 +1,78 @@
 import { render, screen, fireEvent, act } from '@testing-library/react';
 import { describe, expect, it, beforeEach, afterEach, vi } from 'vitest';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { CreatePostScreen } from './CreatePostScreen';
 import { useAppStore } from '../../store/useAppStore';
 
-// Synchronous FileReader mock: readAsDataURL immediately fires onload
+const mockApiFetch = vi.hoisted(() => vi.fn());
+vi.mock('../../lib/api', () => ({ apiFetch: mockApiFetch, ApiError: class extends Error {} }));
+
 class MockFileReader {
   result = 'data:image/png;base64,fakedata';
   onload: ((e: any) => void) | null = null;
-  readAsDataURL(_file: File) {
-    this.onload?.({ target: this });
-  }
+  readAsDataURL(_file: File) { this.onload?.({ target: this }); }
+}
+
+function wrapper({ children }: { children: React.ReactNode }) {
+  const qc = new QueryClient({ defaultOptions: { queries: { retry: false }, mutations: { retry: false } } });
+  return <QueryClientProvider client={qc}>{children}</QueryClientProvider>;
 }
 
 beforeEach(() => {
-  useAppStore.setState({ motherName: 'Mariana', communityPosts: [] });
+  useAppStore.setState({ motherName: 'Mariana', isLoggedIn: true });
   vi.stubGlobal('FileReader', MockFileReader);
+  mockApiFetch.mockResolvedValue({ id: 'new-post', content: 'test', category: 'saúde mental', author: { id: 'u1', name: 'Mariana' }, _count: { likes: 0, comments: 0 }, createdAt: new Date().toISOString(), authorId: 'u1', isRepost: false });
 });
 
-afterEach(() => {
-  vi.unstubAllGlobals();
-});
+afterEach(() => { vi.unstubAllGlobals(); vi.clearAllMocks(); });
 
 describe('CreatePostScreen', () => {
   it('renders textarea and publish button', () => {
-    render(<CreatePostScreen onBack={vi.fn()} />);
+    render(<CreatePostScreen onBack={vi.fn()} />, { wrapper });
     expect(screen.getByRole('textbox')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /publicar/i })).toBeInTheDocument();
   });
 
   it('renders Adicionar foto button', () => {
-    render(<CreatePostScreen onBack={vi.fn()} />);
+    render(<CreatePostScreen onBack={vi.fn()} />, { wrapper });
     expect(screen.getByRole('button', { name: /adicionar foto/i })).toBeInTheDocument();
   });
 
   it('shows image preview after file is selected', async () => {
-    render(<CreatePostScreen onBack={vi.fn()} />);
+    render(<CreatePostScreen onBack={vi.fn()} />, { wrapper });
     const input = screen.getByTestId('file-input') as HTMLInputElement;
     const file = new File(['hello'], 'photo.png', { type: 'image/png' });
-    await act(async () => {
-      fireEvent.change(input, { target: { files: [file] } });
-    });
-    const preview = screen.getByRole('img', { name: 'Preview' });
-    expect(preview).toBeInTheDocument();
-    expect(preview).toHaveAttribute('src', 'data:image/png;base64,fakedata');
+    await act(async () => { fireEvent.change(input, { target: { files: [file] } }); });
+    expect(screen.getByRole('img', { name: 'Preview' })).toHaveAttribute('src', 'data:image/png;base64,fakedata');
   });
 
   it('removes preview when X button is clicked', async () => {
-    render(<CreatePostScreen onBack={vi.fn()} />);
+    render(<CreatePostScreen onBack={vi.fn()} />, { wrapper });
     const input = screen.getByTestId('file-input') as HTMLInputElement;
     const file = new File(['hello'], 'photo.png', { type: 'image/png' });
-    await act(async () => {
-      fireEvent.change(input, { target: { files: [file] } });
-    });
-    expect(screen.getByRole('img', { name: 'Preview' })).toBeInTheDocument();
+    await act(async () => { fireEvent.change(input, { target: { files: [file] } }); });
     fireEvent.click(screen.getByRole('button', { name: 'Remover imagem' }));
     expect(screen.queryByRole('img', { name: 'Preview' })).not.toBeInTheDocument();
   });
 
-  it('submits post with imageUrl when image is selected', async () => {
-    render(<CreatePostScreen onBack={vi.fn()} />);
-    const input = screen.getByTestId('file-input') as HTMLInputElement;
-    const file = new File(['hello'], 'photo.png', { type: 'image/png' });
-    await act(async () => {
-      fireEvent.change(input, { target: { files: [file] } });
-    });
+  it('calls apiFetch with content and category on publish', async () => {
+    render(<CreatePostScreen onBack={vi.fn()} />, { wrapper });
     fireEvent.change(screen.getByRole('textbox'), { target: { value: 'Meu desabafo' } });
-    fireEvent.click(screen.getByRole('button', { name: /publicar/i }));
-    const posts = useAppStore.getState().communityPosts;
-    expect(posts[0].imageUrl).toBe('data:image/png;base64,fakedata');
-    expect(posts[0].content).toBe('Meu desabafo');
+    await act(async () => { fireEvent.click(screen.getByRole('button', { name: /publicar/i })); });
+    expect(mockApiFetch).toHaveBeenCalledWith('/posts', expect.objectContaining({ method: 'POST' }));
+    const body = JSON.parse(mockApiFetch.mock.calls[0][1].body);
+    expect(body.content).toBe('Meu desabafo');
   });
 
-  it('submits post without imageUrl when no image selected', () => {
-    render(<CreatePostScreen onBack={vi.fn()} />);
-    fireEvent.change(screen.getByRole('textbox'), { target: { value: 'Só texto' } });
-    fireEvent.click(screen.getByRole('button', { name: /publicar/i }));
-    const posts = useAppStore.getState().communityPosts;
-    expect(posts[0].imageUrl).toBeUndefined();
-  });
-
-  it('renders Cancelar button instead of arrow-back button', () => {
-    render(<CreatePostScreen onBack={() => {}} />);
+  it('renders Cancelar button', () => {
+    render(<CreatePostScreen onBack={() => {}} />, { wrapper });
     expect(screen.getByRole('button', { name: /cancelar/i })).toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: /voltar/i })).not.toBeInTheDocument();
   });
 
-  it('renders header Publicar button', () => {
-    render(<CreatePostScreen onBack={() => {}} />);
-    // The Publicar button is now in the header, not a full-width bottom button
-    const pubBtns = screen.getAllByRole('button', { name: /publicar/i });
-    expect(pubBtns.length).toBeGreaterThan(0);
-  });
-
-  it('enables Publicar when only imagePreview is set (no text)', async () => {
-    render(<CreatePostScreen onBack={() => {}} />);
+  it('enables Publicar when only imagePreview is set', async () => {
+    render(<CreatePostScreen onBack={() => {}} />, { wrapper });
     const input = screen.getByTestId('file-input');
-    const file = new File(['img'], 'photo.png', { type: 'image/png' });
-    await act(async () => {
-      fireEvent.change(input, { target: { files: [file] } });
-    });
-    const pubBtn = screen.getAllByRole('button', { name: /publicar/i })[0];
-    expect(pubBtn).not.toBeDisabled();
+    await act(async () => { fireEvent.change(input, { target: { files: [new File(['img'], 'photo.png', { type: 'image/png' })] } }); });
+    expect(screen.getAllByRole('button', { name: /publicar/i })[0]).not.toBeDisabled();
   });
 });

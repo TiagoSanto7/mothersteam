@@ -1,6 +1,9 @@
 import { useState, useRef } from 'react';
 import { ImagePlus, X } from 'lucide-react';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAppStore } from '../../store/useAppStore';
+import { apiFetch } from '../../lib/api';
+import type { ApiPost } from '../../lib/types';
 import type { CommunityPost } from '../../types';
 
 type PostCategory = CommunityPost['category'];
@@ -17,12 +20,24 @@ interface CreatePostScreenProps {
 }
 
 export function CreatePostScreen({ onBack }: CreatePostScreenProps) {
-  const addCommunityPost = useAppStore((s) => s.addCommunityPost);
   const motherName = useAppStore((s) => s.motherName);
   const [content, setContent] = useState('');
   const [category, setCategory] = useState<PostCategory>('saúde mental');
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const queryClient = useQueryClient();
+
+  const { mutate: publish, isPending } = useMutation({
+    mutationFn: () =>
+      apiFetch<ApiPost>('/posts', {
+        method: 'POST',
+        body: JSON.stringify({ content: content.trim(), category, imageUrl: imagePreview ?? undefined }),
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['posts'] });
+      onBack();
+    },
+  });
 
   function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
@@ -35,13 +50,7 @@ export function CreatePostScreen({ onBack }: CreatePostScreenProps) {
 
   function handlePublish() {
     if (!content.trim() && !imagePreview) return;
-    addCommunityPost({
-      author: motherName,
-      content: content.trim(),
-      category,
-      imageUrl: imagePreview ?? undefined,
-    });
-    onBack();
+    publish();
   }
 
   return (
@@ -56,7 +65,7 @@ export function CreatePostScreen({ onBack }: CreatePostScreenProps) {
         <h1 className="text-sm font-semibold text-graphite">Publicação</h1>
         <button
           onClick={handlePublish}
-          disabled={!content.trim() && !imagePreview}
+          disabled={(!content.trim() && !imagePreview) || isPending}
           className="text-sm font-semibold text-sara-gold disabled:opacity-40 px-1 py-1"
         >
           Publicar
