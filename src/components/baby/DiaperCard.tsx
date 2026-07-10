@@ -1,8 +1,31 @@
 import { Plus } from 'lucide-react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { apiFetch } from '../../lib/api';
 import { useAppStore } from '../../store/useAppStore';
+import type { ApiBabyEntry } from '../../lib/types';
 
 export function DiaperCard() {
-  const { diaperCount, incrementDiaper } = useAppStore();
+  const isLoggedIn = useAppStore((s) => s.isLoggedIn);
+  const queryClient = useQueryClient();
+
+  const { data: entries = [] } = useQuery({
+    queryKey: ['baby'],
+    queryFn: () => apiFetch<ApiBabyEntry[]>('/baby'),
+    enabled: isLoggedIn,
+  });
+
+  const diaperCount = entries.filter((e) => e.type === 'diaper').length;
+
+  const { mutate: increment } = useMutation({
+    mutationFn: () => {
+      const now = new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+      return apiFetch<ApiBabyEntry>('/baby', {
+        method: 'POST',
+        body: JSON.stringify({ time: now, type: 'diaper', detail: 'Fralda trocada' }),
+      });
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['baby'] }),
+  });
 
   return (
     <div className="bg-white rounded-3xl p-4 shadow-sm flex flex-col gap-3">
@@ -15,15 +38,12 @@ export function DiaperCard() {
       </div>
 
       <div className="flex items-center justify-between">
-        <span
-          data-testid="diaper-count"
-          className="text-4xl font-bold text-graphite tabular-nums"
-        >
+        <span data-testid="diaper-count" className="text-4xl font-bold text-graphite tabular-nums">
           {diaperCount}
         </span>
         <button
           aria-label="Registrar troca de fralda"
-          onClick={incrementDiaper}
+          onClick={() => increment()}
           className="w-11 h-11 rounded-2xl bg-sara-linen flex items-center justify-center active:scale-95 transition-transform"
         >
           <Plus size={20} className="text-sara-gold" strokeWidth={2.5} />

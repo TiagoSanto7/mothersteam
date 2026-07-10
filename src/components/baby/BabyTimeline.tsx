@@ -1,22 +1,22 @@
 import { motion } from 'framer-motion';
+import { useQuery } from '@tanstack/react-query';
+import { apiFetch } from '../../lib/api';
 import { useAppStore } from '../../store/useAppStore';
-import type { BabyEntry } from '../../types';
+import type { ApiBabyEntry } from '../../lib/types';
 
-const TYPE_EMOJI: Record<BabyEntry['type'], string> = {
-  sleep:  '😴',
-  feed:   '🤱',
-  diaper: '🧷',
-};
-
-const TYPE_LABEL: Record<BabyEntry['type'], string> = {
-  sleep:  'Sono',
-  feed:   'Amamentação',
-  diaper: 'Fralda',
-};
+const TYPE_EMOJI: Record<ApiBabyEntry['type'], string> = { sleep: '😴', feed: '🤱', diaper: '🧷' };
+const TYPE_LABEL: Record<ApiBabyEntry['type'], string> = { sleep: 'Sono', feed: 'Amamentação', diaper: 'Fralda' };
 
 export function BabyTimeline() {
-  const babyEntries = useAppStore((s) => s.babyEntries);
-  const sorted = [...babyEntries].sort((a, b) => b.time.localeCompare(a.time));
+  const isLoggedIn = useAppStore((s) => s.isLoggedIn);
+
+  const { data: entries = [] } = useQuery({
+    queryKey: ['baby'],
+    queryFn: () => apiFetch<ApiBabyEntry[]>('/baby'),
+    enabled: isLoggedIn,
+  });
+
+  const sorted = [...entries].sort((a, b) => b.createdAt.localeCompare(a.createdAt));
 
   return (
     <div className="flex flex-col gap-2 px-4">

@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { X } from 'lucide-react';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { apiFetch } from '../../lib/api';
 import { useAppStore } from '../../store/useAppStore';
 import type { RoutineEntry } from '../../types';
 
@@ -25,16 +27,29 @@ function nowTime(): string {
 }
 
 export function AddRoutineModal({ onClose, defaultDate }: AddRoutineModalProps) {
-  const addRoutineEntry = useAppStore((s) => s.addRoutineEntry);
   const [title, setTitle] = useState('');
   const [time, setTime] = useState(nowTime());
   const [category, setCategory] = useState<RoutineEntry['category']>('task');
   const [date, setDate] = useState(defaultDate);
 
+  const queryClient = useQueryClient();
+  const selectedDate = useAppStore((s) => s.selectedDate);
+
+  const { mutate: addEntry, isPending } = useMutation({
+    mutationFn: () =>
+      apiFetch('/routine', {
+        method: 'POST',
+        body: JSON.stringify({ title: title.trim(), time, category, date: selectedDate }),
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['routine', selectedDate] });
+      onClose();
+    },
+  });
+
   function handleAdd() {
     if (!title.trim()) return;
-    addRoutineEntry({ title: title.trim(), time, category, date, done: false });
-    onClose();
+    addEntry();
   }
 
   return (
@@ -123,12 +138,12 @@ export function AddRoutineModal({ onClose, defaultDate }: AddRoutineModalProps) 
 
         <motion.button
           onClick={handleAdd}
-          disabled={!title.trim()}
+          disabled={!title.trim() || isPending}
           whileTap={{ scale: 0.97 }}
           transition={{ duration: 0.15, ease: 'easeOut' }}
           className="w-full py-3.5 rounded-2xl bg-sara-gold text-white text-sm font-semibold disabled:opacity-40"
         >
-          Adicionar
+          {isPending ? 'Adicionando…' : 'Adicionar'}
         </motion.button>
       </div>
     </>
