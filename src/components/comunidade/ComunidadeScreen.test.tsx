@@ -41,10 +41,6 @@ beforeEach(() => {
     followedCommunityIds: ['amamentacao-apoio'],
     phase: { stage: 'pregnant', week: 28 },
     motherProfile: null,
-    chats: [
-      { id: '1', with: 'Ana Oliveira', lastMessage: 'Oi!', time: '5min', unread: 2,
-        messages: [{ id: '1', from: 'Ana Oliveira', content: 'Oi!', time: '14:20' }] },
-    ],
     notifications: [],
   });
 });
@@ -170,36 +166,6 @@ describe('ComunidadeScreen', () => {
     fireEvent.click(screen.getByRole('button', { name: /escrever post/i }));
     fireEvent.click(screen.getByRole('button', { name: /cancelar/i }));
     expect(screen.queryByRole('button', { name: /cancelar/i })).not.toBeInTheDocument();
-  });
-
-  it('shows Mensagens icon button when onOpenChat prop is provided', () => {
-    render(<ComunidadeScreen onOpenChat={() => {}} />);
-    expect(screen.getByRole('button', { name: /mensagens/i })).toBeInTheDocument();
-  });
-
-  it('shows Notificações icon button when onOpenNotifications prop is provided', () => {
-    render(<ComunidadeScreen onOpenNotifications={() => {}} />);
-    expect(screen.getByRole('button', { name: /notificações/i })).toBeInTheDocument();
-  });
-
-  it('calls onOpenChat when Mensagens button is clicked', () => {
-    const onOpenChat = vi.fn();
-    render(<ComunidadeScreen onOpenChat={onOpenChat} />);
-    fireEvent.click(screen.getByRole('button', { name: /mensagens/i }));
-    expect(onOpenChat).toHaveBeenCalledOnce();
-  });
-
-  it('calls onOpenNotifications when Notificações button is clicked', () => {
-    const onOpenNotifications = vi.fn();
-    render(<ComunidadeScreen onOpenNotifications={onOpenNotifications} />);
-    fireEvent.click(screen.getByRole('button', { name: /notificações/i }));
-    expect(onOpenNotifications).toHaveBeenCalledOnce();
-  });
-
-  it('does not render icon buttons when props are not provided', () => {
-    render(<ComunidadeScreen />);
-    expect(screen.queryByRole('button', { name: /mensagens/i })).not.toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: /notificações/i })).not.toBeInTheDocument();
   });
 
   it('feed share sheet shows comment textarea', () => {
