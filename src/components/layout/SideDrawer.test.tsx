@@ -52,7 +52,7 @@ describe('SideDrawer', () => {
 
   it('renders correct post count for current user', () => {
     render(<SideDrawer {...defaultProps} />);
-    expect(screen.getByText('1 posts')).toBeInTheDocument();
+    expect(screen.getByText('1 post')).toBeInTheDocument();
   });
 
   it('renders Perfil navigation item', () => {
@@ -100,5 +100,12 @@ describe('SideDrawer', () => {
     fireEvent.click(screen.getByRole('button', { name: /configurações/i }));
     expect(onClose).toHaveBeenCalledOnce();
     expect(onOpenSettings).toHaveBeenCalledOnce();
+  });
+
+  it('calls onClose when Sair da conta is clicked', () => {
+    const onClose = vi.fn();
+    render(<SideDrawer {...defaultProps} onClose={onClose} />);
+    fireEvent.click(screen.getByRole('button', { name: /sair da conta/i }));
+    expect(onClose).toHaveBeenCalledOnce();
   });
 });
