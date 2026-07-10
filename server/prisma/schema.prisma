@@ -1,0 +1,174 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                String    @id @default(cuid())
+  email             String    @unique
+  passwordHash      String
+  name              String
+  babyName          String?
+  pregnancyStage    String
+  pregnancyWeek     Int?
+  babyAgeInDays     Int?
+  onboardingDone    Boolean   @default(false)
+  onboardingAnswers Json?
+  profileKey        String?
+  archetypeKey      String?
+
+  posts              Post[]
+  comments           Comment[]
+  routineEntries     RoutineEntry[]
+  babyEntries        BabyEntry[]
+  notifications      Notification[]
+  following          Follow[]          @relation("Follower")
+  followers          Follow[]          @relation("Following")
+  communities        CommunityMember[]
+  chats              ChatParticipant[]
+  sentMessages       Message[]
+  likedPosts         PostLike[]
+  createdCommunities Community[]       @relation("CommunityCreator")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Follow {
+  followerId  String
+  followingId String
+  follower    User     @relation("Follower", fields: [followerId], references: [id], onDelete: Cascade)
+  following   User     @relation("Following", fields: [followingId], references: [id], onDelete: Cascade)
+  createdAt   DateTime @default(now())
+
+  @@id([followerId, followingId])
+}
+
+model Community {
+  id          String  @id @default(cuid())
+  name        String
+  description String  @db.Text
+  category    String
+  colorKey    String
+  creatorId   String
+  creator     User    @relation("CommunityCreator", fields: [creatorId], references: [id])
+  members     CommunityMember[]
+  posts       Post[]
+  createdAt   DateTime @default(now())
+}
+
+model CommunityMember {
+  userId      String
+  communityId String
+  role        String    @default("member")
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  community   Community @relation(fields: [communityId], references: [id], onDelete: Cascade)
+  joinedAt    DateTime  @default(now())
+
+  @@id([userId, communityId])
+}
+
+model Post {
+  id           String     @id @default(cuid())
+  content      String     @db.Text
+  category     String
+  imageUrl     String?
+  authorId     String
+  author       User       @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  communityId  String?
+  community    Community? @relation(fields: [communityId], references: [id])
+  isRepost     Boolean    @default(false)
+  repostFromId String?
+  repostFrom   Post?      @relation("Repost", fields: [repostFromId], references: [id])
+  reposts      Post[]     @relation("Repost")
+  likes        PostLike[]
+  comments     Comment[]
+  createdAt    DateTime   @default(now())
+}
+
+model PostLike {
+  userId    String
+  postId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@id([userId, postId])
+}
+
+model Comment {
+  id        String   @id @default(cuid())
+  content   String   @db.Text
+  authorId  String
+  author    User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  postId    String
+  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  likes     Int      @default(0)
+  createdAt DateTime @default(now())
+}
+
+model Chat {
+  id           String            @id @default(cuid())
+  participants ChatParticipant[]
+  messages     Message[]
+  createdAt    DateTime          @default(now())
+}
+
+model ChatParticipant {
+  userId String
+  chatId String
+  user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  chat   Chat @relation(fields: [chatId], references: [id], onDelete: Cascade)
+
+  @@id([userId, chatId])
+}
+
+model Message {
+  id                String   @id @default(cuid())
+  content           String   @db.Text
+  chatId            String
+  chat              Chat     @relation(fields: [chatId], references: [id], onDelete: Cascade)
+  senderId          String
+  sender            User     @relation(fields: [senderId], references: [id], onDelete: Cascade)
+  sharedPostId      String?
+  sharedPostAuthor  String?
+  sharedPostExcerpt String?
+  read              Boolean  @default(false)
+  createdAt         DateTime @default(now())
+}
+
+model RoutineEntry {
+  id        String   @id @default(cuid())
+  time      String
+  date      String
+  title     String
+  category  String
+  done      Boolean  @default(false)
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+}
+
+model BabyEntry {
+  id        String   @id @default(cuid())
+  time      String
+  type      String
+  detail    String
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+}
+
+model Notification {
+  id          String   @id @default(cuid())
+  type        String
+  text        String
+  read        Boolean  @default(false)
+  recipientId String
+  recipient   User     @relation(fields: [recipientId], references: [id], onDelete: Cascade)
+  createdAt   DateTime @default(now())
+}
