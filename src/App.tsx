@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Bell, MessageSquare } from 'lucide-react';
 import { useAppStore } from './store/useAppStore';
 import type { TabId } from './types';
 import { MobileShell } from './components/layout/MobileShell';
@@ -10,51 +11,94 @@ import { ShoppingScreen } from './components/shopping/ShoppingScreen';
 import { LoginScreen } from './components/auth/LoginScreen';
 import { OnboardingScreen } from './components/auth/OnboardingScreen';
 import { ProfileScreen } from './components/profile/ProfileScreen';
+import { SettingsScreen } from './components/profile/SettingsScreen';
 import { NotificationsScreen } from './components/notifications/NotificationsScreen';
 import { ChatListScreen } from './components/chat/ChatListScreen';
 
 export default function App() {
-  const isLoggedIn = useAppStore((s) => s.isLoggedIn);
-  const onboardingDone = useAppStore((s) => s.onboardingDone);
-  const activeTab = useAppStore((s) => s.activeTab);
-  const [showProfile, setShowProfile] = useState(false);
-  const [showNotifications, setShowNotifications] = useState(false);
-  const [showChat, setShowChat] = useState(false);
+  const isLoggedIn       = useAppStore((s) => s.isLoggedIn);
+  const onboardingDone   = useAppStore((s) => s.onboardingDone);
+  const activeTab        = useAppStore((s) => s.activeTab);
+  const notifications    = useAppStore((s) => s.notifications);
+  const chats            = useAppStore((s) => s.chats);
 
-  if (!isLoggedIn) return <LoginScreen />;
+  const [drawerOpen,        setDrawerOpen]        = useState(false);
+  const [showProfile,       setShowProfile]       = useState(false);
+  const [showSettings,      setShowSettings]      = useState(false);
+  const [showNotifications, setShowNotifications] = useState(false);
+  const [showChat,          setShowChat]          = useState(false);
+
+  if (!isLoggedIn)    return <LoginScreen />;
   if (!onboardingDone) return <OnboardingScreen />;
 
+  const unreadNotifs = notifications.filter((n) => !n.read).length;
+  const unreadChats  = chats.reduce((sum, c) => sum + c.unread, 0);
+
+  const isHomeTab = activeTab === 'home' || activeTab === 'comunidade';
+
+  const headerRightSlot = isHomeTab ? (
+    <div className="flex items-center gap-2">
+      <button
+        onClick={() => setShowChat(true)}
+        aria-label="Mensagens"
+        className="relative w-9 h-9 rounded-xl bg-white/70 backdrop-blur-sm border border-white/50 flex items-center justify-center"
+      >
+        <MessageSquare size={18} className="text-graphite-light" strokeWidth={1.8} />
+        {unreadChats > 0 && (
+          <span className="absolute -top-1 -right-1 w-4 h-4 bg-sara-gold rounded-full flex items-center justify-center text-[9px] font-bold text-white">
+            {unreadChats}
+          </span>
+        )}
+      </button>
+      <button
+        onClick={() => setShowNotifications(true)}
+        aria-label="Notificações"
+        className="relative w-9 h-9 rounded-xl bg-white/70 backdrop-blur-sm border border-white/50 flex items-center justify-center"
+      >
+        <Bell size={18} className="text-graphite-light" strokeWidth={1.8} />
+        {unreadNotifs > 0 && (
+          <span className="absolute -top-1 -right-1 w-4 h-4 bg-sara-terracotta rounded-full flex items-center justify-center text-[9px] font-bold text-white">
+            {unreadNotifs}
+          </span>
+        )}
+      </button>
+    </div>
+  ) : undefined;
+
   const screens: Record<TabId, React.ReactElement> = {
-    // 'home' routes to the feed — community IS the home experience by design
-    home: (
-      <ComunidadeScreen
-        onOpenChat={() => setShowChat(true)}
-        onOpenNotifications={() => setShowNotifications(true)}
-      />
-    ),
+    home:       <ComunidadeScreen />,
     maeIA:      <MaeIAScreen />,
     baby:       <BabyScreen />,
-    rotina: (
-      <HomeScreen
-        onOpenProfile={() => setShowProfile(true)}
-      />
-    ),
-    comunidade: ( // alias for stale persisted activeTab
-      <ComunidadeScreen
-        onOpenChat={() => setShowChat(true)}
-        onOpenNotifications={() => setShowNotifications(true)}
-      />
-    ),
+    rotina:     <HomeScreen onOpenProfile={() => setShowProfile(true)} />,
+    comunidade: <ComunidadeScreen />,
     shopping:   <ShoppingScreen />,
   };
 
   return (
     <>
-      <MobileShell>{screens[activeTab]}</MobileShell>
+      <MobileShell
+        drawerOpen={drawerOpen}
+        onOpenDrawer={() => setDrawerOpen(true)}
+        onCloseDrawer={() => setDrawerOpen(false)}
+        onOpenProfile={() => setShowProfile(true)}
+        onOpenSettings={() => setShowSettings(true)}
+        headerRightSlot={headerRightSlot}
+      >
+        {screens[activeTab]}
+      </MobileShell>
 
       {showProfile && (
         <div className="fixed inset-0 z-50 sm:bg-black/40 sm:flex sm:items-center sm:justify-center">
           <ProfileScreen onClose={() => setShowProfile(false)} />
+        </div>
+      )}
+
+      {showSettings && (
+        <div className="fixed inset-0 z-50 sm:bg-black/40 sm:flex sm:items-center sm:justify-center">
+          <SettingsScreen
+            onBack={() => setShowSettings(false)}
+            onClose={() => setShowSettings(false)}
+          />
         </div>
       )}
 
