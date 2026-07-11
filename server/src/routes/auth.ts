@@ -19,6 +19,7 @@ const registerSchema = z.object({
   pregnancyStage: z.enum(['pregnant', 'postpartum']),
   pregnancyWeek: z.number().int().min(1).max(42).optional(),
   babyAgeInDays: z.number().int().min(0).optional(),
+  babyName: z.string().optional(),
 })
 
 const loginSchema = z.object({
@@ -43,8 +44,13 @@ export default async function authRoutes(fastify: FastifyInstance) {
         pregnancyStage: body.data.pregnancyStage,
         pregnancyWeek: body.data.pregnancyWeek,
         babyAgeInDays: body.data.babyAgeInDays,
+        babyName: body.data.babyName,
       },
-      select: { id: true, email: true, name: true },
+      select: {
+        id: true, email: true, name: true, babyName: true,
+        pregnancyStage: true, pregnancyWeek: true, babyAgeInDays: true,
+        onboardingDone: true, profileKey: true, archetypeKey: true,
+      },
     })
 
     const accessToken = signAccessToken(user.id)
