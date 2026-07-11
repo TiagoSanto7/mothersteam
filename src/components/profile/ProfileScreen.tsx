@@ -1,9 +1,13 @@
 import { useState } from 'react';
 import { ChevronLeft, Settings, Heart, MessageCircle } from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';
 import { useAppStore } from '../../store/useAppStore';
 import { ARCHETYPES } from '../../utils/onboardingScoring';
 import { SettingsScreen } from './SettingsScreen';
 import { PostDetailScreen } from '../post/PostDetailScreen';
+import { apiFetch } from '../../lib/api';
+import { apiPostToCommunityPost } from '../../lib/helpers';
+import type { PaginatedResult, ApiPost } from '../../lib/types';
 import type { CommunityPost } from '../../types';
 
 interface ProfileScreenProps {
@@ -13,7 +17,15 @@ interface ProfileScreenProps {
 export function ProfileScreen({ onClose }: ProfileScreenProps) {
   const motherName = useAppStore((s) => s.motherName);
   const motherProfile = useAppStore((s) => s.motherProfile);
-  const communityPosts = useAppStore((s) => s.communityPosts);
+  const isLoggedIn = useAppStore((s) => s.isLoggedIn);
+
+  const { data } = useQuery({
+    queryKey: ['posts'],
+    queryFn: () => apiFetch<PaginatedResult<ApiPost>>('/posts'),
+    enabled: isLoggedIn,
+  });
+
+  const communityPosts: CommunityPost[] = (data?.items ?? []).map(apiPostToCommunityPost);
 
   const [showSettings, setShowSettings] = useState(false);
   const [isVisitorView, setIsVisitorView] = useState(false);

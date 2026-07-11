@@ -71,7 +71,7 @@ export default async function authRoutes(fastify: FastifyInstance) {
 
     reply
       .setCookie(REFRESH_COOKIE, refreshToken, COOKIE_OPTS)
-      .send({ accessToken, user: { id: user.id, email: user.email, name: user.name } })
+      .send({ accessToken, user: { id: user.id, email: user.email, name: user.name, onboardingDone: user.onboardingDone } })
   })
 
   fastify.post('/logout', async (request, reply) => {
