@@ -60,7 +60,14 @@ export default async function authRoutes(fastify: FastifyInstance) {
     const body = loginSchema.safeParse(request.body)
     if (!body.success) return reply.status(400).send({ error: body.error.flatten() })
 
-    const user = await fastify.prisma.user.findUnique({ where: { email: body.data.email } })
+    const user = await fastify.prisma.user.findUnique({
+      where: { email: body.data.email },
+      select: {
+        id: true, email: true, name: true, passwordHash: true, babyName: true,
+        pregnancyStage: true, pregnancyWeek: true, babyAgeInDays: true,
+        onboardingDone: true, profileKey: true, archetypeKey: true,
+      },
+    })
     if (!user) return reply.status(401).send({ error: 'Invalid credentials' })
 
     const valid = await bcrypt.compare(body.data.password, user.passwordHash)
@@ -69,9 +76,11 @@ export default async function authRoutes(fastify: FastifyInstance) {
     const accessToken = signAccessToken(user.id)
     const refreshToken = signRefreshToken(user.id)
 
+    const { passwordHash: _, ...safeUser } = user
+
     reply
       .setCookie(REFRESH_COOKIE, refreshToken, COOKIE_OPTS)
-      .send({ accessToken, user: { id: user.id, email: user.email, name: user.name, onboardingDone: user.onboardingDone } })
+      .send({ accessToken, user: safeUser })
   })
 
   fastify.post('/logout', async (request, reply) => {

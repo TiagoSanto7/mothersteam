@@ -10,6 +10,7 @@ interface AppState {
   isLoggedIn: boolean;
   accessToken: string | null;
   currentUserId: string | null;
+  email: string;
   // Profile — persisted
   onboardingDone: boolean;
   motherProfile: MotherProfile | null;
@@ -56,6 +57,7 @@ export const useAppStore = create<AppState>()(
       isLoggedIn: false,
       accessToken: null,
       currentUserId: null,
+      email: '',
       // Profile
       onboardingDone: false,
       motherProfile: null,
@@ -74,13 +76,14 @@ export const useAppStore = create<AppState>()(
           accessToken: token,
           currentUserId: user.id,
           isLoggedIn: true,
+          email: user.email,
           motherName: user.name,
           babyName: user.babyName ?? '',
           phase: buildPhase(user),
           onboardingDone: user.onboardingDone,
         }),
       clearAuth: () =>
-        set({ accessToken: null, currentUserId: null, isLoggedIn: false }),
+        set({ accessToken: null, currentUserId: null, isLoggedIn: false, email: '' }),
       // Profile actions
       completeOnboarding: (answers) => {
         const profile = computeProfile(answers);

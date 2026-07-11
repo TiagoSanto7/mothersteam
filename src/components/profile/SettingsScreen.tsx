@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { useAppStore } from '../../store/useAppStore';
+import { apiFetch } from '../../lib/api';
 
 interface SettingsScreenProps {
   onBack: () => void;
@@ -9,14 +10,16 @@ interface SettingsScreenProps {
 
 export function SettingsScreen({ onBack, onClose }: SettingsScreenProps) {
   const motherName = useAppStore((s) => s.motherName);
-  const logout = useAppStore((s) => s.logout);
+  const email = useAppStore((s) => s.email);
+  const clearAuth = useAppStore((s) => s.clearAuth);
   const resetOnboarding = useAppStore((s) => s.resetOnboarding);
 
   const [notifLikes, setNotifLikes] = useState(true);
   const [notifPosts, setNotifPosts] = useState(false);
 
   function handleLogout() {
-    logout();
+    apiFetch('/auth/logout', { method: 'POST' }).catch(() => {});
+    clearAuth();
     onClose();
   }
 
@@ -48,7 +51,7 @@ export function SettingsScreen({ onBack, onClose }: SettingsScreenProps) {
             <div className="flex items-center justify-between px-4 py-3">
               <div>
                 <p className="text-xs text-graphite-muted">E-mail</p>
-                <p className="text-sm font-medium text-graphite">navegador@mothersteam</p>
+                <p className="text-sm font-medium text-graphite">{email}</p>
               </div>
             </div>
             <div className="flex items-center justify-between px-4 py-3">

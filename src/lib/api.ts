@@ -25,7 +25,7 @@ async function doRefresh(): Promise<string | null> {
 export async function apiFetch<T>(path: string, init: RequestInit = {}): Promise<T> {
   const token = useAppStore.getState().accessToken
   const headers: Record<string, string> = {
-    'Content-Type': 'application/json',
+    ...(init.body ? { 'Content-Type': 'application/json' } : {}),
     ...(init.headers as Record<string, string>),
   }
   if (token) headers['Authorization'] = `Bearer ${token}`
