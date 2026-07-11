@@ -235,4 +235,28 @@ describe('ComunidadeScreen', () => {
     fireEvent.click(firstEnviar);
     expect(screen.getByTestId('share-send-btn')).toBeDisabled();
   });
+
+  it('PostCard starts as liked when post.likedByCurrentUser is true', async () => {
+    const likedPost = {
+      id: '3',
+      category: 'gestação',
+      author: { id: 'u3', name: 'Bia' },
+      content: 'Post já curtido',
+      imageUrl: null,
+      authorId: 'u3',
+      communityId: null,
+      isRepost: false,
+      _count: { likes: 10, comments: 0 },
+      createdAt: new Date().toISOString(),
+      likedByCurrentUser: true,
+    };
+    mockApiFetch.mockResolvedValue({ items: [likedPost], hasMore: false });
+    const qc = new QueryClient({ defaultOptions: { queries: { retry: false }, mutations: { retry: false } } });
+    qc.setQueryData(['posts'], { items: [likedPost], hasMore: false });
+    render(
+      <QueryClientProvider client={qc}><ComunidadeScreen /></QueryClientProvider>
+    );
+    await screen.findAllByTestId('post-card');
+    expect(screen.getByRole('button', { name: 'Descurtir' })).toBeInTheDocument();
+  });
 });

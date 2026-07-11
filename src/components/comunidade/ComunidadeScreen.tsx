@@ -34,13 +34,25 @@ function PostCard({
   onRepost: () => void;
   onShare: () => void;
 }) {
-  const [liked, setLiked] = useState(false);
+  const queryClient = useQueryClient();
+  const [liked, setLiked] = useState(post.likedByCurrentUser ?? false);
   const [reposted, setReposted] = useState(false);
   const badge = post.badge ? BADGE_CONFIG[post.badge] : null;
 
   const likeMutation = useMutation({
     mutationFn: (isLiked: boolean) =>
       apiFetch(`/posts/${post.id}/like`, { method: isLiked ? 'POST' : 'DELETE' }),
+    onSuccess: (_, isLiked) => {
+      queryClient.setQueryData<PaginatedResult<ApiPost>>(['posts'], (old) => {
+        if (!old) return old;
+        return {
+          ...old,
+          items: old.items.map((p) =>
+            p.id === post.id ? { ...p, likedByCurrentUser: isLiked } : p
+          ),
+        };
+      });
+    },
   });
 
   return (
@@ -95,7 +107,7 @@ function PostCard({
           }`}
         >
           <Heart size={14} fill={liked ? 'currentColor' : 'none'} strokeWidth={1.8} />
-          {post.likes + (liked ? 1 : 0)}
+          {post.likes - (post.likedByCurrentUser ? 1 : 0) + (liked ? 1 : 0)}
         </button>
         <button
           onClick={onOpen}
