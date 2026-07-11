@@ -29,6 +29,7 @@ export function apiPostToCommunityPost(post: ApiPost): CommunityPost {
     time: relativeTime(post.createdAt),
     communityId: post.communityId ?? undefined,
     isRepost: post.isRepost,
+    likedByCurrentUser: post.likedByCurrentUser,
   }
 }
 

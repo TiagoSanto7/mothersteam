@@ -62,6 +62,7 @@ export interface CommunityPost {
   repostFrom?: string;
   communityId?: string;
   imageUrl?: string;
+  likedByCurrentUser?: boolean;
 }
 
 export interface PostComment {

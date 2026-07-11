@@ -28,6 +28,7 @@ const API_POSTS = [
     isRepost: false,
     _count: { likes: 24, comments: 8 },
     createdAt: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
+    likedByCurrentUser: false,
   },
   {
     id: '2',
@@ -40,6 +41,7 @@ const API_POSTS = [
     isRepost: false,
     _count: { likes: 67, comments: 12 },
     createdAt: new Date(Date.now() - 4 * 60 * 60 * 1000).toISOString(),
+    likedByCurrentUser: false,
   },
 ];
 

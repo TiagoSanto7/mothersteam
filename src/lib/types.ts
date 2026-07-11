@@ -23,6 +23,7 @@ export interface ApiPost {
   repostFromId?: string | null
   _count: { likes: number; comments: number }
   createdAt: string
+  likedByCurrentUser: boolean
 }
 
 export interface ApiCommunity {
