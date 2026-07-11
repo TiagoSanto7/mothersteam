@@ -18,10 +18,24 @@ describe('ComposerBar', () => {
     expect(screen.getByText('O que você está sentindo hoje?')).toBeInTheDocument();
   });
 
-  it('calls onOpen when clicked', () => {
+  it('clicking text button calls onOpen', () => {
     const onOpen = vi.fn();
     render(<ComposerBar onOpen={onOpen} />);
     fireEvent.click(screen.getByRole('button', { name: 'Escrever post' }));
+    expect(onOpen).toHaveBeenCalledOnce();
+  });
+
+  it('camera button calls onOpenWithImage when provided', () => {
+    const onOpenWithImage = vi.fn();
+    render(<ComposerBar onOpen={vi.fn()} onOpenWithImage={onOpenWithImage} />);
+    fireEvent.click(screen.getByRole('button', { name: 'Adicionar foto' }));
+    expect(onOpenWithImage).toHaveBeenCalledOnce();
+  });
+
+  it('camera button falls back to onOpen when onOpenWithImage not provided', () => {
+    const onOpen = vi.fn();
+    render(<ComposerBar onOpen={onOpen} />);
+    fireEvent.click(screen.getByRole('button', { name: 'Adicionar foto' }));
     expect(onOpen).toHaveBeenCalledOnce();
   });
 

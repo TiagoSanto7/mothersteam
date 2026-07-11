@@ -152,6 +152,7 @@ export function ComunidadeScreen() {
   const [topTab, setTopTab] = useState<TopTab>('para-voce');
   const [activeCategory, setActiveCategory] = useState<Category>('todos');
   const [showCreate, setShowCreate] = useState(false);
+  const [showCreateWithImage, setShowCreateWithImage] = useState(false);
   const [selectedPost, setSelectedPost] = useState<CommunityPost | null>(null);
   const [sharingPost, setSharingPost] = useState<CommunityPost | null>(null);
 
@@ -207,7 +208,10 @@ export function ComunidadeScreen() {
 
         {topTab === 'para-voce' ? (
           <>
-            <ComposerBar onOpen={() => setShowCreate(true)} />
+            <ComposerBar
+              onOpen={() => setShowCreate(true)}
+              onOpenWithImage={() => { setShowCreateWithImage(true); setShowCreate(true); }}
+            />
 
             <div className="flex gap-2 overflow-x-auto scrollbar-hide px-4">
               {CATEGORY_LABELS.map((cat) => {
@@ -285,7 +289,10 @@ export function ComunidadeScreen() {
               className="w-full max-w-[390px] mx-auto h-[90%] bg-gradient-to-b from-[#F5EDE0] via-[#EAD8C8] to-[#D9C4AF] rounded-t-3xl flex flex-col overflow-hidden"
               onClick={(e) => e.stopPropagation()}
             >
-              <CreatePostScreen onBack={() => setShowCreate(false)} />
+              <CreatePostScreen
+                  onBack={() => { setShowCreate(false); setShowCreateWithImage(false); }}
+                  autoOpenImage={showCreateWithImage}
+                />
             </motion.div>
           </motion.div>
         )}

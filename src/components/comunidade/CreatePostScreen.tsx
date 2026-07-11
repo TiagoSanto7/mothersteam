@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { ImagePlus, X } from 'lucide-react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAppStore } from '../../store/useAppStore';
@@ -17,15 +17,22 @@ const CATEGORIES: { value: PostCategory; label: string }[] = [
 
 interface CreatePostScreenProps {
   onBack: () => void;
+  autoOpenImage?: boolean;
 }
 
-export function CreatePostScreen({ onBack }: CreatePostScreenProps) {
+export function CreatePostScreen({ onBack, autoOpenImage }: CreatePostScreenProps) {
   const motherName = useAppStore((s) => s.motherName);
   const [content, setContent] = useState('');
   const [category, setCategory] = useState<PostCategory>('saúde mental');
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const queryClient = useQueryClient();
+
+  useEffect(() => {
+    if (autoOpenImage) {
+      fileInputRef.current?.click();
+    }
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const { mutate: publish, isPending } = useMutation({
     mutationFn: () =>
