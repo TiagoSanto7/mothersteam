@@ -28,8 +28,6 @@ export function ProfileScreen({ onClose }: ProfileScreenProps) {
   const communityPosts: CommunityPost[] = (data?.items ?? []).map(apiPostToCommunityPost);
 
   const [showSettings, setShowSettings] = useState(false);
-  const [isVisitorView, setIsVisitorView] = useState(false);
-  const [following, setFollowing] = useState(false);
   const [selectedPost, setSelectedPost] = useState<CommunityPost | null>(null);
 
   const archetype = motherProfile ? ARCHETYPES[motherProfile.archetypeKey] : null;
@@ -94,44 +92,11 @@ export function ProfileScreen({ onClose }: ProfileScreenProps) {
           "{bio}"
         </p>
 
-        {/* Owner / Visitor toggle */}
-        <div className="flex items-center gap-1 mt-3 bg-gray-100 rounded-xl p-1 w-fit">
-          <button
-            onClick={() => setIsVisitorView(false)}
-            className={`text-[11px] font-semibold px-3 py-1.5 rounded-lg transition-all ${!isVisitorView ? 'bg-white text-graphite shadow-sm' : 'text-graphite-muted'}`}
-          >
-            Meu perfil
-          </button>
-          <button
-            onClick={() => setIsVisitorView(true)}
-            className={`text-[11px] font-semibold px-3 py-1.5 rounded-lg transition-all ${isVisitorView ? 'bg-white text-graphite shadow-sm' : 'text-graphite-muted'}`}
-          >
-            Como visitante
-          </button>
-        </div>
-
         {/* Actions */}
         <div className="flex gap-2 mt-3">
-          {!isVisitorView ? (
-            <button className="flex-1 py-2 rounded-xl bg-sara-linen text-xs font-semibold text-sara-gold active:scale-95 transition-transform">
-              Editar perfil
-            </button>
-          ) : (
-            <>
-              <button
-                onClick={() => setFollowing(!following)}
-                className={`flex-1 py-2 rounded-xl text-xs font-semibold active:scale-95 transition-all ${following ? 'bg-gray-100 text-graphite border border-gray-200' : 'bg-sara-gold text-white'}`}
-              >
-                {following ? 'Seguindo' : 'Seguir'}
-              </button>
-              <button className="flex-1 py-2 rounded-xl bg-gray-100 text-xs font-semibold text-graphite active:scale-95 transition-transform border border-gray-200">
-                Mensagem
-              </button>
-              <button className="w-10 h-9 flex items-center justify-center rounded-xl bg-gray-100 border border-gray-200 active:scale-95 transition-transform">
-                <span className="text-sm">🔔</span>
-              </button>
-            </>
-          )}
+          <button className="flex-1 py-2 rounded-xl bg-sara-linen text-xs font-semibold text-sara-gold active:scale-95 transition-transform">
+            Editar perfil
+          </button>
         </div>
       </div>
 
