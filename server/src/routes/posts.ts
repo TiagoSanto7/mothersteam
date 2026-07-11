@@ -19,17 +19,22 @@ export default async function postsRoutes(fastify: FastifyInstance) {
     '/',
     async (request, reply) => {
       const limit = Math.min(Number(request.query.limit ?? 20), 50)
-      const posts = await fastify.prisma.post.findMany({
+      const rows = await fastify.prisma.post.findMany({
         take: limit + 1,
         ...(request.query.cursor ? { cursor: { id: request.query.cursor }, skip: 1 } : {}),
         include: {
           author: { select: { id: true, name: true } },
           _count: { select: { likes: true, comments: true } },
+          likes: { where: { userId: request.userId }, select: { userId: true } },
         },
         orderBy: { createdAt: 'desc' },
       })
-      const hasMore = posts.length > limit
-      reply.send({ items: posts.slice(0, limit), hasMore })
+      const hasMore = rows.length > limit
+      const items = rows.slice(0, limit).map(({ likes, ...post }) => ({
+        ...post,
+        likedByCurrentUser: likes.length > 0,
+      }))
+      reply.send({ items, hasMore })
     }
   )
 
