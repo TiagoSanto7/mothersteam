@@ -88,19 +88,21 @@ export function SettingsScreen({ onBack, onClose }: SettingsScreenProps) {
             <div className="flex items-center justify-between px-4 py-3.5">
               <p className="text-sm text-graphite">Curtidas e comentários</p>
               <button
+                aria-label="Curtidas e comentários"
                 onClick={() => setNotifLikes(!notifLikes)}
-                className={`w-10 h-6 rounded-full transition-colors relative ${notifLikes ? 'bg-sara-gold' : 'bg-gray-200'}`}
+                className={`w-10 h-6 rounded-full p-0 transition-colors relative ${notifLikes ? 'bg-sara-gold' : 'bg-gray-200'}`}
               >
-                <span className={`absolute top-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${notifLikes ? 'translate-x-4' : 'translate-x-0.5'}`} />
+                <span className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${notifLikes ? 'translate-x-[18px]' : ''}`} />
               </button>
             </div>
             <div className="flex items-center justify-between px-4 py-3.5">
               <p className="text-sm text-graphite">Novas publicações</p>
               <button
+                aria-label="Novas publicações"
                 onClick={() => setNotifPosts(!notifPosts)}
-                className={`w-10 h-6 rounded-full transition-colors relative ${notifPosts ? 'bg-sara-gold' : 'bg-gray-200'}`}
+                className={`w-10 h-6 rounded-full p-0 transition-colors relative ${notifPosts ? 'bg-sara-gold' : 'bg-gray-200'}`}
               >
-                <span className={`absolute top-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${notifPosts ? 'translate-x-4' : 'translate-x-0.5'}`} />
+                <span className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${notifPosts ? 'translate-x-[18px]' : ''}`} />
               </button>
             </div>
           </div>
