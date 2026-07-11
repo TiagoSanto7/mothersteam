@@ -3,12 +3,14 @@ import { useMutation } from '@tanstack/react-query';
 import { apiFetch, ApiError } from '../../lib/api';
 import { useAppStore } from '../../store/useAppStore';
 import type { ApiUser } from '../../lib/types';
+import { RegisterScreen } from './RegisterScreen';
 
 export function LoginScreen() {
   const setAuth = useAppStore((s) => s.setAuth);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showComingSoon, setShowComingSoon] = useState(false);
+  const [showRegister, setShowRegister] = useState(false);
 
   const { mutate, isPending, isError, error } = useMutation({
     mutationFn: () =>
@@ -32,6 +34,10 @@ export function LoginScreen() {
       : isError
       ? 'Erro de conexão. Tente novamente.'
       : '';
+
+  if (showRegister) {
+    return <RegisterScreen onBack={() => setShowRegister(false)} />;
+  }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-sara-cream sm:bg-[#EDE6DC]">
@@ -129,6 +135,14 @@ export function LoginScreen() {
               🚀 Login social disponível em breve
             </p>
           )}
+
+          <button
+            type="button"
+            onClick={() => setShowRegister(true)}
+            className="w-full py-3 rounded-2xl bg-transparent border border-dashed border-sara-linen text-sm font-medium text-graphite-muted active:scale-95 transition-transform"
+          >
+            Criar conta
+          </button>
         </div>
       </div>
     </div>
