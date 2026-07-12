@@ -5,6 +5,7 @@ import { useAppStore } from '../../store/useAppStore';
 import { ARCHETYPES } from '../../utils/onboardingScoring';
 import { SettingsScreen } from './SettingsScreen';
 import { PostDetailScreen } from '../post/PostDetailScreen';
+import { FollowListScreen } from './FollowListScreen';
 import { apiFetch } from '../../lib/api';
 import { apiPostToCommunityPost } from '../../lib/helpers';
 import type { PaginatedResult, ApiPost } from '../../lib/types';
@@ -18,6 +19,7 @@ export function ProfileScreen({ onClose }: ProfileScreenProps) {
   const motherName = useAppStore((s) => s.motherName);
   const motherProfile = useAppStore((s) => s.motherProfile);
   const isLoggedIn = useAppStore((s) => s.isLoggedIn);
+  const currentUserId = useAppStore((s) => s.currentUserId);
 
   const { data } = useQuery({
     queryKey: ['posts'],
@@ -29,6 +31,7 @@ export function ProfileScreen({ onClose }: ProfileScreenProps) {
 
   const [showSettings, setShowSettings] = useState(false);
   const [selectedPost, setSelectedPost] = useState<CommunityPost | null>(null);
+  const [followList, setFollowList] = useState<'followers' | 'following' | null>(null);
 
   const archetype = motherProfile ? ARCHETYPES[motherProfile.archetypeKey] : null;
   const avatarColor = archetype?.color ?? '#9D8FCC';
@@ -40,6 +43,19 @@ export function ProfileScreen({ onClose }: ProfileScreenProps) {
     return (
       <div className="flex flex-col w-full h-full sm:w-[390px] sm:h-[844px] bg-gradient-to-b from-[#F5EDE0] via-[#EAD8C8] to-[#D9C4AF] sm:rounded-[44px] sm:shadow-2xl overflow-hidden">
         <PostDetailScreen post={selectedPost} onBack={() => setSelectedPost(null)} />
+      </div>
+    );
+  }
+
+  if (followList && currentUserId) {
+    return (
+      <div className="flex flex-col w-full h-full sm:w-[390px] sm:h-[844px] bg-gradient-to-b from-[#F5EDE0] via-[#EAD8C8] to-[#D9C4AF] sm:rounded-[44px] sm:shadow-2xl overflow-hidden">
+        <FollowListScreen
+          mode={followList}
+          userId={currentUserId}
+          onOpenUser={() => { /* self view — no recursive nav available here */ }}
+          onBack={() => setFollowList(null)}
+        />
       </div>
     );
   }
@@ -76,14 +92,27 @@ export function ProfileScreen({ onClose }: ProfileScreenProps) {
           </div>
           <div className="flex gap-4 flex-1 justify-around">
             {[
-              { label: 'Posts', value: userPosts.length },
-              { label: 'Seguidoras', value: 248 },
-              { label: 'Seguindo', value: 31 },
-            ].map(({ label, value }) => (
-              <div key={label} className="flex flex-col items-center">
-                <span className="text-base font-bold text-graphite">{value}</span>
-                <span className="text-[10px] text-graphite-muted text-center leading-tight">{label}</span>
-              </div>
+              { label: 'Posts', value: userPosts.length, mode: null as 'followers' | 'following' | null },
+              { label: 'Seguidoras', value: 248, mode: 'followers' as const },
+              { label: 'Seguindo', value: 31, mode: 'following' as const },
+            ].map(({ label, value, mode }) => (
+              mode ? (
+                <button
+                  key={label}
+                  type="button"
+                  onClick={() => setFollowList(mode)}
+                  aria-label={label}
+                  className="flex flex-col items-center"
+                >
+                  <span className="text-base font-bold text-graphite">{value}</span>
+                  <span className="text-[10px] text-graphite-muted text-center leading-tight">{label}</span>
+                </button>
+              ) : (
+                <div key={label} className="flex flex-col items-center">
+                  <span className="text-base font-bold text-graphite">{value}</span>
+                  <span className="text-[10px] text-graphite-muted text-center leading-tight">{label}</span>
+                </div>
+              )
             ))}
           </div>
         </div>

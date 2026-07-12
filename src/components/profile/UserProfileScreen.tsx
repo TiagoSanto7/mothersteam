@@ -1,16 +1,20 @@
+import { useState } from 'react';
 import { ChevronLeft, Heart, MessageCircle } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiFetch } from '../../lib/api';
 import type { ApiUserProfile, PaginatedResult, ApiPost } from '../../lib/types';
 import { apiPostToCommunityPost } from '../../lib/helpers';
+import { FollowListScreen } from './FollowListScreen';
 
 interface UserProfileScreenProps {
   userId: string;
   onBack: () => void;
+  onOpenProfile?: (userId: string) => void;
 }
 
-export function UserProfileScreen({ userId, onBack }: UserProfileScreenProps) {
+export function UserProfileScreen({ userId, onBack, onOpenProfile }: UserProfileScreenProps) {
   const queryClient = useQueryClient();
+  const [followList, setFollowList] = useState<'followers' | 'following' | null>(null);
 
   const { data: profile } = useQuery({
     queryKey: ['user', userId],
@@ -39,6 +43,20 @@ export function UserProfileScreen({ userId, onBack }: UserProfileScreenProps) {
     },
   });
 
+  if (followList) {
+    return (
+      <FollowListScreen
+        mode={followList}
+        userId={userId}
+        onOpenUser={(id) => {
+          setFollowList(null);
+          onOpenProfile?.(id);
+        }}
+        onBack={() => setFollowList(null)}
+      />
+    );
+  }
+
   if (!profile) {
     return (
       <div className="flex items-center justify-center w-full h-full">
@@ -66,14 +84,27 @@ export function UserProfileScreen({ userId, onBack }: UserProfileScreenProps) {
           </div>
           <div className="flex gap-4 flex-1 justify-around">
             {[
-              { label: 'Posts', value: profile._count.posts },
-              { label: 'Seguidoras', value: profile._count.followers },
-              { label: 'Seguindo', value: profile._count.following },
-            ].map(({ label, value }) => (
-              <div key={label} className="flex flex-col items-center">
-                <span className="text-base font-bold text-graphite">{value}</span>
-                <span className="text-[10px] text-graphite-muted text-center leading-tight">{label}</span>
-              </div>
+              { label: 'Posts', value: profile._count.posts, mode: null as 'followers' | 'following' | null },
+              { label: 'Seguidoras', value: profile._count.followers, mode: 'followers' as const },
+              { label: 'Seguindo', value: profile._count.following, mode: 'following' as const },
+            ].map(({ label, value, mode }) => (
+              mode ? (
+                <button
+                  key={label}
+                  type="button"
+                  onClick={() => setFollowList(mode)}
+                  aria-label={label}
+                  className="flex flex-col items-center"
+                >
+                  <span className="text-base font-bold text-graphite">{value}</span>
+                  <span className="text-[10px] text-graphite-muted text-center leading-tight">{label}</span>
+                </button>
+              ) : (
+                <div key={label} className="flex flex-col items-center">
+                  <span className="text-base font-bold text-graphite">{value}</span>
+                  <span className="text-[10px] text-graphite-muted text-center leading-tight">{label}</span>
+                </div>
+              )
             ))}
           </div>
         </div>

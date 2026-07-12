@@ -200,7 +200,13 @@ export function ComunidadeScreen() {
   }
 
   if (profileUserId) {
-    return <UserProfileScreen userId={profileUserId} onBack={() => setProfileUserId(null)} />;
+    return (
+      <UserProfileScreen
+        userId={profileUserId}
+        onBack={() => setProfileUserId(null)}
+        onOpenProfile={(id) => setProfileUserId(id)}
+      />
+    );
   }
 
   if (selectedPost) {

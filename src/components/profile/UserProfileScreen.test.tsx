@@ -58,7 +58,16 @@ describe('UserProfileScreen', () => {
       return { ...mockProfile, isFollowedByCurrentUser: true };
     });
     renderScreen();
-    await waitFor(() => expect(screen.getByRole('button', { name: 'Seguindo' })).toBeInTheDocument());
+    // Two elements share the "Seguindo" accessible name: the follow toggle button
+    // and the "Seguindo" count button (aria-label). Pick the follow toggle (last).
+    await waitFor(() => {
+      const buttons = screen.getAllByRole('button', { name: 'Seguindo' });
+      expect(buttons.length).toBeGreaterThanOrEqual(1);
+    });
+    const followToggles = screen.getAllByRole('button', { name: 'Seguindo' });
+    // The follow toggle has the sara-gold-style class; simpler: it's the one not styled with items-center layout only.
+    const followToggle = followToggles.find((b) => !b.className.includes('items-center'));
+    expect(followToggle).toBeDefined();
   });
 
   it('hides follow button when isSelf', async () => {
