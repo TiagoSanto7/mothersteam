@@ -72,6 +72,8 @@ export interface ApiNotification {
   read: boolean
   recipientId: string
   createdAt: string
+  targetType?: 'post' | 'user' | 'community' | string
+  targetId?: string
 }
 
 export interface ApiMessage {

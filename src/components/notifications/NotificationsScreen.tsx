@@ -7,6 +7,9 @@ import { relativeTime } from '../../lib/helpers';
 
 interface NotificationsScreenProps {
   onBack: () => void;
+  onOpenPost?: (postId: string) => void;
+  onOpenUser?: (userId: string) => void;
+  onOpenCommunity?: (communityId: string) => void;
 }
 
 const ICON: Record<ApiNotification['type'], React.ReactElement> = {
@@ -15,7 +18,7 @@ const ICON: Record<ApiNotification['type'], React.ReactElement> = {
   comment: <MessageCircle size={16} className="text-sara-warm" />,
 };
 
-export function NotificationsScreen({ onBack }: NotificationsScreenProps) {
+export function NotificationsScreen({ onBack, onOpenPost, onOpenUser, onOpenCommunity }: NotificationsScreenProps) {
   const isLoggedIn = useAppStore((s) => s.isLoggedIn);
   const queryClient = useQueryClient();
 
@@ -30,7 +33,24 @@ export function NotificationsScreen({ onBack }: NotificationsScreenProps) {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['notifications'] }),
   });
 
+  const readMutation = useMutation({
+    mutationFn: (notificationId: string) =>
+      apiFetch(`/notifications/${notificationId}/read`, { method: 'POST' }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['notifications'] }),
+  });
+
   const unreadCount = notifications.filter((n) => !n.read).length;
+
+  function handleNotificationClick(n: ApiNotification) {
+    readMutation.mutate(n.id);
+    if (n.targetType === 'post' && n.targetId) {
+      onOpenPost?.(n.targetId);
+    } else if (n.targetType === 'user' && n.targetId) {
+      onOpenUser?.(n.targetId);
+    } else if (n.targetType === 'community' && n.targetId) {
+      onOpenCommunity?.(n.targetId);
+    }
+  }
 
   return (
     <div className="flex flex-col w-full h-full sm:w-[390px] sm:h-[844px] bg-gradient-to-b from-[#F5EDE0] via-[#EAD8C8] to-[#D9C4AF] sm:rounded-[44px] sm:shadow-2xl overflow-hidden">
@@ -59,20 +79,22 @@ export function NotificationsScreen({ onBack }: NotificationsScreenProps) {
         ) : (
           <ul className="divide-y divide-gray-100">
             {notifications.map((n) => (
-              <li
-                key={n.id}
-                className={`flex items-start gap-3 px-4 py-4 ${!n.read ? 'bg-sara-linen' : 'bg-white'}`}
-              >
-                <div className="w-9 h-9 rounded-full bg-sara-cream flex items-center justify-center flex-shrink-0">
-                  {ICON[n.type]}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm text-graphite leading-snug">{n.text}</p>
-                  <p className="text-[11px] text-graphite-muted mt-0.5">{relativeTime(n.createdAt)} atrás</p>
-                </div>
-                {!n.read && (
-                  <div className="w-2 h-2 rounded-full bg-sara-gold flex-shrink-0 mt-1.5" />
-                )}
+              <li key={n.id}>
+                <button
+                  onClick={() => handleNotificationClick(n)}
+                  className={`w-full flex items-start gap-3 px-4 py-4 text-left ${!n.read ? 'bg-sara-linen' : 'bg-white'} hover:brightness-95 transition-all`}
+                >
+                  <div className="w-9 h-9 rounded-full bg-sara-cream flex items-center justify-center flex-shrink-0">
+                    {ICON[n.type]}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm text-graphite leading-snug">{n.text}</p>
+                    <p className="text-[11px] text-graphite-muted mt-0.5">{relativeTime(n.createdAt)} atrás</p>
+                  </div>
+                  {!n.read && (
+                    <div className="w-2 h-2 rounded-full bg-sara-gold flex-shrink-0 mt-1.5" />
+                  )}
+                </button>
               </li>
             ))}
           </ul>

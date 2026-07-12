@@ -39,6 +39,9 @@ export default function App() {
   const [showSearch,        setShowSearch]        = useState(false);
   const [profileUserId,     setProfileUserId]     = useState<string | null>(null);
   const [openCommunityId,   setOpenCommunityId]   = useState<string | null>(null);
+  // pendingPostId: will be used in M3.T3.4 to open PostDetailScreen
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const [pendingPostId,     setPendingPostId]     = useState<string | null>(null);
 
   // Session restore: try refresh cookie on first load
   useEffect(() => {
@@ -163,7 +166,12 @@ export default function App() {
 
       {showNotifications && (
         <div className="fixed inset-0 z-50 sm:bg-black/40 sm:flex sm:items-center sm:justify-center">
-          <NotificationsScreen onBack={() => setShowNotifications(false)} />
+          <NotificationsScreen
+            onBack={() => setShowNotifications(false)}
+            onOpenPost={(postId) => setPendingPostId(postId)}
+            onOpenUser={() => {}}
+            onOpenCommunity={() => {}}
+          />
         </div>
       )}
 
@@ -204,6 +212,9 @@ export default function App() {
           />
         </div>
       )}
+
+      {/* M3.T3.4: PostDetailScreen will be rendered here when pendingPostId is set */}
+      {pendingPostId && null}
     </>
   );
 }
