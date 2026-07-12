@@ -53,3 +53,25 @@ export async function apiFetch<T>(path: string, init: RequestInit = {}): Promise
   if (res.status === 204) return undefined as T
   return res.json() as T
 }
+
+export async function uploadImage(file: File, accessToken: string | null): Promise<string> {
+  const formData = new FormData()
+  formData.append('file', file)
+
+  const headers: HeadersInit = {}
+  if (accessToken) headers['Authorization'] = `Bearer ${accessToken}`
+
+  const res = await fetch(`${BASE}/uploads`, {
+    method: 'POST',
+    headers,
+    body: formData,
+  })
+
+  if (!res.ok) {
+    const text = await res.text().catch(() => res.statusText)
+    throw new Error(`Upload failed: ${text}`)
+  }
+
+  const data = (await res.json()) as { url: string }
+  return data.url
+}
