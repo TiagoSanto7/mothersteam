@@ -4,6 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useAppStore } from '../../store/useAppStore';
 import { ARCHETYPES } from '../../utils/onboardingScoring';
 import { SettingsScreen } from './SettingsScreen';
+import { EditProfileScreen } from './EditProfileScreen';
 import { PostDetailScreen } from '../post/PostDetailScreen';
 import { FollowListScreen } from './FollowListScreen';
 import { apiFetch } from '../../lib/api';
@@ -30,6 +31,7 @@ export function ProfileScreen({ onClose }: ProfileScreenProps) {
   const communityPosts: CommunityPost[] = (data?.items ?? []).map(apiPostToCommunityPost);
 
   const [showSettings, setShowSettings] = useState(false);
+  const [showEdit, setShowEdit] = useState(false);
   const [selectedPost, setSelectedPost] = useState<CommunityPost | null>(null);
   const [followList, setFollowList] = useState<'followers' | 'following' | null>(null);
 
@@ -38,6 +40,10 @@ export function ProfileScreen({ onClose }: ProfileScreenProps) {
   const userPosts = communityPosts.filter((p) => p.author === motherName);
 
   const bio = archetype ? archetype.phrases[1] : 'Maternidade com presença e intenção.';
+
+  if (showEdit) {
+    return <EditProfileScreen onBack={() => setShowEdit(false)} />;
+  }
 
   if (selectedPost) {
     return (
@@ -123,7 +129,10 @@ export function ProfileScreen({ onClose }: ProfileScreenProps) {
 
         {/* Actions */}
         <div className="flex gap-2 mt-3">
-          <button className="flex-1 py-2 rounded-xl bg-sara-linen text-xs font-semibold text-sara-gold active:scale-95 transition-transform">
+          <button
+            onClick={() => setShowEdit(true)}
+            className="flex-1 py-2 rounded-xl bg-sara-linen text-xs font-semibold text-sara-gold active:scale-95 transition-transform"
+          >
             Editar perfil
           </button>
         </div>
