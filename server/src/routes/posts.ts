@@ -83,6 +83,23 @@ export default async function postsRoutes(fastify: FastifyInstance) {
       update: {},
       create: { userId: request.userId, postId: request.params.id },
     })
+
+    const post = await fastify.prisma.post.findUnique({
+      where: { id: request.params.id },
+      select: { authorId: true },
+    })
+    if (post && post.authorId !== request.userId) {
+      await fastify.prisma.notification.create({
+        data: {
+          type: 'like',
+          text: 'Alguém curtiu sua publicação.',
+          recipientId: post.authorId,
+          targetType: 'post',
+          targetId: request.params.id,
+        },
+      })
+    }
+
     reply.status(201).send({ ok: true })
   })
 
@@ -134,6 +151,23 @@ export default async function postsRoutes(fastify: FastifyInstance) {
       data: { content: body.data.content, authorId: request.userId, postId: request.params.id },
       include: { author: { select: { id: true, name: true } } },
     })
+
+    const post = await fastify.prisma.post.findUnique({
+      where: { id: request.params.id },
+      select: { authorId: true },
+    })
+    if (post && post.authorId !== request.userId) {
+      await fastify.prisma.notification.create({
+        data: {
+          type: 'comment',
+          text: 'Alguém comentou na sua publicação.',
+          recipientId: post.authorId,
+          targetType: 'post',
+          targetId: request.params.id,
+        },
+      })
+    }
+
     reply.status(201).send(comment)
   })
 }

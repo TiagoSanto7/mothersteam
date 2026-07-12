@@ -91,6 +91,17 @@ export default async function usersRoutes(fastify: FastifyInstance) {
       update: {},
       create: { followerId: request.userId, followingId: request.params.id },
     })
+
+    await fastify.prisma.notification.create({
+      data: {
+        type: 'follow',
+        text: 'Alguém começou a te seguir.',
+        recipientId: request.params.id,
+        targetType: 'user',
+        targetId: request.params.id,
+      },
+    })
+
     reply.status(201).send({ ok: true })
   })
 
