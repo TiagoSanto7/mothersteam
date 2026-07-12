@@ -3,9 +3,10 @@ import { Bell, MessageSquare, Search } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { useAppStore } from './store/useAppStore';
 import type { TabId } from './types';
-import type { ApiNotification, ApiChat } from './lib/types';
+import type { ApiNotification, ApiChat, ApiPost } from './lib/types';
 import { apiFetch } from './lib/api';
 import type { ApiUser } from './lib/types';
+import { apiPostToCommunityPost } from './lib/helpers';
 import { MobileShell } from './components/layout/MobileShell';
 import { HomeScreen } from './components/home/HomeScreen';
 import { BabyScreen } from './components/baby/BabyScreen';
@@ -21,6 +22,7 @@ import { ChatListScreen } from './components/chat/ChatListScreen';
 import { SearchScreen } from './components/search/SearchScreen';
 import { UserProfileScreen } from './components/profile/UserProfileScreen';
 import { CommunityDetailScreen } from './components/comunidade/CommunityDetailScreen';
+import { PostDetailScreen } from './components/post/PostDetailScreen';
 
 export default function App() {
   const isLoggedIn     = useAppStore((s) => s.isLoggedIn);
@@ -39,8 +41,6 @@ export default function App() {
   const [showSearch,        setShowSearch]        = useState(false);
   const [profileUserId,     setProfileUserId]     = useState<string | null>(null);
   const [openCommunityId,   setOpenCommunityId]   = useState<string | null>(null);
-  // pendingPostId: will be used in M3.T3.4 to open PostDetailScreen
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [pendingPostId,     setPendingPostId]     = useState<string | null>(null);
 
   // Session restore: try refresh cookie on first load
@@ -76,6 +76,14 @@ export default function App() {
     enabled: isLoggedIn,
     staleTime: 30_000,
   });
+
+  const { data: pendingApiPost } = useQuery({
+    queryKey: ['posts', pendingPostId],
+    queryFn: () => apiFetch<ApiPost>(`/posts/${pendingPostId}`),
+    enabled: !!pendingPostId,
+  });
+
+  const pendingPost = pendingApiPost ? apiPostToCommunityPost(pendingApiPost) : null;
 
   if (restoring) return null;
   if (!isLoggedIn) return <LoginScreen />;
@@ -213,8 +221,13 @@ export default function App() {
         </div>
       )}
 
-      {/* M3.T3.4: PostDetailScreen will be rendered here when pendingPostId is set */}
-      {pendingPostId && null}
+      {pendingPost && (
+        <div className="fixed inset-0 z-50 sm:bg-black/40 sm:flex sm:items-center sm:justify-center">
+          <div className="w-full h-full sm:w-[390px] sm:h-[844px] bg-gradient-to-b from-[#F5EDE0] via-[#EAD8C8] to-[#D9C4AF] sm:rounded-[44px] sm:shadow-2xl overflow-hidden">
+            <PostDetailScreen post={pendingPost} onBack={() => setPendingPostId(null)} />
+          </div>
+        </div>
+      )}
     </>
   );
 }
