@@ -6,6 +6,7 @@ import type { ApiCommunity } from '../../lib/types';
 import { apiCommunityToCommunity } from '../../lib/helpers';
 import type { Community, PregnancyPhase } from '../../types';
 import { useState } from 'react';
+import { Plus } from 'lucide-react';
 
 type SubFilter = 'seguindo' | 'sugestoes';
 
@@ -19,11 +20,12 @@ function getSuggestionScore(community: Community, phase: PregnancyPhase, archety
 
 interface ComunidadesScreenProps {
   onOpenCommunity?: (id: string) => void;
+  onCreate?: () => void;
 }
 
 type ApiCommunityWithMember = ApiCommunity & { isMember?: boolean };
 
-export function ComunidadesScreen({ onOpenCommunity }: ComunidadesScreenProps = {}) {
+export function ComunidadesScreen({ onOpenCommunity, onCreate }: ComunidadesScreenProps = {}) {
   const phase          = useAppStore((s) => s.phase);
   const motherProfile  = useAppStore((s) => s.motherProfile);
   const isLoggedIn     = useAppStore((s) => s.isLoggedIn);
@@ -112,6 +114,16 @@ export function ComunidadesScreen({ onOpenCommunity }: ComunidadesScreenProps = 
           ))
         )}
       </div>
+
+      {onCreate && (
+        <button
+          onClick={onCreate}
+          aria-label="Criar comunidade"
+          className="fixed bottom-24 right-4 z-20 w-14 h-14 rounded-full bg-sara-gold text-white shadow-lg flex items-center justify-center"
+        >
+          <Plus size={24} />
+        </button>
+      )}
     </div>
   );
 }

@@ -10,6 +10,7 @@ import { CreatePostScreen } from './CreatePostScreen';
 import { PostDetailScreen } from '../post/PostDetailScreen';
 import { ComunidadesScreen } from './ComunidadesScreen';
 import { CommunityDetailScreen } from './CommunityDetailScreen';
+import { CreateCommunityScreen } from './CreateCommunityScreen';
 import { ComposerBar } from './ComposerBar';
 import { SharePostSheet } from './SharePostSheet';
 import { UserProfileScreen } from '../profile/UserProfileScreen';
@@ -183,6 +184,16 @@ export function ComunidadeScreen() {
   const [sharingPost, setSharingPost] = useState<CommunityPost | null>(null);
   const [profileUserId, setProfileUserId] = useState<string | null>(null);
   const [openCommunityId, setOpenCommunityId] = useState<string | null>(null);
+  const [showCreateCommunity, setShowCreateCommunity] = useState(false);
+
+  if (showCreateCommunity) {
+    return (
+      <CreateCommunityScreen
+        onBack={() => setShowCreateCommunity(false)}
+        onCreated={(id) => { setShowCreateCommunity(false); setOpenCommunityId(id); }}
+      />
+    );
+  }
 
   if (openCommunityId) {
     return <CommunityDetailScreen communityId={openCommunityId} onBack={() => setOpenCommunityId(null)} />;
@@ -297,7 +308,10 @@ export function ComunidadeScreen() {
             </motion.button>
           </>
         ) : (
-          <ComunidadesScreen onOpenCommunity={setOpenCommunityId} />
+          <ComunidadesScreen
+            onOpenCommunity={setOpenCommunityId}
+            onCreate={() => setShowCreateCommunity(true)}
+          />
         )}
       </div>
 
