@@ -28,7 +28,7 @@ await fastify.register(cors, {
 })
 await fastify.register(rateLimit, { global: false })
 await fastify.register(cookie)
-await fastify.register(multipart)
+await fastify.register(multipart, { limits: { fileSize: 5 * 1024 * 1024 } })
 await fastify.register(staticPlugin, {
   root: join(process.cwd(), 'uploads'),
   prefix: '/uploads/',
