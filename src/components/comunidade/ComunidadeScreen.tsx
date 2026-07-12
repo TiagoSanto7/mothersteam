@@ -5,7 +5,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAppStore } from '../../store/useAppStore';
 import { apiFetch } from '../../lib/api';
 import type { PaginatedResult, ApiPost } from '../../lib/types';
-import { apiPostToCommunityPost } from '../../lib/helpers';
+import { apiPostToCommunityPost, patchPostLikeInAllCaches } from '../../lib/helpers';
 import { CreatePostScreen } from './CreatePostScreen';
 import { PostDetailScreen } from '../post/PostDetailScreen';
 import { ComunidadesScreen } from './ComunidadesScreen';
@@ -48,21 +48,7 @@ function PostCard({
     mutationFn: (isLiked: boolean) =>
       apiFetch(`/posts/${post.id}/like`, { method: isLiked ? 'POST' : 'DELETE' }),
     onSuccess: (_, isLiked) => {
-      queryClient.setQueryData<PaginatedResult<ApiPost>>(['posts'], (old) => {
-        if (!old) return old;
-        return {
-          ...old,
-          items: old.items.map((p) =>
-            p.id === post.id
-              ? {
-                  ...p,
-                  likedByCurrentUser: isLiked,
-                  _count: { ...p._count, likes: p._count.likes + (isLiked ? 1 : -1) },
-                }
-              : p
-          ),
-        };
-      });
+      patchPostLikeInAllCaches(queryClient, post.id, isLiked);
     },
   });
 
@@ -196,7 +182,13 @@ export function ComunidadeScreen() {
   }
 
   if (openCommunityId) {
-    return <CommunityDetailScreen communityId={openCommunityId} onBack={() => setOpenCommunityId(null)} />;
+    return (
+      <CommunityDetailScreen
+        communityId={openCommunityId}
+        onBack={() => setOpenCommunityId(null)}
+        onOpenProfile={(id) => { setOpenCommunityId(null); setProfileUserId(id); }}
+      />
+    );
   }
 
   if (profileUserId) {

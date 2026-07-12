@@ -28,7 +28,6 @@ beforeEach(() => {
     activeTab: 'home',
     motherName: 'Mariana',
     phase: { stage: 'pregnant', week: 28 },
-    followedCommunityIds: [],
     motherProfile: null,
   });
 });

@@ -1,12 +1,16 @@
-import { ChevronLeft } from 'lucide-react';
+import { useState } from 'react';
+import { ChevronLeft, Heart, MessageCircle } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiFetch } from '../../lib/api';
 import type { ApiCommunityDetail, PaginatedResult, ApiPost } from '../../lib/types';
 import { apiPostToCommunityPost } from '../../lib/helpers';
+import { PostDetailScreen } from '../post/PostDetailScreen';
+import type { CommunityPost } from '../../types';
 
 interface CommunityDetailScreenProps {
   communityId: string;
   onBack: () => void;
+  onOpenProfile?: (userId: string) => void;
 }
 
 const COLOR_MAP: Record<string, string> = {
@@ -17,8 +21,9 @@ const COLOR_MAP: Record<string, string> = {
   cream:      'bg-sara-cream',
 };
 
-export function CommunityDetailScreen({ communityId, onBack }: CommunityDetailScreenProps) {
+export function CommunityDetailScreen({ communityId, onBack, onOpenProfile }: CommunityDetailScreenProps) {
   const queryClient = useQueryClient();
+  const [selectedPost, setSelectedPost] = useState<CommunityPost | null>(null);
 
   const { data: community } = useQuery({
     queryKey: ['community', communityId],
@@ -48,6 +53,16 @@ export function CommunityDetailScreen({ communityId, onBack }: CommunityDetailSc
       queryClient.invalidateQueries({ queryKey: ['communities'] });
     },
   });
+
+  if (selectedPost) {
+    return (
+      <PostDetailScreen
+        post={selectedPost}
+        onBack={() => setSelectedPost(null)}
+        onOpenProfile={(id) => { setSelectedPost(null); onOpenProfile?.(id); }}
+      />
+    );
+  }
 
   if (!community) {
     return (
@@ -93,10 +108,20 @@ export function CommunityDetailScreen({ communityId, onBack }: CommunityDetailSc
           <p className="text-sm text-graphite-muted text-center py-8">Nenhuma publicação ainda</p>
         ) : (
           posts.map((post) => (
-            <div key={post.id} className="bg-white rounded-2xl p-4 shadow-sm">
+            <button
+              key={post.id}
+              type="button"
+              onClick={() => setSelectedPost(post)}
+              aria-label={`Ver post de ${post.author}`}
+              className="bg-white rounded-2xl p-4 shadow-sm text-left active:scale-[0.99] transition-transform"
+            >
               <p className="text-sm font-semibold text-graphite">{post.author}</p>
               <p className="text-sm text-graphite-light mt-1 leading-relaxed">{post.content}</p>
-            </div>
+              <div className="flex items-center gap-5 mt-3">
+                <span className="flex items-center gap-1.5 text-graphite-muted"><Heart size={14} /><span className="text-[11px]">{post.likes}</span></span>
+                <span className="flex items-center gap-1.5 text-graphite-muted"><MessageCircle size={14} /><span className="text-[11px]">{post.replies}</span></span>
+              </div>
+            </button>
           ))
         )}
       </div>

@@ -1,5 +1,31 @@
-import type { ApiPost, ApiCommunity, ApiChat, ApiUser } from './types'
+import type { QueryClient } from '@tanstack/react-query'
+import type { ApiPost, ApiCommunity, ApiChat, ApiUser, PaginatedResult } from './types'
 import type { CommunityPost, Community, Chat, PregnancyPhase } from '../types'
+
+export function patchPostLikeInAllCaches(
+  queryClient: QueryClient,
+  postId: string,
+  isLiked: boolean,
+): void {
+  queryClient.setQueriesData<PaginatedResult<ApiPost>>(
+    { predicate: (q) => Array.isArray(q.queryKey) && q.queryKey.includes('posts') },
+    (old) => {
+      if (!old) return old
+      return {
+        ...old,
+        items: old.items.map((p) =>
+          p.id === postId
+            ? {
+                ...p,
+                likedByCurrentUser: isLiked,
+                _count: { ...p._count, likes: p._count.likes + (isLiked ? 1 : -1) },
+              }
+            : p,
+        ),
+      }
+    },
+  )
+}
 
 export function relativeTime(iso: string): string {
   const m = Math.floor((Date.now() - new Date(iso).getTime()) / 60000)

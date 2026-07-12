@@ -3,9 +3,9 @@ import { ChevronLeft, Heart, MessageCircle, Share2, Repeat2, Send } from 'lucide
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAppStore } from '../../store/useAppStore';
 import { apiFetch } from '../../lib/api';
+import { patchPostLikeInAllCaches } from '../../lib/helpers';
 import { SharePostSheet } from '../comunidade/SharePostSheet';
 import type { CommunityPost, PostComment } from '../../types';
-import type { PaginatedResult, ApiPost } from '../../lib/types';
 
 const BADGE_CONFIG = {
   experiente:   { label: 'Mãe Experiente',       color: 'bg-sara-linen text-sara-terracotta' },
@@ -53,21 +53,7 @@ export function PostDetailScreen({ post, onBack, onOpenProfile }: PostDetailScre
     mutationFn: (isLiked: boolean) =>
       apiFetch(`/posts/${post.id}/like`, { method: isLiked ? 'POST' : 'DELETE' }),
     onSuccess: (_, isLiked) => {
-      queryClient.setQueryData<PaginatedResult<ApiPost>>(['posts'], (old) => {
-        if (!old) return old;
-        return {
-          ...old,
-          items: old.items.map((p) =>
-            p.id === post.id
-              ? {
-                  ...p,
-                  likedByCurrentUser: isLiked,
-                  _count: { ...p._count, likes: p._count.likes + (isLiked ? 1 : -1) },
-                }
-              : p
-          ),
-        };
-      });
+      patchPostLikeInAllCaches(queryClient, post.id, isLiked);
     },
   });
 

@@ -197,8 +197,10 @@ export default function App() {
       {openCommunityId && (
         <div className="fixed inset-0 z-50 sm:bg-black/40 sm:flex sm:items-center sm:justify-center">
           <CommunityDetailScreen
+            key={openCommunityId}
             communityId={openCommunityId}
             onBack={() => setOpenCommunityId(null)}
+            onOpenProfile={(id) => { setOpenCommunityId(null); setProfileUserId(id); }}
           />
         </div>
       )}

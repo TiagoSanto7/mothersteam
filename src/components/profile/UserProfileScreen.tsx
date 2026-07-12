@@ -5,6 +5,8 @@ import { apiFetch } from '../../lib/api';
 import type { ApiUserProfile, PaginatedResult, ApiPost } from '../../lib/types';
 import { apiPostToCommunityPost } from '../../lib/helpers';
 import { FollowListScreen } from './FollowListScreen';
+import { PostDetailScreen } from '../post/PostDetailScreen';
+import type { CommunityPost } from '../../types';
 
 interface UserProfileScreenProps {
   userId: string;
@@ -15,6 +17,7 @@ interface UserProfileScreenProps {
 export function UserProfileScreen({ userId, onBack, onOpenProfile }: UserProfileScreenProps) {
   const queryClient = useQueryClient();
   const [followList, setFollowList] = useState<'followers' | 'following' | null>(null);
+  const [selectedPost, setSelectedPost] = useState<CommunityPost | null>(null);
 
   const { data: profile } = useQuery({
     queryKey: ['user', userId],
@@ -42,6 +45,16 @@ export function UserProfileScreen({ userId, onBack, onOpenProfile }: UserProfile
       );
     },
   });
+
+  if (selectedPost) {
+    return (
+      <PostDetailScreen
+        post={selectedPost}
+        onBack={() => setSelectedPost(null)}
+        onOpenProfile={(id) => { setSelectedPost(null); onOpenProfile?.(id); }}
+      />
+    );
+  }
 
   if (followList) {
     return (
@@ -139,12 +152,19 @@ export function UserProfileScreen({ userId, onBack, onOpenProfile }: UserProfile
         ) : (
           <ul className="divide-y divide-gray-100">
             {posts.map((post) => (
-              <li key={post.id} className="px-4 py-4">
-                <p className="text-sm text-graphite leading-relaxed">{post.content}</p>
-                <div className="flex items-center gap-5 mt-2">
-                  <span className="flex items-center gap-1.5 text-graphite-muted"><Heart size={14} /><span className="text-[11px]">{post.likes}</span></span>
-                  <span className="flex items-center gap-1.5 text-graphite-muted"><MessageCircle size={14} /><span className="text-[11px]">{post.replies}</span></span>
-                </div>
+              <li key={post.id}>
+                <button
+                  type="button"
+                  onClick={() => setSelectedPost(post)}
+                  aria-label={`Ver post: ${post.content.slice(0, 40)}`}
+                  className="w-full px-4 py-4 text-left active:bg-sara-linen transition-colors"
+                >
+                  <p className="text-sm text-graphite leading-relaxed">{post.content}</p>
+                  <div className="flex items-center gap-5 mt-2">
+                    <span className="flex items-center gap-1.5 text-graphite-muted"><Heart size={14} /><span className="text-[11px]">{post.likes}</span></span>
+                    <span className="flex items-center gap-1.5 text-graphite-muted"><MessageCircle size={14} /><span className="text-[11px]">{post.replies}</span></span>
+                  </div>
+                </button>
               </li>
             ))}
           </ul>
