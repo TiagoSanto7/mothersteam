@@ -18,9 +18,10 @@ const CATEGORIES: { value: PostCategory; label: string }[] = [
 interface CreatePostScreenProps {
   onBack: () => void;
   autoOpenImage?: boolean;
+  initialCommunityId?: string;
 }
 
-export function CreatePostScreen({ onBack, autoOpenImage }: CreatePostScreenProps) {
+export function CreatePostScreen({ onBack, autoOpenImage, initialCommunityId }: CreatePostScreenProps) {
   const motherName = useAppStore((s) => s.motherName);
   const [content, setContent] = useState('');
   const [category, setCategory] = useState<PostCategory>('saúde mental');
@@ -38,10 +39,18 @@ export function CreatePostScreen({ onBack, autoOpenImage }: CreatePostScreenProp
     mutationFn: () =>
       apiFetch<ApiPost>('/posts', {
         method: 'POST',
-        body: JSON.stringify({ content: content.trim(), category, imageUrl: imagePreview ?? undefined }),
+        body: JSON.stringify({
+          content: content.trim(),
+          category,
+          imageUrl: imagePreview ?? undefined,
+          communityId: initialCommunityId,
+        }),
       }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['posts'] });
+      if (initialCommunityId) {
+        queryClient.invalidateQueries({ queryKey: ['community', initialCommunityId, 'posts'] });
+      }
       onBack();
     },
   });

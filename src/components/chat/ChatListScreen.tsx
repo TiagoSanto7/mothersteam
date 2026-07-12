@@ -1,10 +1,10 @@
 import { useState } from 'react';
-import { ChevronLeft, Search, Edit } from 'lucide-react';
-import { useQuery } from '@tanstack/react-query';
+import { ChevronLeft, Search, Edit, X } from 'lucide-react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiFetch } from '../../lib/api';
 import { useAppStore } from '../../store/useAppStore';
 import { ChatScreen } from './ChatScreen';
-import type { ApiChat } from '../../lib/types';
+import type { ApiChat, ApiFollowUser, PaginatedResult } from '../../lib/types';
 import { apiChatToChat } from '../../lib/helpers';
 import type { Chat } from '../../types';
 
@@ -15,7 +15,9 @@ interface ChatListScreenProps {
 export function ChatListScreen({ onBack }: ChatListScreenProps) {
   const isLoggedIn    = useAppStore((s) => s.isLoggedIn);
   const currentUserId = useAppStore((s) => s.currentUserId) ?? '';
+  const queryClient   = useQueryClient();
   const [selectedChat, setSelectedChat] = useState<Chat | null>(null);
+  const [showNewChat, setShowNewChat] = useState(false);
 
   const { data: apiChats = [] } = useQuery({
     queryKey: ['chats'],
@@ -23,7 +25,23 @@ export function ChatListScreen({ onBack }: ChatListScreenProps) {
     enabled: isLoggedIn,
   });
 
+  const { data: followingData } = useQuery({
+    queryKey: ['users', currentUserId, 'following'],
+    queryFn: () => apiFetch<PaginatedResult<ApiFollowUser>>(`/users/${currentUserId}/following`),
+    enabled: isLoggedIn && showNewChat && !!currentUserId,
+  });
+
   const chats = apiChats.map((c) => apiChatToChat(c, currentUserId));
+
+  const createChatMutation = useMutation({
+    mutationFn: (userId: string) =>
+      apiFetch<ApiChat>('/chats', { method: 'POST', body: JSON.stringify({ userId }) }),
+    onSuccess: (newChat) => {
+      queryClient.invalidateQueries({ queryKey: ['chats'] });
+      setShowNewChat(false);
+      setSelectedChat(apiChatToChat(newChat, currentUserId));
+    },
+  });
 
   if (selectedChat) {
     return (
@@ -33,14 +51,20 @@ export function ChatListScreen({ onBack }: ChatListScreenProps) {
     );
   }
 
+  const followingUsers = followingData?.items ?? [];
+
   return (
-    <div className="flex flex-col w-full h-full sm:w-[390px] sm:h-[844px] bg-gradient-to-b from-[#F5EDE0] via-[#EAD8C8] to-[#D9C4AF] sm:rounded-[44px] sm:shadow-2xl overflow-hidden">
+    <div className="flex flex-col w-full h-full sm:w-[390px] sm:h-[844px] bg-gradient-to-b from-[#F5EDE0] via-[#EAD8C8] to-[#D9C4AF] sm:rounded-[44px] sm:shadow-2xl overflow-hidden relative">
       <div className="flex items-center justify-between px-4 pt-6 pb-4 border-b border-sara-linen/60 flex-shrink-0">
         <button onClick={onBack} className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-sara-linen">
           <ChevronLeft size={20} className="text-graphite" />
         </button>
         <p className="text-sm font-semibold text-graphite">Mensagens</p>
-        <button className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-sara-linen">
+        <button
+          onClick={() => setShowNewChat(true)}
+          aria-label="Nova conversa"
+          className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-sara-linen"
+        >
           <Edit size={16} className="text-graphite" />
         </button>
       </div>
@@ -56,6 +80,12 @@ export function ChatListScreen({ onBack }: ChatListScreenProps) {
         {chats.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full gap-2 text-graphite-muted">
             <p className="text-sm">Nenhuma conversa ainda</p>
+            <button
+              onClick={() => setShowNewChat(true)}
+              className="text-xs text-sara-gold font-semibold mt-1"
+            >
+              Iniciar uma conversa
+            </button>
           </div>
         ) : (
           <ul className="divide-y divide-gray-100">
@@ -86,6 +116,45 @@ export function ChatListScreen({ onBack }: ChatListScreenProps) {
           </ul>
         )}
       </div>
+
+      {showNewChat && (
+        <div className="absolute inset-0 z-20 flex flex-col bg-white/95 backdrop-blur-sm">
+          <div className="flex items-center justify-between px-4 py-4 border-b border-gray-100 flex-shrink-0">
+            <p className="text-sm font-semibold text-graphite">Nova conversa</p>
+            <button
+              onClick={() => setShowNewChat(false)}
+              aria-label="Fechar"
+              className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100"
+            >
+              <X size={18} className="text-graphite" />
+            </button>
+          </div>
+          <div className="flex-1 overflow-y-auto">
+            {followingUsers.length === 0 ? (
+              <div className="flex flex-col items-center justify-center h-full gap-2 text-graphite-muted px-4 text-center">
+                <p className="text-sm">Siga alguém para iniciar uma conversa</p>
+              </div>
+            ) : (
+              <ul className="divide-y divide-gray-100">
+                {followingUsers.map((user) => (
+                  <li key={user.id}>
+                    <button
+                      onClick={() => createChatMutation.mutate(user.id)}
+                      disabled={createChatMutation.isPending}
+                      className="w-full flex items-center gap-3 px-4 py-3.5 active:bg-sara-linen transition-colors text-left"
+                    >
+                      <div className="w-10 h-10 rounded-full bg-sara-terracotta flex items-center justify-center text-white font-bold flex-shrink-0">
+                        {user.name.charAt(0).toUpperCase()}
+                      </div>
+                      <p className="text-sm font-medium text-graphite">{user.name}</p>
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -1,10 +1,11 @@
 import { useState } from 'react';
-import { ChevronLeft } from 'lucide-react';
+import { ChevronLeft, Pencil } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiFetch } from '../../lib/api';
 import type { ApiCommunityDetail, PaginatedResult, ApiPost } from '../../lib/types';
 import { apiPostToCommunityPost } from '../../lib/helpers';
 import { PostDetailScreen } from '../post/PostDetailScreen';
+import { CreatePostScreen } from './CreatePostScreen';
 import { PostCard } from './PostCard';
 import type { CommunityPost } from '../../types';
 
@@ -25,6 +26,7 @@ const COLOR_MAP: Record<string, string> = {
 export function CommunityDetailScreen({ communityId, onBack, onOpenProfile }: CommunityDetailScreenProps) {
   const queryClient = useQueryClient();
   const [selectedPost, setSelectedPost] = useState<CommunityPost | null>(null);
+  const [showCreate, setShowCreate] = useState(false);
 
   const { data: community } = useQuery({
     queryKey: ['community', communityId],
@@ -54,6 +56,14 @@ export function CommunityDetailScreen({ communityId, onBack, onOpenProfile }: Co
       queryClient.invalidateQueries({ queryKey: ['communities'] });
     },
   });
+
+  if (showCreate) {
+    return (
+      <div className="flex flex-col w-full h-full sm:w-[390px] sm:h-[844px] bg-gradient-to-b from-[#F5EDE0] via-[#EAD8C8] to-[#D9C4AF] sm:rounded-[44px] sm:shadow-2xl overflow-hidden">
+        <CreatePostScreen onBack={() => setShowCreate(false)} initialCommunityId={communityId} />
+      </div>
+    );
+  }
 
   if (selectedPost) {
     return (
@@ -85,23 +95,39 @@ export function CommunityDetailScreen({ communityId, onBack, onOpenProfile }: Co
         <div className="w-8" />
       </div>
 
-      <div className={`h-24 ${COLOR_MAP[community.colorKey] ?? 'bg-sara-gold'} flex-shrink-0`} />
+      <div className="relative flex-shrink-0">
+        <div className={`h-24 ${COLOR_MAP[community.colorKey] ?? 'bg-sara-gold'}`} />
+        <div className={`absolute left-4 -bottom-6 w-12 h-12 rounded-full border-4 border-white ${COLOR_MAP[community.colorKey] ?? 'bg-sara-gold'} flex items-center justify-center shadow-sm`}>
+          <span className="text-white text-base font-bold">{community.name.charAt(0).toUpperCase()}</span>
+        </div>
+      </div>
 
-      <div className="px-4 py-4 flex-shrink-0 bg-white/40">
+      <div className="px-4 pt-8 pb-4 flex-shrink-0 bg-white/40">
         <h1 className="text-base font-bold text-graphite">{community.name}</h1>
         <p className="text-xs text-graphite-muted mt-1">{community._count.members} membros · {community.category}</p>
         <p className="text-sm text-graphite mt-3 leading-relaxed">{community.description}</p>
 
-        <button
-          onClick={() => joinMutation.mutate(!community.isMember)}
-          className={`w-full mt-4 py-2.5 rounded-xl text-xs font-semibold active:scale-95 transition-transform ${
-            community.isMember
-              ? 'bg-white text-graphite-muted border border-sara-linen'
-              : 'bg-sara-gold text-white'
-          }`}
-        >
-          {community.isMember ? 'Sair' : 'Entrar'}
-        </button>
+        <div className="flex gap-2 mt-4">
+          <button
+            onClick={() => joinMutation.mutate(!community.isMember)}
+            className={`flex-1 py-2.5 rounded-xl text-xs font-semibold active:scale-95 transition-transform ${
+              community.isMember
+                ? 'bg-white text-graphite-muted border border-sara-linen'
+                : 'bg-sara-gold text-white'
+            }`}
+          >
+            {community.isMember ? 'Sair' : 'Entrar'}
+          </button>
+          {community.isMember && (
+            <button
+              onClick={() => setShowCreate(true)}
+              className="flex-1 py-2.5 rounded-xl text-xs font-semibold bg-sara-terracotta text-white active:scale-95 transition-transform flex items-center justify-center gap-1.5"
+            >
+              <Pencil size={12} strokeWidth={2.5} />
+              Publicar
+            </button>
+          )}
+        </div>
       </div>
 
       <div className="flex-1 overflow-y-auto px-4 py-4 flex flex-col gap-3">

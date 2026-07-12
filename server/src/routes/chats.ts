@@ -43,7 +43,7 @@ export default async function chatsRoutes(fastify: FastifyInstance) {
       },
     })
 
-    if (existing) return reply.send(existing)
+    if (existing) return reply.send({ ...existing, messages: [] })
 
     const chat = await fastify.prisma.chat.create({
       data: {
@@ -53,7 +53,7 @@ export default async function chatsRoutes(fastify: FastifyInstance) {
       },
       include: { participants: { include: { user: { select: { id: true, name: true } } } } },
     })
-    reply.status(201).send(chat)
+    reply.status(201).send({ ...chat, messages: [] })
   })
 
   fastify.get<{ Params: { id: string }; Querystring: { cursor?: string; limit?: string } }>(

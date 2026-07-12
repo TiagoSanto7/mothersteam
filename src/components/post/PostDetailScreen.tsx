@@ -6,6 +6,7 @@ import { apiFetch } from '../../lib/api';
 import { patchPostLikeInAllCaches } from '../../lib/helpers';
 import { SharePostSheet } from '../comunidade/SharePostSheet';
 import type { CommunityPost, PostComment } from '../../types';
+import type { PaginatedResult } from '../../lib/types';
 
 const BADGE_CONFIG = {
   experiente:   { label: 'Mãe Experiente',       color: 'bg-sara-linen text-sara-terracotta' },
@@ -16,7 +17,7 @@ interface ApiComment {
   id: string;
   content: string;
   author: { id: string; name: string };
-  _count: { likes: number };
+  likes: number;
   createdAt: string;
 }
 
@@ -35,18 +36,18 @@ export function PostDetailScreen({ post, onBack, onOpenProfile }: PostDetailScre
   const [commentText, setCommentText] = useState('');
   const [showShareSheet, setShowShareSheet] = useState(false);
 
-  const { data: commentsData } = useQuery<ApiComment[]>({
+  const { data: commentsData } = useQuery<PaginatedResult<ApiComment>>({
     queryKey: ['comments', post.id],
-    queryFn: () => apiFetch<ApiComment[]>(`/posts/${post.id}/comments`),
-    initialData: [],
+    queryFn: () => apiFetch<PaginatedResult<ApiComment>>(`/posts/${post.id}/comments`),
+    initialData: { items: [], hasMore: false },
   });
 
-  const comments: PostComment[] = (commentsData ?? []).map((c) => ({
+  const comments: PostComment[] = (commentsData?.items ?? []).map((c) => ({
     id: c.id,
     author: c.author.name,
     content: c.content,
     time: '',
-    likes: c._count.likes,
+    likes: c.likes,
   }));
 
   const likeMutation = useMutation({
@@ -131,7 +132,14 @@ export function PostDetailScreen({ post, onBack, onOpenProfile }: PostDetailScre
             <span className="text-xs text-graphite-muted flex-shrink-0">{post.time}</span>
           </div>
 
-          <p className="text-sm text-graphite leading-relaxed mb-4">{post.content}</p>
+          {post.isRepost && post.repostOriginal ? (
+            <div className="border border-sara-linen rounded-2xl p-3 mb-4 bg-white/60">
+              <p className="text-[11px] font-semibold text-graphite mb-1">{post.repostOriginal.author}</p>
+              <p className="text-sm text-graphite leading-relaxed">{post.repostOriginal.content}</p>
+            </div>
+          ) : (
+            <p className="text-sm text-graphite leading-relaxed mb-4">{post.content}</p>
+          )}
 
           {post.imageUrl && (
             <img

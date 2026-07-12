@@ -43,7 +43,8 @@ export interface ApiPost {
   communityId?: string | null
   isRepost: boolean
   repostFromId?: string | null
-  _count: { likes: number; comments: number }
+  repostFrom?: { id: string; content: string; category: string; author: { id: string; name: string } } | null
+  _count: { likes: number; comments: number; reposts: number }
   createdAt: string
   likedByCurrentUser: boolean
 }

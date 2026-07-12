@@ -70,16 +70,29 @@ export function PostCard({ post, onOpen, onOpenProfile }: PostCardProps) {
           <span className="text-xs text-graphite-muted flex-shrink-0">{post.time}</span>
         </div>
 
-        <button onClick={onOpen} aria-label={`Ver post de ${post.author}`} className="text-left flex flex-col gap-2">
-          <p className="text-sm text-graphite-light leading-relaxed">{post.content}</p>
-          {post.imageUrl && (
-            <img
-              src={post.imageUrl}
-              alt="Imagem do post"
-              className="w-full rounded-xl object-cover max-h-64 mt-2"
-            />
-          )}
-        </button>
+        {post.isRepost && post.repostOriginal ? (
+          <button onClick={onOpen} aria-label={`Ver post de ${post.author}`} className="text-left w-full">
+            <div className="flex items-center gap-1 mb-2">
+              <Repeat2 size={12} className="text-graphite-muted" />
+              <span className="text-[11px] text-graphite-muted">Republicou</span>
+            </div>
+            <div className="border border-sara-linen rounded-2xl p-3 bg-white/60">
+              <p className="text-[11px] font-semibold text-graphite mb-1">{post.repostOriginal.author}</p>
+              <p className="text-sm text-graphite-light leading-relaxed">{post.repostOriginal.content}</p>
+            </div>
+          </button>
+        ) : (
+          <button onClick={onOpen} aria-label={`Ver post de ${post.author}`} className="text-left flex flex-col gap-2">
+            <p className="text-sm text-graphite-light leading-relaxed">{post.content}</p>
+            {post.imageUrl && (
+              <img
+                src={post.imageUrl}
+                alt="Imagem do post"
+                className="w-full rounded-xl object-cover max-h-64 mt-2"
+              />
+            )}
+          </button>
+        )}
 
         <div className="flex items-center gap-4 pt-1">
           <button
@@ -118,6 +131,7 @@ export function PostCard({ post, onOpen, onOpenProfile }: PostCardProps) {
             }`}
           >
             <Repeat2 size={14} strokeWidth={1.8} />
+            {(post.reposts ?? 0) + (reposted ? 1 : 0)}
           </button>
           <button
             onClick={(e) => { e.stopPropagation(); setShowShare(true); }}

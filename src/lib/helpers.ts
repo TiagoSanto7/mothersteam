@@ -63,10 +63,19 @@ export function apiPostToCommunityPost(post: ApiPost): CommunityPost {
     imageUrl: post.imageUrl ?? undefined,
     likes: post._count.likes,
     replies: post._count.comments,
+    reposts: post._count.reposts ?? 0,
     time: relativeTime(post.createdAt),
     communityId: post.communityId ?? undefined,
     isRepost: post.isRepost,
     likedByCurrentUser: post.likedByCurrentUser,
+    repostOriginal: post.repostFrom
+      ? {
+          content: post.repostFrom.content,
+          author: post.repostFrom.author.name,
+          authorId: post.repostFrom.author.id,
+          category: post.repostFrom.category,
+        }
+      : undefined,
   }
 }
 

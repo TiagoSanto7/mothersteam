@@ -4,20 +4,20 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { PostDetailScreen } from './PostDetailScreen';
 import { useAppStore } from '../../store/useAppStore';
 import type { CommunityPost } from '../../types';
-import type { ApiChat } from '../../lib/types';
+import type { ApiChat, ApiFollowUser, PaginatedResult } from '../../lib/types';
 
 const { mockApiFetch } = vi.hoisted(() => ({ mockApiFetch: vi.fn() }));
 vi.mock('../../lib/api', () => ({ apiFetch: mockApiFetch, ApiError: class extends Error {} }));
 
 const POST_WITH_IMAGE: CommunityPost = {
   id: '1', category: 'gestação', author: 'Fernanda S.',
-  content: 'Dicas para o enjoo', likes: 24, replies: 8, time: '2h',
+  content: 'Dicas para o enjoo', likes: 24, replies: 8, reposts: 0, time: '2h',
   imageUrl: 'data:image/png;base64,testimg',
 };
 
 const POST_NO_IMAGE: CommunityPost = {
   id: '2', category: 'saúde mental', author: 'Juliana M.',
-  content: 'Puerpério é difícil', likes: 10, replies: 3, time: '5h',
+  content: 'Puerpério é difícil', likes: 10, replies: 3, reposts: 0, time: '5h',
 };
 
 const MOCK_API_CHATS: ApiChat[] = [
@@ -41,14 +41,23 @@ const MOCK_API_CHATS: ApiChat[] = [
   },
 ];
 
+const MOCK_FOLLOWING: PaginatedResult<ApiFollowUser> = {
+  items: [
+    { id: 'u2', name: 'Ana Oliveira', isFollowedByCurrentUser: false, isSelf: false },
+    { id: 'u3', name: 'Juliana M.', isFollowedByCurrentUser: false, isSelf: false },
+  ],
+  hasMore: false,
+};
+
 function makeWrapper() {
   return function Wrapper({ children }: { children: React.ReactNode }) {
     const qc = new QueryClient({
       defaultOptions: { queries: { retry: false, staleTime: Infinity } },
     });
     qc.setQueryData<ApiChat[]>(['chats'], MOCK_API_CHATS);
-    qc.setQueryData(['comments', '1'], []);
-    qc.setQueryData(['comments', '2'], []);
+    qc.setQueryData<PaginatedResult<ApiFollowUser>>(['users', 'u1', 'following'], MOCK_FOLLOWING);
+    qc.setQueryData(['comments', '1'], { items: [], hasMore: false });
+    qc.setQueryData(['comments', '2'], { items: [], hasMore: false });
     return <QueryClientProvider client={qc}>{children}</QueryClientProvider>;
   };
 }
@@ -93,7 +102,7 @@ describe('PostDetailScreen', () => {
     expect(screen.getByText('Enviar para')).toBeInTheDocument();
   });
 
-  it('shows all chats in share sheet as checkboxes', () => {
+  it('shows following users in share sheet as checkboxes', () => {
     render(<PostDetailScreen post={POST_WITH_IMAGE} onBack={() => {}} />, { wrapper: makeWrapper() });
     fireEvent.click(screen.getByRole('button', { name: /enviar/i }));
     const list = screen.getByRole('list');

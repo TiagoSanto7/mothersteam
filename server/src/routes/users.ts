@@ -67,8 +67,9 @@ export default async function usersRoutes(fastify: FastifyInstance) {
         ...(request.query.cursor ? { cursor: { id: request.query.cursor }, skip: 1 } : {}),
         include: {
           author: { select: { id: true, name: true } },
-          _count: { select: { likes: true, comments: true } },
+          _count: { select: { likes: true, comments: true, reposts: true } },
           likes: { where: { userId: request.userId }, select: { userId: true } },
+          repostFrom: { include: { author: { select: { id: true, name: true } } } },
         },
         orderBy: { createdAt: 'desc' },
       })

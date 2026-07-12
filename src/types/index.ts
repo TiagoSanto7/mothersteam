@@ -58,9 +58,11 @@ export interface CommunityPost {
   content: string;
   likes: number;
   replies: number;
+  reposts: number;
   time: string;
   isRepost?: boolean;
   repostFrom?: string;
+  repostOriginal?: { content: string; author: string; authorId: string; category: string };
   communityId?: string;
   imageUrl?: string;
   likedByCurrentUser?: boolean;

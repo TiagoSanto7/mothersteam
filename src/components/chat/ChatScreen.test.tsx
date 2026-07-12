@@ -33,7 +33,7 @@ const SHARED_MESSAGES: ApiMessage[] = [
 const MOCK_POST: ApiPost = {
   id: 'p1', content: 'Puerpério é difícil', category: 'saúde mental', authorId: 'other',
   author: { id: 'other', name: 'Juliana M.' }, isRepost: false,
-  _count: { likes: 10, comments: 3 }, createdAt: '2024-01-01T08:00:00Z',
+  _count: { likes: 10, comments: 3, reposts: 0 }, createdAt: '2024-01-01T08:00:00Z',
   likedByCurrentUser: false,
 };
 

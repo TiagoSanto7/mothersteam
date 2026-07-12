@@ -24,8 +24,9 @@ export default async function postsRoutes(fastify: FastifyInstance) {
         ...(request.query.cursor ? { cursor: { id: request.query.cursor }, skip: 1 } : {}),
         include: {
           author: { select: { id: true, name: true } },
-          _count: { select: { likes: true, comments: true } },
+          _count: { select: { likes: true, comments: true, reposts: true } },
           likes: { where: { userId: request.userId }, select: { userId: true } },
+          repostFrom: { include: { author: { select: { id: true, name: true } } } },
         },
         orderBy: { createdAt: 'desc' },
       })
@@ -57,8 +58,9 @@ export default async function postsRoutes(fastify: FastifyInstance) {
       where: { id: request.params.id },
       include: {
         author: { select: { id: true, name: true } },
-        _count: { select: { likes: true, comments: true } },
+        _count: { select: { likes: true, comments: true, reposts: true } },
         likes: { where: { userId: request.userId }, select: { userId: true } },
+        repostFrom: { include: { author: { select: { id: true, name: true } } } },
       },
     })
     if (!post) return reply.status(404).send({ error: 'Post not found' })
