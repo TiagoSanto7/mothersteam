@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import { ImagePlus, X } from 'lucide-react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAppStore } from '../../store/useAppStore';
-import { apiFetch } from '../../lib/api';
+import { apiFetch, uploadImage } from '../../lib/api';
 import type { ApiPost } from '../../lib/types';
 import type { CommunityPost } from '../../types';
 
@@ -22,10 +22,11 @@ interface CreatePostScreenProps {
 }
 
 export function CreatePostScreen({ onBack, autoOpenImage, initialCommunityId }: CreatePostScreenProps) {
-  const motherName = useAppStore((s) => s.motherName);
+  const accessToken = useAppStore((s) => s.accessToken);
   const [content, setContent] = useState('');
   const [category, setCategory] = useState<PostCategory>('saúde mental');
-  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imagePreviewUrl, setImagePreviewUrl] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const queryClient = useQueryClient();
 
@@ -35,17 +36,29 @@ export function CreatePostScreen({ onBack, autoOpenImage, initialCommunityId }: 
     }
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // Revoke object URL on unmount to avoid memory leaks
+  useEffect(() => {
+    return () => {
+      if (imagePreviewUrl) URL.revokeObjectURL(imagePreviewUrl);
+    };
+  }, [imagePreviewUrl]);
+
   const { mutate: publish, isPending } = useMutation({
-    mutationFn: () =>
-      apiFetch<ApiPost>('/posts', {
+    mutationFn: async () => {
+      let imageUrl: string | undefined;
+      if (imageFile) {
+        imageUrl = await uploadImage(imageFile, accessToken);
+      }
+      return apiFetch<ApiPost>('/posts', {
         method: 'POST',
         body: JSON.stringify({
           content: content.trim(),
           category,
-          imageUrl: imagePreview ?? undefined,
+          imageUrl,
           communityId: initialCommunityId,
         }),
-      }),
+      });
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['posts'] });
       if (initialCommunityId) {
@@ -56,18 +69,25 @@ export function CreatePostScreen({ onBack, autoOpenImage, initialCommunityId }: 
   });
 
   function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = () => setImagePreview(reader.result as string);
-    reader.onerror = () => console.error('Falha ao carregar imagem');
-    reader.readAsDataURL(file);
+    const file = e.target.files?.[0] ?? null;
+    setImageFile(file);
+    if (imagePreviewUrl) URL.revokeObjectURL(imagePreviewUrl);
+    setImagePreviewUrl(file ? URL.createObjectURL(file) : null);
+  }
+
+  function handleRemoveImage() {
+    if (imagePreviewUrl) URL.revokeObjectURL(imagePreviewUrl);
+    setImageFile(null);
+    setImagePreviewUrl(null);
+    if (fileInputRef.current) fileInputRef.current.value = '';
   }
 
   function handlePublish() {
-    if (!content.trim() && !imagePreview) return;
+    if (!content.trim() && !imageFile) return;
     publish();
   }
+
+  const canPublish = Boolean(content.trim() || imageFile);
 
   return (
     <div className="flex flex-col gap-4 pb-6 h-full">
@@ -81,7 +101,7 @@ export function CreatePostScreen({ onBack, autoOpenImage, initialCommunityId }: 
         <h1 className="text-sm font-semibold text-graphite">Publicação</h1>
         <button
           onClick={handlePublish}
-          disabled={(!content.trim() && !imagePreview) || isPending}
+          disabled={!canPublish || isPending}
           className="text-sm font-semibold text-sara-gold disabled:opacity-40 px-1 py-1"
         >
           Publicar
@@ -116,18 +136,15 @@ export function CreatePostScreen({ onBack, autoOpenImage, initialCommunityId }: 
           Adicionar foto
         </button>
 
-        {imagePreview && (
+        {imagePreviewUrl && (
           <div className="relative mt-1">
             <img
-              src={imagePreview}
+              src={imagePreviewUrl}
               alt="Preview"
               className="w-full rounded-xl object-cover max-h-48"
             />
             <button
-              onClick={() => {
-                setImagePreview(null);
-                if (fileInputRef.current) fileInputRef.current.value = '';
-              }}
+              onClick={handleRemoveImage}
               aria-label="Remover imagem"
               className="absolute top-2 right-2 bg-black/50 text-white rounded-full p-1"
             >
