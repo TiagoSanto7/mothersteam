@@ -28,7 +28,7 @@ const mockCommunity = {
 beforeEach(() => {
   vi.clearAllMocks();
   vi.mocked(api.apiFetch).mockImplementation(async (path: string) => {
-    if (path.endsWith('/posts')) return { items: [], hasMore: false };
+    if (path.includes('/posts')) return { items: [], hasMore: false };
     return mockCommunity;
   });
 });
@@ -52,7 +52,7 @@ describe('CommunityDetailScreen', () => {
 
   it('shows "Sair" when already a member', async () => {
     vi.mocked(api.apiFetch).mockImplementation(async (path: string) => {
-      if (path.endsWith('/posts')) return { items: [], hasMore: false };
+      if (path.includes('/posts')) return { items: [], hasMore: false };
       return { ...mockCommunity, isMember: true, role: 'member' };
     });
     renderScreen();

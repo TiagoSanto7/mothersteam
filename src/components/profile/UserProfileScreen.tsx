@@ -1,9 +1,10 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { ChevronLeft } from 'lucide-react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiFetch } from '../../lib/api';
-import type { ApiUserProfile, PaginatedResult, ApiPost } from '../../lib/types';
+import type { ApiUserProfile, ApiPost } from '../../lib/types';
 import { apiPostToCommunityPost } from '../../lib/helpers';
+import { useIntersection } from '../../lib/useIntersection';
 import { FollowListScreen } from './FollowListScreen';
 import { PostDetailScreen } from '../post/PostDetailScreen';
 import { PostCard } from '../comunidade/PostCard';
@@ -20,16 +21,33 @@ export function UserProfileScreen({ userId, onBack, onOpenProfile }: UserProfile
   const [followList, setFollowList] = useState<'followers' | 'following' | null>(null);
   const [selectedPost, setSelectedPost] = useState<CommunityPost | null>(null);
 
+  const sentinelRef = useRef<HTMLDivElement>(null);
+  const isAtBottom = useIntersection(sentinelRef);
+
   const { data: profile } = useQuery({
     queryKey: ['user', userId],
     queryFn: () => apiFetch<ApiUserProfile>(`/users/${userId}`),
   });
 
-  const { data: postsData } = useQuery({
-    queryKey: ['user', userId, 'posts'],
-    queryFn: () => apiFetch<PaginatedResult<ApiPost>>(`/users/${userId}/posts`),
-    enabled: !!profile,
+  const {
+    data: postsPages,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+  } = useInfiniteQuery({
+    queryKey: ['userPosts', userId],
+    queryFn: ({ pageParam }) =>
+      apiFetch<{ items: ApiPost[]; hasMore: boolean; nextCursor?: string }>(
+        `/users/${userId}/posts?cursor=${pageParam ?? ''}&limit=20`
+      ),
+    initialPageParam: '',
+    getNextPageParam: (lastPage) => (lastPage.hasMore ? lastPage.nextCursor : undefined),
+    enabled: !!userId,
   });
+
+  useEffect(() => {
+    if (isAtBottom && hasNextPage && !isFetchingNextPage) fetchNextPage();
+  }, [isAtBottom, hasNextPage, isFetchingNextPage, fetchNextPage]);
 
   const followMutation = useMutation({
     mutationFn: (isFollowing: boolean) =>
@@ -79,7 +97,7 @@ export function UserProfileScreen({ userId, onBack, onOpenProfile }: UserProfile
     );
   }
 
-  const posts = (postsData?.items ?? []).map(apiPostToCommunityPost);
+  const posts = postsPages?.pages.flatMap((p) => p.items.map(apiPostToCommunityPost)) ?? [];
 
   return (
     <div className="flex flex-col w-full h-full sm:w-[390px] sm:h-[844px] bg-gradient-to-b from-[#F5EDE0] via-[#EAD8C8] to-[#D9C4AF] sm:rounded-[44px] sm:shadow-2xl overflow-hidden">
@@ -159,6 +177,10 @@ export function UserProfileScreen({ userId, onBack, onOpenProfile }: UserProfile
               onOpenProfile={() => onOpenProfile?.(userId)}
             />
           ))
+        )}
+        <div ref={sentinelRef} className="h-4" />
+        {isFetchingNextPage && (
+          <p className="text-center text-xs text-graphite-muted py-2">Carregando...</p>
         )}
       </div>
     </div>

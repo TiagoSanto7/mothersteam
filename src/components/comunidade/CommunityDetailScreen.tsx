@@ -1,9 +1,10 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { ChevronLeft, Pencil } from 'lucide-react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiFetch } from '../../lib/api';
-import type { ApiCommunityDetail, PaginatedResult, ApiPost } from '../../lib/types';
+import type { ApiCommunityDetail, ApiPost } from '../../lib/types';
 import { apiPostToCommunityPost } from '../../lib/helpers';
+import { useIntersection } from '../../lib/useIntersection';
 import { PostDetailScreen } from '../post/PostDetailScreen';
 import { CreatePostScreen } from './CreatePostScreen';
 import { PostCard } from './PostCard';
@@ -28,16 +29,33 @@ export function CommunityDetailScreen({ communityId, onBack, onOpenProfile }: Co
   const [selectedPost, setSelectedPost] = useState<CommunityPost | null>(null);
   const [showCreate, setShowCreate] = useState(false);
 
+  const sentinelRef = useRef<HTMLDivElement>(null);
+  const isAtBottom = useIntersection(sentinelRef);
+
   const { data: community } = useQuery({
     queryKey: ['community', communityId],
     queryFn: () => apiFetch<ApiCommunityDetail>(`/communities/${communityId}`),
   });
 
-  const { data: postsData } = useQuery({
-    queryKey: ['community', communityId, 'posts'],
-    queryFn: () => apiFetch<PaginatedResult<ApiPost>>(`/communities/${communityId}/posts`),
-    enabled: !!community,
+  const {
+    data: postsPages,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+  } = useInfiniteQuery({
+    queryKey: ['communityPosts', communityId],
+    queryFn: ({ pageParam }) =>
+      apiFetch<{ items: ApiPost[]; hasMore: boolean; nextCursor?: string }>(
+        `/communities/${communityId}/posts?cursor=${pageParam ?? ''}&limit=20`
+      ),
+    initialPageParam: '',
+    getNextPageParam: (lastPage) => (lastPage.hasMore ? lastPage.nextCursor : undefined),
+    enabled: !!communityId,
   });
+
+  useEffect(() => {
+    if (isAtBottom && hasNextPage && !isFetchingNextPage) fetchNextPage();
+  }, [isAtBottom, hasNextPage, isFetchingNextPage, fetchNextPage]);
 
   const joinMutation = useMutation({
     mutationFn: (isJoining: boolean) =>
@@ -83,7 +101,7 @@ export function CommunityDetailScreen({ communityId, onBack, onOpenProfile }: Co
     );
   }
 
-  const posts = (postsData?.items ?? []).map(apiPostToCommunityPost);
+  const posts = postsPages?.pages.flatMap((p) => p.items.map(apiPostToCommunityPost)) ?? [];
 
   return (
     <div className="flex flex-col w-full h-full sm:w-[390px] sm:h-[844px] bg-gradient-to-b from-[#F5EDE0] via-[#EAD8C8] to-[#D9C4AF] sm:rounded-[44px] sm:shadow-2xl overflow-hidden">
@@ -142,6 +160,10 @@ export function CommunityDetailScreen({ communityId, onBack, onOpenProfile }: Co
               onOpenProfile={() => post.authorId && onOpenProfile?.(post.authorId)}
             />
           ))
+        )}
+        <div ref={sentinelRef} className="h-4" />
+        {isFetchingNextPage && (
+          <p className="text-center text-xs text-graphite-muted py-2">Carregando...</p>
         )}
       </div>
     </div>

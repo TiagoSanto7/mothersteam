@@ -32,7 +32,7 @@ const mockPosts = { items: [], hasMore: false };
 beforeEach(() => {
   vi.clearAllMocks();
   vi.mocked(api.apiFetch).mockImplementation(async (path: string) => {
-    if (path.endsWith('/posts')) return mockPosts;
+    if (path.includes('/posts')) return mockPosts;
     return mockProfile;
   });
 });
@@ -54,7 +54,7 @@ describe('UserProfileScreen', () => {
 
   it('shows "Seguindo" button when already following', async () => {
     vi.mocked(api.apiFetch).mockImplementation(async (path: string) => {
-      if (path.endsWith('/posts')) return mockPosts;
+      if (path.includes('/posts')) return mockPosts;
       return { ...mockProfile, isFollowedByCurrentUser: true };
     });
     renderScreen();
@@ -72,7 +72,7 @@ describe('UserProfileScreen', () => {
 
   it('hides follow button when isSelf', async () => {
     vi.mocked(api.apiFetch).mockImplementation(async (path: string) => {
-      if (path.endsWith('/posts')) return mockPosts;
+      if (path.includes('/posts')) return mockPosts;
       return { ...mockProfile, isSelf: true };
     });
     renderScreen();
