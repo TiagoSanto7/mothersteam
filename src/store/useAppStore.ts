@@ -17,6 +17,7 @@ interface AppState {
   motherName: string;
   babyName: string;
   phase: PregnancyPhase;
+  socialOnboardingDone: boolean;
   // UI — persisted
   activeTab: TabId;
   selectedDate: string;
@@ -28,6 +29,7 @@ interface AppState {
   // Profile actions
   completeOnboarding: (answers: OnboardingAnswers) => void;
   resetOnboarding: () => void;
+  completeSocialOnboarding: () => void;
   // UI actions
   setActiveTab: (tab: TabId) => void;
   setSelectedDate: (date: string) => void;
@@ -61,6 +63,7 @@ export const useAppStore = create<AppState>()(
       motherName: '',
       babyName: '',
       phase: { stage: 'pregnant', week: 28 },
+      socialOnboardingDone: false,
       // UI
       activeTab: 'home',
       selectedDate: new Date().toISOString().split('T')[0],
@@ -86,6 +89,7 @@ export const useAppStore = create<AppState>()(
         set({ onboardingDone: true, motherProfile: profile });
       },
       resetOnboarding: () => set({ onboardingDone: false, motherProfile: null }),
+      completeSocialOnboarding: () => set({ socialOnboardingDone: true }),
       // UI actions
       setActiveTab: (tab) => set({ activeTab: tab }),
       setSelectedDate: (date) => set({ selectedDate: date }),
@@ -102,6 +106,7 @@ export const useAppStore = create<AppState>()(
         motherName: state.motherName,
         babyName: state.babyName,
         phase: state.phase,
+        socialOnboardingDone: state.socialOnboardingDone,
         activeTab: state.activeTab,
         selectedDate: state.selectedDate,
         lastFeedSide: state.lastFeedSide,
