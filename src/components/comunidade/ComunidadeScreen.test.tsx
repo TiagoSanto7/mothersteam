@@ -239,7 +239,10 @@ describe('ComunidadeScreen', () => {
     };
     mockApiFetch.mockResolvedValue({ items: [likedPost], hasMore: false });
     const qc = new QueryClient({ defaultOptions: { queries: { retry: false }, mutations: { retry: false } } });
-    qc.setQueryData(['posts'], { items: [likedPost], hasMore: false });
+    qc.setQueryData(['posts'], {
+      pages: [{ items: [likedPost], hasMore: false }],
+      pageParams: [''],
+    });
     render(
       <QueryClientProvider client={qc}><ComunidadeScreen /></QueryClientProvider>
     );

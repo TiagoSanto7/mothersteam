@@ -28,7 +28,7 @@ export function PostCard({ post, onOpen, onOpenProfile }: PostCardProps) {
     mutationFn: (isLiked: boolean) =>
       apiFetch(`/posts/${post.id}/like`, { method: isLiked ? 'POST' : 'DELETE' }),
     onSuccess: (_, isLiked) => {
-      patchPostLikeInAllCaches(queryClient, post.id, isLiked);
+      patchPostLikeInAllCaches(queryClient, post.id, isLiked, isLiked ? 1 : -1);
     },
   });
 

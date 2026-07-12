@@ -1,10 +1,11 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { Plus } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useQuery } from '@tanstack/react-query';
+import { useInfiniteQuery } from '@tanstack/react-query';
 import { useAppStore } from '../../store/useAppStore';
 import { apiFetch } from '../../lib/api';
-import type { PaginatedResult, ApiPost } from '../../lib/types';
+import { useIntersection } from '../../lib/useIntersection';
+import type { ApiPost } from '../../lib/types';
 import { apiPostToCommunityPost } from '../../lib/helpers';
 import { CreatePostScreen } from './CreatePostScreen';
 import { PostDetailScreen } from '../post/PostDetailScreen';
@@ -24,13 +25,33 @@ const CATEGORY_LABELS: Category[] = ['todos', 'gestação', 'pós-parto', 'amame
 export function ComunidadeScreen() {
   const isLoggedIn = useAppStore((s) => s.isLoggedIn);
 
-  const { data, isLoading } = useQuery({
+  const sentinelRef = useRef<HTMLDivElement>(null);
+  const isAtBottom = useIntersection(sentinelRef);
+
+  const {
+    data: postsPages,
+    isLoading,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+  } = useInfiniteQuery({
     queryKey: ['posts'],
-    queryFn: () => apiFetch<PaginatedResult<ApiPost>>('/posts'),
+    queryFn: ({ pageParam }) =>
+      apiFetch<{ items: ApiPost[]; hasMore: boolean; nextCursor?: string }>(
+        `/posts?cursor=${pageParam ?? ''}&limit=20`,
+      ),
+    initialPageParam: '',
+    getNextPageParam: (lastPage) => (lastPage.hasMore ? lastPage.nextCursor : undefined),
     enabled: isLoggedIn,
   });
 
-  const communityPosts = (data?.items ?? []).map(apiPostToCommunityPost);
+  const communityPosts = postsPages?.pages.flatMap((p) => p.items.map(apiPostToCommunityPost)) ?? [];
+
+  useEffect(() => {
+    if (isAtBottom && hasNextPage && !isFetchingNextPage) {
+      fetchNextPage();
+    }
+  }, [isAtBottom, hasNextPage, isFetchingNextPage, fetchNextPage]);
 
   const [topTab, setTopTab] = useState<TopTab>('para-voce');
   const [activeCategory, setActiveCategory] = useState<Category>('todos');
@@ -158,6 +179,10 @@ export function ComunidadeScreen() {
                   onOpenProfile={() => post.authorId && setProfileUserId(post.authorId)}
                 />
               ))}
+              <div ref={sentinelRef} className="h-4" />
+              {isFetchingNextPage && (
+                <p className="text-center text-xs text-graphite-muted py-2">Carregando...</p>
+              )}
             </div>
 
             <motion.button

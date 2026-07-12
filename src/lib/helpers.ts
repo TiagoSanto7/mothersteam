@@ -5,24 +5,57 @@ import type { CommunityPost, Community, Chat, PregnancyPhase } from '../types'
 export function patchPostLikeInAllCaches(
   queryClient: QueryClient,
   postId: string,
-  isLiked: boolean,
+  liked: boolean,
+  delta: number,
 ): void {
-  queryClient.setQueriesData<PaginatedResult<ApiPost>>(
-    { predicate: (q) => Array.isArray(q.queryKey) && q.queryKey.includes('posts') },
-    (old) => {
+  queryClient.setQueriesData<unknown>(
+    {
+      predicate: (q) => {
+        const k = q.queryKey
+        return (
+          Array.isArray(k) &&
+          (k[0] === 'posts' || k[0] === 'communityPosts' || k[0] === 'userPosts')
+        )
+      },
+    },
+    (old: unknown) => {
       if (!old) return old
-      return {
-        ...old,
-        items: old.items.map((p) =>
-          p.id === postId
-            ? {
-                ...p,
-                likedByCurrentUser: isLiked,
-                _count: { ...p._count, likes: p._count.likes + (isLiked ? 1 : -1) },
-              }
-            : p,
-        ),
+      // Handle infinite query shape: { pages: [...], pageParams: [...] }
+      if (typeof old === 'object' && 'pages' in (old as object)) {
+        const inf = old as { pages: PaginatedResult<ApiPost>[]; pageParams: unknown[] }
+        return {
+          ...inf,
+          pages: inf.pages.map((page) => ({
+            ...page,
+            items: page.items.map((p) =>
+              p.id === postId
+                ? {
+                    ...p,
+                    likedByCurrentUser: liked,
+                    _count: { ...p._count, likes: p._count.likes + delta },
+                  }
+                : p,
+            ),
+          })),
+        }
       }
+      // Handle regular query shape: { items: [...], hasMore: boolean }
+      const paged = old as PaginatedResult<ApiPost>
+      if (paged.items) {
+        return {
+          ...paged,
+          items: paged.items.map((p) =>
+            p.id === postId
+              ? {
+                  ...p,
+                  likedByCurrentUser: liked,
+                  _count: { ...p._count, likes: p._count.likes + delta },
+                }
+              : p,
+          ),
+        }
+      }
+      return old
     },
   )
 }
