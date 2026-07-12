@@ -1,5 +1,5 @@
 import type { QueryClient } from '@tanstack/react-query'
-import type { ApiPost, ApiCommunity, ApiChat, ApiUser, PaginatedResult } from './types'
+import type { ApiPost, ApiCommunity, ApiChat, ApiUser, ApiUserProfile, PaginatedResult } from './types'
 import type { CommunityPost, Community, Chat, PregnancyPhase } from '../types'
 
 export function patchPostLikeInAllCaches(
@@ -24,6 +24,16 @@ export function patchPostLikeInAllCaches(
         ),
       }
     },
+  )
+}
+
+export function patchUserProfileInCaches(
+  queryClient: QueryClient,
+  userId: string,
+  patch: Partial<{ name: string; bio: string | null }>,
+): void {
+  queryClient.setQueryData<ApiUserProfile>(['user', userId], (old) =>
+    old ? { ...old, ...patch } : old,
   )
 }
 

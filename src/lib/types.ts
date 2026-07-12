@@ -3,6 +3,7 @@ export interface ApiUser {
   email: string
   name: string
   babyName?: string | null
+  bio?: string | null
   pregnancyStage: 'pregnant' | 'postpartum'
   pregnancyWeek?: number | null
   babyAgeInDays?: number | null
