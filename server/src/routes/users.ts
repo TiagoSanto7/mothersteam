@@ -2,11 +2,12 @@ import type { FastifyInstance } from 'fastify'
 import { z } from 'zod'
 
 const updateMeSchema = z.object({
-  name: z.string().min(1).optional(),
-  babyName: z.string().optional(),
+  name: z.string().min(1).max(80).optional(),
+  babyName: z.string().max(80).optional().nullable(),
+  bio: z.string().max(280).optional().nullable(),
   pregnancyStage: z.enum(['pregnant', 'postpartum']).optional(),
-  pregnancyWeek: z.number().int().min(1).max(42).optional(),
-  babyAgeInDays: z.number().int().min(0).optional(),
+  pregnancyWeek: z.number().int().min(1).max(42).optional().nullable(),
+  babyAgeInDays: z.number().int().min(0).optional().nullable(),
 })
 
 export default async function usersRoutes(fastify: FastifyInstance) {
@@ -48,7 +49,10 @@ export default async function usersRoutes(fastify: FastifyInstance) {
     const user = await fastify.prisma.user.update({
       where: { id: request.userId },
       data: body.data,
-      select: { id: true, name: true, babyName: true, pregnancyStage: true },
+      select: {
+        id: true, name: true, babyName: true, bio: true,
+        pregnancyStage: true, pregnancyWeek: true, babyAgeInDays: true,
+      },
     })
     reply.send(user)
   })
