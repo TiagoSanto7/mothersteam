@@ -11,6 +11,20 @@ export interface ApiUser {
   archetypeKey?: string | null
 }
 
+export interface ApiUserProfile {
+  id: string
+  name: string
+  bio?: string | null
+  pregnancyStage: 'pregnant' | 'postpartum'
+  pregnancyWeek?: number | null
+  babyAgeInDays?: number | null
+  profileKey?: string | null
+  archetypeKey?: string | null
+  _count: { posts: number; followers: number; following: number }
+  isSelf: boolean
+  isFollowedByCurrentUser: boolean
+}
+
 export interface ApiPost {
   id: string
   content: string

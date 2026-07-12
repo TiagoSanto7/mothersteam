@@ -16,12 +16,29 @@ export default async function usersRoutes(fastify: FastifyInstance) {
     const user = await fastify.prisma.user.findUnique({
       where: { id: request.params.id },
       select: {
-        id: true, name: true,
+        id: true,
+        name: true,
+        bio: true,
+        pregnancyStage: true,
+        pregnancyWeek: true,
+        babyAgeInDays: true,
+        profileKey: true,
+        archetypeKey: true,
         _count: { select: { posts: true, followers: true, following: true } },
       },
     })
     if (!user) return reply.status(404).send({ error: 'User not found' })
-    reply.send(user)
+
+    const isSelf = user.id === request.userId
+    let isFollowedByCurrentUser = false
+    if (!isSelf) {
+      const follow = await fastify.prisma.follow.findUnique({
+        where: { followerId_followingId: { followerId: request.userId, followingId: user.id } },
+      })
+      isFollowedByCurrentUser = !!follow
+    }
+
+    reply.send({ ...user, isSelf, isFollowedByCurrentUser })
   })
 
   fastify.patch('/me', async (request, reply) => {
