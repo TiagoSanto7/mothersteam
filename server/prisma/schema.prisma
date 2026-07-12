@@ -171,5 +171,7 @@ model Notification {
   read        Boolean  @default(false)
   recipientId String
   recipient   User     @relation(fields: [recipientId], references: [id], onDelete: Cascade)
+  targetType  String?
+  targetId    String?
   createdAt   DateTime @default(now())
 }
