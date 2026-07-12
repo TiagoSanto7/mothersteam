@@ -1,4 +1,4 @@
-import { useQuery, useMutation } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAppStore } from '../../store/useAppStore';
 import { CommunityCard } from './CommunityCard';
 import { apiFetch } from '../../lib/api';
@@ -14,48 +14,56 @@ function getSuggestionScore(community: Community, phase: PregnancyPhase, archety
   if (phase.stage === 'pregnant' && community.category === 'gestação') score += 3;
   if (phase.stage === 'postpartum' && (community.category === 'pós-parto' || community.category === 'amamentação')) score += 3;
   if (archetypeKey === 'ana' && community.category === 'saúde mental') score += 2;
-  if (archetypeKey === 'rute' && community.id === 'maes-solo') score += 2;
   return score;
 }
 
-export function ComunidadesScreen() {
-  const followedCommunityIds = useAppStore((s) => s.followedCommunityIds);
-  const joinCommunity  = useAppStore((s) => s.joinCommunity);
-  const leaveCommunity = useAppStore((s) => s.leaveCommunity);
+interface ComunidadesScreenProps {
+  onOpenCommunity?: (id: string) => void;
+}
+
+type ApiCommunityWithMember = ApiCommunity & { isMember?: boolean };
+
+export function ComunidadesScreen({ onOpenCommunity }: ComunidadesScreenProps = {}) {
   const phase          = useAppStore((s) => s.phase);
   const motherProfile  = useAppStore((s) => s.motherProfile);
   const isLoggedIn     = useAppStore((s) => s.isLoggedIn);
+  const queryClient    = useQueryClient();
   const [subFilter, setSubFilter] = useState<SubFilter>('seguindo');
 
   const { data: apiCommunities = [] } = useQuery({
     queryKey: ['communities'],
-    queryFn: () => apiFetch<ApiCommunity[]>('/communities'),
+    queryFn: () => apiFetch<ApiCommunityWithMember[]>('/communities?includeMember=1'),
     enabled: isLoggedIn,
   });
 
-  const communities = apiCommunities.map(apiCommunityToCommunity);
+  const communities = apiCommunities.map((c) => ({
+    ...apiCommunityToCommunity(c),
+    isMember: !!c.isMember,
+  }));
 
   const joinMutation = useMutation({
-    mutationFn: (id: string) => apiFetch(`/communities/${id}/join`, { method: 'POST' }),
+    mutationFn: ({ id, isJoining }: { id: string; isJoining: boolean }) =>
+      apiFetch(`/communities/${id}/join`, { method: isJoining ? 'POST' : 'DELETE' }),
+    onMutate: async ({ id, isJoining }) => {
+      await queryClient.cancelQueries({ queryKey: ['communities'] });
+      const previous = queryClient.getQueryData<ApiCommunityWithMember[]>(['communities']);
+      queryClient.setQueryData<ApiCommunityWithMember[]>(['communities'], (old) =>
+        old?.map((c) => (c.id === id ? { ...c, isMember: isJoining } : c)) ?? old
+      );
+      return { previous };
+    },
+    onError: (_e, _v, ctx) => {
+      if (ctx?.previous) queryClient.setQueryData(['communities'], ctx.previous);
+    },
   });
 
-  const leaveMutation = useMutation({
-    mutationFn: (id: string) => apiFetch(`/communities/${id}/join`, { method: 'DELETE' }),
-  });
-
-  function handleToggle(id: string) {
-    if (followedCommunityIds.includes(id)) {
-      leaveCommunity(id);
-      leaveMutation.mutate(id);
-    } else {
-      joinCommunity(id);
-      joinMutation.mutate(id);
-    }
+  function handleToggle(id: string, isMember: boolean) {
+    joinMutation.mutate({ id, isJoining: !isMember });
   }
 
-  const followed    = communities.filter((c) => followedCommunityIds.includes(c.id));
+  const followed    = communities.filter((c) => c.isMember);
   const suggestions = communities
-    .filter((c) => !followedCommunityIds.includes(c.id))
+    .filter((c) => !c.isMember)
     .sort((a, b) =>
       getSuggestionScore(b, phase, motherProfile?.archetypeKey) -
       getSuggestionScore(a, phase, motherProfile?.archetypeKey)
@@ -97,8 +105,9 @@ export function ComunidadesScreen() {
             <CommunityCard
               key={community.id}
               community={community}
-              isFollowing={followedCommunityIds.includes(community.id)}
-              onToggle={handleToggle}
+              isFollowing={community.isMember}
+              onToggle={() => handleToggle(community.id, community.isMember)}
+              onOpen={onOpenCommunity ? () => onOpenCommunity(community.id) : undefined}
             />
           ))
         )}

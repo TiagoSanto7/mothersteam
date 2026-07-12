@@ -9,6 +9,7 @@ import { apiPostToCommunityPost } from '../../lib/helpers';
 import { CreatePostScreen } from './CreatePostScreen';
 import { PostDetailScreen } from '../post/PostDetailScreen';
 import { ComunidadesScreen } from './ComunidadesScreen';
+import { CommunityDetailScreen } from './CommunityDetailScreen';
 import { ComposerBar } from './ComposerBar';
 import { SharePostSheet } from './SharePostSheet';
 import { UserProfileScreen } from '../profile/UserProfileScreen';
@@ -158,7 +159,6 @@ function PostCard({
 
 export function ComunidadeScreen() {
   const isLoggedIn = useAppStore((s) => s.isLoggedIn);
-  const followedCommunityIds = useAppStore((s) => s.followedCommunityIds);
   const queryClient = useQueryClient();
 
   const { data, isLoading } = useQuery({
@@ -182,6 +182,11 @@ export function ComunidadeScreen() {
   const [selectedPost, setSelectedPost] = useState<CommunityPost | null>(null);
   const [sharingPost, setSharingPost] = useState<CommunityPost | null>(null);
   const [profileUserId, setProfileUserId] = useState<string | null>(null);
+  const [openCommunityId, setOpenCommunityId] = useState<string | null>(null);
+
+  if (openCommunityId) {
+    return <CommunityDetailScreen communityId={openCommunityId} onBack={() => setOpenCommunityId(null)} />;
+  }
 
   if (profileUserId) {
     return <UserProfileScreen userId={profileUserId} onBack={() => setProfileUserId(null)} />;
@@ -205,14 +210,9 @@ export function ComunidadeScreen() {
     );
   }
 
-  const prioritized = [
-    ...communityPosts.filter((p) => p.communityId && followedCommunityIds.includes(p.communityId)),
-    ...communityPosts.filter((p) => !p.communityId || !followedCommunityIds.includes(p.communityId)),
-  ];
-
   const filtered = activeCategory === 'todos'
-    ? prioritized
-    : prioritized.filter((p) => p.category === activeCategory);
+    ? communityPosts
+    : communityPosts.filter((p) => p.category === activeCategory);
 
   return (
     <>
@@ -297,7 +297,7 @@ export function ComunidadeScreen() {
             </motion.button>
           </>
         ) : (
-          <ComunidadesScreen />
+          <ComunidadesScreen onOpenCommunity={setOpenCommunityId} />
         )}
       </div>
 

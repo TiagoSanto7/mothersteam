@@ -13,13 +13,25 @@ const updateSchema = createSchema.partial()
 export default async function communitiesRoutes(fastify: FastifyInstance) {
   fastify.addHook('preHandler', fastify.authenticate)
 
-  fastify.get('/', async (request, reply) => {
-    const communities = await fastify.prisma.community.findMany({
-      include: { _count: { select: { members: true } } },
-      orderBy: { createdAt: 'desc' },
-    })
-    reply.send(communities)
-  })
+  fastify.get<{ Querystring: { includeMember?: string } }>(
+    '/',
+    async (request, reply) => {
+      const includeMember = request.query.includeMember === '1'
+      const communities = await fastify.prisma.community.findMany({
+        include: {
+          _count: { select: { members: true } },
+          ...(includeMember
+            ? { members: { where: { userId: request.userId }, select: { userId: true } } }
+            : {}),
+        },
+        orderBy: { createdAt: 'desc' },
+      })
+      if (!includeMember) return reply.send(communities)
+      reply.send(
+        communities.map(({ members, ...c }: any) => ({ ...c, isMember: members.length > 0 }))
+      )
+    }
+  )
 
   fastify.post('/', async (request, reply) => {
     const body = createSchema.safeParse(request.body)

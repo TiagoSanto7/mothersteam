@@ -21,7 +21,6 @@ interface AppState {
   activeTab: TabId;
   selectedDate: string;
   lastFeedSide: 'left' | 'right';
-  followedCommunityIds: string[];
   // Auth actions
   setAccessToken: (token: string) => void;
   setAuth: (token: string, user: ApiUser) => void;
@@ -34,8 +33,6 @@ interface AppState {
   setSelectedDate: (date: string) => void;
   toggleFeedSide: () => void;
   setFeedSide: (side: 'left' | 'right') => void;
-  joinCommunity: (id: string) => void;
-  leaveCommunity: (id: string) => void;
 }
 
 const safeLocalStorage = {
@@ -68,7 +65,6 @@ export const useAppStore = create<AppState>()(
       activeTab: 'home',
       selectedDate: new Date().toISOString().split('T')[0],
       lastFeedSide: 'left',
-      followedCommunityIds: [],
       // Auth actions
       setAccessToken: (token) => set({ accessToken: token }),
       setAuth: (token, user) =>
@@ -96,16 +92,6 @@ export const useAppStore = create<AppState>()(
       toggleFeedSide: () =>
         set((s) => ({ lastFeedSide: s.lastFeedSide === 'left' ? 'right' : 'left' })),
       setFeedSide: (side) => set({ lastFeedSide: side }),
-      joinCommunity: (id) =>
-        set((s) => ({
-          followedCommunityIds: s.followedCommunityIds.includes(id)
-            ? s.followedCommunityIds
-            : [...s.followedCommunityIds, id],
-        })),
-      leaveCommunity: (id) =>
-        set((s) => ({
-          followedCommunityIds: s.followedCommunityIds.filter((cid) => cid !== id),
-        })),
     }),
     {
       name: 'mothers-team-v3',
@@ -119,7 +105,6 @@ export const useAppStore = create<AppState>()(
         activeTab: state.activeTab,
         selectedDate: state.selectedDate,
         lastFeedSide: state.lastFeedSide,
-        followedCommunityIds: state.followedCommunityIds,
       }),
     },
   ),

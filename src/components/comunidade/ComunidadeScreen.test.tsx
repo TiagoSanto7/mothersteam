@@ -63,21 +63,8 @@ beforeEach(() => {
   useAppStore.setState({
     motherName: 'Mariana',
     isLoggedIn: true,
-    chats: [],
-    communities: [
-      {
-        id: 'amamentacao-apoio',
-        name: 'Amamentação com Apoio',
-        description: 'Dúvidas da amamentação.',
-        category: 'amamentação',
-        memberCount: 3210,
-        colorKey: 'warm',
-      },
-    ],
-    followedCommunityIds: ['amamentacao-apoio'],
     phase: { stage: 'pregnant', week: 28 },
     motherProfile: null,
-    notifications: [],
   });
   mockApiFetch.mockResolvedValue({ items: API_POSTS, hasMore: false });
 });

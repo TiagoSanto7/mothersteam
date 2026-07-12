@@ -5,6 +5,7 @@ interface CommunityCardProps {
   community: Community;
   isFollowing: boolean;
   onToggle: (id: string) => void;
+  onOpen?: () => void;
 }
 
 const COLOR_CONFIG: Record<CommunityColorKey, { avatarBg: string; avatarText: string }> = {
@@ -15,11 +16,11 @@ const COLOR_CONFIG: Record<CommunityColorKey, { avatarBg: string; avatarText: st
   cream:      { avatarBg: 'bg-sara-cream', avatarText: 'text-sara-charcoal' },
 };
 
-export function CommunityCard({ community, isFollowing, onToggle }: CommunityCardProps) {
+export function CommunityCard({ community, isFollowing, onToggle, onOpen }: CommunityCardProps) {
   const { avatarBg, avatarText } = COLOR_CONFIG[community.colorKey];
 
-  return (
-    <div className="bg-white/70 backdrop-blur-sm border border-white/50 rounded-3xl p-4 flex items-start gap-3 shadow-sm">
+  const inner = (
+    <>
       <div className={`w-11 h-11 rounded-2xl flex items-center justify-center flex-shrink-0 ${avatarBg}`}>
         <span className={`text-lg font-serif font-semibold ${avatarText}`}>
           {community.name.charAt(0)}
@@ -42,7 +43,8 @@ export function CommunityCard({ community, isFollowing, onToggle }: CommunityCar
       </div>
 
       <button
-        onClick={() => onToggle(community.id)}
+        type="button"
+        onClick={(e) => { e.stopPropagation(); onToggle(community.id); }}
         aria-label={isFollowing ? 'Deixar de seguir' : 'Seguir'}
         className={`flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-semibold transition-colors ${
           isFollowing
@@ -52,6 +54,25 @@ export function CommunityCard({ community, isFollowing, onToggle }: CommunityCar
       >
         {isFollowing ? 'Seguindo' : 'Seguir'}
       </button>
+    </>
+  );
+
+  if (onOpen) {
+    return (
+      <button
+        type="button"
+        onClick={onOpen}
+        aria-label={`Ver comunidade ${community.name}`}
+        className="w-full text-left bg-white/70 backdrop-blur-sm border border-white/50 rounded-3xl p-4 flex items-start gap-3 shadow-sm"
+      >
+        {inner}
+      </button>
+    );
+  }
+
+  return (
+    <div className="bg-white/70 backdrop-blur-sm border border-white/50 rounded-3xl p-4 flex items-start gap-3 shadow-sm">
+      {inner}
     </div>
   );
 }
