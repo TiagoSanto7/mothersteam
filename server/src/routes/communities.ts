@@ -151,4 +151,20 @@ export default async function communitiesRoutes(fastify: FastifyInstance) {
       reply.send({ ok: true })
     }
   )
+
+  fastify.get('/suggested', async (request, reply) => {
+    const communities = await fastify.prisma.community.findMany({
+      where: {
+        members: {
+          none: { userId: request.userId },
+        },
+      },
+      include: {
+        _count: { select: { members: true } },
+      },
+      orderBy: { members: { _count: 'desc' } },
+      take: 5,
+    })
+    return reply.send(communities)
+  })
 }
