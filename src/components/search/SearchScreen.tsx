@@ -49,6 +49,7 @@ export function SearchScreen({ onOpenUser, onOpenCommunity, onBack }: SearchScre
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Buscar pessoas e comunidades"
+            aria-label="Buscar pessoas e comunidades"
             className="flex-1 bg-transparent text-sm text-graphite placeholder:text-sara-muted outline-none"
           />
         </div>
@@ -57,7 +58,7 @@ export function SearchScreen({ onOpenUser, onOpenCommunity, onBack }: SearchScre
       <div className="flex-1 overflow-y-auto">
         {users.length > 0 && (
           <section>
-            <p className="text-[10px] font-semibold text-graphite-muted uppercase tracking-wide px-4 py-2">Pessoas</p>
+            <h2 className="text-[10px] font-semibold text-graphite-muted uppercase tracking-wide px-4 py-2">Pessoas</h2>
             <ul className="divide-y divide-gray-100">
               {users.map((u) => (
                 <li key={u.id}>
@@ -75,7 +76,7 @@ export function SearchScreen({ onOpenUser, onOpenCommunity, onBack }: SearchScre
 
         {communities.length > 0 && (
           <section>
-            <p className="text-[10px] font-semibold text-graphite-muted uppercase tracking-wide px-4 py-2">Comunidades</p>
+            <h2 className="text-[10px] font-semibold text-graphite-muted uppercase tracking-wide px-4 py-2">Comunidades</h2>
             <ul className="divide-y divide-gray-100">
               {communities.map((c) => (
                 <li key={c.id}>
