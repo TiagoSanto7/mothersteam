@@ -23,10 +23,12 @@ import { SearchScreen } from './components/search/SearchScreen';
 import { UserProfileScreen } from './components/profile/UserProfileScreen';
 import { CommunityDetailScreen } from './components/comunidade/CommunityDetailScreen';
 import { PostDetailScreen } from './components/post/PostDetailScreen';
+import { SocialOnboardingScreen } from './components/onboarding/SocialOnboardingScreen';
 
 export default function App() {
-  const isLoggedIn     = useAppStore((s) => s.isLoggedIn);
-  const onboardingDone = useAppStore((s) => s.onboardingDone);
+  const isLoggedIn           = useAppStore((s) => s.isLoggedIn);
+  const onboardingDone       = useAppStore((s) => s.onboardingDone);
+  const socialOnboardingDone = useAppStore((s) => s.socialOnboardingDone);
   const activeTab      = useAppStore((s) => s.activeTab);
   const currentUserId  = useAppStore((s) => s.currentUserId);
   const setAccessToken = useAppStore((s) => s.setAccessToken);
@@ -225,6 +227,14 @@ export default function App() {
         <div className="fixed inset-0 z-50 sm:bg-black/40 sm:flex sm:items-center sm:justify-center">
           <div className="w-full h-full sm:w-[390px] sm:h-[844px] bg-gradient-to-b from-[#F5EDE0] via-[#EAD8C8] to-[#D9C4AF] sm:rounded-[44px] sm:shadow-2xl overflow-hidden">
             <PostDetailScreen post={pendingPost} onBack={() => setPendingPostId(null)} />
+          </div>
+        </div>
+      )}
+
+      {isLoggedIn && onboardingDone && !socialOnboardingDone && (
+        <div className="fixed inset-0 z-50 sm:bg-black/40 sm:flex sm:items-center sm:justify-center">
+          <div className="w-full h-full sm:w-[390px] sm:h-[844px] bg-gradient-to-b from-[#F5EDE0] via-[#EAD8C8] to-[#D9C4AF] sm:rounded-[44px] sm:shadow-2xl overflow-hidden">
+            <SocialOnboardingScreen onDone={() => {}} />
           </div>
         </div>
       )}
