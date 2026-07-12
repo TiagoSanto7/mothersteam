@@ -27,6 +27,16 @@ beforeEach(() => {
     motherName: 'Ana',
     isLoggedIn: true,
   });
+  vi.mocked(api.apiFetch).mockImplementation(async (_path, options) => {
+    if (options?.method === 'PATCH') {
+      return { id: 'u1', name: 'Ana Maria', bio: 'Nova bio' };
+    }
+    return {
+      id: 'u1', name: 'Ana', bio: null,
+      pregnancyStage: 'pregnant', _count: { posts: 0, followers: 0, following: 0 },
+      isSelf: true, isFollowedByCurrentUser: false,
+    };
+  });
 });
 
 describe('EditProfileScreen', () => {
@@ -43,7 +53,6 @@ describe('EditProfileScreen', () => {
   });
 
   it('calls PATCH /users/me on save', async () => {
-    vi.mocked(api.apiFetch).mockResolvedValue({ id: 'u1', name: 'Ana Maria', bio: 'Nova bio' });
     const user = userEvent.setup();
     renderScreen();
     await user.clear(screen.getByLabelText(/Nome/i));
@@ -57,7 +66,6 @@ describe('EditProfileScreen', () => {
   });
 
   it('calls onBack after successful save', async () => {
-    vi.mocked(api.apiFetch).mockResolvedValue({ id: 'u1', name: 'Ana Maria', bio: '' });
     const onBack = vi.fn();
     const user = userEvent.setup();
     renderScreen(onBack);
@@ -69,5 +77,30 @@ describe('EditProfileScreen', () => {
     renderScreen();
     const bioInput = screen.getByLabelText(/Bio/i) as HTMLTextAreaElement;
     expect(bioInput.maxLength).toBe(280);
+  });
+
+  it('shows error message on save failure', async () => {
+    vi.mocked(api.apiFetch).mockImplementation(async (_path, options) => {
+      if (options?.method === 'PATCH') throw new Error('Server down');
+      return { id: 'u1', name: 'Ana', bio: null, pregnancyStage: 'pregnant', _count: { posts: 0, followers: 0, following: 0 }, isSelf: true, isFollowedByCurrentUser: false };
+    });
+    const user = userEvent.setup();
+    renderScreen();
+    await user.click(screen.getByRole('button', { name: /Salvar/i }));
+    await vi.waitFor(() => {
+      expect(screen.getByRole('alert')).toHaveTextContent(/Não foi possível salvar/i);
+    });
+  });
+
+  it('prefills bio from existing profile', async () => {
+    vi.mocked(api.apiFetch).mockImplementation(async () => ({
+      id: 'u1', name: 'Ana', bio: 'Bio existente',
+      pregnancyStage: 'pregnant', _count: { posts: 0, followers: 0, following: 0 },
+      isSelf: true, isFollowedByCurrentUser: false,
+    }));
+    renderScreen();
+    await vi.waitFor(() => {
+      expect(screen.getByLabelText(/Bio/i)).toHaveValue('Bio existente');
+    });
   });
 });
