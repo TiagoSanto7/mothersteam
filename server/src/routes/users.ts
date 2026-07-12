@@ -108,7 +108,22 @@ export default async function usersRoutes(fastify: FastifyInstance) {
         orderBy: { createdAt: 'desc' },
       })
       const hasMore = follows.length > limit
-      reply.send({ items: follows.slice(0, limit).map((f) => f.follower), hasMore })
+      const items = follows.slice(0, limit).map((f) => f.follower)
+
+      const ids = items.map((i) => i.id)
+      const myFollows = ids.length
+        ? await fastify.prisma.follow.findMany({
+            where: { followerId: request.userId, followingId: { in: ids } },
+            select: { followingId: true },
+          })
+        : []
+      const followingSet = new Set(myFollows.map((f) => f.followingId))
+      const enriched = items.map((u) => ({
+        ...u,
+        isFollowedByCurrentUser: followingSet.has(u.id),
+        isSelf: u.id === request.userId,
+      }))
+      reply.send({ items: enriched, hasMore })
     }
   )
 
@@ -124,7 +139,22 @@ export default async function usersRoutes(fastify: FastifyInstance) {
         orderBy: { createdAt: 'desc' },
       })
       const hasMore = follows.length > limit
-      reply.send({ items: follows.slice(0, limit).map((f) => f.following), hasMore })
+      const items = follows.slice(0, limit).map((f) => f.following)
+
+      const ids = items.map((i) => i.id)
+      const myFollows = ids.length
+        ? await fastify.prisma.follow.findMany({
+            where: { followerId: request.userId, followingId: { in: ids } },
+            select: { followingId: true },
+          })
+        : []
+      const followingSet = new Set(myFollows.map((f) => f.followingId))
+      const enriched = items.map((u) => ({
+        ...u,
+        isFollowedByCurrentUser: followingSet.has(u.id),
+        isSelf: u.id === request.userId,
+      }))
+      reply.send({ items: enriched, hasMore })
     }
   )
 }

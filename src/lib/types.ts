@@ -25,6 +25,13 @@ export interface ApiUserProfile {
   isFollowedByCurrentUser: boolean
 }
 
+export interface ApiFollowUser {
+  id: string
+  name: string
+  isFollowedByCurrentUser: boolean
+  isSelf: boolean
+}
+
 export interface ApiPost {
   id: string
   content: string
