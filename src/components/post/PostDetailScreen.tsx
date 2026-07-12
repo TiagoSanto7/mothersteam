@@ -5,6 +5,7 @@ import { useAppStore } from '../../store/useAppStore';
 import { apiFetch } from '../../lib/api';
 import { SharePostSheet } from '../comunidade/SharePostSheet';
 import type { CommunityPost, PostComment } from '../../types';
+import type { PaginatedResult, ApiPost } from '../../lib/types';
 
 const BADGE_CONFIG = {
   experiente:   { label: 'Mãe Experiente',       color: 'bg-sara-linen text-sara-terracotta' },
@@ -28,7 +29,7 @@ export function PostDetailScreen({ post, onBack }: PostDetailScreenProps) {
   const motherName = useAppStore((s) => s.motherName);
   const queryClient = useQueryClient();
 
-  const [liked, setLiked] = useState(false);
+  const [liked, setLiked] = useState(post.likedByCurrentUser ?? false);
   const [reposted, setReposted] = useState(false);
   const [commentText, setCommentText] = useState('');
   const [showShareSheet, setShowShareSheet] = useState(false);
@@ -50,6 +51,23 @@ export function PostDetailScreen({ post, onBack }: PostDetailScreenProps) {
   const likeMutation = useMutation({
     mutationFn: (isLiked: boolean) =>
       apiFetch(`/posts/${post.id}/like`, { method: isLiked ? 'POST' : 'DELETE' }),
+    onSuccess: (_, isLiked) => {
+      queryClient.setQueryData<PaginatedResult<ApiPost>>(['posts'], (old) => {
+        if (!old) return old;
+        return {
+          ...old,
+          items: old.items.map((p) =>
+            p.id === post.id
+              ? {
+                  ...p,
+                  likedByCurrentUser: isLiked,
+                  _count: { ...p._count, likes: p._count.likes + (isLiked ? 1 : -1) },
+                }
+              : p
+          ),
+        };
+      });
+    },
   });
 
   const repostMutation = useMutation({
@@ -137,7 +155,7 @@ export function PostDetailScreen({ post, onBack }: PostDetailScreenProps) {
               className={`flex items-center gap-1.5 text-xs transition-colors ${liked ? 'text-sara-terracotta' : 'text-graphite-muted'}`}
             >
               <Heart size={16} fill={liked ? 'currentColor' : 'none'} strokeWidth={1.8} />
-              <span>{post.likes + (liked ? 1 : 0)}</span>
+              <span>{post.likes - (post.likedByCurrentUser ? 1 : 0) + (liked ? 1 : 0)}</span>
             </button>
             <button className="flex items-center gap-1.5 text-xs text-graphite-muted">
               <MessageCircle size={16} strokeWidth={1.8} />

@@ -48,7 +48,13 @@ function PostCard({
         return {
           ...old,
           items: old.items.map((p) =>
-            p.id === post.id ? { ...p, likedByCurrentUser: isLiked } : p
+            p.id === post.id
+              ? {
+                  ...p,
+                  likedByCurrentUser: isLiked,
+                  _count: { ...p._count, likes: p._count.likes + (isLiked ? 1 : -1) },
+                }
+              : p
           ),
         };
       });
@@ -107,7 +113,7 @@ function PostCard({
           }`}
         >
           <Heart size={14} fill={liked ? 'currentColor' : 'none'} strokeWidth={1.8} />
-          {post.likes - (post.likedByCurrentUser ? 1 : 0) + (liked ? 1 : 0)}
+          {post.likes}
         </button>
         <button
           onClick={onOpen}
@@ -288,7 +294,7 @@ export function ComunidadeScreen() {
             exit={{ opacity: 0 }}
             transition={{ duration: 0.2 }}
             className="fixed inset-0 z-50 bg-black/40 flex items-end"
-            onClick={() => setShowCreate(false)}
+            onClick={() => { setShowCreate(false); setShowCreateWithImage(false); }}
           >
             <motion.div
               initial={{ y: 40, opacity: 0 }}

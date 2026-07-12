@@ -44,9 +44,12 @@ export default async function postsRoutes(fastify: FastifyInstance) {
 
     const post = await fastify.prisma.post.create({
       data: { ...body.data, authorId: request.userId },
-      include: { author: { select: { id: true, name: true } } },
+      include: {
+        author: { select: { id: true, name: true } },
+        _count: { select: { likes: true, comments: true } },
+      },
     })
-    reply.status(201).send(post)
+    reply.status(201).send({ ...post, likedByCurrentUser: false })
   })
 
   fastify.get<{ Params: { id: string } }>('/:id', async (request, reply) => {
@@ -55,10 +58,12 @@ export default async function postsRoutes(fastify: FastifyInstance) {
       include: {
         author: { select: { id: true, name: true } },
         _count: { select: { likes: true, comments: true } },
+        likes: { where: { userId: request.userId }, select: { userId: true } },
       },
     })
     if (!post) return reply.status(404).send({ error: 'Post not found' })
-    reply.send(post)
+    const { likes, ...rest } = post
+    reply.send({ ...rest, likedByCurrentUser: likes.length > 0 })
   })
 
   fastify.delete<{ Params: { id: string } }>('/:id', async (request, reply) => {
