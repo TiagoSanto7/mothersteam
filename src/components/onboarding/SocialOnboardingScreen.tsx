@@ -37,7 +37,7 @@ export function SocialOnboardingScreen({ onDone }: SocialOnboardingScreenProps) 
       apiFetch(`/communities/${communityId}/join`, { method: 'POST' }),
     onSuccess: (_, communityId) => {
       setJoinedIds((prev) => new Set([...prev, communityId]))
-      queryClient.invalidateQueries({ queryKey: ['communities'] })
+      queryClient.invalidateQueries({ queryKey: ['communities', 'suggested'] })
     },
   })
 
