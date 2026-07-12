@@ -51,6 +51,11 @@ export interface ApiCommunity {
   createdAt: string
 }
 
+export interface ApiCommunityDetail extends ApiCommunity {
+  isMember: boolean
+  role: 'owner' | 'admin' | 'member' | null
+}
+
 export interface ApiNotification {
   id: string
   type: 'like' | 'follow' | 'comment'

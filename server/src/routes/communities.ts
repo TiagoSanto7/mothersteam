@@ -38,10 +38,16 @@ export default async function communitiesRoutes(fastify: FastifyInstance) {
   fastify.get<{ Params: { id: string } }>('/:id', async (request, reply) => {
     const community = await fastify.prisma.community.findUnique({
       where: { id: request.params.id },
-      include: { _count: { select: { members: true } } },
+      include: {
+        _count: { select: { members: true } },
+        members: { where: { userId: request.userId }, select: { role: true } },
+      },
     })
     if (!community) return reply.status(404).send({ error: 'Community not found' })
-    reply.send(community)
+    const { members, ...rest } = community
+    const isMember = members.length > 0
+    const role = members[0]?.role ?? null
+    reply.send({ ...rest, isMember, role })
   })
 
   fastify.patch<{ Params: { id: string } }>('/:id', async (request, reply) => {
@@ -65,18 +71,23 @@ export default async function communitiesRoutes(fastify: FastifyInstance) {
     '/:id/posts',
     async (request, reply) => {
       const limit = Math.min(Number(request.query.limit ?? 20), 50)
-      const posts = await fastify.prisma.post.findMany({
+      const rows = await fastify.prisma.post.findMany({
         where: { communityId: request.params.id },
         take: limit + 1,
         ...(request.query.cursor ? { cursor: { id: request.query.cursor }, skip: 1 } : {}),
         include: {
           author: { select: { id: true, name: true } },
           _count: { select: { likes: true, comments: true } },
+          likes: { where: { userId: request.userId }, select: { userId: true } },
         },
         orderBy: { createdAt: 'desc' },
       })
-      const hasMore = posts.length > limit
-      reply.send({ items: posts.slice(0, limit), hasMore })
+      const hasMore = rows.length > limit
+      const items = rows.slice(0, limit).map(({ likes, ...post }) => ({
+        ...post,
+        likedByCurrentUser: likes.length > 0,
+      }))
+      reply.send({ items, hasMore })
     }
   )
 
