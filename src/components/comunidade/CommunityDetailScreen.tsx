@@ -1,10 +1,11 @@
 import { useState } from 'react';
-import { ChevronLeft, Heart, MessageCircle } from 'lucide-react';
+import { ChevronLeft } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiFetch } from '../../lib/api';
 import type { ApiCommunityDetail, PaginatedResult, ApiPost } from '../../lib/types';
 import { apiPostToCommunityPost } from '../../lib/helpers';
 import { PostDetailScreen } from '../post/PostDetailScreen';
+import { PostCard } from './PostCard';
 import type { CommunityPost } from '../../types';
 
 interface CommunityDetailScreenProps {
@@ -108,20 +109,12 @@ export function CommunityDetailScreen({ communityId, onBack, onOpenProfile }: Co
           <p className="text-sm text-graphite-muted text-center py-8">Nenhuma publicação ainda</p>
         ) : (
           posts.map((post) => (
-            <button
+            <PostCard
               key={post.id}
-              type="button"
-              onClick={() => setSelectedPost(post)}
-              aria-label={`Ver post de ${post.author}`}
-              className="bg-white rounded-2xl p-4 shadow-sm text-left active:scale-[0.99] transition-transform"
-            >
-              <p className="text-sm font-semibold text-graphite">{post.author}</p>
-              <p className="text-sm text-graphite-light mt-1 leading-relaxed">{post.content}</p>
-              <div className="flex items-center gap-5 mt-3">
-                <span className="flex items-center gap-1.5 text-graphite-muted"><Heart size={14} /><span className="text-[11px]">{post.likes}</span></span>
-                <span className="flex items-center gap-1.5 text-graphite-muted"><MessageCircle size={14} /><span className="text-[11px]">{post.replies}</span></span>
-              </div>
-            </button>
+              post={post}
+              onOpen={() => setSelectedPost(post)}
+              onOpenProfile={() => post.authorId && onOpenProfile?.(post.authorId)}
+            />
           ))
         )}
       </div>

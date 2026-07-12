@@ -1,11 +1,12 @@
 import { useState } from 'react';
-import { ChevronLeft, Heart, MessageCircle } from 'lucide-react';
+import { ChevronLeft } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiFetch } from '../../lib/api';
 import type { ApiUserProfile, PaginatedResult, ApiPost } from '../../lib/types';
 import { apiPostToCommunityPost } from '../../lib/helpers';
 import { FollowListScreen } from './FollowListScreen';
 import { PostDetailScreen } from '../post/PostDetailScreen';
+import { PostCard } from '../comunidade/PostCard';
 import type { CommunityPost } from '../../types';
 
 interface UserProfileScreenProps {
@@ -144,30 +145,20 @@ export function UserProfileScreen({ userId, onBack, onOpenProfile }: UserProfile
 
       <div className="border-t border-gray-100 flex-shrink-0" />
 
-      <div className="flex-1 overflow-y-auto">
+      <div className="flex-1 overflow-y-auto px-4 py-3 flex flex-col gap-3">
         {posts.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full gap-2 py-12 text-graphite-muted">
             <p className="text-sm">Nenhuma publicação ainda</p>
           </div>
         ) : (
-          <ul className="divide-y divide-gray-100">
-            {posts.map((post) => (
-              <li key={post.id}>
-                <button
-                  type="button"
-                  onClick={() => setSelectedPost(post)}
-                  aria-label={`Ver post: ${post.content.slice(0, 40)}`}
-                  className="w-full px-4 py-4 text-left active:bg-sara-linen transition-colors"
-                >
-                  <p className="text-sm text-graphite leading-relaxed">{post.content}</p>
-                  <div className="flex items-center gap-5 mt-2">
-                    <span className="flex items-center gap-1.5 text-graphite-muted"><Heart size={14} /><span className="text-[11px]">{post.likes}</span></span>
-                    <span className="flex items-center gap-1.5 text-graphite-muted"><MessageCircle size={14} /><span className="text-[11px]">{post.replies}</span></span>
-                  </div>
-                </button>
-              </li>
-            ))}
-          </ul>
+          posts.map((post) => (
+            <PostCard
+              key={post.id}
+              post={post}
+              onOpen={() => setSelectedPost(post)}
+              onOpenProfile={() => onOpenProfile?.(userId)}
+            />
+          ))
         )}
       </div>
     </div>

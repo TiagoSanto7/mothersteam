@@ -97,11 +97,22 @@ export function ComunidadesScreen({ onOpenCommunity, onCreate }: ComunidadesScre
 
       <div className="flex flex-col gap-3 px-4">
         {displayList.length === 0 ? (
-          <p className="text-sm text-graphite-muted text-center py-8">
-            {subFilter === 'seguindo'
-              ? 'Você ainda não segue nenhuma comunidade. Explore as sugestões!'
-              : 'Todas as comunidades disponíveis já estão no seu feed.'}
-          </p>
+          <div className="flex flex-col items-center gap-3 py-8 text-center">
+            <p className="text-sm text-graphite-muted">
+              {subFilter === 'seguindo'
+                ? 'Você ainda não segue nenhuma comunidade. Explore as sugestões ou crie a sua!'
+                : 'Todas as comunidades disponíveis já estão no seu feed.'}
+            </p>
+            {subFilter === 'seguindo' && onCreate && (
+              <button
+                onClick={onCreate}
+                className="flex items-center gap-2 px-4 py-2.5 rounded-full bg-sara-gold text-white text-sm font-semibold active:scale-95 transition-transform"
+              >
+                <Plus size={16} strokeWidth={2.5} />
+                Criar minha primeira comunidade
+              </button>
+            )}
+          </div>
         ) : (
           displayList.map((community) => (
             <CommunityCard
