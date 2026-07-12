@@ -20,6 +20,7 @@ model User {
   onboardingAnswers Json?
   profileKey        String?
   archetypeKey      String?
+  bio               String?  @db.Text
 
   posts              Post[]
   comments           Comment[]
