@@ -53,6 +53,30 @@ export default async function usersRoutes(fastify: FastifyInstance) {
     reply.send(user)
   })
 
+  fastify.get<{ Params: { id: string }; Querystring: { cursor?: string; limit?: string } }>(
+    '/:id/posts',
+    async (request, reply) => {
+      const limit = Math.min(Number(request.query.limit ?? 20), 50)
+      const rows = await fastify.prisma.post.findMany({
+        where: { authorId: request.params.id },
+        take: limit + 1,
+        ...(request.query.cursor ? { cursor: { id: request.query.cursor }, skip: 1 } : {}),
+        include: {
+          author: { select: { id: true, name: true } },
+          _count: { select: { likes: true, comments: true } },
+          likes: { where: { userId: request.userId }, select: { userId: true } },
+        },
+        orderBy: { createdAt: 'desc' },
+      })
+      const hasMore = rows.length > limit
+      const items = rows.slice(0, limit).map(({ likes, ...post }) => ({
+        ...post,
+        likedByCurrentUser: likes.length > 0,
+      }))
+      reply.send({ items, hasMore })
+    }
+  )
+
   fastify.post<{ Params: { id: string } }>('/:id/follow', async (request, reply) => {
     if (request.params.id === request.userId)
       return reply.status(400).send({ error: 'Cannot follow yourself' })
