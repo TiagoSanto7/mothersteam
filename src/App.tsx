@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Bell, MessageSquare } from 'lucide-react';
+import { Bell, MessageSquare, Search } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { useAppStore } from './store/useAppStore';
 import type { TabId } from './types';
@@ -18,6 +18,9 @@ import { ProfileScreen } from './components/profile/ProfileScreen';
 import { SettingsScreen } from './components/profile/SettingsScreen';
 import { NotificationsScreen } from './components/notifications/NotificationsScreen';
 import { ChatListScreen } from './components/chat/ChatListScreen';
+import { SearchScreen } from './components/search/SearchScreen';
+import { UserProfileScreen } from './components/profile/UserProfileScreen';
+import { CommunityDetailScreen } from './components/comunidade/CommunityDetailScreen';
 
 export default function App() {
   const isLoggedIn     = useAppStore((s) => s.isLoggedIn);
@@ -33,6 +36,9 @@ export default function App() {
   const [showSettings,      setShowSettings]      = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
   const [showChat,          setShowChat]          = useState(false);
+  const [showSearch,        setShowSearch]        = useState(false);
+  const [profileUserId,     setProfileUserId]     = useState<string | null>(null);
+  const [openCommunityId,   setOpenCommunityId]   = useState<string | null>(null);
 
   // Session restore: try refresh cookie on first load
   useEffect(() => {
@@ -82,6 +88,13 @@ export default function App() {
 
   const headerRightSlot = isHomeTab ? (
     <div className="flex items-center gap-2">
+      <button
+        onClick={() => setShowSearch(true)}
+        aria-label="Buscar"
+        className="relative w-9 h-9 rounded-xl bg-white/70 backdrop-blur-sm border border-white/50 flex items-center justify-center"
+      >
+        <Search size={18} className="text-graphite-light" strokeWidth={1.8} />
+      </button>
       <button
         onClick={() => setShowChat(true)}
         aria-label="Mensagens"
@@ -157,6 +170,35 @@ export default function App() {
       {showChat && (
         <div className="fixed inset-0 z-50 sm:bg-black/40 sm:flex sm:items-center sm:justify-center">
           <ChatListScreen onBack={() => setShowChat(false)} />
+        </div>
+      )}
+
+      {showSearch && (
+        <div className="fixed inset-0 z-50 sm:bg-black/40 sm:flex sm:items-center sm:justify-center">
+          <SearchScreen
+            onBack={() => setShowSearch(false)}
+            onOpenUser={(id) => { setShowSearch(false); setProfileUserId(id); }}
+            onOpenCommunity={(id) => { setShowSearch(false); setOpenCommunityId(id); }}
+          />
+        </div>
+      )}
+
+      {profileUserId && (
+        <div className="fixed inset-0 z-50 sm:bg-black/40 sm:flex sm:items-center sm:justify-center">
+          <UserProfileScreen
+            userId={profileUserId}
+            onBack={() => setProfileUserId(null)}
+            onOpenProfile={(id) => setProfileUserId(id)}
+          />
+        </div>
+      )}
+
+      {openCommunityId && (
+        <div className="fixed inset-0 z-50 sm:bg-black/40 sm:flex sm:items-center sm:justify-center">
+          <CommunityDetailScreen
+            communityId={openCommunityId}
+            onBack={() => setOpenCommunityId(null)}
+          />
         </div>
       )}
     </>
