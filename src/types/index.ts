@@ -51,6 +51,7 @@ export interface MotherProfile {
 
 export interface CommunityPost {
   id: string;
+  authorId?: string;
   category: 'gestação' | 'pós-parto' | 'amamentação' | 'saúde mental';
   author: string;
   badge?: 'experiente' | 'profissional';

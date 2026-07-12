@@ -23,9 +23,10 @@ interface ApiComment {
 interface PostDetailScreenProps {
   post: CommunityPost;
   onBack: () => void;
+  onOpenProfile?: (userId: string) => void;
 }
 
-export function PostDetailScreen({ post, onBack }: PostDetailScreenProps) {
+export function PostDetailScreen({ post, onBack, onOpenProfile }: PostDetailScreenProps) {
   const motherName = useAppStore((s) => s.motherName);
   const queryClient = useQueryClient();
 
@@ -123,7 +124,12 @@ export function PostDetailScreen({ post, onBack }: PostDetailScreenProps) {
           )}
 
           <div className="flex items-start justify-between gap-2 mb-3">
-            <div className="flex items-center gap-2.5">
+            <button
+              type="button"
+              onClick={() => post.authorId && onOpenProfile?.(post.authorId)}
+              aria-label={`Ver perfil de ${post.author}`}
+              className="flex items-center gap-2.5 text-left"
+            >
               <div className="w-10 h-10 rounded-full bg-sara-terracotta flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
                 {post.author.charAt(0)}
               </div>
@@ -135,7 +141,7 @@ export function PostDetailScreen({ post, onBack }: PostDetailScreenProps) {
                   </span>
                 )}
               </div>
-            </div>
+            </button>
             <span className="text-xs text-graphite-muted flex-shrink-0">{post.time}</span>
           </div>
 

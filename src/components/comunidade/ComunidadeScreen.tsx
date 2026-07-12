@@ -11,6 +11,7 @@ import { PostDetailScreen } from '../post/PostDetailScreen';
 import { ComunidadesScreen } from './ComunidadesScreen';
 import { ComposerBar } from './ComposerBar';
 import { SharePostSheet } from './SharePostSheet';
+import { UserProfileScreen } from '../profile/UserProfileScreen';
 import type { CommunityPost } from '../../types';
 
 type TopTab = 'para-voce' | 'comunidades';
@@ -26,11 +27,13 @@ const CATEGORY_LABELS: Category[] = ['todos', 'gestação', 'pós-parto', 'amame
 function PostCard({
   post,
   onOpen,
+  onOpenProfile,
   onRepost,
   onShare,
 }: {
   post: CommunityPost;
   onOpen: () => void;
+  onOpenProfile: () => void;
   onRepost: () => void;
   onShare: () => void;
 }) {
@@ -67,27 +70,32 @@ function PostCard({
       data-category={post.category}
       className="bg-white rounded-3xl p-4 shadow-sm flex flex-col gap-3"
     >
-      <button onClick={onOpen} aria-label={`Ver post de ${post.author}`} className="text-left flex flex-col gap-2">
-        <div className="flex items-start justify-between gap-2">
-          <div className="flex items-center gap-2.5">
-            <div
-              data-testid="post-avatar"
-              aria-hidden="true"
-              className="w-10 h-10 rounded-full bg-sara-terracotta flex items-center justify-center text-white text-sm font-bold flex-shrink-0"
-            >
-              {post.author.charAt(0)}
-            </div>
-            <div className="flex flex-col gap-0.5">
-              <p className="text-sm font-semibold text-graphite">{post.author}</p>
-              {badge && (
-                <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full w-fit ${badge.color}`}>
-                  {badge.label}
-                </span>
-              )}
-            </div>
+      <div className="flex items-start justify-between gap-2">
+        <button
+          type="button"
+          onClick={(e) => { e.stopPropagation(); onOpenProfile(); }}
+          aria-label={`Ver perfil de ${post.author}`}
+          className="flex items-center gap-2.5 text-left"
+        >
+          <div
+            data-testid="post-avatar"
+            aria-hidden="true"
+            className="w-10 h-10 rounded-full bg-sara-terracotta flex items-center justify-center text-white text-sm font-bold flex-shrink-0"
+          >
+            {post.author.charAt(0)}
           </div>
-          <span className="text-xs text-graphite-muted flex-shrink-0">{post.time}</span>
-        </div>
+          <div className="flex flex-col gap-0.5">
+            <p className="text-sm font-semibold text-graphite">{post.author}</p>
+            {badge && (
+              <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full w-fit ${badge.color}`}>
+                {badge.label}
+              </span>
+            )}
+          </div>
+        </button>
+        <span className="text-xs text-graphite-muted flex-shrink-0">{post.time}</span>
+      </div>
+      <button onClick={onOpen} aria-label={`Ver post de ${post.author}`} className="text-left flex flex-col gap-2">
         <p className="text-sm text-graphite-light leading-relaxed">{post.content}</p>
         {post.imageUrl && (
           <img
@@ -173,9 +181,20 @@ export function ComunidadeScreen() {
   const [showCreateWithImage, setShowCreateWithImage] = useState(false);
   const [selectedPost, setSelectedPost] = useState<CommunityPost | null>(null);
   const [sharingPost, setSharingPost] = useState<CommunityPost | null>(null);
+  const [profileUserId, setProfileUserId] = useState<string | null>(null);
+
+  if (profileUserId) {
+    return <UserProfileScreen userId={profileUserId} onBack={() => setProfileUserId(null)} />;
+  }
 
   if (selectedPost) {
-    return <PostDetailScreen post={selectedPost} onBack={() => setSelectedPost(null)} />;
+    return (
+      <PostDetailScreen
+        post={selectedPost}
+        onBack={() => setSelectedPost(null)}
+        onOpenProfile={(userId) => { setSelectedPost(null); setProfileUserId(userId); }}
+      />
+    );
   }
 
   if (isLoading && communityPosts.length === 0) {
@@ -258,6 +277,7 @@ export function ComunidadeScreen() {
                   key={post.id}
                   post={post}
                   onOpen={() => setSelectedPost(post)}
+                  onOpenProfile={() => post.authorId && setProfileUserId(post.authorId)}
                   onRepost={() => repostMutation.mutate(post.id)}
                   onShare={() => setSharingPost(post)}
                 />

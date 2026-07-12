@@ -20,6 +20,7 @@ export function buildPhase(user: Pick<ApiUser, 'pregnancyStage' | 'pregnancyWeek
 export function apiPostToCommunityPost(post: ApiPost): CommunityPost {
   return {
     id: post.id,
+    authorId: post.authorId,
     category: post.category,
     author: post.author.name,
     content: post.content,
