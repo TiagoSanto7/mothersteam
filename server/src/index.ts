@@ -3,6 +3,9 @@ import helmet from '@fastify/helmet'
 import cors from '@fastify/cors'
 import rateLimit from '@fastify/rate-limit'
 import cookie from '@fastify/cookie'
+import multipart from '@fastify/multipart'
+import staticPlugin from '@fastify/static'
+import { join } from 'path'
 import { prismaPlugin } from './plugins/prisma'
 import { authPlugin } from './plugins/auth'
 import authRoutes from './routes/auth'
@@ -14,6 +17,7 @@ import routineRoutes from './routes/routine'
 import babyRoutes from './routes/baby'
 import notificationsRoutes from './routes/notifications'
 import searchRoutes from './routes/search'
+import { uploadsRoutes } from './routes/uploads'
 
 const fastify = Fastify({ logger: true })
 
@@ -24,6 +28,11 @@ await fastify.register(cors, {
 })
 await fastify.register(rateLimit, { global: false })
 await fastify.register(cookie)
+await fastify.register(multipart)
+await fastify.register(staticPlugin, {
+  root: join(process.cwd(), 'uploads'),
+  prefix: '/uploads/',
+})
 await fastify.register(prismaPlugin)
 await fastify.register(authPlugin)
 
@@ -36,6 +45,7 @@ await fastify.register(routineRoutes, { prefix: '/routine' })
 await fastify.register(babyRoutes, { prefix: '/baby' })
 await fastify.register(notificationsRoutes, { prefix: '/notifications' })
 await fastify.register(searchRoutes, { prefix: '/search' })
+await fastify.register(uploadsRoutes)
 
 fastify.get('/health', async () => ({ status: 'ok' }))
 
