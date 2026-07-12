@@ -13,6 +13,7 @@ import chatsRoutes from './routes/chats'
 import routineRoutes from './routes/routine'
 import babyRoutes from './routes/baby'
 import notificationsRoutes from './routes/notifications'
+import searchRoutes from './routes/search'
 
 const fastify = Fastify({ logger: true })
 
@@ -34,6 +35,7 @@ await fastify.register(chatsRoutes, { prefix: '/chats' })
 await fastify.register(routineRoutes, { prefix: '/routine' })
 await fastify.register(babyRoutes, { prefix: '/baby' })
 await fastify.register(notificationsRoutes, { prefix: '/notifications' })
+await fastify.register(searchRoutes, { prefix: '/search' })
 
 fastify.get('/health', async () => ({ status: 'ok' }))
 
