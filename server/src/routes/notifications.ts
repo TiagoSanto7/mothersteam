@@ -27,10 +27,10 @@ export default async function notificationsRoutes(fastify: FastifyInstance) {
     if (!notification) return reply.status(404).send({ error: 'Not found' })
     if (notification.recipientId !== request.userId) return reply.status(403).send({ error: 'Forbidden' })
 
-    const updated = await fastify.prisma.notification.update({
+    await fastify.prisma.notification.update({
       where: { id: request.params.id },
       data: { read: true },
     })
-    return reply.send(updated)
+    return reply.send({ ok: true })
   })
 }

@@ -18,7 +18,9 @@ mkdirSync(UPLOADS_DIR, { recursive: true })
 export async function uploadsRoutes(fastify: FastifyInstance) {
   fastify.addHook('preHandler', fastify.authenticate)
 
-  fastify.post('/uploads', async (request, reply) => {
+  fastify.post('/uploads', {
+    config: { rateLimit: { max: 20, timeWindow: '1 minute' } },
+  }, async (request, reply) => {
     const data = await request.file()
     if (!data) return reply.status(400).send({ error: 'No file uploaded' })
 
