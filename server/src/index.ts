@@ -18,6 +18,7 @@ import babyRoutes from './routes/baby'
 import notificationsRoutes from './routes/notifications'
 import searchRoutes from './routes/search'
 import { uploadsRoutes } from './routes/uploads'
+import sseRoutes from './routes/sse'
 
 const fastify = Fastify({ logger: true })
 
@@ -46,6 +47,7 @@ await fastify.register(babyRoutes, { prefix: '/baby' })
 await fastify.register(notificationsRoutes, { prefix: '/notifications' })
 await fastify.register(searchRoutes, { prefix: '/search' })
 await fastify.register(uploadsRoutes)
+await fastify.register(sseRoutes)
 
 fastify.get('/health', async () => ({ status: 'ok' }))
 

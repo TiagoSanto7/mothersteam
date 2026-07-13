@@ -62,7 +62,12 @@ export function SharePostSheet({ post, onClose }: SharePostSheetProps) {
       }
       return apiFetch(`/chats/${resolvedChatId}/messages`, {
         method: 'POST',
-        body: JSON.stringify({ content: shareComment.trim() || '📩', sharedPostId: post.id }),
+        body: JSON.stringify({
+          content: shareComment.trim() || '',
+          sharedPostId: post.id,
+          sharedPostAuthor: post.author,
+          sharedPostExcerpt: post.content.slice(0, 150),
+        }),
       });
     },
   });

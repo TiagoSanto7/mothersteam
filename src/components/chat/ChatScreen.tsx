@@ -14,7 +14,6 @@ interface ChatScreenProps {
 }
 
 export function ChatScreen({ chat, onBack }: ChatScreenProps) {
-  const motherName    = useAppStore((s) => s.motherName);
   const currentUserId = useAppStore((s) => s.currentUserId);
   const isLoggedIn    = useAppStore((s) => s.isLoggedIn);
   const queryClient   = useQueryClient();
@@ -48,6 +47,14 @@ export function ChatScreen({ chat, onBack }: ChatScreenProps) {
       queryClient.invalidateQueries({ queryKey: ['chats'] });
     },
   });
+
+  // Mark messages as read when the chat is opened
+  useEffect(() => {
+    apiFetch(`/chats/${chat.id}/read`, { method: 'POST' }).then(() => {
+      queryClient.invalidateQueries({ queryKey: ['chats'] });
+    }).catch(() => {/* ignore */});
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [chat.id]);
 
   useEffect(() => {
     if (typeof bottomRef.current?.scrollIntoView === 'function') {

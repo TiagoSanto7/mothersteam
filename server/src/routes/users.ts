@@ -1,8 +1,10 @@
 import type { FastifyInstance } from 'fastify'
 import { z } from 'zod'
+import { emitNotification } from '../sse'
 
 const updateMeSchema = z.object({
   name: z.string().min(1).max(80).optional(),
+  username: z.string().min(3).max(30).regex(/^[a-z0-9_]+$/).optional().nullable(),
   babyName: z.string().max(80).optional().nullable(),
   bio: z.string().max(280).optional().nullable(),
   pregnancyStage: z.enum(['pregnant', 'postpartum']).optional(),
@@ -19,6 +21,7 @@ export default async function usersRoutes(fastify: FastifyInstance) {
       select: {
         id: true,
         name: true,
+        username: true,
         bio: true,
         pregnancyStage: true,
         pregnancyWeek: true,
@@ -46,11 +49,19 @@ export default async function usersRoutes(fastify: FastifyInstance) {
     const body = updateMeSchema.safeParse(request.body)
     if (!body.success) return reply.status(400).send({ error: body.error.flatten() })
 
+    if (body.data.username !== undefined && body.data.username !== null) {
+      const taken = await fastify.prisma.user.findFirst({
+        where: { username: body.data.username, id: { not: request.userId } },
+        select: { id: true },
+      })
+      if (taken) return reply.status(409).send({ error: 'Username already taken' })
+    }
+
     const user = await fastify.prisma.user.update({
       where: { id: request.userId },
       data: body.data,
       select: {
-        id: true, name: true, babyName: true, bio: true,
+        id: true, name: true, username: true, babyName: true, bio: true,
         pregnancyStage: true, pregnancyWeek: true, babyAgeInDays: true,
       },
     })
@@ -66,10 +77,10 @@ export default async function usersRoutes(fastify: FastifyInstance) {
         take: limit + 1,
         ...(request.query.cursor ? { cursor: { id: request.query.cursor }, skip: 1 } : {}),
         include: {
-          author: { select: { id: true, name: true } },
+          author: { select: { id: true, name: true, username: true } },
           _count: { select: { likes: true, comments: true, reposts: true } },
           likes: { where: { userId: request.userId }, select: { userId: true } },
-          repostFrom: { include: { author: { select: { id: true, name: true } } } },
+          repostFrom: { include: { author: { select: { id: true, name: true, username: true } } } },
         },
         orderBy: { createdAt: 'desc' },
       })
@@ -78,7 +89,8 @@ export default async function usersRoutes(fastify: FastifyInstance) {
         ...post,
         likedByCurrentUser: likes.length > 0,
       }))
-      reply.send({ items, hasMore })
+      const nextCursor = items.length > 0 ? items[items.length - 1].id : undefined
+      reply.send({ items, hasMore, nextCursor })
     }
   )
 
@@ -92,17 +104,24 @@ export default async function usersRoutes(fastify: FastifyInstance) {
       create: { followerId: request.userId, followingId: request.params.id },
     })
 
-    if (request.params.id !== request.userId) {
-      await fastify.prisma.notification.create({
-        data: {
-          type: 'follow',
-          text: 'Alguém começou a te seguir.',
-          recipientId: request.params.id,
-          targetType: 'user',
-          targetId: request.params.id,
-        },
-      })
-    }
+    const actor = await fastify.prisma.user.findUnique({
+      where: { id: request.userId },
+      select: { name: true },
+    })
+    const actorName = actor?.name ?? 'Alguém'
+
+    await fastify.prisma.notification.create({
+      data: {
+        type: 'follow',
+        text: `${actorName} começou a te seguir.`,
+        recipientId: request.params.id,
+        targetType: 'user',
+        targetId: request.userId,
+        actorId: request.userId,
+        actorName,
+      },
+    })
+    emitNotification(request.params.id)
 
     reply.status(201).send({ ok: true })
   })
@@ -122,7 +141,7 @@ export default async function usersRoutes(fastify: FastifyInstance) {
         where: { followingId: request.params.id },
         take: limit + 1,
         ...(request.query.cursor ? { cursor: { followerId_followingId: { followerId: request.query.cursor, followingId: request.params.id } }, skip: 1 } : {}),
-        include: { follower: { select: { id: true, name: true } } },
+        include: { follower: { select: { id: true, name: true, username: true } } },
         orderBy: { createdAt: 'desc' },
       })
       const hasMore = follows.length > limit
@@ -153,7 +172,7 @@ export default async function usersRoutes(fastify: FastifyInstance) {
         where: { followerId: request.params.id },
         take: limit + 1,
         ...(request.query.cursor ? { cursor: { followerId_followingId: { followerId: request.params.id, followingId: request.query.cursor } }, skip: 1 } : {}),
-        include: { following: { select: { id: true, name: true } } },
+        include: { following: { select: { id: true, name: true, username: true } } },
         orderBy: { createdAt: 'desc' },
       })
       const hasMore = follows.length > limit
@@ -189,6 +208,8 @@ export default async function usersRoutes(fastify: FastifyInstance) {
       select: {
         id: true,
         name: true,
+        username: true,
+        bio: true,
         _count: { select: { followers: true } },
       },
       orderBy: { followers: { _count: 'desc' } },
@@ -198,6 +219,8 @@ export default async function usersRoutes(fastify: FastifyInstance) {
     const items = users.map((u) => ({
       id: u.id,
       name: u.name,
+      username: u.username,
+      bio: u.bio,
       isFollowedByCurrentUser: false,
       isSelf: false,
     }))

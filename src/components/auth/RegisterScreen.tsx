@@ -1,5 +1,5 @@
-import { useState, type FormEvent } from 'react';
-import { Eye, EyeOff, ChevronLeft } from 'lucide-react';
+import { useState, useEffect, type FormEvent } from 'react';
+import { Eye, EyeOff, ChevronLeft, Check, X } from 'lucide-react';
 import { useMutation } from '@tanstack/react-query';
 import { apiFetch, ApiError } from '../../lib/api';
 import { useAppStore } from '../../store/useAppStore';
@@ -9,11 +9,15 @@ interface RegisterScreenProps {
   onBack: () => void;
 }
 
+type UsernameStatus = 'idle' | 'checking' | 'available' | 'taken' | 'invalid';
+
 export function RegisterScreen({ onBack }: RegisterScreenProps) {
   const setAuth = useAppStore((s) => s.setAuth);
   const [step, setStep] = useState<1 | 2>(1);
 
   const [name, setName] = useState('');
+  const [username, setUsername] = useState('');
+  const [usernameStatus, setUsernameStatus] = useState<UsernameStatus>('idle');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -23,7 +27,31 @@ export function RegisterScreen({ onBack }: RegisterScreenProps) {
   const [babyAgeInDays, setBabyAgeInDays] = useState('');
   const [babyName, setBabyName] = useState('');
 
-  const step1Valid = name.trim().length > 0 && email.includes('@') && password.length >= 8;
+  // Debounced username availability check
+  useEffect(() => {
+    const cleaned = username.toLowerCase().replace(/\s/g, '');
+    if (!cleaned) { setUsernameStatus('idle'); return; }
+    if (!/^[a-z0-9_]{3,30}$/.test(cleaned)) { setUsernameStatus('invalid'); return; }
+
+    setUsernameStatus('checking');
+    const timer = setTimeout(async () => {
+      try {
+        const { available } = await apiFetch<{ available: boolean }>(`/auth/check-username?username=${cleaned}`);
+        setUsernameStatus(available ? 'available' : 'taken');
+      } catch {
+        setUsernameStatus('idle');
+      }
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [username]);
+
+  const usernameOk = usernameStatus === 'available' || (username === '' && usernameStatus === 'idle');
+  const step1Valid =
+    name.trim().length > 0 &&
+    email.includes('@') &&
+    password.length >= 8 &&
+    usernameOk;
+
   const step2Valid =
     pregnancyStage === 'pregnant'
       ? pregnancyWeek !== '' && Number(pregnancyWeek) >= 1 && Number(pregnancyWeek) <= 42
@@ -35,6 +63,7 @@ export function RegisterScreen({ onBack }: RegisterScreenProps) {
         method: 'POST',
         body: JSON.stringify({
           name: name.trim(),
+          username: username.trim() || undefined,
           email: email.trim(),
           password,
           pregnancyStage,
@@ -60,6 +89,20 @@ export function RegisterScreen({ onBack }: RegisterScreenProps) {
     if (!step2Valid) return;
     mutate();
   }
+
+  function getUsernameHelp() {
+    if (usernameStatus === 'checking') return { text: 'Verificando…', color: 'text-graphite-muted' };
+    if (usernameStatus === 'available') return { text: '@' + username + ' disponível', color: 'text-green-600' };
+    if (usernameStatus === 'taken') return { text: 'Este @ já está em uso', color: 'text-sara-terracotta' };
+    if (usernameStatus === 'invalid') return { text: 'Use letras minúsculas, números e _  (mín. 3)', color: 'text-sara-terracotta' };
+    return null;
+  }
+
+  const usernameHelp = getUsernameHelp();
+  const usernameIcon =
+    usernameStatus === 'available' ? <Check size={14} className="text-green-600" /> :
+    usernameStatus === 'taken' || usernameStatus === 'invalid' ? <X size={14} className="text-sara-terracotta" /> :
+    null;
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-sara-cream sm:bg-[#EDE6DC]">
@@ -96,6 +139,31 @@ export function RegisterScreen({ onBack }: RegisterScreenProps) {
                 placeholder="Seu nome"
                 className="w-full px-4 py-3 rounded-2xl bg-white border border-sara-linen text-sm text-graphite placeholder:text-sara-muted focus:outline-none focus:border-sara-gold"
               />
+            </div>
+
+            <div className="flex flex-col gap-1">
+              <label className="text-xs font-medium text-graphite-muted" htmlFor="reg-username">
+                Apelido (@)
+                <span className="font-normal text-graphite-muted/60 ml-1">(opcional)</span>
+              </label>
+              <div className="relative">
+                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-sm text-graphite-muted pointer-events-none">@</span>
+                <input
+                  id="reg-username"
+                  type="text"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, ''))}
+                  placeholder="seunome"
+                  maxLength={30}
+                  className="w-full pl-8 pr-10 py-3 rounded-2xl bg-white border border-sara-linen text-sm text-graphite placeholder:text-sara-muted focus:outline-none focus:border-sara-gold"
+                />
+                {usernameIcon && (
+                  <span className="absolute right-3 top-1/2 -translate-y-1/2">{usernameIcon}</span>
+                )}
+              </div>
+              {usernameHelp && (
+                <p className={`text-[11px] ${usernameHelp.color} px-1`}>{usernameHelp.text}</p>
+              )}
             </div>
 
             <div className="flex flex-col gap-1">

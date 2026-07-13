@@ -10,6 +10,7 @@ datasource db {
 model User {
   id                String    @id @default(cuid())
   email             String    @unique
+  username          String?   @unique
   passwordHash      String
   name              String
   babyName          String?
@@ -173,5 +174,8 @@ model Notification {
   recipient   User     @relation(fields: [recipientId], references: [id], onDelete: Cascade)
   targetType  String?
   targetId    String?
+  actorId     String?
+  actorName   String?
+  postExcerpt String?  @db.VarChar(300)
   createdAt   DateTime @default(now())
 }

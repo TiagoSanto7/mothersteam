@@ -1,11 +1,12 @@
 import type { FastifyInstance } from 'fastify'
 import { z } from 'zod'
+import { emitNotification } from '../sse'
 
 const createSchema = z.object({
   content: z.string().min(1),
   category: z.enum(['gestação', 'pós-parto', 'amamentação', 'saúde mental']),
   communityId: z.string().optional(),
-  imageUrl: z.string().url().optional(),
+  imageUrl: z.string().optional(),
 })
 
 const commentSchema = z.object({
@@ -23,10 +24,10 @@ export default async function postsRoutes(fastify: FastifyInstance) {
         take: limit + 1,
         ...(request.query.cursor ? { cursor: { id: request.query.cursor }, skip: 1 } : {}),
         include: {
-          author: { select: { id: true, name: true } },
+          author: { select: { id: true, name: true, username: true } },
           _count: { select: { likes: true, comments: true, reposts: true } },
           likes: { where: { userId: request.userId }, select: { userId: true } },
-          repostFrom: { include: { author: { select: { id: true, name: true } } } },
+          repostFrom: { include: { author: { select: { id: true, name: true, username: true } } } },
         },
         orderBy: { createdAt: 'desc' },
       })
@@ -35,7 +36,8 @@ export default async function postsRoutes(fastify: FastifyInstance) {
         ...post,
         likedByCurrentUser: likes.length > 0,
       }))
-      reply.send({ items, hasMore })
+      const nextCursor = items.length > 0 ? items[items.length - 1].id : undefined
+      reply.send({ items, hasMore, nextCursor })
     }
   )
 
@@ -46,7 +48,7 @@ export default async function postsRoutes(fastify: FastifyInstance) {
     const post = await fastify.prisma.post.create({
       data: { ...body.data, authorId: request.userId },
       include: {
-        author: { select: { id: true, name: true } },
+        author: { select: { id: true, name: true, username: true } },
         _count: { select: { likes: true, comments: true } },
       },
     })
@@ -57,10 +59,10 @@ export default async function postsRoutes(fastify: FastifyInstance) {
     const post = await fastify.prisma.post.findUnique({
       where: { id: request.params.id },
       include: {
-        author: { select: { id: true, name: true } },
+        author: { select: { id: true, name: true, username: true } },
         _count: { select: { likes: true, comments: true, reposts: true } },
         likes: { where: { userId: request.userId }, select: { userId: true } },
-        repostFrom: { include: { author: { select: { id: true, name: true } } } },
+        repostFrom: { include: { author: { select: { id: true, name: true, username: true } } } },
       },
     })
     if (!post) return reply.status(404).send({ error: 'Post not found' })
@@ -84,20 +86,32 @@ export default async function postsRoutes(fastify: FastifyInstance) {
       create: { userId: request.userId, postId: request.params.id },
     })
 
-    const post = await fastify.prisma.post.findUnique({
-      where: { id: request.params.id },
-      select: { authorId: true },
-    })
+    const [post, actor] = await Promise.all([
+      fastify.prisma.post.findUnique({
+        where: { id: request.params.id },
+        select: { authorId: true, content: true },
+      }),
+      fastify.prisma.user.findUnique({
+        where: { id: request.userId },
+        select: { name: true },
+      }),
+    ])
+
     if (post && post.authorId !== request.userId) {
+      const actorName = actor?.name ?? 'Alguém'
       await fastify.prisma.notification.create({
         data: {
           type: 'like',
-          text: 'Alguém curtiu sua publicação.',
+          text: `${actorName} curtiu sua publicação.`,
           recipientId: post.authorId,
           targetType: 'post',
           targetId: request.params.id,
+          actorId: request.userId,
+          actorName,
+          postExcerpt: post.content.slice(0, 200),
         },
       })
+      emitNotification(post.authorId)
     }
 
     reply.status(201).send({ ok: true })
@@ -152,20 +166,32 @@ export default async function postsRoutes(fastify: FastifyInstance) {
       include: { author: { select: { id: true, name: true } } },
     })
 
-    const post = await fastify.prisma.post.findUnique({
-      where: { id: request.params.id },
-      select: { authorId: true },
-    })
+    const [post, actor] = await Promise.all([
+      fastify.prisma.post.findUnique({
+        where: { id: request.params.id },
+        select: { authorId: true, content: true },
+      }),
+      fastify.prisma.user.findUnique({
+        where: { id: request.userId },
+        select: { name: true },
+      }),
+    ])
+
     if (post && post.authorId !== request.userId) {
+      const actorName = actor?.name ?? 'Alguém'
       await fastify.prisma.notification.create({
         data: {
           type: 'comment',
-          text: 'Alguém comentou na sua publicação.',
+          text: `${actorName} comentou na sua publicação.`,
           recipientId: post.authorId,
           targetType: 'post',
           targetId: request.params.id,
+          actorId: request.userId,
+          actorName,
+          postExcerpt: post.content.slice(0, 200),
         },
       })
+      emitNotification(post.authorId)
     }
 
     reply.status(201).send(comment)

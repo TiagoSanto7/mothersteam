@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { Users } from 'lucide-react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useAppStore } from '../../store/useAppStore'
 import { apiFetch } from '../../lib/api'
@@ -80,9 +81,15 @@ export function SocialOnboardingScreen({ onDone }: SocialOnboardingScreenProps) 
                       {community.name.charAt(0).toUpperCase()}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-semibold text-graphite truncate">{community.name}</p>
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        <p className="text-sm font-semibold text-graphite truncate">{community.name}</p>
+                        <span className="flex items-center gap-0.5 text-[10px] font-medium text-sara-warm bg-sara-cream px-1.5 py-0.5 rounded-full flex-shrink-0">
+                          <Users size={9} />
+                          Comunidade
+                        </span>
+                      </div>
                       {community.description && (
-                        <p className="text-xs text-graphite-muted truncate">{community.description}</p>
+                        <p className="text-xs text-graphite-muted truncate mt-0.5">{community.description}</p>
                       )}
                     </div>
                     <button
@@ -91,7 +98,7 @@ export function SocialOnboardingScreen({ onDone }: SocialOnboardingScreenProps) 
                       aria-label={
                         joined ? `Membro de ${community.name}` : `Entrar em ${community.name}`
                       }
-                      className={`text-xs font-semibold px-3 py-1.5 rounded-xl transition-colors ${
+                      className={`text-xs font-semibold px-3 py-1.5 rounded-xl transition-colors flex-shrink-0 ${
                         joined
                           ? 'bg-sara-linen text-graphite-muted'
                           : 'bg-sara-gold text-white active:scale-95'
@@ -122,12 +129,22 @@ export function SocialOnboardingScreen({ onDone }: SocialOnboardingScreenProps) 
                     <div className="w-10 h-10 rounded-full bg-sara-gold flex items-center justify-center text-white font-bold flex-shrink-0">
                       {user.name.charAt(0).toUpperCase()}
                     </div>
-                    <p className="flex-1 text-sm font-semibold text-graphite truncate">{user.name}</p>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-baseline gap-1.5">
+                        <p className="text-sm font-semibold text-graphite truncate">{user.name}</p>
+                        {user.username && (
+                          <span className="text-xs text-graphite-muted/70 flex-shrink-0">@{user.username}</span>
+                        )}
+                      </div>
+                      {user.bio && (
+                        <p className="text-xs text-graphite-muted truncate mt-0.5">{user.bio}</p>
+                      )}
+                    </div>
                     <button
                       onClick={() => !followed && followMutation.mutate(user.id)}
                       disabled={followed}
                       aria-label={followed ? `Seguindo ${user.name}` : `Seguir ${user.name}`}
-                      className={`text-xs font-semibold px-3 py-1.5 rounded-xl transition-colors ${
+                      className={`text-xs font-semibold px-3 py-1.5 rounded-xl transition-colors flex-shrink-0 ${
                         followed
                           ? 'bg-sara-linen text-graphite-muted'
                           : 'bg-sara-gold text-white active:scale-95'

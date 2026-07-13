@@ -16,6 +16,7 @@ const registerSchema = z.object({
   email: z.string().email(),
   password: z.string().min(8),
   name: z.string().min(1),
+  username: z.string().min(3).max(30).regex(/^[a-z0-9_]+$/).optional(),
   pregnancyStage: z.enum(['pregnant', 'postpartum']),
   pregnancyWeek: z.number().int().min(1).max(42).optional(),
   babyAgeInDays: z.number().int().min(0).optional(),
@@ -27,7 +28,25 @@ const loginSchema = z.object({
   password: z.string(),
 })
 
+const USER_SELECT = {
+  id: true, email: true, name: true, username: true, babyName: true,
+  pregnancyStage: true, pregnancyWeek: true, babyAgeInDays: true,
+  onboardingDone: true, profileKey: true, archetypeKey: true,
+} as const
+
 export default async function authRoutes(fastify: FastifyInstance) {
+  fastify.get<{ Querystring: { username: string } }>('/check-username', async (request, reply) => {
+    const { username } = request.query
+    if (!username || !/^[a-z0-9_]{3,30}$/.test(username)) {
+      return reply.status(400).send({ available: false, error: 'Invalid username format' })
+    }
+    const existing = await fastify.prisma.user.findUnique({
+      where: { username },
+      select: { id: true },
+    })
+    reply.send({ available: !existing })
+  })
+
   fastify.post('/register', async (request, reply) => {
     const body = registerSchema.safeParse(request.body)
     if (!body.success) return reply.status(400).send({ error: body.error.flatten() })
@@ -35,22 +54,27 @@ export default async function authRoutes(fastify: FastifyInstance) {
     const existing = await fastify.prisma.user.findUnique({ where: { email: body.data.email } })
     if (existing) return reply.status(409).send({ error: 'Email already registered' })
 
+    if (body.data.username) {
+      const usernameTaken = await fastify.prisma.user.findUnique({
+        where: { username: body.data.username },
+        select: { id: true },
+      })
+      if (usernameTaken) return reply.status(409).send({ error: 'Username already taken' })
+    }
+
     const passwordHash = await bcrypt.hash(body.data.password, 12)
     const user = await fastify.prisma.user.create({
       data: {
         email: body.data.email,
         passwordHash,
         name: body.data.name,
+        username: body.data.username,
         pregnancyStage: body.data.pregnancyStage,
         pregnancyWeek: body.data.pregnancyWeek,
         babyAgeInDays: body.data.babyAgeInDays,
         babyName: body.data.babyName,
       },
-      select: {
-        id: true, email: true, name: true, babyName: true,
-        pregnancyStage: true, pregnancyWeek: true, babyAgeInDays: true,
-        onboardingDone: true, profileKey: true, archetypeKey: true,
-      },
+      select: USER_SELECT,
     })
 
     const accessToken = signAccessToken(user.id)
@@ -68,11 +92,7 @@ export default async function authRoutes(fastify: FastifyInstance) {
 
     const user = await fastify.prisma.user.findUnique({
       where: { email: body.data.email },
-      select: {
-        id: true, email: true, name: true, passwordHash: true, babyName: true,
-        pregnancyStage: true, pregnancyWeek: true, babyAgeInDays: true,
-        onboardingDone: true, profileKey: true, archetypeKey: true,
-      },
+      select: { ...USER_SELECT, passwordHash: true },
     })
     if (!user) return reply.status(401).send({ error: 'Invalid credentials' })
 
@@ -112,11 +132,7 @@ export default async function authRoutes(fastify: FastifyInstance) {
   fastify.get('/me', { preHandler: [fastify.authenticate] }, async (request, reply) => {
     const user = await fastify.prisma.user.findUnique({
       where: { id: request.userId },
-      select: {
-        id: true, email: true, name: true, babyName: true,
-        pregnancyStage: true, pregnancyWeek: true, babyAgeInDays: true,
-        onboardingDone: true, profileKey: true, archetypeKey: true,
-      },
+      select: USER_SELECT,
     })
     if (!user) return reply.status(404).send({ error: 'User not found' })
     reply.send(user)

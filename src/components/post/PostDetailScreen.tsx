@@ -3,10 +3,10 @@ import { ChevronLeft, Heart, MessageCircle, Share2, Repeat2, Send } from 'lucide
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAppStore } from '../../store/useAppStore';
 import { apiFetch } from '../../lib/api';
-import { patchPostLikeInAllCaches } from '../../lib/helpers';
+import { patchPostLikeInAllCaches, apiPostToCommunityPost } from '../../lib/helpers';
 import { SharePostSheet } from '../comunidade/SharePostSheet';
 import type { CommunityPost, PostComment } from '../../types';
-import type { PaginatedResult } from '../../lib/types';
+import type { ApiPost, PaginatedResult } from '../../lib/types';
 
 const BADGE_CONFIG = {
   experiente:   { label: 'Mãe Experiente',       color: 'bg-sara-linen text-sara-terracotta' },
@@ -35,11 +35,18 @@ export function PostDetailScreen({ post, onBack, onOpenProfile }: PostDetailScre
   const [reposted, setReposted] = useState(false);
   const [commentText, setCommentText] = useState('');
   const [showShareSheet, setShowShareSheet] = useState(false);
+  const [viewingOriginalId, setViewingOriginalId] = useState<string | null>(null);
 
   const { data: commentsData } = useQuery<PaginatedResult<ApiComment>>({
     queryKey: ['comments', post.id],
     queryFn: () => apiFetch<PaginatedResult<ApiComment>>(`/posts/${post.id}/comments`),
     initialData: { items: [], hasMore: false },
+  });
+
+  const { data: originalApiPost } = useQuery({
+    queryKey: ['posts', viewingOriginalId],
+    queryFn: () => apiFetch<ApiPost>(`/posts/${viewingOriginalId}`),
+    enabled: !!viewingOriginalId,
   });
 
   const comments: PostComment[] = (commentsData?.items ?? []).map((c) => ({
@@ -70,6 +77,17 @@ export function PostDetailScreen({ post, onBack, onOpenProfile }: PostDetailScre
   });
 
   const badge = post.badge ? BADGE_CONFIG[post.badge] : null;
+
+  // When the original post loads, render PostDetailScreen for it
+  if (viewingOriginalId && originalApiPost) {
+    return (
+      <PostDetailScreen
+        post={apiPostToCommunityPost(originalApiPost)}
+        onBack={() => setViewingOriginalId(null)}
+        onOpenProfile={onOpenProfile}
+      />
+    );
+  }
 
   function handleLike() {
     const next = !liked;
@@ -106,7 +124,7 @@ export function PostDetailScreen({ post, onBack, onOpenProfile }: PostDetailScre
           {post.isRepost && (
             <div className="flex items-center gap-1.5 mb-2">
               <Repeat2 size={12} className="text-graphite-muted" />
-              <span className="text-[11px] text-graphite-muted">Republicado de {post.repostFrom}</span>
+              <span className="text-[11px] text-graphite-muted">Republicado</span>
             </div>
           )}
 
@@ -121,7 +139,12 @@ export function PostDetailScreen({ post, onBack, onOpenProfile }: PostDetailScre
                 {post.author.charAt(0)}
               </div>
               <div>
-                <p className="text-sm font-semibold text-graphite">{post.author}</p>
+                <div className="flex items-baseline gap-1.5">
+                  <p className="text-sm font-semibold text-graphite">{post.author}</p>
+                  {post.authorUsername && (
+                    <span className="text-xs text-graphite-muted/70">@{post.authorUsername}</span>
+                  )}
+                </div>
                 {badge && (
                   <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full ${badge.color}`}>
                     {badge.label}
@@ -132,11 +155,24 @@ export function PostDetailScreen({ post, onBack, onOpenProfile }: PostDetailScre
             <span className="text-xs text-graphite-muted flex-shrink-0">{post.time}</span>
           </div>
 
+          {/* Repost original — clickable to navigate to the original post */}
           {post.isRepost && post.repostOriginal ? (
-            <div className="border border-sara-linen rounded-2xl p-3 mb-4 bg-white/60">
-              <p className="text-[11px] font-semibold text-graphite mb-1">{post.repostOriginal.author}</p>
+            <button
+              type="button"
+              onClick={() => post.repostOriginal?.originalPostId && setViewingOriginalId(post.repostOriginal.originalPostId)}
+              className="w-full text-left border border-sara-linen rounded-2xl p-3 mb-4 bg-white/60 active:bg-sara-linen/50 transition-colors"
+            >
+              <div className="flex items-baseline gap-1.5 mb-1">
+                <p className="text-[11px] font-semibold text-graphite">{post.repostOriginal.author}</p>
+                {post.repostOriginal.authorUsername && (
+                  <span className="text-[10px] text-graphite-muted/70">@{post.repostOriginal.authorUsername}</span>
+                )}
+              </div>
               <p className="text-sm text-graphite leading-relaxed">{post.repostOriginal.content}</p>
-            </div>
+              {post.repostOriginal.originalPostId && (
+                <p className="text-[10px] text-sara-gold mt-1.5">Toque para ver a publicação original →</p>
+              )}
+            </button>
           ) : (
             <p className="text-sm text-graphite leading-relaxed mb-4">{post.content}</p>
           )}

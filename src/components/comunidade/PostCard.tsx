@@ -59,7 +59,12 @@ export function PostCard({ post, onOpen, onOpenProfile }: PostCardProps) {
               {post.author.charAt(0)}
             </div>
             <div className="flex flex-col gap-0.5">
-              <p className="text-sm font-semibold text-graphite">{post.author}</p>
+              <div className="flex items-baseline gap-1.5">
+                <p className="text-sm font-semibold text-graphite">{post.author}</p>
+                {post.authorUsername && (
+                  <span className="text-xs text-graphite-muted/70">@{post.authorUsername}</span>
+                )}
+              </div>
               {badge && (
                 <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full w-fit ${badge.color}`}>
                   {badge.label}

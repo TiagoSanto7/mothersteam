@@ -23,7 +23,8 @@ import { SearchScreen } from './components/search/SearchScreen';
 import { UserProfileScreen } from './components/profile/UserProfileScreen';
 import { CommunityDetailScreen } from './components/comunidade/CommunityDetailScreen';
 import { PostDetailScreen } from './components/post/PostDetailScreen';
-import { SocialOnboardingScreen } from './components/onboarding/SocialOnboardingScreen';
+import { SocialOnboardingScreen } from './components/onboarding/SocialOnboardingScreen'
+import { useSSE } from './lib/useSSE';
 
 export default function App() {
   const isLoggedIn           = useAppStore((s) => s.isLoggedIn);
@@ -33,6 +34,8 @@ export default function App() {
   const currentUserId  = useAppStore((s) => s.currentUserId);
   const setAccessToken = useAppStore((s) => s.setAccessToken);
   const setAuth        = useAppStore((s) => s.setAuth);
+
+  useSSE();
 
   const [restoring,         setRestoring]         = useState(true);
   const [drawerOpen,        setDrawerOpen]        = useState(false);
@@ -178,9 +181,9 @@ export default function App() {
         <div className="fixed inset-0 z-50 sm:bg-black/40 sm:flex sm:items-center sm:justify-center">
           <NotificationsScreen
             onBack={() => setShowNotifications(false)}
-            onOpenPost={(postId) => setPendingPostId(postId)}
-            onOpenUser={() => {}}
-            onOpenCommunity={() => {}}
+            onOpenPost={(postId) => { setShowNotifications(false); setPendingPostId(postId); }}
+            onOpenUser={(userId) => { setShowNotifications(false); setProfileUserId(userId); }}
+            onOpenCommunity={(communityId) => { setShowNotifications(false); setOpenCommunityId(communityId); }}
           />
         </div>
       )}

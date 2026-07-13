@@ -1,5 +1,6 @@
 import type { FastifyInstance } from 'fastify'
 import { z } from 'zod'
+import { emitMessage } from '../sse'
 
 const sendMessageSchema = z.object({
   content: z.string(),
@@ -87,6 +88,32 @@ export default async function chatsRoutes(fastify: FastifyInstance) {
       },
       include: { sender: { select: { id: true, name: true } } },
     })
+
+    // Notify all OTHER participants via SSE
+    const chat = await fastify.prisma.chat.findUnique({
+      where: { id: request.params.id },
+      select: { participants: { select: { userId: true } } },
+    })
+    if (chat) {
+      for (const p of chat.participants) {
+        if (p.userId !== request.userId) {
+          emitMessage(p.userId, request.params.id)
+        }
+      }
+    }
+
     reply.status(201).send(message)
+  })
+
+  fastify.post<{ Params: { id: string } }>('/:id/read', async (request, reply) => {
+    await fastify.prisma.message.updateMany({
+      where: {
+        chatId: request.params.id,
+        senderId: { not: request.userId },
+        read: false,
+      },
+      data: { read: true },
+    })
+    reply.send({ ok: true })
   })
 }

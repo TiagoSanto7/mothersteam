@@ -1,4 +1,4 @@
-import { ChevronLeft, Heart, UserPlus, MessageCircle } from 'lucide-react';
+import { ChevronLeft, Heart, UserPlus, MessageCircle, UserCheck } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiFetch } from '../../lib/api';
 import { useAppStore } from '../../store/useAppStore';
@@ -19,8 +19,9 @@ const ICON: Record<ApiNotification['type'], React.ReactElement> = {
 };
 
 export function NotificationsScreen({ onBack, onOpenPost, onOpenUser, onOpenCommunity }: NotificationsScreenProps) {
-  const isLoggedIn = useAppStore((s) => s.isLoggedIn);
-  const queryClient = useQueryClient();
+  const isLoggedIn    = useAppStore((s) => s.isLoggedIn);
+  const currentUserId = useAppStore((s) => s.currentUserId);
+  const queryClient   = useQueryClient();
 
   const { data: notifications = [] } = useQuery({
     queryKey: ['notifications'],
@@ -39,6 +40,12 @@ export function NotificationsScreen({ onBack, onOpenPost, onOpenUser, onOpenComm
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['notifications'] }),
   });
 
+  const followMutation = useMutation({
+    mutationFn: (userId: string) =>
+      apiFetch(`/users/${userId}/follow`, { method: 'POST' }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['notifications'] }),
+  });
+
   const unreadCount = notifications.filter((n) => !n.read).length;
 
   function handleNotificationClick(n: ApiNotification) {
@@ -50,6 +57,11 @@ export function NotificationsScreen({ onBack, onOpenPost, onOpenUser, onOpenComm
     } else if (n.targetType === 'community' && n.targetId) {
       onOpenCommunity?.(n.targetId);
     }
+  }
+
+  function handleActorClick(e: React.MouseEvent, actorId: string) {
+    e.stopPropagation();
+    onOpenUser?.(actorId);
   }
 
   return (
@@ -78,25 +90,66 @@ export function NotificationsScreen({ onBack, onOpenPost, onOpenUser, onOpenComm
           </div>
         ) : (
           <ul className="divide-y divide-gray-100">
-            {notifications.map((n) => (
-              <li key={n.id}>
-                <button
-                  onClick={() => handleNotificationClick(n)}
-                  className={`w-full flex items-start gap-3 px-4 py-4 text-left ${!n.read ? 'bg-sara-linen' : 'bg-white'} hover:brightness-95 transition-all`}
-                >
-                  <div className="w-9 h-9 rounded-full bg-sara-cream flex items-center justify-center flex-shrink-0">
-                    {ICON[n.type]}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm text-graphite leading-snug">{n.text}</p>
-                    <p className="text-[11px] text-graphite-muted mt-0.5">{relativeTime(n.createdAt)} atrás</p>
-                  </div>
-                  {!n.read && (
-                    <div className="w-2 h-2 rounded-full bg-sara-gold flex-shrink-0 mt-1.5" />
-                  )}
-                </button>
-              </li>
-            ))}
+            {notifications.map((n) => {
+              const isFollowBack = n.type === 'follow' && n.actorId && n.actorId !== currentUserId;
+              return (
+                <li key={n.id}>
+                  <button
+                    onClick={() => handleNotificationClick(n)}
+                    className={`w-full flex items-start gap-3 px-4 py-4 text-left ${!n.read ? 'bg-sara-linen' : 'bg-white'} hover:brightness-95 transition-all`}
+                  >
+                    {/* Actor avatar */}
+                    <div className="w-9 h-9 rounded-full bg-sara-cream flex items-center justify-center flex-shrink-0">
+                      {ICON[n.type]}
+                    </div>
+
+                    <div className="flex-1 min-w-0">
+                      {/* Main text — actor name is a tappable link for follow notifications */}
+                      {n.type === 'follow' && n.actorId ? (
+                        <p className="text-sm text-graphite leading-snug">
+                          <button
+                            type="button"
+                            onClick={(e) => handleActorClick(e, n.actorId!)}
+                            className="font-semibold text-graphite hover:underline"
+                          >
+                            {n.actorName ?? 'Alguém'}
+                          </button>
+                          {' '}começou a te seguir.
+                        </p>
+                      ) : (
+                        <p className="text-sm text-graphite leading-snug">{n.text}</p>
+                      )}
+
+                      {/* Post excerpt for like/comment */}
+                      {(n.type === 'like' || n.type === 'comment') && n.postExcerpt && (
+                        <p className="text-xs text-graphite-muted mt-1 line-clamp-2 bg-white/60 rounded-lg px-2 py-1">
+                          {n.postExcerpt}
+                        </p>
+                      )}
+
+                      <p className="text-[11px] text-graphite-muted mt-1">{relativeTime(n.createdAt)} atrás</p>
+                    </div>
+
+                    <div className="flex flex-col items-end gap-2 flex-shrink-0">
+                      {!n.read && (
+                        <div className="w-2 h-2 rounded-full bg-sara-gold" />
+                      )}
+                      {/* Follow-back button */}
+                      {isFollowBack && (
+                        <button
+                          type="button"
+                          onClick={(e) => { e.stopPropagation(); followMutation.mutate(n.actorId!); }}
+                          className="flex items-center gap-1 text-[11px] font-semibold px-2 py-1 rounded-full bg-sara-gold text-white active:scale-95 transition-all"
+                        >
+                          <UserCheck size={11} />
+                          Seguir
+                        </button>
+                      )}
+                    </div>
+                  </button>
+                </li>
+              );
+            })}
           </ul>
         )}
       </div>

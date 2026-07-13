@@ -99,6 +99,7 @@ export function apiPostToCommunityPost(post: ApiPost): CommunityPost {
   return {
     id: post.id,
     authorId: post.authorId,
+    authorUsername: post.author.username ?? null,
     category: post.category,
     author: post.author.name,
     content: post.content,
@@ -112,9 +113,11 @@ export function apiPostToCommunityPost(post: ApiPost): CommunityPost {
     likedByCurrentUser: post.likedByCurrentUser,
     repostOriginal: post.repostFrom
       ? {
+          originalPostId: post.repostFrom.id,
           content: post.repostFrom.content,
           author: post.repostFrom.author.name,
           authorId: post.repostFrom.author.id,
+          authorUsername: post.repostFrom.author.username ?? null,
           category: post.repostFrom.category,
         }
       : undefined,

@@ -52,6 +52,7 @@ export interface MotherProfile {
 export interface CommunityPost {
   id: string;
   authorId?: string;
+  authorUsername?: string | null;
   category: 'gestação' | 'pós-parto' | 'amamentação' | 'saúde mental';
   author: string;
   badge?: 'experiente' | 'profissional';
@@ -62,7 +63,7 @@ export interface CommunityPost {
   time: string;
   isRepost?: boolean;
   repostFrom?: string;
-  repostOriginal?: { content: string; author: string; authorId: string; category: string };
+  repostOriginal?: { content: string; author: string; authorId: string; authorUsername?: string | null; category: string; originalPostId?: string };
   communityId?: string;
   imageUrl?: string;
   likedByCurrentUser?: boolean;

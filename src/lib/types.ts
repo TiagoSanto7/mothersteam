@@ -2,6 +2,7 @@ export interface ApiUser {
   id: string
   email: string
   name: string
+  username?: string | null
   babyName?: string | null
   bio?: string | null
   pregnancyStage: 'pregnant' | 'postpartum'
@@ -15,6 +16,7 @@ export interface ApiUser {
 export interface ApiUserProfile {
   id: string
   name: string
+  username?: string | null
   bio?: string | null
   pregnancyStage: 'pregnant' | 'postpartum'
   pregnancyWeek?: number | null
@@ -29,6 +31,8 @@ export interface ApiUserProfile {
 export interface ApiFollowUser {
   id: string
   name: string
+  username?: string | null
+  bio?: string | null
   isFollowedByCurrentUser: boolean
   isSelf: boolean
 }
@@ -39,11 +43,11 @@ export interface ApiPost {
   category: 'gestação' | 'pós-parto' | 'amamentação' | 'saúde mental'
   imageUrl?: string | null
   authorId: string
-  author: { id: string; name: string }
+  author: { id: string; name: string; username?: string | null }
   communityId?: string | null
   isRepost: boolean
   repostFromId?: string | null
-  repostFrom?: { id: string; content: string; category: string; author: { id: string; name: string } } | null
+  repostFrom?: { id: string; content: string; category: string; author: { id: string; name: string; username?: string | null } } | null
   _count: { likes: number; comments: number; reposts: number }
   createdAt: string
   likedByCurrentUser: boolean
@@ -74,6 +78,9 @@ export interface ApiNotification {
   createdAt: string
   targetType?: 'post' | 'user' | 'community' | string
   targetId?: string
+  actorId?: string | null
+  actorName?: string | null
+  postExcerpt?: string | null
 }
 
 export interface ApiMessage {
@@ -119,4 +126,5 @@ export interface ApiBabyEntry {
 export interface PaginatedResult<T> {
   items: T[]
   hasMore: boolean
+  nextCursor?: string
 }

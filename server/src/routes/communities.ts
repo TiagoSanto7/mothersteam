@@ -88,10 +88,10 @@ export default async function communitiesRoutes(fastify: FastifyInstance) {
         take: limit + 1,
         ...(request.query.cursor ? { cursor: { id: request.query.cursor }, skip: 1 } : {}),
         include: {
-          author: { select: { id: true, name: true } },
+          author: { select: { id: true, name: true, username: true } },
           _count: { select: { likes: true, comments: true, reposts: true } },
           likes: { where: { userId: request.userId }, select: { userId: true } },
-          repostFrom: { include: { author: { select: { id: true, name: true } } } },
+          repostFrom: { include: { author: { select: { id: true, name: true, username: true } } } },
         },
         orderBy: { createdAt: 'desc' },
       })
@@ -100,7 +100,8 @@ export default async function communitiesRoutes(fastify: FastifyInstance) {
         ...post,
         likedByCurrentUser: likes.length > 0,
       }))
-      reply.send({ items, hasMore })
+      const nextCursor = items.length > 0 ? items[items.length - 1].id : undefined
+      reply.send({ items, hasMore, nextCursor })
     }
   )
 
