@@ -62,7 +62,7 @@ export function CreatePostScreen({ onBack, autoOpenImage, initialCommunityId }: 
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['posts'] });
       if (initialCommunityId) {
-        queryClient.invalidateQueries({ queryKey: ['community', initialCommunityId, 'posts'] });
+        queryClient.invalidateQueries({ queryKey: ['communityPosts', initialCommunityId] });
       }
       onBack();
     },

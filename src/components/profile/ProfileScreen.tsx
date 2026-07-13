@@ -23,9 +23,9 @@ export function ProfileScreen({ onClose }: ProfileScreenProps) {
   const currentUserId = useAppStore((s) => s.currentUserId);
 
   const { data } = useQuery({
-    queryKey: ['posts'],
-    queryFn: () => apiFetch<PaginatedResult<ApiPost>>('/posts'),
-    enabled: isLoggedIn,
+    queryKey: ['userPosts', currentUserId],
+    queryFn: () => apiFetch<PaginatedResult<ApiPost>>(`/users/${currentUserId}/posts`),
+    enabled: isLoggedIn && !!currentUserId,
   });
 
   const communityPosts: CommunityPost[] = (data?.items ?? []).map(apiPostToCommunityPost);
@@ -37,7 +37,7 @@ export function ProfileScreen({ onClose }: ProfileScreenProps) {
 
   const archetype = motherProfile ? ARCHETYPES[motherProfile.archetypeKey] : null;
   const avatarColor = archetype?.color ?? '#9D8FCC';
-  const userPosts = communityPosts.filter((p) => p.author === motherName);
+  const userPosts = communityPosts;
 
   const bio = archetype ? archetype.phrases[1] : 'Maternidade com presença e intenção.';
 

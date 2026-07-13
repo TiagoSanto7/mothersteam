@@ -12,7 +12,7 @@ if (typeof IntersectionObserver === 'undefined') {
     configurable: true,
     value: IntersectionObserverStub,
   })
-  Object.defineProperty(global, 'IntersectionObserver', {
+  Object.defineProperty(globalThis, 'IntersectionObserver', {
     writable: true,
     configurable: true,
     value: IntersectionObserverStub,

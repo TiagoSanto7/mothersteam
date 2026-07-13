@@ -175,4 +175,32 @@ export default async function usersRoutes(fastify: FastifyInstance) {
       reply.send({ items: enriched, hasMore })
     }
   )
+
+  fastify.get<{ Querystring: { limit?: string } }>('/', async (request, reply) => {
+    const limit = Math.min(Number(request.query.limit ?? 10), 50)
+    const alreadyFollowing = await fastify.prisma.follow.findMany({
+      where: { followerId: request.userId },
+      select: { followingId: true },
+    })
+    const excludeIds = [request.userId, ...alreadyFollowing.map((f) => f.followingId)]
+
+    const users = await fastify.prisma.user.findMany({
+      where: { id: { notIn: excludeIds } },
+      select: {
+        id: true,
+        name: true,
+        _count: { select: { followers: true } },
+      },
+      orderBy: { followers: { _count: 'desc' } },
+      take: limit,
+    })
+
+    const items = users.map((u) => ({
+      id: u.id,
+      name: u.name,
+      isFollowedByCurrentUser: false,
+      isSelf: false,
+    }))
+    reply.send({ items, hasMore: false })
+  })
 }

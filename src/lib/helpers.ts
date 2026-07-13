@@ -55,6 +55,15 @@ export function patchPostLikeInAllCaches(
           ),
         }
       }
+      // Handle single post shape: raw ApiPost (from ['posts', postId] detail query)
+      const single = old as ApiPost
+      if (single.id === postId) {
+        return {
+          ...single,
+          likedByCurrentUser: liked,
+          _count: { ...single._count, likes: single._count.likes + delta },
+        }
+      }
       return old
     },
   )

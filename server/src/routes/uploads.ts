@@ -37,7 +37,6 @@ export async function uploadsRoutes(fastify: FastifyInstance) {
       return reply.status(413).send({ error: 'File too large' })
     }
 
-    const baseUrl = process.env.BASE_URL ?? `http://localhost:${process.env.PORT ?? 3001}`
-    return { url: `${baseUrl}/uploads/${filename}` }
+    return { url: `/uploads/${filename}` }
   })
 }
