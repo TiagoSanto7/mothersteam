@@ -98,30 +98,34 @@ export default async function usersRoutes(fastify: FastifyInstance) {
     if (request.params.id === request.userId)
       return reply.status(400).send({ error: 'Cannot follow yourself' })
 
-    await fastify.prisma.follow.upsert({
+    const existing = await fastify.prisma.follow.findUnique({
       where: { followerId_followingId: { followerId: request.userId, followingId: request.params.id } },
-      update: {},
-      create: { followerId: request.userId, followingId: request.params.id },
     })
 
-    const actor = await fastify.prisma.user.findUnique({
-      where: { id: request.userId },
-      select: { name: true },
-    })
-    const actorName = actor?.name ?? 'Alguém'
+    if (!existing) {
+      await fastify.prisma.follow.create({
+        data: { followerId: request.userId, followingId: request.params.id },
+      })
 
-    await fastify.prisma.notification.create({
-      data: {
-        type: 'follow',
-        text: `${actorName} começou a te seguir.`,
-        recipientId: request.params.id,
-        targetType: 'user',
-        targetId: request.userId,
-        actorId: request.userId,
-        actorName,
-      },
-    })
-    emitNotification(request.params.id)
+      const actor = await fastify.prisma.user.findUnique({
+        where: { id: request.userId },
+        select: { name: true },
+      })
+      const actorName = actor?.name ?? 'Alguém'
+
+      await fastify.prisma.notification.create({
+        data: {
+          type: 'follow',
+          text: `${actorName} começou a te seguir.`,
+          recipientId: request.params.id,
+          targetType: 'user',
+          targetId: request.userId,
+          actorId: request.userId,
+          actorName,
+        },
+      })
+      emitNotification(request.params.id)
+    }
 
     reply.status(201).send({ ok: true })
   })

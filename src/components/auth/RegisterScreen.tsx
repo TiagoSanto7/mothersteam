@@ -39,7 +39,8 @@ export function RegisterScreen({ onBack }: RegisterScreenProps) {
         const { available } = await apiFetch<{ available: boolean }>(`/auth/check-username?username=${cleaned}`);
         setUsernameStatus(available ? 'available' : 'taken');
       } catch {
-        setUsernameStatus('idle');
+        // Network error — allow proceeding; server validates on submit
+        setUsernameStatus('available');
       }
     }, 500);
     return () => clearTimeout(timer);

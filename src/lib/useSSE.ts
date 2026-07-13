@@ -24,6 +24,11 @@ export function useSSE() {
       } catch { /* ignore malformed events */ }
     }
 
+    es.onerror = () => {
+      queryClient.invalidateQueries({ queryKey: ['notifications'] })
+      queryClient.invalidateQueries({ queryKey: ['chats'] })
+    }
+
     return () => es.close()
   }, [isLoggedIn, queryClient])
 }

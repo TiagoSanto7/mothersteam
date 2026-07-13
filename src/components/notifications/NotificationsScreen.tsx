@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { ChevronLeft, Heart, UserPlus, MessageCircle, UserCheck } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiFetch } from '../../lib/api';
@@ -40,10 +41,16 @@ export function NotificationsScreen({ onBack, onOpenPost, onOpenUser, onOpenComm
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['notifications'] }),
   });
 
+  const [followError, setFollowError] = useState<string | null>(null);
+
   const followMutation = useMutation({
     mutationFn: (userId: string) =>
       apiFetch(`/users/${userId}/follow`, { method: 'POST' }),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['notifications'] }),
+    onSuccess: () => {
+      setFollowError(null);
+      queryClient.invalidateQueries({ queryKey: ['notifications'] });
+    },
+    onError: () => setFollowError('Não foi possível seguir. Tente novamente.'),
   });
 
   const unreadCount = notifications.filter((n) => !n.read).length;
@@ -82,6 +89,12 @@ export function NotificationsScreen({ onBack, onOpenPost, onOpenUser, onOpenComm
           <div className="w-20" />
         )}
       </div>
+
+      {followError && (
+        <p role="alert" className="text-[11px] text-sara-terracotta text-center px-4 py-2 bg-sara-cream border-b border-sara-linen/60">
+          {followError}
+        </p>
+      )}
 
       <div className="flex-1 overflow-y-auto">
         {notifications.length === 0 ? (

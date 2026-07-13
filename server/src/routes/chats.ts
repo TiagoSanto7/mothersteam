@@ -60,6 +60,11 @@ export default async function chatsRoutes(fastify: FastifyInstance) {
   fastify.get<{ Params: { id: string }; Querystring: { cursor?: string; limit?: string } }>(
     '/:id/messages',
     async (request, reply) => {
+      const isMember = await fastify.prisma.chatParticipant.findUnique({
+        where: { userId_chatId: { userId: request.userId, chatId: request.params.id } },
+      })
+      if (!isMember) return reply.status(403).send({ error: 'Forbidden' })
+
       const limit = Math.min(Number(request.query.limit ?? 30), 100)
       const messages = await fastify.prisma.message.findMany({
         where: { chatId: request.params.id },
@@ -74,6 +79,11 @@ export default async function chatsRoutes(fastify: FastifyInstance) {
   )
 
   fastify.post<{ Params: { id: string } }>('/:id/messages', async (request, reply) => {
+    const isMember = await fastify.prisma.chatParticipant.findUnique({
+      where: { userId_chatId: { userId: request.userId, chatId: request.params.id } },
+    })
+    if (!isMember) return reply.status(403).send({ error: 'Forbidden' })
+
     const body = sendMessageSchema.safeParse(request.body)
     if (!body.success) return reply.status(400).send({ error: body.error.flatten() })
 
@@ -106,6 +116,11 @@ export default async function chatsRoutes(fastify: FastifyInstance) {
   })
 
   fastify.post<{ Params: { id: string } }>('/:id/read', async (request, reply) => {
+    const isMember = await fastify.prisma.chatParticipant.findUnique({
+      where: { userId_chatId: { userId: request.userId, chatId: request.params.id } },
+    })
+    if (!isMember) return reply.status(403).send({ error: 'Forbidden' })
+
     await fastify.prisma.message.updateMany({
       where: {
         chatId: request.params.id,

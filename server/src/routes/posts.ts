@@ -137,8 +137,13 @@ export default async function postsRoutes(fastify: FastifyInstance) {
         repostFromId: original.id,
         communityId: original.communityId,
       },
+      include: {
+        author: { select: { id: true, name: true, username: true } },
+        _count: { select: { likes: true, comments: true, reposts: true } },
+        repostFrom: { include: { author: { select: { id: true, name: true, username: true } } } },
+      },
     })
-    reply.status(201).send(repost)
+    reply.status(201).send({ ...repost, likedByCurrentUser: false })
   })
 
   fastify.get<{ Params: { id: string }; Querystring: { cursor?: string; limit?: string } }>(
