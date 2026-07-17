@@ -42,12 +42,11 @@ export function DashboardScreen() {
   const setActiveTab = useAppStore((s) => s.setActiveTab)
   const [sheetOpen, setSheetOpen] = useState(false)
 
-  const today = new Date().toISOString().split('T')[0]
-  const nowTime = new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
+  const selectedDate = useAppStore((s) => s.selectedDate)
 
   const { data: routineItems } = useQuery({
-    queryKey: ['routine', today],
-    queryFn: () => apiFetch<ApiRoutineEntry[]>(`/routine?date=${today}`),
+    queryKey: ['routine', selectedDate],
+    queryFn: () => apiFetch<ApiRoutineEntry[]>(`/routine?date=${selectedDate}`),
     enabled: isLoggedIn,
     staleTime: 60_000,
   })
@@ -64,9 +63,13 @@ export function DashboardScreen() {
     return getMensagemParaFase(phase.stage, semanaOuDias)
   }, [phase])
 
-  const versiculo = getVersiculoDoDia('home')
+  const versiculo = useMemo(() => getVersiculoDoDia('home'), [])
 
-  const nextAppointment = routineItems?.find((r) => !r.done && r.time >= nowTime) ?? null
+  const nextAppointment = useMemo(() => {
+    if (!routineItems) return null
+    const nowTime = new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
+    return routineItems.find((r) => !r.done && r.time >= nowTime) ?? null
+  }, [routineItems])
   const lastFeed = babyEntries?.find((e) => e.type === 'feed') ?? null
   const initial = (motherName || 'M').charAt(0).toUpperCase()
 
