@@ -22,6 +22,7 @@ interface AppState {
   activeTab: TabId;
   selectedDate: string;
   lastFeedSide: 'left' | 'right';
+  savedVerses: string[];
   // Auth actions
   setAccessToken: (token: string) => void;
   setAuth: (token: string, user: ApiUser) => void;
@@ -35,6 +36,8 @@ interface AppState {
   setSelectedDate: (date: string) => void;
   toggleFeedSide: () => void;
   setFeedSide: (side: 'left' | 'right') => void;
+  saveVerse: (ref: string) => void;
+  unsaveVerse: (ref: string) => void;
 }
 
 const safeLocalStorage = {
@@ -68,6 +71,7 @@ export const useAppStore = create<AppState>()(
       activeTab: 'home',
       selectedDate: new Date().toISOString().split('T')[0],
       lastFeedSide: 'left',
+      savedVerses: [],
       // Auth actions
       setAccessToken: (token) => set({ accessToken: token }),
       setAuth: (token, user) =>
@@ -96,6 +100,8 @@ export const useAppStore = create<AppState>()(
       toggleFeedSide: () =>
         set((s) => ({ lastFeedSide: s.lastFeedSide === 'left' ? 'right' : 'left' })),
       setFeedSide: (side) => set({ lastFeedSide: side }),
+      saveVerse: (ref) => set((s) => ({ savedVerses: s.savedVerses.includes(ref) ? s.savedVerses : [...s.savedVerses, ref] })),
+      unsaveVerse: (ref) => set((s) => ({ savedVerses: s.savedVerses.filter((r) => r !== ref) })),
     }),
     {
       name: 'mothers-team-v3',
@@ -110,6 +116,7 @@ export const useAppStore = create<AppState>()(
         activeTab: state.activeTab,
         selectedDate: state.selectedDate,
         lastFeedSide: state.lastFeedSide,
+        savedVerses: state.savedVerses,
       }),
     },
   ),
