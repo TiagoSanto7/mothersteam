@@ -46,15 +46,19 @@ export function QuickRegisterSheet({ open, onClose }: QuickRegisterSheetProps) {
 
   return (
     <div
+      data-testid="sheet-backdrop"
       className={`fixed inset-0 z-50 flex items-end transition-all duration-200 ${
         open ? 'bg-black/40' : 'bg-transparent pointer-events-none'
       }`}
       onClick={(e) => {
-        if (e.target === e.currentTarget) onClose()
+        if (e.target === e.currentTarget && !mutation.isPending) onClose()
       }}
     >
       <div
-        className={`w-full bg-[#FAF7F2] rounded-t-3xl px-5 pb-8 pt-4 transition-transform duration-300 ${
+        role="dialog"
+        aria-modal="true"
+        aria-label="Registrar mamada"
+        className={`w-full bg-sara-cream rounded-t-3xl px-5 pb-8 pt-4 transition-transform duration-300 ${
           open ? 'translate-y-0' : 'translate-y-full'
         }`}
       >
@@ -90,6 +94,12 @@ export function QuickRegisterSheet({ open, onClose }: QuickRegisterSheetProps) {
         >
           {mutation.isPending ? 'Registrando...' : 'Registrar agora'}
         </button>
+
+        {mutation.isError && (
+          <p className="text-[11px] text-red-500 text-center mt-2">
+            Erro ao registrar. Tente de novo.
+          </p>
+        )}
 
         <p className="text-[11px] text-graphite-muted text-center mt-3">
           Horário: agora · {nowDisplay}

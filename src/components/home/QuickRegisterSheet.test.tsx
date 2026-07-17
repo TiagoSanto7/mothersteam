@@ -63,4 +63,12 @@ describe('QuickRegisterSheet', () => {
     fireEvent.click(screen.getByRole('button', { name: /registrar mamada agora/i }))
     await waitFor(() => expect(onClose).toHaveBeenCalled())
   })
+
+  it('calls onClose when backdrop is clicked', () => {
+    const onClose = vi.fn()
+    render(<QuickRegisterSheet open onClose={onClose} />, { wrapper: makeWrapper() })
+    const backdrop = document.querySelector('[data-testid="sheet-backdrop"]') ?? screen.getByRole('dialog').parentElement!
+    fireEvent.click(backdrop!)
+    expect(onClose).toHaveBeenCalled()
+  })
 })
