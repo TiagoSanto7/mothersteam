@@ -4,10 +4,13 @@ import { useQuery } from '@tanstack/react-query'
 import { useAppStore } from '../../store/useAppStore'
 import { apiFetch } from '../../lib/api'
 import { getMensagemParaFase } from '../../data/mensagemDeDeus'
-import { getVersiculoDoDia } from '../../data/versiculos'
 import type { ApiRoutineEntry, ApiBabyEntry } from '../../lib/types'
 import type { PregnancyPhase } from '../../types'
 import { QuickRegisterSheet } from './QuickRegisterSheet'
+import { BabyDevCard } from './BabyDevCard'
+import { BabyDevScreen } from './BabyDevScreen'
+import { MomentoDeusCard } from './MomentoDeusCard'
+import { MomentoDeusScreen } from './MomentoDeusScreen'
 
 export function getGreeting(): string {
   const h = new Date().getHours()
@@ -41,6 +44,8 @@ export function DashboardScreen() {
   const isLoggedIn = useAppStore((s) => s.isLoggedIn)
   const setActiveTab = useAppStore((s) => s.setActiveTab)
   const [sheetOpen, setSheetOpen] = useState(false)
+  const [babyDevOpen, setBabyDevOpen] = useState(false)
+  const [momentoDeusOpen, setMomentoDeusOpen] = useState(false)
 
   const selectedDate = useAppStore((s) => s.selectedDate)
 
@@ -62,8 +67,6 @@ export function DashboardScreen() {
     const semanaOuDias = phase.stage === 'pregnant' ? phase.week : phase.ageInDays
     return getMensagemParaFase(phase.stage, semanaOuDias)
   }, [phase])
-
-  const versiculo = useMemo(() => getVersiculoDoDia('home'), [])
 
   const nextAppointment = useMemo(() => {
     if (!routineItems) return null
@@ -166,18 +169,13 @@ export function DashboardScreen() {
           </div>
         </div>
 
-        {/* Daily verse */}
-        <div className="px-4 pt-1">
-          <p className="text-[10px] text-graphite-muted/70 italic leading-relaxed text-center">
-            "{versiculo.texto}"
-          </p>
-          <p className="text-[9px] text-graphite-muted/50 text-center mt-0.5">
-            {versiculo.referencia} · NVI
-          </p>
-        </div>
+        <BabyDevCard onClick={() => setBabyDevOpen(true)} />
+        <MomentoDeusCard onClick={() => setMomentoDeusOpen(true)} />
       </div>
 
       <QuickRegisterSheet open={sheetOpen} onClose={() => setSheetOpen(false)} />
+      <BabyDevScreen open={babyDevOpen} onClose={() => setBabyDevOpen(false)} />
+      <MomentoDeusScreen open={momentoDeusOpen} onClose={() => setMomentoDeusOpen(false)} />
     </>
   )
 }
