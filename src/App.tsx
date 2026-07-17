@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
+import type { ReactElement } from 'react';
 import { Bell, MessageSquare, Search } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { useAppStore } from './store/useAppStore';
@@ -8,7 +9,9 @@ import { apiFetch } from './lib/api';
 import type { ApiUser } from './lib/types';
 import { apiPostToCommunityPost } from './lib/helpers';
 import { MobileShell } from './components/layout/MobileShell';
+import { WebLayout } from './components/layout/WebLayout';
 import { HomeScreen } from './components/home/HomeScreen';
+import { DashboardScreen } from './components/home/DashboardScreen';
 import { BabyScreen } from './components/baby/BabyScreen';
 import { MaeIAScreen } from './components/maeIA/MaeIAScreen';
 import { ComunidadeScreen } from './components/comunidade/ComunidadeScreen';
@@ -32,8 +35,8 @@ export default function App() {
   const socialOnboardingDone = useAppStore((s) => s.socialOnboardingDone);
   const activeTab      = useAppStore((s) => s.activeTab);
   const currentUserId  = useAppStore((s) => s.currentUserId);
-  const setAccessToken = useAppStore((s) => s.setAccessToken);
-  const setAuth        = useAppStore((s) => s.setAuth);
+  const setAccessToken          = useAppStore((s) => s.setAccessToken);
+  const completeSocialOnboarding = useAppStore((s) => s.completeSocialOnboarding);
 
   useSSE();
 
@@ -86,6 +89,7 @@ export default function App() {
     queryKey: ['posts', pendingPostId],
     queryFn: () => apiFetch<ApiPost>(`/posts/${pendingPostId}`),
     enabled: !!pendingPostId,
+    staleTime: 60_000,
   });
 
   const pendingPost = pendingApiPost ? apiPostToCommunityPost(pendingApiPost) : null;
@@ -118,7 +122,7 @@ export default function App() {
       >
         <MessageSquare size={18} className="text-graphite-light" strokeWidth={1.8} />
         {unreadChats > 0 && (
-          <span className="absolute -top-1 -right-1 w-4 h-4 bg-sara-gold rounded-full flex items-center justify-center text-[9px] font-bold text-white">
+          <span className="absolute -top-1 -right-1 w-4 h-4 bg-sara-terracotta rounded-full flex items-center justify-center text-[9px] font-bold text-white">
             {unreadChats}
           </span>
         )}
@@ -138,8 +142,8 @@ export default function App() {
     </div>
   ) : undefined;
 
-  const screens: Record<TabId, React.ReactElement> = {
-    home:       <ComunidadeScreen />,
+  const screens: Record<TabId, ReactElement> = {
+    home:       <DashboardScreen />,
     maeIA:      <MaeIAScreen />,
     baby:       <BabyScreen />,
     rotina:     <HomeScreen onOpenProfile={() => setShowProfile(true)} />,
@@ -159,6 +163,19 @@ export default function App() {
       >
         {screens[activeTab]}
       </MobileShell>
+
+      <WebLayout
+        unreadNotifs={unreadNotifs}
+        unreadChats={unreadChats}
+        onOpenNotifications={() => setShowNotifications(true)}
+        onOpenChat={() => setShowChat(true)}
+        onOpenProfile={() => setShowProfile(true)}
+        onOpenSettings={() => setShowSettings(true)}
+        onOpenUser={(id) => setProfileUserId(id)}
+        onOpenCommunity={(id) => setOpenCommunityId(id)}
+      >
+        {screens[activeTab]}
+      </WebLayout>
 
       {showProfile && (
         <div className="fixed inset-0 z-50 sm:bg-black/40 sm:flex sm:items-center sm:justify-center">
@@ -237,7 +254,7 @@ export default function App() {
       {isLoggedIn && onboardingDone && !socialOnboardingDone && (
         <div className="fixed inset-0 z-50 sm:bg-black/40 sm:flex sm:items-center sm:justify-center">
           <div className="w-full h-full sm:w-[390px] sm:h-[844px] bg-gradient-to-b from-[#F5EDE0] via-[#EAD8C8] to-[#D9C4AF] sm:rounded-[44px] sm:shadow-2xl overflow-hidden">
-            <SocialOnboardingScreen onDone={() => {}} />
+            <SocialOnboardingScreen onDone={completeSocialOnboarding} />
           </div>
         </div>
       )}

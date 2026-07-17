@@ -26,6 +26,7 @@ beforeEach(() => {
   useAppStore.setState({
     isLoggedIn: true,
     onboardingDone: true,
+    socialOnboardingDone: true,
     activeTab: 'home',
     motherName: 'Mariana',
     phase: { stage: 'pregnant', week: 28 },
@@ -34,21 +35,21 @@ beforeEach(() => {
 });
 
 describe('App routing', () => {
-  it('home tab renders ComunidadeScreen (Para Você tab visible)', () => {
+  it('home tab renders DashboardScreen (mother name visible in greeting)', () => {
     useAppStore.setState({ activeTab: 'home' });
     render(<App />, { wrapper: makeWrapper() });
-    expect(screen.getByRole('button', { name: /para você/i })).toBeInTheDocument();
+    expect(screen.getAllByText('Mariana').length).toBeGreaterThan(0);
   });
 
   it('rotina tab renders HomeScreen (Para Você tab absent)', () => {
     useAppStore.setState({ activeTab: 'rotina' });
     render(<App />, { wrapper: makeWrapper() });
-    expect(screen.queryByRole('button', { name: /para você/i })).not.toBeInTheDocument();
+    expect(screen.queryAllByRole('button', { name: /para você/i })).toHaveLength(0);
   });
 
   it('comunidade tab renders ComunidadeScreen (alias for stale state)', () => {
     useAppStore.setState({ activeTab: 'comunidade' });
     render(<App />, { wrapper: makeWrapper() });
-    expect(screen.getByRole('button', { name: /para você/i })).toBeInTheDocument();
+    expect(screen.getAllByRole('button', { name: /para você/i }).length).toBeGreaterThan(0);
   });
 });
