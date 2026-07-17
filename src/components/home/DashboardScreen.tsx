@@ -67,7 +67,8 @@ export function DashboardScreen() {
 
   const nextAppointment = useMemo(() => {
     if (!routineItems) return null
-    const nowTime = new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
+    const now = new Date()
+    const nowTime = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`
     return routineItems.find((r) => !r.done && r.time >= nowTime) ?? null
   }, [routineItems])
   const lastFeed = babyEntries?.find((e) => e.type === 'feed') ?? null

@@ -21,17 +21,13 @@ export function QuickRegisterSheet({ open, onClose }: QuickRegisterSheetProps) {
     if (open) setSelectedSide(lastFeedSide === 'left' ? 'Direito' : 'Esquerdo')
   }, [open, lastFeedSide])
 
-  const nowDisplay = new Date().toLocaleTimeString('pt-BR', {
-    hour: '2-digit',
-    minute: '2-digit',
-  })
+  const nd = new Date()
+  const nowDisplay = `${String(nd.getHours()).padStart(2, '0')}:${String(nd.getMinutes()).padStart(2, '0')}`
 
   const mutation = useMutation({
     mutationFn: () => {
-      const time = new Date().toLocaleTimeString('pt-BR', {
-        hour: '2-digit',
-        minute: '2-digit',
-      })
+      const now = new Date()
+      const time = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`
       return apiFetch('/baby', {
         method: 'POST',
         body: JSON.stringify({ type: 'feed', time, detail: selectedSide }),
