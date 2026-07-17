@@ -45,7 +45,7 @@ describe('QuickRegisterSheet', () => {
   it('calls POST /baby with type feed and the selected detail on submit', async () => {
     useAppStore.setState({ lastFeedSide: 'left' })
     render(<QuickRegisterSheet open onClose={vi.fn()} />, { wrapper: makeWrapper() })
-    fireEvent.click(screen.getByRole('button', { name: /registrar mamada agora/i }))
+    fireEvent.click(screen.getByRole('button', { name: /confirmar mamada/i }))
     await waitFor(() =>
       expect(mockApiFetch).toHaveBeenCalledWith(
         '/baby',
@@ -60,7 +60,7 @@ describe('QuickRegisterSheet', () => {
   it('calls onClose after successful registration', async () => {
     const onClose = vi.fn()
     render(<QuickRegisterSheet open onClose={onClose} />, { wrapper: makeWrapper() })
-    fireEvent.click(screen.getByRole('button', { name: /registrar mamada agora/i }))
+    fireEvent.click(screen.getByRole('button', { name: /confirmar mamada/i }))
     await waitFor(() => expect(onClose).toHaveBeenCalled())
   })
 
