@@ -89,7 +89,7 @@ export function QuickRegisterSheet({ open, onClose }: QuickRegisterSheetProps) {
         <button
           onClick={() => mutation.mutate()}
           disabled={mutation.isPending}
-          aria-label="Confirmar mamada"
+          aria-label="Registrar mamada agora"
           className="w-full py-3.5 rounded-2xl bg-sara-gold text-white text-[14px] font-bold disabled:opacity-60"
         >
           {mutation.isPending ? 'Registrando...' : 'Registrar agora'}

@@ -123,7 +123,7 @@ describe('DashboardScreen', () => {
 
   it('opens QuickRegisterSheet when Registrar button is clicked', () => {
     render(<DashboardScreen />, { wrapper: makeWrapper() })
-    fireEvent.click(screen.getByRole('button', { name: /registrar mamada/i }))
+    fireEvent.click(screen.getByRole('button', { name: 'Registrar mamada' }))
     expect(screen.getByRole('dialog')).toBeInTheDocument()
   })
 
