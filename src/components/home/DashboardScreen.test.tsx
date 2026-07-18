@@ -105,13 +105,6 @@ describe('DashboardScreen', () => {
     expect(screen.getByRole('dialog')).toBeInTheDocument()
   })
 
-  it('calls setActiveTab with comunidade when Ver → is clicked', () => {
-    const setActiveTab = vi.fn()
-    useAppStore.setState({ setActiveTab } as any)
-    render(<DashboardScreen />, { wrapper: makeWrapper() })
-    fireEvent.click(screen.getByRole('button', { name: /ir para a comunidade/i }))
-    expect(setActiveTab).toHaveBeenCalledWith('comunidade')
-  })
 })
 
 describe('DashboardScreen — emotional header', () => {

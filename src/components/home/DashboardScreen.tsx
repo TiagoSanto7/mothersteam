@@ -181,28 +181,6 @@ export function DashboardScreen() {
           </button>
         </div>
 
-        {/* Community card */}
-        <div className="mx-4 bg-white rounded-2xl p-3.5 shadow-sm">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-[9px] font-bold text-graphite-muted uppercase tracking-wide mb-0.5">
-                Comunidade
-              </p>
-              <p className="text-[13px] font-semibold text-graphite">
-                <span className="inline-block w-1.5 h-1.5 rounded-full bg-sara-terracotta mr-1.5 align-middle" />
-                Ir para o feed
-              </p>
-            </div>
-            <button
-              onClick={() => setActiveTab('comunidade')}
-              aria-label="Ir para a comunidade"
-              className="text-[10px] font-semibold text-sara-gold"
-            >
-              Ver →
-            </button>
-          </div>
-        </div>
-
         <BabyDevCard onClick={() => setBabyDevOpen(true)} />
         <MomentoDeusCard onClick={() => setMomentoDeusOpen(true)} />
       </div>
