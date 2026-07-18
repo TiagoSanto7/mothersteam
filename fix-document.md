@@ -1314,3 +1314,103 @@ Parabéns! Hoje vocês completam 100 registros.
 > **"A mãe nunca deveria precisar procurar a Sara. A Sara é que deve encontrar a mãe nos momentos certos."**
 
 Essa é a identidade do produto.
+
+---
+
+# Decisões finais — 3 perguntas fechadas
+
+## Sara contextual — card inserido no fluxo
+
+**Nunca toast. Nunca bottom sheet.**
+
+Toast diz "olha aqui". Bottom sheet diz "resolva isso". Nenhum dos dois transmite acolhimento.
+
+Sara faz parte da narrativa de cada tela:
+
+```
+Home:
+  ─────────────
+  🤖 Sara
+  Hoje pode ser um bom dia para tirar
+  alguns minutos para você.
+  [Conversar]
+  ─────────────
+  Hoje
+  ...
+
+Jornada (entre itens da timeline):
+  08:00  Mamou
+  09:20  Dormiu
+  ─────────────
+  🤖 Sara
+  As sonecas de hoje ficaram bem distribuídas.
+  Isso costuma ser um bom sinal.
+  ─────────────
+  11:30  Fralda
+
+Comunidade:
+  ─────────────
+  🤖 Sara
+  Percebi muitas mães falando sobre cólicas hoje.
+  Talvez essa comunidade possa ajudar.
+  [Entrar]
+  ─────────────
+  Posts...
+```
+
+**Regras da Sara:**
+- Máximo 1 intervenção por tela
+- Máximo 3 intervenções por dia
+- Nunca repetir mensagem
+- Nunca aparecer durante fluxo crítico (registrando mamada, criando post, preenchendo formulário)
+
+---
+
+## Perfil — aba normal, sem overlay
+
+O Perfil cresce para conter jornada, conquistas, estatísticas, fotos, dados, versículos, preferências, plano, família. Merece uma tela própria como as demais abas.
+
+Overlays ficam para **ações** pontuais: editar foto, editar nome, trocar senha.
+
+---
+
+## Jornada/Hoje — mesma fonte, perspectiva diferente
+
+**Não criar nova API. Não criar novo endpoint.**
+
+Os dados já existem (rotina + registros do bebê). A diferença é só a perspectiva:
+
+**Home** — *"O que precisa da minha atenção agora?"*
+Próximo compromisso · última mamada · lembrete. Pouca informação, alta prioridade.
+
+**Jornada/Hoje** — *"Como foi o nosso dia?"*
+Mesmos registros, organizados como timeline cronológica completa.
+
+Fotos, observações, humor, notas, crescimento → Épico 4 ou 5, não agora.
+
+---
+
+## Regra da Fonte Única de Verdade
+
+Todo dado da Home existe em outro lugar mais detalhado. A Home nunca é dona de informação, ela apenas resume.
+
+```
+Home  →  Jornada  →  Registro
+```
+
+Nunca API exclusiva / modelo duplicado.
+
+---
+
+## Regra de ouro — cada aba responde uma única pergunta
+
+| Aba | Pergunta |
+|---|---|
+| 🏠 Hoje | O que precisa da minha atenção agora? |
+| ❤️ Jornada | Como estamos evoluindo? |
+| 👥 Comunidade | Como outras mães estão vivendo essa fase? |
+| 👤 Perfil | Quem somos e como foi nossa caminhada? |
+
+Se uma funcionalidade não responde à pergunta da sua aba, ela está na aba errada.
+
+Esta regra orienta todas as decisões futuras sem precisar reinventar a arquitetura.
