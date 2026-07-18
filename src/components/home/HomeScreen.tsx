@@ -5,7 +5,6 @@ import { useAppStore } from '../../store/useAppStore';
 import { getHeaderGreeting } from '../../utils/pregnancyUtils';
 import { WeekCalendar } from './WeekCalendar';
 import { RoutineTimeline } from './RoutineTimeline';
-import { InsightCard } from './InsightCard';
 import { AddRoutineModal } from './AddRoutineModal';
 
 interface HomeScreenProps {
@@ -17,7 +16,6 @@ export function HomeScreen({ onOpenProfile }: HomeScreenProps) {
   const motherName = useAppStore((s) => s.motherName);
   const babyName = useAppStore((s) => s.babyName);
   const selectedDate = useAppStore((s) => s.selectedDate);
-  const motherProfile = useAppStore((s) => s.motherProfile);
   const greeting = getHeaderGreeting(phase, motherName, babyName);
   const [showAddModal, setShowAddModal] = useState(false);
   const initial = motherName.charAt(0).toUpperCase();
@@ -39,8 +37,6 @@ export function HomeScreen({ onOpenProfile }: HomeScreenProps) {
           </h1>
         </div>
       </div>
-
-      {motherProfile && <InsightCard profile={motherProfile} />}
 
       <WeekCalendar referenceDate={selectedDate} />
 

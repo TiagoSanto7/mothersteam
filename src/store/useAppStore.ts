@@ -114,7 +114,6 @@ export const useAppStore = create<AppState>()(
         phase: state.phase,
         socialOnboardingDone: state.socialOnboardingDone,
         activeTab: state.activeTab,
-        selectedDate: state.selectedDate,
         lastFeedSide: state.lastFeedSide,
         savedVerses: state.savedVerses,
       }),
