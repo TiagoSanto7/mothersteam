@@ -1055,3 +1055,138 @@ Microinterações, animações, haptics, skeletons, tipografia, espaçamento.
 ## Visão final do designer
 
 > "Ele pode virar um **companheiro digital de maternidade**. Um aplicativo oferece ferramentas. Um companheiro acompanha, lembra, acolhe, antecipa necessidades e cria vínculo."
+
+---
+
+# Decisões fechadas — 2026-07-18 (resposta às 5 perguntas)
+
+## 1. O que é a Jornada?
+
+Não é scroll infinito. Não são telas separadas. É um **Segmented Control** com 3 seções:
+
+```
+❤️ Jornada
+[ Hoje | Planejamento | Evolução ]
+```
+
+**Hoje** — diário do dia
+```
+08:00  Mamou
+09:30  Dormiu
+11:00  Fralda
+13:00  Consulta
+```
+
+**Planejamento** — o que ainda vai acontecer
+```
+Consulta · Vacina · Vitamina · Exames · Calendário
+```
+
+**Evolução** — crescimento e desenvolvimento
+```
+Semana 28
+Desenvolvimento · Peso · Altura · Marcos · Fotos
+```
+
+Separação natural para qualquer mãe: o que aconteceu / o que vai acontecer / como estamos evoluindo.
+
+**O botão 🌸 central desaparece.** Ele só fazia sentido quando Bebê era uma entidade separada.
+
+---
+
+## 2. Para onde vão 🔔 💬 🔍?
+
+Cada tela fica apenas com o que faz sentido:
+
+| Tela | Controles |
+|---|---|
+| Hoje (Home) | ☰  nome  🔔 |
+| Jornada | nenhum |
+| Comunidade | título  🔍 |
+| Sara (quando aberta) | ← título ⋯ |
+| Perfil | ← título ⚙️ |
+
+90% dos ícones saem. Cada tela recebe apenas os controles relevantes para ela.
+
+---
+
+## 3. Avatar da Sara — Fase 1
+
+Não criar ilustração detalhada agora. A identidade vai amadurecer com o produto.
+
+**Fase 1:** avatar flat simples
+- Círculo terracotta
+- Cabelo minimalista
+- Sorriso discreto
+- Estilo ícone
+
+Reconhecível mesmo pequeno. Exclusivo, mas leve de produzir.
+
+---
+
+## 4. Mood Check — fluxo
+
+Nunca publica automaticamente. Fluxo:
+
+```
+Como você está hoje?
+[😴 Cansada]  [😊 Feliz]  [😥 Ansiosa]  [❤️ Grata]
+
+↓
+
+Sara entende.
+"Obrigada por compartilhar."
+
+↓
+
+Quer conversar?
+ou
+Quer compartilhar com outras mães?
+```
+
+A mãe escolhe sempre.
+
+**Adicional:** o mood alimenta a IA. Cinco dias seguidos de 😔 → Sara muda completamente o comportamento.
+
+---
+
+## 5. Home viva
+
+**Fase 1 — strings por horário (sem IA):**
+```
+07h  →  "Bom dia 🌷"
+11h  →  "Como está sendo sua manhã?"
+19h  →  "Como vocês passaram o dia?"
+23h  →  "Espero que consigam descansar esta noite."
+```
+
+**Fase 2 — Sara com contexto:**
+```
+"Ontem você comentou que a noite foi difícil. Como foi hoje?"
+"Parabéns. Hoje faz um mês desde o nascimento do bebê."
+"Vi que vocês têm consulta amanhã. Quer revisar perguntas para o pediatra?"
+```
+
+A IA não substitui a Home. Ela evolui a Home.
+
+---
+
+## Sara como serviço transversal
+
+Sara deixa de ser uma aba. Passa a ser uma presença.
+
+Ela aparece:
+- Hero card da Home ("Conversar com a Sara →")
+- FAB discreto nas telas principais (ocultável em contextos específicos, ex: durante escrita de post)
+- Espontaneamente em momentos importantes
+- Em qualquer busca, ajuda ou sugestão
+
+**Nova bottom bar — 4 abas:**
+
+```
+🏠 Hoje  ❤️ Jornada  👥 Comunidade  👤 Perfil
+```
+
+Sara não ocupa aba. A mãe não "vai falar com a Sara". A Sara está sempre com ela.
+
+> "Essa diferença é exatamente a transição de um chatbot para uma companheira digital."
