@@ -28,6 +28,7 @@ import { CommunityDetailScreen } from './components/comunidade/CommunityDetailSc
 import { PostDetailScreen } from './components/post/PostDetailScreen';
 import { SocialOnboardingScreen } from './components/onboarding/SocialOnboardingScreen'
 import { SavedVersesScreen } from './components/home/SavedVersesScreen'
+import { CreatePostScreen } from './components/comunidade/CreatePostScreen'
 import { useSSE } from './lib/useSSE';
 
 export default function App() {
@@ -38,6 +39,8 @@ export default function App() {
   const currentUserId  = useAppStore((s) => s.currentUserId);
   const setAccessToken          = useAppStore((s) => s.setAccessToken);
   const completeSocialOnboarding = useAppStore((s) => s.completeSocialOnboarding);
+  const pendingShareContent = useAppStore((s) => s.pendingShareContent)
+  const setPendingShareContent = useAppStore((s) => s.setPendingShareContent)
 
   useSSE();
 
@@ -258,6 +261,17 @@ export default function App() {
         <div className="fixed inset-0 z-50 sm:bg-black/40 sm:flex sm:items-center sm:justify-center">
           <div className="w-full h-full sm:w-[390px] sm:h-[844px] bg-gradient-to-b from-[#F5EDE0] via-[#EAD8C8] to-[#D9C4AF] sm:rounded-[44px] sm:shadow-2xl overflow-hidden">
             <SocialOnboardingScreen onDone={completeSocialOnboarding} />
+          </div>
+        </div>
+      )}
+
+      {pendingShareContent !== null && (
+        <div className="fixed inset-0 z-50 sm:bg-black/40 sm:flex sm:items-center sm:justify-center">
+          <div className="w-full h-full sm:w-[390px] sm:h-[844px] bg-gradient-to-b from-[#F5EDE0] via-[#EAD8C8] to-[#D9C4AF] sm:rounded-[44px] sm:shadow-2xl overflow-hidden">
+            <CreatePostScreen
+              onBack={() => setPendingShareContent(null)}
+              initialContent={pendingShareContent}
+            />
           </div>
         </div>
       )}
