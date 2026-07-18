@@ -188,4 +188,20 @@ describe('DashboardScreen — bloco Hoje', () => {
     const buttons = screen.getAllByRole('button', { name: /registrar mamada/i })
     expect(buttons.length).toBeGreaterThan(0)
   })
+
+  it('does not show mamada from yesterday feed entry', () => {
+    const yesterday = new Date(Date.now() - 24 * 60 * 60_000).toISOString().split('T')[0]
+    useAppStore.setState({
+      isLoggedIn: true,
+      motherName: 'Ana',
+      phase: { stage: 'postpartum', ageInDays: 60 },
+      selectedDate: new Date().toISOString().split('T')[0],
+    })
+    const yesterdayFeed: ApiBabyEntry = {
+      id: '2', time: '10:00', type: 'feed', detail: 'Esquerdo',
+      userId: 'u1', createdAt: `${yesterday}T10:00:00.000Z`,
+    }
+    render(<DashboardScreen />, { wrapper: makeWrapper([], [yesterdayFeed]) })
+    expect(screen.queryByText('Mamada')).toBeNull()
+  })
 })

@@ -150,8 +150,8 @@ export function DashboardScreen() {
             <p className="text-[12px] text-graphite-muted">Dia livre hoje 🌸</p>
           ) : (
             <div className="flex flex-col gap-2">
-              {timelineRows.map((row, i) => (
-                <div key={i} className="flex items-center gap-2">
+              {timelineRows.map((row) => (
+                <div key={`${row.type}-${row.time}`} className="flex items-center gap-2">
                   <span
                     className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${
                       row.done ? 'bg-graphite-muted/40' : 'bg-sara-gold'
