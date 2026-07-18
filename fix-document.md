@@ -887,3 +887,171 @@ Tela básica de catálogo de produtos com imagem, nome, preço e link. Sem carri
 | Shopping | MVP básico de vitrine | 🟡 Baixa prioridade |
 | AppHeader | Estático, duplica com header das telas | ⚠️ Concorrência visual |
 | SideDrawer | Funcional, estrutura simples | ✅ OK por ora |
+
+---
+
+# Revisão do designer — 2026-07-18 (resposta ao mapa completo)
+
+## Diagnóstico central
+
+> O Mother's Team ainda é composto por boas telas, mas ainda não funciona como um único organismo.
+
+O app hoje tem módulos. A mãe tem contexto. Ela pensa "meu bebê mamou", "estou preocupada", "tenho pediatra hoje" — não "vou abrir o módulo Bebê".
+
+A pergunta que deveria organizar tudo:
+
+> **Como vocês estão hoje?**
+
+---
+
+## Home — deveria parecer viva
+
+A Home precisa mudar ao longo do dia, não só ao abrir o app.
+
+```
+07:00 → "Bom dia 🌷  Dormiram bem?"
+12:00 → "Como está sendo a manhã?"
+18:00 → "Como vocês passaram o dia?"
+23:00 → "Hora de descansar."
+```
+
+---
+
+## Header — eliminar o header global
+
+O header do app compete com o header próprio de cada tela. Proposta: cada tela controla seu próprio topo, no modelo Airbnb.
+
+```
+Home         →  ☰  Bom dia Ana         🔔
+Comunidade   →  ←  Comunidade          🔍
+Sara         →  ←  Sara                ⋯
+Perfil       →  ←  Perfil              ⚙️
+```
+
+---
+
+## MãeIA — Sara precisa de identidade
+
+Hoje parece ChatGPT. Precisa de:
+- Avatar próprio (personagem, mesmo minimalista)
+- Chips de atalho **antes** da conversa, não embaixo do campo de texto
+
+```
+Bom dia Ana.
+Sobre o que vamos conversar hoje?
+
+[Amamentação]  [Cólica]  [Ansiedade]  [Sono]
+```
+
+Os chips desaparecem após a primeira mensagem.
+
+---
+
+## Bebê — responde uma pergunta, não descreve um módulo
+
+Renomear "Rotina do bebê" para responder:
+
+> **Como está seu bebê hoje?**
+
+A timeline vira o centro da tela:
+
+```
+08:30  Mamou
+09:20  Dormiu
+11:10  Fralda
+13:00  Mamou
+```
+
+---
+
+## Rotina — vira Planejamento
+
+A Home já assumiu o papel de "o que aconteceu hoje". A Rotina então se torna Planejamento: calendário, consultas, vacinas, compromissos futuros. Separação clara entre presente (Home) e futuro (Planejamento).
+
+---
+
+## Comunidade — precisa parecer viva antes de ser grande
+
+```
+Maria comentou no seu post.
+Juliana entrou na comunidade.
+52 mães falaram sobre cólica hoje.
+Tema em alta: Sono do bebê.
+```
+
+Novo componente de mood check logo acima do feed:
+
+```
+O que você está sentindo hoje?
+😴 Cansada   😊 Feliz   😥 Ansiosa   ❤️ Grata
+```
+
+Gera engajamento, dados e post — tudo ao mesmo tempo.
+
+---
+
+## Perfil — jornada, não Instagram
+
+```
+Sua jornada
+
+Desde: 15 de janeiro
+Hoje: 32 semanas
+
+Registros    248
+Momentos      93
+Comunidades    6
+```
+
+Mais emocional, menos rede social.
+
+---
+
+## Shopping — contextual, nunca direto
+
+Nunca mostrar, sempre sugerir. Sara sugere. Rotina sugere. Home sugere. O usuário nunca entra pensando "comprar".
+
+---
+
+## Bottom bar — proposta final
+
+**Atual:**
+```
+Home · MãeIA · 🌸 · Rotina · Comunidade
+```
+
+**Proposta:**
+```
+🏠 Hoje  ❤️ Jornada  🤖 Sara  👥 Comunidade  👤 Perfil
+```
+
+**Racional:**
+- "Hoje" comunica experiência; "Home" comunica conceito técnico
+- "Jornada" engloba bebê + rotina + evolução sem forçar a usuária a escolher entre áreas artificiais
+- "Sara" eleva a IA a pilar do produto, não chat escondido
+- "Perfil" sai do drawer e entra na barra — é área de uso frequente
+
+---
+
+## Épicos de produto (ordem de prioridade)
+
+**Épico 1 — Unificar a navegação**
+Eliminar header global, padronizar header por tela, revisar bottom bar.
+
+**Épico 2 — Dar vida à Sara**
+Avatar, presença em múltiplos fluxos, mensagens contextuais, memória.
+
+**Épico 3 — Jornada como linha do tempo**
+Gravidez, desenvolvimento, registros, marcos, fotos, crescimento.
+
+**Épico 4 — Comunidade parecer viva**
+Atividade recente, tendências, estados vazios acolhedores, recomendações.
+
+**Épico 5 — Polimento**
+Microinterações, animações, haptics, skeletons, tipografia, espaçamento.
+
+---
+
+## Visão final do designer
+
+> "Ele pode virar um **companheiro digital de maternidade**. Um aplicativo oferece ferramentas. Um companheiro acompanha, lembra, acolhe, antecipa necessidades e cria vínculo."
