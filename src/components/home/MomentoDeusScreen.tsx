@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useAppStore } from '../../store/useAppStore'
 import { getMomentoDoDia, getMoodPeriod, MOOD_CONFIG } from '../../data/momentoDeus'
+import { SavedVersesScreen } from './SavedVersesScreen'
 
 interface Props { open: boolean; onClose: () => void }
 
@@ -10,6 +11,7 @@ export function MomentoDeusScreen({ open, onClose }: Props) {
   const mood = useMemo(() => getMoodPeriod(), [])
   const config = MOOD_CONFIG[mood]
   const [showPrayer, setShowPrayer] = useState(false)
+  const [savedOpen, setSavedOpen] = useState(false)
 
   const savedVerses = useAppStore((s) => s.savedVerses)
   const saveVerse = useAppStore((s) => s.saveVerse)
@@ -26,6 +28,7 @@ export function MomentoDeusScreen({ open, onClose }: Props) {
   }
 
   return (
+  <>
     <AnimatePresence>
       {open && (
         <motion.div
@@ -113,9 +116,18 @@ export function MomentoDeusScreen({ open, onClose }: Props) {
             >
               📤 Compartilhar
             </button>
+            <button
+              onClick={() => setSavedOpen(true)}
+              aria-label="Ver versículos salvos"
+              className="flex-1 py-3 rounded-2xl bg-white/10 text-white text-sm font-semibold flex items-center justify-center gap-1.5"
+            >
+              📖 Salvos
+            </button>
           </div>
         </motion.div>
       )}
     </AnimatePresence>
+    <SavedVersesScreen open={open && savedOpen} onClose={() => setSavedOpen(false)} />
+  </>
   )
 }
