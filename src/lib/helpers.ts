@@ -88,11 +88,33 @@ export function relativeTime(iso: string): string {
   return `${Math.floor(h / 24)}d`
 }
 
-export function buildPhase(user: Pick<ApiUser, 'pregnancyStage' | 'pregnancyWeek' | 'babyAgeInDays'>): PregnancyPhase {
+export function buildPhase(
+  user: Pick<ApiUser, 'pregnancyStage' | 'pregnancyWeek' | 'babyAgeInDays' | 'babyBirthDate' | 'expectedBirthDate'>,
+): PregnancyPhase {
   if (user.pregnancyStage === 'pregnant') {
+    if (user.expectedBirthDate) {
+      const msUntilBirth = new Date(user.expectedBirthDate).getTime() - Date.now()
+      const daysUntilBirth = Math.ceil(msUntilBirth / (1000 * 60 * 60 * 24))
+      const week = Math.max(1, Math.min(42, 40 - Math.round(daysUntilBirth / 7)))
+      return { stage: 'pregnant', week }
+    }
     return { stage: 'pregnant', week: user.pregnancyWeek ?? 28 }
   }
+  if (user.babyBirthDate) {
+    const ageInDays = Math.max(0, Math.floor((Date.now() - new Date(user.babyBirthDate).getTime()) / (1000 * 60 * 60 * 24)))
+    return { stage: 'postpartum', ageInDays }
+  }
   return { stage: 'postpartum', ageInDays: user.babyAgeInDays ?? 0 }
+}
+
+export function calcMotherAge(motherBirthDate?: string | null): number | undefined {
+  if (!motherBirthDate) return undefined
+  const born = new Date(motherBirthDate)
+  const today = new Date()
+  let age = today.getFullYear() - born.getFullYear()
+  const m = today.getMonth() - born.getMonth()
+  if (m < 0 || (m === 0 && today.getDate() < born.getDate())) age--
+  return age
 }
 
 export function apiPostToCommunityPost(post: ApiPost): CommunityPost {
@@ -146,4 +168,17 @@ export function apiChatToChat(c: ApiChat, currentUserId: string): Chat {
     unread: lastMsg && lastMsg.senderId !== currentUserId && !lastMsg.read ? 1 : 0,
     messages: [],
   }
+}
+
+export function getContextualPhrase(phase: PregnancyPhase): string {
+  if (phase.stage === 'pregnant') {
+    if (phase.week <= 13) return 'Primeiro trimestre — cada dia é uma descoberta. ✨'
+    if (phase.week <= 27) return 'Você está no meio do caminho. Seu bebê está crescendo! 💛'
+    if (phase.week <= 36) return 'Reta final chegando. Você está indo muito bem. 🌷'
+    if (phase.week <= 40) return 'A hora está chegando. Respira — você foi feita para isso. ❤️'
+    return 'Seu bebê está prestes a chegar. Coragem! 🌸'
+  }
+  if (phase.ageInDays <= 30) return 'Você está fazendo lindo, mesmo exausta. Isso é amor. 💪'
+  if (phase.ageInDays <= 180) return 'Seu bebê está descobrindo o mundo com você. 🌟'
+  return 'Olha até onde vocês chegaram juntos. ☀️'
 }
