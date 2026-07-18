@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { useAppStore } from '../../store/useAppStore'
 import { getMomentoDoDia, getMoodPeriod, MOOD_CONFIG } from '../../data/momentoDeus'
 import { SavedVersesScreen } from './SavedVersesScreen'
+import { ShareMomentoSheet } from './ShareMomentoSheet'
 
 interface Props { open: boolean; onClose: () => void }
 
@@ -12,20 +13,13 @@ export function MomentoDeusScreen({ open, onClose }: Props) {
   const config = MOOD_CONFIG[mood]
   const [showPrayer, setShowPrayer] = useState(false)
   const [savedOpen, setSavedOpen] = useState(false)
+  const [shareOpen, setShareOpen] = useState(false)
 
   const savedVerses = useAppStore((s) => s.savedVerses)
   const saveVerse = useAppStore((s) => s.saveVerse)
   const unsaveVerse = useAppStore((s) => s.unsaveVerse)
+  const setPendingShareContent = useAppStore((s) => s.setPendingShareContent)
   const isSaved = savedVerses.includes(momento.referencia)
-
-  function handleShare() {
-    const text = `"${momento.verso}" — ${momento.referencia}`
-    if (navigator.share) {
-      navigator.share({ text }).catch(() => {})
-    } else {
-      navigator.clipboard.writeText(text).catch(() => {})
-    }
-  }
 
   return (
   <>
@@ -110,7 +104,7 @@ export function MomentoDeusScreen({ open, onClose }: Props) {
               ❤️ {isSaved ? 'Salvo' : 'Salvar'}
             </button>
             <button
-              onClick={handleShare}
+              onClick={() => setShareOpen(true)}
               aria-label="Compartilhar versículo"
               className="flex-1 py-3 rounded-2xl bg-white/10 text-white text-sm font-semibold flex items-center justify-center gap-1.5"
             >
@@ -128,6 +122,23 @@ export function MomentoDeusScreen({ open, onClose }: Props) {
       )}
     </AnimatePresence>
     <SavedVersesScreen open={open && savedOpen} onClose={() => setSavedOpen(false)} />
+    <ShareMomentoSheet
+      open={shareOpen}
+      onClose={() => setShareOpen(false)}
+      verso={momento.verso}
+      referencia={momento.referencia}
+      oracao={momento.oracao}
+      onShareToFeed={(content) => {
+        setShareOpen(false)
+        onClose()
+        setPendingShareContent(content)
+      }}
+      onShareToCommunity={(content) => {
+        setShareOpen(false)
+        onClose()
+        setPendingShareContent(content)
+      }}
+    />
   </>
   )
 }

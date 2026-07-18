@@ -19,3 +19,11 @@ describe('MomentoDeusScreen — salvos button', () => {
     expect(screen.getByRole('dialog', { name: /versículos salvos/i })).toBeTruthy()
   })
 })
+
+describe('MomentoDeusScreen — compartilhar', () => {
+  it('opens ShareMomentoSheet when "Compartilhar" button is tapped', () => {
+    render(<MomentoDeusScreen open onClose={vi.fn()} />)
+    fireEvent.click(screen.getByRole('button', { name: /compartilhar versículo/i }))
+    expect(screen.getByRole('button', { name: /publicar no feed/i })).toBeTruthy()
+  })
+})
