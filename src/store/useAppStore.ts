@@ -23,6 +23,8 @@ interface AppState {
   selectedDate: string;
   lastFeedSide: 'left' | 'right';
   savedVerses: string[];
+  // UI — NOT persisted
+  pendingShareContent: string | null;
   // Auth actions
   setAccessToken: (token: string) => void;
   setAuth: (token: string, user: ApiUser) => void;
@@ -38,6 +40,7 @@ interface AppState {
   setFeedSide: (side: 'left' | 'right') => void;
   saveVerse: (ref: string) => void;
   unsaveVerse: (ref: string) => void;
+  setPendingShareContent: (content: string | null) => void;
 }
 
 const safeLocalStorage = {
@@ -72,6 +75,7 @@ export const useAppStore = create<AppState>()(
       selectedDate: new Date().toISOString().split('T')[0],
       lastFeedSide: 'left',
       savedVerses: [],
+      pendingShareContent: null,
       // Auth actions
       setAccessToken: (token) => set({ accessToken: token }),
       setAuth: (token, user) =>
@@ -102,6 +106,7 @@ export const useAppStore = create<AppState>()(
       setFeedSide: (side) => set({ lastFeedSide: side }),
       saveVerse: (ref) => set((s) => ({ savedVerses: s.savedVerses.includes(ref) ? s.savedVerses : [...s.savedVerses, ref] })),
       unsaveVerse: (ref) => set((s) => ({ savedVerses: s.savedVerses.filter((r) => r !== ref) })),
+      setPendingShareContent: (content) => set({ pendingShareContent: content }),
     }),
     {
       name: 'mothers-team-v3',
