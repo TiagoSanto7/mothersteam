@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { Home, MessageCircle, Calendar, ShoppingBag } from 'lucide-react';
+import { Home, MessageCircle, Calendar, Users } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { useAppStore } from '../../store/useAppStore';
 import { getEvolutionEmoji } from '../../utils/pregnancyUtils';
@@ -65,8 +65,8 @@ export function BottomTabBar() {
         <Calendar size={22} strokeWidth={1.8} />
       </TabBtn>
 
-      <TabBtn id="shopping" label="Shopping" active={activeTab === 'shopping'} onClick={() => setActiveTab('shopping')}>
-        <ShoppingBag size={22} strokeWidth={1.8} />
+      <TabBtn id="comunidade" label="Comunidade" active={activeTab === 'comunidade'} onClick={() => setActiveTab('comunidade')}>
+        <Users size={22} strokeWidth={1.8} />
       </TabBtn>
     </nav>
   );

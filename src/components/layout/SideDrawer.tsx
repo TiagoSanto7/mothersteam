@@ -1,4 +1,4 @@
-import { X, User, Settings, LogOut, BookOpen } from 'lucide-react';
+import { X, User, Settings, LogOut, BookOpen, ShoppingBag } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAppStore } from '../../store/useAppStore';
 import { apiFetch } from '../../lib/api';
@@ -14,6 +14,7 @@ interface SideDrawerProps {
 export function SideDrawer({ isOpen, onClose, onOpenProfile, onOpenSettings, onOpenSavedVerses }: SideDrawerProps) {
   const motherName = useAppStore((s) => s.motherName);
   const clearAuth = useAppStore((s) => s.clearAuth);
+  const setActiveTab = useAppStore((s) => s.setActiveTab);
 
   const initial = (motherName || 'M').charAt(0).toUpperCase();
 
@@ -91,6 +92,14 @@ export function SideDrawer({ isOpen, onClose, onOpenProfile, onOpenSettings, onO
               >
                 <BookOpen size={20} strokeWidth={1.8} />
                 <span className="text-sm font-medium">Meus versículos</span>
+              </button>
+              <button
+                onClick={() => handleItem(() => setActiveTab('shopping'))}
+                aria-label="Shopping"
+                className="w-full flex items-center gap-3 px-3 py-3.5 rounded-xl text-graphite hover:bg-white/50 active:bg-white/70 transition-colors"
+              >
+                <ShoppingBag size={20} strokeWidth={1.8} />
+                <span className="text-sm font-medium">Shopping</span>
               </button>
             </nav>
 

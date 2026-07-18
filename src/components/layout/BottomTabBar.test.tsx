@@ -8,18 +8,20 @@ beforeEach(() => {
 });
 
 describe('BottomTabBar', () => {
-  it('renders 5 navigation items including Rotina', () => {
+  it('renders 5 navigation items with Comunidade (not Shopping)', () => {
     render(<BottomTabBar />);
     expect(screen.getByTestId('tab-home')).toBeInTheDocument();
     expect(screen.getByTestId('tab-maeIA')).toBeInTheDocument();
     expect(screen.getByTestId('baby-central-button')).toBeInTheDocument();
     expect(screen.getByTestId('tab-rotina')).toBeInTheDocument();
-    expect(screen.getByTestId('tab-shopping')).toBeInTheDocument();
+    expect(screen.getByTestId('tab-comunidade')).toBeInTheDocument();
+    expect(screen.queryByTestId('tab-shopping')).not.toBeInTheDocument();
   });
 
-  it('does not render Comunidade tab', () => {
+  it('activates comunidade tab when clicked', () => {
     render(<BottomTabBar />);
-    expect(screen.queryByTestId('tab-comunidade')).not.toBeInTheDocument();
+    fireEvent.click(screen.getByTestId('tab-comunidade'));
+    expect(useAppStore.getState().activeTab).toBe('comunidade');
   });
 
   it('activates Rotina tab when clicked', () => {
