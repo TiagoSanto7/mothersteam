@@ -105,4 +105,21 @@ describe('CreatePostScreen', () => {
     await act(async () => { fireEvent.change(input, { target: { files: [new File(['img'], 'photo.png', { type: 'image/png' })] } }); });
     expect(screen.getAllByRole('button', { name: /publicar/i })[0]).not.toBeDisabled();
   });
+
+  describe('initialContent', () => {
+    it('pre-fills the textarea when initialContent is provided', () => {
+      render(
+        <CreatePostScreen onBack={vi.fn()} initialContent='"Verso" — Referência' />,
+        { wrapper }
+      );
+      const textarea = screen.getByRole('textbox');
+      expect((textarea as HTMLTextAreaElement).value).toBe('"Verso" — Referência');
+    });
+
+    it('starts with empty textarea when initialContent is not provided', () => {
+      render(<CreatePostScreen onBack={vi.fn()} />, { wrapper });
+      const textarea = screen.getByRole('textbox');
+      expect((textarea as HTMLTextAreaElement).value).toBe('');
+    });
+  });
 });

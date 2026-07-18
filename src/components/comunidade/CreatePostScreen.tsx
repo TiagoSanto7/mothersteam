@@ -19,11 +19,12 @@ interface CreatePostScreenProps {
   onBack: () => void;
   autoOpenImage?: boolean;
   initialCommunityId?: string;
+  initialContent?: string;
 }
 
-export function CreatePostScreen({ onBack, autoOpenImage, initialCommunityId }: CreatePostScreenProps) {
+export function CreatePostScreen({ onBack, autoOpenImage, initialCommunityId, initialContent }: CreatePostScreenProps) {
   const accessToken = useAppStore((s) => s.accessToken);
-  const [content, setContent] = useState('');
+  const [content, setContent] = useState(initialContent ?? '');
   const [category, setCategory] = useState<PostCategory>('saúde mental');
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreviewUrl, setImagePreviewUrl] = useState<string | null>(null);
