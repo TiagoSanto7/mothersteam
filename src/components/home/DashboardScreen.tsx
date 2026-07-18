@@ -69,14 +69,38 @@ export function DashboardScreen() {
     return getMensagemParaFase(phase.stage, semanaOuDias)
   }, [phase])
 
-  const nextAppointment = useMemo(() => {
-    if (!routineItems) return null
-    const now = new Date()
-    const nowTime = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`
-    return routineItems.find((r) => !r.done && r.time >= nowTime) ?? null
-  }, [routineItems])
-  const lastFeed = babyEntries?.find((e) => e.type === 'feed') ?? null
   const initial = (motherName || 'M').charAt(0).toUpperCase()
+
+  const todayStr = selectedDate
+
+  const timelineRows = useMemo(() => {
+    const routineRows = (routineItems ?? []).map((r) => ({
+      time: r.time,
+      label: r.title,
+      done: r.done,
+      type: 'rotina' as const,
+    }))
+
+    const lastFeedToday = babyEntries?.find(
+      (e) => e.type === 'feed' && e.createdAt.startsWith(todayStr)
+    ) ?? null
+
+    const feedRow = lastFeedToday
+      ? {
+          time: (() => {
+            const d = new Date(lastFeedToday.createdAt)
+            return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`
+          })(),
+          label: 'Mamada',
+          done: true,
+          type: 'feed' as const,
+        }
+      : null
+
+    return [...routineRows, ...(feedRow ? [feedRow] : [])].sort((a, b) =>
+      a.time.localeCompare(b.time)
+    )
+  }, [routineItems, babyEntries, todayStr])
 
   return (
     <>
@@ -116,45 +140,45 @@ export function DashboardScreen() {
           </button>
         </div>
 
-        {/* Row: next appointment + last feed */}
-        <div className="flex gap-2 px-4">
-          <div className="flex-1 bg-white rounded-2xl p-3.5 shadow-sm">
-            <p className="text-[9px] font-bold text-graphite-muted uppercase tracking-wide mb-1">
-              Próximo
-            </p>
-            {nextAppointment ? (
-              <>
-                <p className="text-[13px] font-semibold text-graphite leading-tight">
-                  {nextAppointment.title}
-                </p>
-                <p className="text-[11px] text-graphite-muted mt-0.5">
-                  Hoje · {nextAppointment.time}
-                </p>
-              </>
-            ) : (
-              <p className="text-[12px] text-graphite-muted">Nenhum compromisso hoje</p>
-            )}
-          </div>
+        {/* Bloco Hoje */}
+        <div className="mx-4 bg-white rounded-2xl p-3.5 shadow-sm">
+          <p className="text-[9px] font-bold text-graphite-muted uppercase tracking-wide mb-2">
+            Hoje
+          </p>
 
-          <div className="flex-1 bg-white rounded-2xl p-3.5 shadow-sm">
-            <p className="text-[9px] font-bold text-graphite-muted uppercase tracking-wide mb-1">
-              Última mamada
-            </p>
-            {lastFeed ? (
-              <p className="text-[13px] font-semibold text-graphite">
-                {relativeTimeFeed(lastFeed.createdAt)}
-              </p>
-            ) : (
-              <p className="text-[12px] text-graphite-muted">Nenhum registro ainda</p>
-            )}
-            <button
-              onClick={() => setSheetOpen(true)}
-              aria-label="Registrar mamada"
-              className="mt-1.5 inline-block bg-sara-gold text-white rounded-xl text-[10px] font-semibold px-2.5 py-1"
-            >
-              Registrar
-            </button>
-          </div>
+          {timelineRows.length === 0 ? (
+            <p className="text-[12px] text-graphite-muted">Dia livre hoje 🌸</p>
+          ) : (
+            <div className="flex flex-col gap-2">
+              {timelineRows.map((row, i) => (
+                <div key={i} className="flex items-center gap-2">
+                  <span
+                    className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${
+                      row.done ? 'bg-graphite-muted/40' : 'bg-sara-gold'
+                    }`}
+                  />
+                  <span className="text-[11px] text-graphite-muted w-9 flex-shrink-0">
+                    {row.time}
+                  </span>
+                  <span
+                    className={`text-[12px] font-medium ${
+                      row.done && row.type === 'rotina' ? 'line-through text-graphite-muted' : 'text-graphite'
+                    }`}
+                  >
+                    {row.label}
+                  </span>
+                </div>
+              ))}
+            </div>
+          )}
+
+          <button
+            onClick={() => setSheetOpen(true)}
+            aria-label="Registrar mamada"
+            className="mt-2.5 inline-block bg-sara-gold text-white rounded-xl text-[10px] font-semibold px-2.5 py-1"
+          >
+            + Registrar mamada
+          </button>
         </div>
 
         {/* Community card */}

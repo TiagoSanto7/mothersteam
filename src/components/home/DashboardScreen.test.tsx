@@ -99,26 +99,6 @@ describe('DashboardScreen', () => {
     expect(screen.getByText(/Sara diz/i)).toBeInTheDocument()
   })
 
-  it('shows empty state when no routine items', () => {
-    render(<DashboardScreen />, { wrapper: makeWrapper([]) })
-    expect(screen.getByText('Nenhum compromisso hoje')).toBeInTheDocument()
-  })
-
-  it('shows next appointment title when available', () => {
-    render(<DashboardScreen />, { wrapper: makeWrapper([ROUTINE_ENTRY]) })
-    expect(screen.getByText('Pediatra')).toBeInTheDocument()
-  })
-
-  it('shows empty state when no feed entries', () => {
-    render(<DashboardScreen />, { wrapper: makeWrapper([], []) })
-    expect(screen.getByText('Nenhum registro ainda')).toBeInTheDocument()
-  })
-
-  it('shows relative time when last feed entry exists', () => {
-    render(<DashboardScreen />, { wrapper: makeWrapper([], [FEED_ENTRY]) })
-    expect(screen.getByText('há 1h20')).toBeInTheDocument()
-  })
-
   it('opens QuickRegisterSheet when Registrar button is clicked', () => {
     render(<DashboardScreen />, { wrapper: makeWrapper() })
     fireEvent.click(screen.getByRole('button', { name: 'Registrar mamada' }))
@@ -168,5 +148,44 @@ describe('DashboardScreen — Sara hero CTA', () => {
     render(<DashboardScreen />, { wrapper: makeWrapper() })
     fireEvent.click(screen.getByRole('button', { name: /conversar com a sara/i }))
     expect(useAppStore.getState().activeTab).toBe('maeIA')
+  })
+})
+
+describe('DashboardScreen — bloco Hoje', () => {
+  it('renders "Hoje" section heading', () => {
+    useAppStore.setState({ isLoggedIn: true, motherName: 'Ana', phase: { stage: 'pregnant', week: 28 } })
+    render(<DashboardScreen />, { wrapper: makeWrapper() })
+    expect(screen.getByText('Hoje')).toBeTruthy()
+  })
+
+  it('shows "Dia livre hoje" when no routine items and no feed', () => {
+    useAppStore.setState({ isLoggedIn: true, motherName: 'Ana', phase: { stage: 'pregnant', week: 28 } })
+    render(<DashboardScreen />, { wrapper: makeWrapper([], []) })
+    expect(screen.getByText(/dia livre hoje/i)).toBeTruthy()
+  })
+
+  it('shows routine item in timeline', () => {
+    useAppStore.setState({ isLoggedIn: true, motherName: 'Ana', phase: { stage: 'pregnant', week: 28 } })
+    render(<DashboardScreen />, { wrapper: makeWrapper([ROUTINE_ENTRY], []) })
+    expect(screen.getByText('Pediatra')).toBeTruthy()
+    expect(screen.getByText('23:59')).toBeTruthy()
+  })
+
+  it('shows mamada in timeline from today feed entry', () => {
+    useAppStore.setState({
+      isLoggedIn: true,
+      motherName: 'Ana',
+      phase: { stage: 'postpartum', ageInDays: 60 },
+      selectedDate: new Date().toISOString().split('T')[0],
+    })
+    render(<DashboardScreen />, { wrapper: makeWrapper([], [FEED_ENTRY]) })
+    expect(screen.getByText('Mamada')).toBeTruthy()
+  })
+
+  it('shows "Registrar mamada" button', () => {
+    useAppStore.setState({ isLoggedIn: true, motherName: 'Ana', phase: { stage: 'postpartum', ageInDays: 60 } })
+    render(<DashboardScreen />, { wrapper: makeWrapper() })
+    const buttons = screen.getAllByRole('button', { name: /registrar mamada/i })
+    expect(buttons.length).toBeGreaterThan(0)
   })
 })
