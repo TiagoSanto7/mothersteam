@@ -5,7 +5,7 @@ export interface MomentoDeusEntry {
   oracao: string
 }
 
-const MOMENTOS: MomentoDeusEntry[] = [
+export const MOMENTOS: MomentoDeusEntry[] = [
   {
     verso: 'Venham a mim, todos os que estão cansados e sobrecarregados, e eu lhes darei descanso.',
     referencia: 'Mateus 11:28',
@@ -91,6 +91,10 @@ const MOMENTOS: MomentoDeusEntry[] = [
     oracao: 'Assim como eu consolo meu filho, Senhor, vem me consolar. Preciso do Teu colo hoje.',
   },
 ]
+
+export function findMomentoByRef(ref: string): MomentoDeusEntry | undefined {
+  return MOMENTOS.find((m) => m.referencia === ref)
+}
 
 function getDayOfYear(): number {
   const now = new Date()
