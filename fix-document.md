@@ -1190,3 +1190,127 @@ Ela aparece:
 Sara não ocupa aba. A mãe não "vai falar com a Sara". A Sara está sempre com ela.
 
 > "Essa diferença é exatamente a transição de um chatbot para uma companheira digital."
+
+---
+
+# Arquitetura definitiva — 2026-07-18
+
+## Navegação final
+
+**Bottom bar — 4 abas:**
+```
+🏠 Hoje  ❤️ Jornada  👥 Comunidade  👤 Perfil
+```
+
+**SideDrawer — centro da conta (não mais menu):**
+```
+👤 Ana · 32 semanas
+─────────────────────
+⚙️  Configurações
+📖  Meus versículos
+🛍️  Recomendações
+❓  Ajuda
+─────────────────────
+    Sair
+```
+
+**Shopping** → renomeado para "Recomendações" ou "Seleções da Sara". Muda completamente a percepção.
+
+---
+
+## FAB por tela (só um por tela, sempre)
+
+| Tela | FAB |
+|---|---|
+| Hoje | 🤖 Sara |
+| Jornada | ➕ Registrar |
+| Comunidade | ✏️ Criar post |
+| Perfil | nenhum |
+
+---
+
+## Distinção Home vs Jornada/Hoje
+
+**Home** responde: *"O que merece minha atenção AGORA?"*
+```
+Consulta · 14:00
+Última mamada · há 2 horas  [Registrar]
+Próximo lembrete · Vitamina
+```
+Resumo executivo. Olha para frente.
+
+**Jornada/Hoje** responde: *"Como foi o nosso dia?"*
+```
+08:00  Mamou
+09:30  Dormiu
+10:15  Fralda
+13:00  Consulta
+15:00  Mamou
+```
+Histórico completo. Olha para trás e para o contexto.
+
+---
+
+## Chat privado → dentro da Comunidade
+
+```
+Comunidade
+[ Feed | Comunidades | Mensagens ]
+```
+
+A aba "Mensagens" aparece só quando há histórico. Sem histórico, fica como botão discreto no header.
+
+---
+
+## Estrutura interna de cada aba
+
+**Hoje**
+- Dashboard
+- Sara (hero card + FAB)
+- Momento com Deus
+- Resumo do dia
+- Recomendações
+
+**Jornada** — Segmented Control
+- Hoje (timeline completa)
+- Planejamento (consultas, vacinas, lembretes futuros)
+- Evolução (desenvolvimento, peso, altura, marcos, fotos)
+
+**Comunidade** — Segmented Control
+- Feed
+- Comunidades
+- Mensagens
+
+**Perfil**
+- Bio
+- Progresso
+- Conquistas
+- Posts
+- Dados pessoais
+
+---
+
+## Sara como camada do sistema
+
+Ela não é um destino. É uma presença.
+
+Aparece contextualmente em várias telas com frases curtas:
+
+```
+━━━━━━━━━━━━━━━━━━━━━━
+🤖 Sara
+Você parece ter tido um dia cheio.
+Posso ajudar?
+━━━━━━━━━━━━━━━━━━━━━━
+```
+
+Entra. Fala uma frase. Desaparece.
+
+```
+✨ Sara
+Parabéns! Hoje vocês completam 100 registros.
+```
+
+> **"A mãe nunca deveria precisar procurar a Sara. A Sara é que deve encontrar a mãe nos momentos certos."**
+
+Essa é a identidade do produto.
