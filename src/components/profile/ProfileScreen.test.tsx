@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, fireEvent } from '@testing-library/react';
 import { describe, expect, it, beforeEach, vi } from 'vitest';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ProfileScreen } from './ProfileScreen';
@@ -20,6 +20,7 @@ beforeEach(() => {
   useAppStore.setState({
     isLoggedIn: true, motherName: 'Mariana',
     phase: { stage: 'pregnant', week: 28 }, motherProfile: null,
+    savedVerses: [],
   });
   mockApiFetch.mockResolvedValue(EMPTY_POSTS);
 });
@@ -40,5 +41,26 @@ describe('ProfileScreen', () => {
     wrap(<ProfileScreen onClose={vi.fn()} />);
     expect(screen.queryByRole('button', { name: /^seguir$/i })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /mensagem/i })).not.toBeInTheDocument();
+  });
+
+  describe('Versículos salvos row', () => {
+    it('does not show button when savedVerses is empty', () => {
+      useAppStore.setState({ savedVerses: [] });
+      wrap(<ProfileScreen onClose={vi.fn()} />);
+      expect(screen.queryByRole('button', { name: /ver versículos salvos/i })).not.toBeInTheDocument();
+    });
+
+    it('shows button when savedVerses has items', () => {
+      useAppStore.setState({ savedVerses: ['Sl 23:1'] });
+      wrap(<ProfileScreen onClose={vi.fn()} />);
+      expect(screen.getByRole('button', { name: /ver versículos salvos/i })).toBeInTheDocument();
+    });
+
+    it('opens SavedVersesScreen dialog when button is clicked', () => {
+      useAppStore.setState({ savedVerses: ['Sl 23:1'] });
+      wrap(<ProfileScreen onClose={vi.fn()} />);
+      fireEvent.click(screen.getByRole('button', { name: /ver versículos salvos/i }));
+      expect(screen.getByRole('dialog', { name: /versículos salvos/i })).toBeInTheDocument();
+    });
   });
 });

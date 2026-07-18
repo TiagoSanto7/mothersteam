@@ -11,6 +11,7 @@ import { apiFetch } from '../../lib/api';
 import { apiPostToCommunityPost } from '../../lib/helpers';
 import type { PaginatedResult, ApiPost } from '../../lib/types';
 import type { CommunityPost } from '../../types';
+import { SavedVersesScreen } from '../home/SavedVersesScreen';
 
 interface ProfileScreenProps {
   onClose: () => void;
@@ -21,6 +22,7 @@ export function ProfileScreen({ onClose }: ProfileScreenProps) {
   const motherProfile = useAppStore((s) => s.motherProfile);
   const isLoggedIn = useAppStore((s) => s.isLoggedIn);
   const currentUserId = useAppStore((s) => s.currentUserId);
+  const savedVerses = useAppStore((s) => s.savedVerses);
 
   const { data } = useQuery({
     queryKey: ['userPosts', currentUserId],
@@ -34,6 +36,7 @@ export function ProfileScreen({ onClose }: ProfileScreenProps) {
   const [showEdit, setShowEdit] = useState(false);
   const [selectedPost, setSelectedPost] = useState<CommunityPost | null>(null);
   const [followList, setFollowList] = useState<'followers' | 'following' | null>(null);
+  const [showSavedVerses, setShowSavedVerses] = useState(false);
 
   const archetype = motherProfile ? ARCHETYPES[motherProfile.archetypeKey] : null;
   const avatarColor = archetype?.color ?? '#9D8FCC';
@@ -136,6 +139,21 @@ export function ProfileScreen({ onClose }: ProfileScreenProps) {
             Editar perfil
           </button>
         </div>
+
+        {savedVerses.length > 0 && (
+          <button
+            onClick={() => setShowSavedVerses(true)}
+            aria-label="Ver versículos salvos"
+            className="w-full flex items-center justify-between mt-2 px-1 py-2 rounded-xl active:bg-sara-linen transition-colors"
+          >
+            <span className="text-[12px] font-semibold text-graphite flex items-center gap-2">
+              📖 Versículos salvos
+            </span>
+            <span className="text-[11px] text-sara-gold font-semibold">
+              {savedVerses.length} →
+            </span>
+          </button>
+        )}
       </div>
 
       <div className="border-t border-gray-100 flex-shrink-0" />
@@ -181,6 +199,8 @@ export function ProfileScreen({ onClose }: ProfileScreenProps) {
           </ul>
         )}
       </div>
+
+      <SavedVersesScreen open={showSavedVerses} onClose={() => setShowSavedVerses(false)} />
     </div>
   );
 }
