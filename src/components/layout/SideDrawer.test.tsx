@@ -34,6 +34,7 @@ const defaultProps = {
   onClose: vi.fn(),
   onOpenProfile: vi.fn(),
   onOpenSettings: vi.fn(),
+  onOpenSavedVerses: vi.fn(),
 };
 
 describe('SideDrawer', () => {
@@ -104,5 +105,24 @@ describe('SideDrawer', () => {
     render(<SideDrawer {...defaultProps} onClose={onClose} />, { wrapper });
     fireEvent.click(screen.getByRole('button', { name: /sair da conta/i }));
     expect(onClose).toHaveBeenCalledOnce();
+  });
+});
+
+describe('SideDrawer — meus versículos', () => {
+  it('renders the "Meus versículos" button', () => {
+    render(<SideDrawer {...defaultProps} />, { wrapper });
+    expect(screen.getByRole('button', { name: /meus versículos/i })).toBeTruthy();
+  });
+
+  it('calls onOpenSavedVerses and closes when button is tapped', () => {
+    const onClose = vi.fn();
+    const onOpenSavedVerses = vi.fn();
+    render(
+      <SideDrawer {...defaultProps} onClose={onClose} onOpenSavedVerses={onOpenSavedVerses} />,
+      { wrapper }
+    );
+    fireEvent.click(screen.getByRole('button', { name: /meus versículos/i }));
+    expect(onOpenSavedVerses).toHaveBeenCalled();
+    expect(onClose).toHaveBeenCalled();
   });
 });

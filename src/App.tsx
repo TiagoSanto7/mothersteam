@@ -27,6 +27,7 @@ import { UserProfileScreen } from './components/profile/UserProfileScreen';
 import { CommunityDetailScreen } from './components/comunidade/CommunityDetailScreen';
 import { PostDetailScreen } from './components/post/PostDetailScreen';
 import { SocialOnboardingScreen } from './components/onboarding/SocialOnboardingScreen'
+import { SavedVersesScreen } from './components/home/SavedVersesScreen'
 import { useSSE } from './lib/useSSE';
 
 export default function App() {
@@ -44,6 +45,7 @@ export default function App() {
   const [drawerOpen,        setDrawerOpen]        = useState(false);
   const [showProfile,       setShowProfile]       = useState(false);
   const [showSettings,      setShowSettings]      = useState(false);
+  const [showSavedVerses,   setShowSavedVerses]   = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
   const [showChat,          setShowChat]          = useState(false);
   const [showSearch,        setShowSearch]        = useState(false);
@@ -159,6 +161,7 @@ export default function App() {
         onCloseDrawer={() => setDrawerOpen(false)}
         onOpenProfile={() => setShowProfile(true)}
         onOpenSettings={() => setShowSettings(true)}
+        onOpenSavedVerses={() => setShowSavedVerses(true)}
         headerRightSlot={headerRightSlot}
       >
         {screens[activeTab]}
@@ -258,6 +261,8 @@ export default function App() {
           </div>
         </div>
       )}
+
+      <SavedVersesScreen open={showSavedVerses} onClose={() => setShowSavedVerses(false)} />
     </>
   );
 }

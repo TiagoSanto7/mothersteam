@@ -1,4 +1,4 @@
-import { X, User, Settings, LogOut } from 'lucide-react';
+import { X, User, Settings, LogOut, BookOpen } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAppStore } from '../../store/useAppStore';
 import { apiFetch } from '../../lib/api';
@@ -8,9 +8,10 @@ interface SideDrawerProps {
   onClose: () => void;
   onOpenProfile: () => void;
   onOpenSettings: () => void;
+  onOpenSavedVerses: () => void;
 }
 
-export function SideDrawer({ isOpen, onClose, onOpenProfile, onOpenSettings }: SideDrawerProps) {
+export function SideDrawer({ isOpen, onClose, onOpenProfile, onOpenSettings, onOpenSavedVerses }: SideDrawerProps) {
   const motherName = useAppStore((s) => s.motherName);
   const clearAuth = useAppStore((s) => s.clearAuth);
 
@@ -82,6 +83,14 @@ export function SideDrawer({ isOpen, onClose, onOpenProfile, onOpenSettings }: S
               >
                 <Settings size={20} strokeWidth={1.8} />
                 <span className="text-sm font-medium">Configurações</span>
+              </button>
+              <button
+                onClick={() => handleItem(onOpenSavedVerses)}
+                aria-label="Meus versículos"
+                className="w-full flex items-center gap-3 px-3 py-3.5 rounded-xl text-graphite hover:bg-white/50 active:bg-white/70 transition-colors"
+              >
+                <BookOpen size={20} strokeWidth={1.8} />
+                <span className="text-sm font-medium">Meus versículos</span>
               </button>
             </nav>
 
