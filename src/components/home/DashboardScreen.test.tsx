@@ -35,12 +35,15 @@ function makeWrapper(
   }
 }
 
+const originalSetActiveTab = useAppStore.getState().setActiveTab
+
 beforeEach(() => {
   useAppStore.setState({
     isLoggedIn: true,
     motherName: 'Ana',
     phase: { stage: 'postpartum', ageInDays: 132 } as PregnancyPhase,
     lastFeedSide: 'left',
+    setActiveTab: originalSetActiveTab,
   })
   mockApiFetch.mockResolvedValue([])
 })
@@ -91,11 +94,6 @@ describe('DashboardScreen', () => {
     expect(screen.getByText(/Ana/)).toBeInTheDocument()
   })
 
-  it('shows phase badge', () => {
-    render(<DashboardScreen />, { wrapper: makeWrapper() })
-    expect(screen.getByText('Bebê · 4 meses e 12 dias')).toBeInTheDocument()
-  })
-
   it('shows Sara card', () => {
     render(<DashboardScreen />, { wrapper: makeWrapper() })
     expect(screen.getByText(/Sara diz/i)).toBeInTheDocument()
@@ -133,5 +131,42 @@ describe('DashboardScreen', () => {
     render(<DashboardScreen />, { wrapper: makeWrapper() })
     fireEvent.click(screen.getByRole('button', { name: /ir para a comunidade/i }))
     expect(setActiveTab).toHaveBeenCalledWith('comunidade')
+  })
+})
+
+describe('DashboardScreen — emotional header', () => {
+  it('shows contextual phrase for pregnant phase', () => {
+    useAppStore.setState({
+      isLoggedIn: true,
+      motherName: 'Ana',
+      phase: { stage: 'pregnant', week: 32 },
+    })
+    render(<DashboardScreen />, { wrapper: makeWrapper() })
+    expect(screen.getByText(/Reta final chegando/i)).toBeTruthy()
+  })
+
+  it('shows contextual phrase for postpartum phase', () => {
+    useAppStore.setState({
+      isLoggedIn: true,
+      motherName: 'Ana',
+      phase: { stage: 'postpartum', ageInDays: 10 },
+    })
+    render(<DashboardScreen />, { wrapper: makeWrapper() })
+    expect(screen.getByText(/mesmo exausta/i)).toBeTruthy()
+  })
+})
+
+describe('DashboardScreen — Sara hero CTA', () => {
+  it('shows "Conversar com a Sara" button', () => {
+    useAppStore.setState({ isLoggedIn: true, motherName: 'Ana', phase: { stage: 'pregnant', week: 28 } })
+    render(<DashboardScreen />, { wrapper: makeWrapper() })
+    expect(screen.getByRole('button', { name: /conversar com a sara/i })).toBeTruthy()
+  })
+
+  it('"Conversar com a Sara" navigates to maeIA tab', () => {
+    useAppStore.setState({ isLoggedIn: true, motherName: 'Ana', phase: { stage: 'pregnant', week: 28 }, activeTab: 'home' })
+    render(<DashboardScreen />, { wrapper: makeWrapper() })
+    fireEvent.click(screen.getByRole('button', { name: /conversar com a sara/i }))
+    expect(useAppStore.getState().activeTab).toBe('maeIA')
   })
 })

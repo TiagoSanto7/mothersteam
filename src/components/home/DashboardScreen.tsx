@@ -4,6 +4,7 @@ import { useQuery } from '@tanstack/react-query'
 import { useAppStore } from '../../store/useAppStore'
 import { apiFetch } from '../../lib/api'
 import { getMensagemParaFase } from '../../data/mensagemDeDeus'
+import { getContextualPhrase } from '../../lib/helpers'
 import type { ApiRoutineEntry, ApiBabyEntry } from '../../lib/types'
 import type { PregnancyPhase } from '../../types'
 import { QuickRegisterSheet } from './QuickRegisterSheet'
@@ -83,27 +84,36 @@ export function DashboardScreen() {
         {/* Header */}
         <div className="flex items-start justify-between px-4 pt-5">
           <div>
-            <p className="text-[17px] font-bold text-graphite">
-              {getGreeting()},{' '}
-              <span className="text-sara-gold">{motherName || 'Mãe'}</span> 🌷
+            <p className="text-[12px] text-graphite-muted font-medium">
+              {getGreeting()},
             </p>
-            <span className="text-[10px] font-semibold text-sara-gold bg-sara-gold/10 rounded-full px-2 py-0.5 mt-1 inline-block">
-              {formatPhase(phase)}
-            </span>
+            <p className="text-[22px] font-bold font-serif text-graphite leading-tight">
+              {motherName || 'Mãe'} 🌷
+            </p>
+            <p className="text-[12px] text-graphite-muted mt-0.5">
+              {getContextualPhrase(phase)}
+            </p>
           </div>
           <div className="w-9 h-9 rounded-full bg-sara-terracotta flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
             {initial}
           </div>
         </div>
 
-        {/* Sara card */}
-        <div className="mx-4 rounded-2xl p-3.5 bg-gradient-to-br from-sara-gold to-sara-terracotta shadow-md">
-          <p className="text-[9px] font-bold text-white/75 uppercase tracking-wide mb-1.5">
+        {/* Sara card — hero */}
+        <div className="mx-4 rounded-2xl p-5 bg-gradient-to-br from-sara-gold to-sara-terracotta shadow-md flex flex-col">
+          <p className="text-[9px] font-bold text-white/75 uppercase tracking-wide mb-2">
             ✦ Sara diz
           </p>
-          <p className="text-[12px] font-medium text-white leading-relaxed">
+          <p className="text-[14px] font-medium text-white leading-relaxed flex-1">
             "{saraMensagem.mensagem}"
           </p>
+          <button
+            onClick={() => setActiveTab('maeIA')}
+            aria-label="Conversar com a Sara"
+            className="mt-3 self-start bg-white/20 text-white text-[11px] font-semibold px-3 py-1.5 rounded-xl"
+          >
+            Conversar com a Sara →
+          </button>
         </div>
 
         {/* Row: next appointment + last feed */}
