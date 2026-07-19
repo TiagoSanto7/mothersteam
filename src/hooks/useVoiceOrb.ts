@@ -32,8 +32,10 @@ export function useVoiceOrb(): UseVoiceOrbReturn {
   const [error, setError] = useState<string | null>(null)
   const conversationRef = useRef<{ endSession: () => Promise<void>; getOutputVolume: () => number } | null>(null)
   const rafRef = useRef<number>(0)
+  const pollingRef = useRef(false)
 
   const stop = useCallback(() => {
+    pollingRef.current = false
     cancelAnimationFrame(rafRef.current)
     conversationRef.current?.endSession()
     conversationRef.current = null
@@ -58,7 +60,7 @@ export function useVoiceOrb(): UseVoiceOrbReturn {
           if (status === 'connected') setState((s) => (s === 'connecting' ? 'listening' : s))
           if (status === 'disconnected') setState((s) => (s === 'done' ? 'done' : 'idle'))
         },
-        onError: (msg: string) => {
+        onError: (msg: string, _context?: unknown) => {
           setError(msg)
           setState('error')
         },
@@ -72,23 +74,22 @@ export function useVoiceOrb(): UseVoiceOrbReturn {
             setState('done')
             cancelAnimationFrame(rafRef.current)
             conversationRef.current?.endSession()
+            conversationRef.current = null
             return 'ok'
           },
         },
       })
 
       conversationRef.current = conversation
-      setState('listening')
+      setState((s) => (s === 'done' || s === 'error') ? s : 'listening')
 
-      let callDepth = 0
+      pollingRef.current = true
       const pollAmplitude = () => {
-        callDepth++
-        if (callDepth > 1) { callDepth--; return }
-        if (conversationRef.current) {
-          setAmplitude(conversation.getOutputVolume())
-          rafRef.current = requestAnimationFrame(pollAmplitude)
-        }
-        callDepth--
+        if (!pollingRef.current || !conversationRef.current) return
+        setAmplitude(conversation.getOutputVolume())
+        pollingRef.current = false
+        rafRef.current = requestAnimationFrame(pollAmplitude)
+        pollingRef.current = true
       }
       rafRef.current = requestAnimationFrame(pollAmplitude)
     } catch (e) {
