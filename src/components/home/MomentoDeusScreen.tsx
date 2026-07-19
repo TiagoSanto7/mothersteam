@@ -86,36 +86,38 @@ export function MomentoDeusScreen({ open, onClose }: Props) {
           </div>
 
           {/* Action bar */}
-          <div className="px-6 pb-12 flex gap-3">
-            <button
-              onClick={() => setShowPrayer((p) => !p)}
-              aria-label="Ver oração"
-              className="flex-1 py-3 rounded-2xl bg-white/10 text-white text-sm font-semibold flex items-center justify-center gap-1.5"
-            >
-              🙏 Oração
-            </button>
+          <div className="px-6 pb-12 flex flex-col gap-2">
+            <div className="flex gap-3">
+              <button
+                onClick={() => setShowPrayer((p) => !p)}
+                aria-label="Ver oração"
+                className="flex-1 py-3 rounded-2xl bg-white/10 text-white text-sm font-semibold flex items-center justify-center gap-1.5"
+              >
+                🙏 Oração
+              </button>
+              <button
+                onClick={() => setShareOpen(true)}
+                aria-label="Compartilhar versículo"
+                className="flex-1 py-3 rounded-2xl bg-white/10 text-white text-sm font-semibold flex items-center justify-center gap-1.5"
+              >
+                📤 Compartilhar
+              </button>
+              <button
+                onClick={() => setSavedOpen(true)}
+                aria-label="Ver versículos salvos"
+                className="flex-1 py-3 rounded-2xl bg-white/10 text-white text-sm font-semibold flex items-center justify-center gap-1.5"
+              >
+                📖 Salvos
+              </button>
+            </div>
             <button
               onClick={() => isSaved ? unsaveVerse(momento.referencia) : saveVerse(momento.referencia)}
               aria-label={isSaved ? 'Remover dos salvos' : 'Salvar versículo'}
-              className={`flex-1 py-3 rounded-2xl text-sm font-semibold flex items-center justify-center gap-1.5 transition-colors ${
+              className={`w-full py-3 rounded-2xl text-sm font-semibold flex items-center justify-center gap-1.5 transition-colors ${
                 isSaved ? 'bg-white text-sara-gold' : 'bg-white/10 text-white'
               }`}
             >
               ❤️ {isSaved ? 'Salvo' : 'Salvar'}
-            </button>
-            <button
-              onClick={() => setShareOpen(true)}
-              aria-label="Compartilhar versículo"
-              className="flex-1 py-3 rounded-2xl bg-white/10 text-white text-sm font-semibold flex items-center justify-center gap-1.5"
-            >
-              📤 Compartilhar
-            </button>
-            <button
-              onClick={() => setSavedOpen(true)}
-              aria-label="Ver versículos salvos"
-              className="flex-1 py-3 rounded-2xl bg-white/10 text-white text-sm font-semibold flex items-center justify-center gap-1.5"
-            >
-              📖 Salvos
             </button>
           </div>
         </motion.div>
