@@ -12,6 +12,7 @@
     "test:ui": "vitest --ui"
   },
   "dependencies": {
+    "@elevenlabs/client": "^1.15.1",
     "@tanstack/react-query": "^5.101.2",
     "framer-motion": "^12.42.2",
     "lucide-react": "^0.469.0",
