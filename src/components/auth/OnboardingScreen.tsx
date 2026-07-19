@@ -1,7 +1,10 @@
 import { useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAppStore } from '../../store/useAppStore';
+import { apiFetch } from '../../lib/api';
 import type { OnboardingAnswers, Q1Answer, Q2Answer, Q3Answer, Q4Answer, Q5Answer } from '../../types';
+import { VoiceOrbOnboarding } from '../onboarding/VoiceOrbOnboarding'
+import type { VoiceCollectedProfile } from '../../hooks/useVoiceOrb'
 
 interface Question<T extends string> {
   id: keyof OnboardingAnswers;
@@ -81,6 +84,8 @@ export function OnboardingScreen() {
   const [optionsVisible, setOptionsVisible] = useState(false);
   const [closingReady, setClosingReady] = useState(false);
   const questionVideoRef = useRef<HTMLVideoElement>(null);
+  const [introSeen, setIntroSeen] = useState(false)
+  const [voiceMode, setVoiceMode] = useState(false)
 
   const isIntro = step === -1;
   const isClosing = step === 5;
@@ -110,6 +115,63 @@ export function OnboardingScreen() {
 
   // ── Intro: scene-0 em tela cheia ──────────────────────────
   if (isIntro) {
+    if (introSeen) {
+      if (voiceMode) {
+        return (
+          <div className="min-h-screen flex items-center justify-center bg-[#1C1510] sm:bg-[#EDE6DC]">
+            <div className="relative w-full min-h-screen sm:w-[390px] sm:min-h-[844px] sm:max-h-[844px] bg-sara-cream sm:rounded-[44px] sm:shadow-2xl overflow-hidden">
+              <VoiceOrbOnboarding
+                onComplete={(data: VoiceCollectedProfile) => {
+                  useAppStore.setState({
+                    motherName: data.motherName,
+                    babyName: data.primaryChild.name ?? '',
+                    phase: data.primaryChild.phase === 'pregnant'
+                      ? { stage: 'pregnant' as const, week: data.primaryChild.week ?? 28 }
+                      : { stage: 'postpartum' as const, ageInDays: data.primaryChild.ageInDays ?? 0 },
+                  })
+                  setVoiceMode(false)
+                  setIntroSeen(false)
+                  setStep(0)
+                }}
+                onBack={() => setVoiceMode(false)}
+              />
+            </div>
+          </div>
+        )
+      }
+
+      return (
+        <div className="min-h-screen flex items-center justify-center bg-[#1C1510] sm:bg-[#EDE6DC]">
+          <div className="relative w-full min-h-screen sm:w-[390px] sm:min-h-[844px] sm:max-h-[844px] bg-sara-cream sm:rounded-[44px] sm:shadow-2xl overflow-hidden flex flex-col items-center justify-center gap-6 px-8">
+            <div className="text-center">
+              <p className="text-[20px] font-semibold font-serif text-graphite mb-2">
+                Como prefere começar?
+              </p>
+              <p className="text-[13px] text-graphite-muted leading-relaxed">
+                Você pode responder as perguntas ou conversar com a Sara — o resultado é o mesmo.
+              </p>
+            </div>
+            <div className="flex flex-col gap-3 w-full">
+              <button
+                onClick={() => setStep(0)}
+                aria-label="Preencher você mesmo"
+                className="w-full py-4 rounded-2xl border-2 border-sara-gold text-sara-gold text-sm font-semibold"
+              >
+                📝 Preencher você mesmo
+              </button>
+              <button
+                onClick={() => setVoiceMode(true)}
+                aria-label="Falar com a Sara"
+                className="w-full py-4 rounded-2xl bg-sara-gold text-white text-sm font-semibold"
+              >
+                🎙️ Falar com a Sara
+              </button>
+            </div>
+          </div>
+        </div>
+      )
+    }
+
     return (
       <div className="min-h-screen flex items-center justify-center bg-[#1C1510] sm:bg-[#EDE6DC]">
         <div className="relative w-full min-h-screen sm:w-[390px] sm:min-h-[844px] sm:max-h-[844px] bg-[#1C1510] sm:rounded-[44px] sm:shadow-2xl overflow-hidden">
@@ -117,18 +179,19 @@ export function OnboardingScreen() {
             src="/videos/onboarding-scene-0.mp4"
             autoPlay
             playsInline
-            onEnded={() => setStep(0)}
+            onEnded={() => setIntroSeen(true)}
             className="absolute inset-0 w-full h-full object-cover"
           />
           <button
-            onClick={() => setStep(0)}
+            onClick={() => setIntroSeen(true)}
+            aria-label="Pular introdução"
             className="absolute bottom-12 right-6 px-4 py-2 bg-black/30 backdrop-blur-sm rounded-full text-white/70 text-xs font-medium active:scale-95 transition-transform"
           >
             Pular →
           </button>
         </div>
       </div>
-    );
+    )
   }
 
   // ── Closing: scene-6 + painel que sobe ao terminar ────────
@@ -165,7 +228,10 @@ export function OnboardingScreen() {
                   ✦ Seu perfil está pronto!
                 </p>
                 <motion.button
-                  onClick={() => completeOnboarding(answers as OnboardingAnswers)}
+                  onClick={async () => {
+                    completeOnboarding(answers as OnboardingAnswers);
+                    await apiFetch('/users/me', { method: 'PATCH', body: JSON.stringify({ onboardingDone: true }) }).catch(() => {});
+                  }}
                   whileTap={{ scale: 0.97 }}
                   transition={{ duration: 0.15, ease: 'easeOut' }}
                   className="w-full py-4 rounded-2xl bg-sara-gold text-white text-sm font-semibold"
