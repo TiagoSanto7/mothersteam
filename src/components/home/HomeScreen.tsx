@@ -2,10 +2,11 @@ import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Plus } from 'lucide-react';
 import { useAppStore } from '../../store/useAppStore';
-import { getHeaderGreeting } from '../../utils/pregnancyUtils';
 import { WeekCalendar } from './WeekCalendar';
 import { RoutineTimeline } from './RoutineTimeline';
 import { AddRoutineModal } from './AddRoutineModal';
+import { SARA_FRASES } from '../../data/reception/sara-frases';
+import type { ReceptionData } from '../../types/reception';
 
 interface HomeScreenProps {
   onOpenProfile: () => void;
@@ -16,9 +17,16 @@ export function HomeScreen({ onOpenProfile }: HomeScreenProps) {
   const motherName = useAppStore((s) => s.motherName);
   const babyName = useAppStore((s) => s.babyName);
   const selectedDate = useAppStore((s) => s.selectedDate);
-  const greeting = getHeaderGreeting(phase, motherName, babyName);
+  const receptionShape: ReceptionData = {
+    phase: phase.stage,
+    week: phase.stage === 'pregnant' ? phase.week : undefined,
+    ageInDays: phase.stage === 'postpartum' ? phase.ageInDays : undefined,
+    babyName,
+    otherChildren: [],
+  };
+  const greeting = SARA_FRASES.primeiraHome(motherName || 'mãe', receptionShape);
   const [showAddModal, setShowAddModal] = useState(false);
-  const initial = motherName.charAt(0).toUpperCase();
+  const initial = (motherName || 'M').charAt(0).toUpperCase();
 
   return (
     <div className="flex flex-col gap-4 pb-6">
@@ -31,8 +39,7 @@ export function HomeScreen({ onOpenProfile }: HomeScreenProps) {
           {initial}
         </button>
         <div>
-          <p className="text-xs text-graphite-muted font-medium">Bom dia ☀️</p>
-          <h1 className="text-base font-semibold font-serif text-graphite leading-snug max-w-[220px]">
+          <h1 className="text-[15px] font-semibold font-serif text-graphite leading-snug max-w-[260px]">
             {greeting}
           </h1>
         </div>
