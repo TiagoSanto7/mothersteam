@@ -1,9 +1,17 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
-import type { TabId, PregnancyPhase, OnboardingAnswers, MotherProfile } from '../types';
+import type { TabId, PregnancyPhase, OnboardingAnswers, MotherProfile, Q1Answer } from '../types';
 import { computeProfile } from '../utils/onboardingScoring';
 import type { ApiUser } from '../lib/types';
 import { buildPhase } from '../lib/helpers';
+import type { ReceptionData } from '../types/reception';
+
+function derivarQ1(phase: PregnancyPhase): Q1Answer {
+  if (phase.stage === 'pregnant') return phase.week < 28 ? 'A' : 'B';
+  if (phase.ageInDays <= 90) return 'C';
+  if (phase.ageInDays <= 365) return 'D';
+  return 'E';
+}
 
 interface AppState {
   // Auth — NOT persisted
@@ -31,6 +39,7 @@ interface AppState {
   clearAuth: () => void;
   // Profile actions
   completeOnboarding: (answers: OnboardingAnswers) => void;
+  applyReceptionData: (data: ReceptionData) => void;
   resetOnboarding: () => void;
   completeSocialOnboarding: () => void;
   // UI actions
@@ -95,6 +104,27 @@ export const useAppStore = create<AppState>()(
       completeOnboarding: (answers) => {
         const profile = computeProfile(answers);
         set({ onboardingDone: true, motherProfile: profile });
+      },
+      applyReceptionData: (data: ReceptionData) => {
+        const phase: PregnancyPhase =
+          data.phase === 'pregnant'
+            ? { stage: 'pregnant', week: data.week ?? 28 }
+            : { stage: 'postpartum', ageInDays: data.ageInDays ?? 0 };
+        const answers: OnboardingAnswers = {
+          q1: derivarQ1(phase),
+          q2: data.mood ?? 'A',
+          q3: data.supportNetwork ?? 'A',
+          q4: data.goal ?? 'A',
+          q5: data.concern ?? 'A',
+        };
+        const profile = computeProfile(answers);
+        set({
+          motherName: data.motherName ?? '',
+          babyName: data.babyName ?? '',
+          phase,
+          onboardingDone: true,
+          motherProfile: profile,
+        });
       },
       resetOnboarding: () => set({ onboardingDone: false, motherProfile: null }),
       completeSocialOnboarding: () => set({ socialOnboardingDone: true }),
