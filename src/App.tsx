@@ -17,7 +17,7 @@ import { MaeIAScreen } from './components/maeIA/MaeIAScreen';
 import { ComunidadeScreen } from './components/comunidade/ComunidadeScreen';
 import { ShoppingScreen } from './components/shopping/ShoppingScreen';
 import { LoginScreen } from './components/auth/LoginScreen';
-import { OnboardingScreen } from './components/auth/OnboardingScreen';
+import { ReceptionFlow } from './components/reception/ReceptionFlow';
 import { ProfileScreen } from './components/profile/ProfileScreen';
 import { SettingsScreen } from './components/profile/SettingsScreen';
 import { NotificationsScreen } from './components/notifications/NotificationsScreen';
@@ -101,7 +101,7 @@ export default function App() {
 
   if (restoring) return null;
   if (!isLoggedIn) return <LoginScreen />;
-  if (!onboardingDone) return <OnboardingScreen />;
+  if (!onboardingDone) return <ReceptionFlow />;
 
   const unreadNotifs = (notifications ?? []).filter((n) => !n.read).length;
   const unreadChats  = (chats ?? []).filter((c) => {
