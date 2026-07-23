@@ -33,21 +33,31 @@ export function PostActionsMenu({ postId, isOwner, onDeleted }: PostActionsMenuP
     };
   }, []);
 
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+
   const deleteMutation = useMutation({
     mutationFn: () => apiFetch(`/posts/${postId}`, { method: 'DELETE' }),
     onSuccess: () => {
-      // Invalidate all post caches using the same predicate pattern as patchPostLikeInAllCaches
+      // Drop the single-post detail cache first so a mounted PostDetailScreen
+      // does not refetch and hit a 404 while unmounting.
+      queryClient.removeQueries({ queryKey: ['posts', postId], exact: true });
+      // Then invalidate list caches (feed, community feed, user feed) so the
+      // deleted card disappears on the next render. Skip the ['posts', postId]
+      // detail key by requiring feeds to be the length-1 ['posts'] key or the
+      // length-2 keyed feeds ['communityPosts', id] / ['userPosts', id].
       queryClient.invalidateQueries({
         predicate: (q) => {
           const k = q.queryKey;
-          return (
-            Array.isArray(k) &&
-            (k[0] === 'posts' || k[0] === 'communityPosts' || k[0] === 'userPosts')
-          );
+          if (!Array.isArray(k)) return false;
+          if (k[0] === 'communityPosts' || k[0] === 'userPosts') return true;
+          return k[0] === 'posts' && k.length === 1;
         },
       });
       setOpen(false);
       onDeleted?.();
+    },
+    onError: () => {
+      setDeleteError('Não foi possível apagar. Tente novamente.');
     },
   });
 
@@ -93,15 +103,22 @@ export function PostActionsMenu({ postId, isOwner, onDeleted }: PostActionsMenuP
                 Obrigada. Nosso time vai revisar.
               </p>
             ) : isOwner ? (
-              <button
-                role="menuitem"
-                type="button"
-                onClick={(e) => { e.stopPropagation(); deleteMutation.mutate(); }}
-                disabled={deleteMutation.isPending}
-                className="w-full text-left px-4 py-3 text-sm text-sara-terracotta hover:bg-sara-linen/40 transition-colors disabled:opacity-50"
-              >
-                {deleteMutation.isPending ? 'Apagando...' : 'Apagar publicação'}
-              </button>
+              <>
+                <button
+                  role="menuitem"
+                  type="button"
+                  onClick={(e) => { e.stopPropagation(); setDeleteError(null); deleteMutation.mutate(); }}
+                  disabled={deleteMutation.isPending}
+                  className="w-full text-left px-4 py-3 text-sm text-sara-terracotta hover:bg-sara-linen/40 transition-colors disabled:opacity-50"
+                >
+                  {deleteMutation.isPending ? 'Apagando...' : 'Apagar publicação'}
+                </button>
+                {deleteError && (
+                  <p role="alert" className="text-[11px] text-sara-terracotta px-4 py-2 border-t border-sara-linen/40">
+                    {deleteError}
+                  </p>
+                )}
+              </>
             ) : (
               <button
                 role="menuitem"
