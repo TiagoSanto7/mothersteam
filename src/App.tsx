@@ -145,11 +145,15 @@ export default function App() {
     </div>
   ) : undefined;
 
+  const openMyProfile = () => {
+    if (currentUserId) setProfileUserId(currentUserId);
+  };
+
   const screens: Record<TabId, ReactElement> = {
     home:       <DashboardScreen />,
     maeIA:      <MaeIAScreen />,
     baby:       <BabyScreen />,
-    rotina:     <HomeScreen onOpenProfile={() => currentUserId && setProfileUserId(currentUserId)} />,
+    rotina:     <HomeScreen onOpenProfile={openMyProfile} />,
     comunidade: <ComunidadeScreen />,
     shopping:   <ShoppingScreen />,
   };
@@ -160,7 +164,7 @@ export default function App() {
         drawerOpen={drawerOpen}
         onOpenDrawer={() => setDrawerOpen(true)}
         onCloseDrawer={() => setDrawerOpen(false)}
-        onOpenProfile={() => currentUserId && setProfileUserId(currentUserId)}
+        onOpenProfile={openMyProfile}
         onOpenSettings={() => setShowSettings(true)}
         onOpenSavedVerses={() => setShowSavedVerses(true)}
         headerRightSlot={headerRightSlot}
@@ -173,7 +177,7 @@ export default function App() {
         unreadChats={unreadChats}
         onOpenNotifications={() => setShowNotifications(true)}
         onOpenChat={() => setShowChat(true)}
-        onOpenProfile={() => currentUserId && setProfileUserId(currentUserId)}
+        onOpenProfile={openMyProfile}
         onOpenSettings={() => setShowSettings(true)}
         onOpenUser={(id) => setProfileUserId(id)}
         onOpenCommunity={(id) => setOpenCommunityId(id)}

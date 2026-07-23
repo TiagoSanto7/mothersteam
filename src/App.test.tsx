@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, fireEvent } from '@testing-library/react';
 import { describe, expect, it, beforeEach, vi } from 'vitest';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import App from './App';
@@ -76,7 +76,7 @@ describe('App — profile navigation', () => {
     // → setProfileUserId(currentUserId) → ProfileRouter → ProfileScreen (self).
     // Both MobileShell and WebLayout render the screen, so use findAllByRole.
     const avatarBtns = await screen.findAllByRole('button', { name: /abrir perfil/i });
-    avatarBtns[0].click();
+    fireEvent.click(avatarBtns[0]);
     expect(await screen.findByRole('button', { name: /editar perfil/i })).toBeInTheDocument();
   });
 });
