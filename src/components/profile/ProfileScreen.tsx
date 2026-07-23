@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { ChevronLeft, Settings, Heart, MessageCircle } from 'lucide-react';
+import { ChevronLeft, Settings } from 'lucide-react';
 import { useQuery, useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAppStore } from '../../store/useAppStore';
 import { ARCHETYPES } from '../../utils/onboardingScoring';
