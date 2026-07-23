@@ -26,7 +26,7 @@ beforeEach(() => {
 
 describe('ProfileRouter', () => {
   it('renders ProfileScreen (self) when userId === currentUserId', () => {
-    wrap(<ProfileRouter userId="me-123" onBack={vi.fn()} onOpenUser={vi.fn()} />);
+    wrap(<ProfileRouter userId="me-123" onBack={vi.fn()} onOpenProfile={vi.fn()} />);
     expect(screen.getByRole('button', { name: /editar perfil/i })).toBeInTheDocument();
   });
 
@@ -41,7 +41,7 @@ describe('ProfileRouter', () => {
         isSelf: false, isFollowedByCurrentUser: false,
       };
     });
-    wrap(<ProfileRouter userId="other-999" onBack={vi.fn()} onOpenUser={vi.fn()} />);
+    wrap(<ProfileRouter userId="other-999" onBack={vi.fn()} onOpenProfile={vi.fn()} />);
     expect(screen.queryByRole('button', { name: /editar perfil/i })).not.toBeInTheDocument();
     expect(await screen.findByText('Julia')).toBeInTheDocument();
   });

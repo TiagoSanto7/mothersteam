@@ -5,14 +5,11 @@ import { UserProfileScreen } from './UserProfileScreen';
 interface ProfileRouterProps {
   userId: string;
   onBack: () => void;
-  onOpenUser?: (userId: string) => void;
+  onOpenProfile?: (userId: string) => void;
 }
 
-/**
- * Escolhe entre ProfileScreen (dono) e UserProfileScreen (visitante)
- * baseado no currentUserId da sessão. Único ponto que decide isso.
- */
-export function ProfileRouter({ userId, onBack, onOpenUser }: ProfileRouterProps) {
+/** Único árbitro entre visão própria (ProfileScreen) e visão de visitante (UserProfileScreen). */
+export function ProfileRouter({ userId, onBack, onOpenProfile }: ProfileRouterProps) {
   const currentUserId = useAppStore((s) => s.currentUserId);
 
   if (userId === currentUserId) {
@@ -24,7 +21,7 @@ export function ProfileRouter({ userId, onBack, onOpenUser }: ProfileRouterProps
       key={userId}
       userId={userId}
       onBack={onBack}
-      onOpenProfile={onOpenUser}
+      onOpenProfile={onOpenProfile}
     />
   );
 }
