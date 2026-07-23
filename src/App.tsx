@@ -18,7 +18,7 @@ import { ComunidadeScreen } from './components/comunidade/ComunidadeScreen';
 import { ShoppingScreen } from './components/shopping/ShoppingScreen';
 import { LoginScreen } from './components/auth/LoginScreen';
 import { ReceptionFlow } from './components/reception/ReceptionFlow';
-import { ProfileRouter } from './components/profile/ProfileRouter';
+import { ProfileScreen } from './components/profile/ProfileScreen';
 import { SettingsScreen } from './components/profile/SettingsScreen';
 import { NotificationsScreen } from './components/notifications/NotificationsScreen';
 import { ChatListScreen } from './components/chat/ChatListScreen';
@@ -225,9 +225,9 @@ export default function App() {
 
       {profileUserId && (
         <div className="fixed inset-0 z-50 sm:bg-black/40 sm:flex sm:items-center sm:justify-center">
-          <ProfileRouter
+          <ProfileScreen
             userId={profileUserId}
-            onBack={() => setProfileUserId(null)}
+            onClose={() => setProfileUserId(null)}
             onOpenProfile={(id) => setProfileUserId(id)}
           />
         </div>

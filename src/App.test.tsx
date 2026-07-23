@@ -56,9 +56,24 @@ describe('App routing', () => {
 
 describe('App — profile navigation', () => {
   it('opens ProfileScreen (self) when profileUserId matches currentUserId (regression: "meu perfil como visitante")', async () => {
-    // Return an empty array for all API calls so RoutineTimeline doesn't crash
-    // (the global beforeEach mock returns an object which causes apiEntries.map to throw)
-    mockApiFetch.mockResolvedValue([]);
+    // Return [] for HomeScreen API calls (RoutineTimeline etc.) and proper
+    // shaped data for ProfileScreen's /users/:id and /users/:id/posts queries.
+    mockApiFetch.mockImplementation(async (path: string) => {
+      if (path === '/users/me-1') {
+        return {
+          id: 'me-1', name: 'Mariana', bio: null,
+          pregnancyStage: 'pregnant', pregnancyWeek: 28, babyAgeInDays: null,
+          profileKey: null, archetypeKey: null,
+          _count: { posts: 0, followers: 0, following: 0 },
+          isSelf: true, isFollowedByCurrentUser: false,
+        };
+      }
+      if (typeof path === 'string' && path.includes('/users/me-1/posts')) {
+        return { items: [], hasMore: false };
+      }
+      // Fallback: empty array for HomeScreen timeline calls
+      return [];
+    });
     useAppStore.setState({
       isLoggedIn: true,
       onboardingDone: true,
@@ -73,7 +88,7 @@ describe('App — profile navigation', () => {
     render(<App />, { wrapper: makeWrapper() });
 
     // Clique no avatar do HomeScreen (aba Rotina) dispara onOpenProfile
-    // → setProfileUserId(currentUserId) → ProfileRouter → ProfileScreen (self).
+    // → setProfileUserId(currentUserId) → ProfileScreen (self, via unified component).
     // Both MobileShell and WebLayout render the screen, so use findAllByRole.
     const avatarBtns = await screen.findAllByRole('button', { name: /abrir perfil/i });
     fireEvent.click(avatarBtns[0]);

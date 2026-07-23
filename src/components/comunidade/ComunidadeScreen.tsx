@@ -14,7 +14,7 @@ import { CommunityDetailScreen } from './CommunityDetailScreen';
 import { CreateCommunityScreen } from './CreateCommunityScreen';
 import { ComposerBar } from './ComposerBar';
 import { PostCard } from './PostCard';
-import { ProfileRouter } from '../profile/ProfileRouter';
+import { ProfileScreen } from '../profile/ProfileScreen';
 import type { CommunityPost } from '../../types';
 
 type TopTab = 'para-voce' | 'comunidades';
@@ -83,9 +83,9 @@ export function ComunidadeScreen() {
 
   if (profileUserId) {
     return (
-      <ProfileRouter
+      <ProfileScreen
         userId={profileUserId}
-        onBack={() => setProfileUserId(null)}
+        onClose={() => setProfileUserId(null)}
         onOpenProfile={(id) => setProfileUserId(id)}
       />
     );
