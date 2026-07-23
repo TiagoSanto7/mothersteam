@@ -5,6 +5,7 @@ import { useAppStore } from '../../store/useAppStore';
 import { apiFetch } from '../../lib/api';
 import { patchPostLikeInAllCaches, apiPostToCommunityPost } from '../../lib/helpers';
 import { SharePostSheet } from '../comunidade/SharePostSheet';
+import { PostActionsMenu } from '../comunidade/PostActionsMenu';
 import { getAvatarColor } from '../../utils/avatar';
 import type { CommunityPost, PostComment } from '../../types';
 import type { ApiPost, PaginatedResult } from '../../lib/types';
@@ -31,6 +32,7 @@ interface PostDetailScreenProps {
 export function PostDetailScreen({ post, onBack, onOpenProfile }: PostDetailScreenProps) {
   const motherName    = useAppStore((s) => s.motherName);
   const motherProfile = useAppStore((s) => s.motherProfile);
+  const currentUserId = useAppStore((s) => s.currentUserId);
   const queryClient = useQueryClient();
 
   const [liked, setLiked] = useState(post.likedByCurrentUser ?? false);
@@ -114,11 +116,18 @@ export function PostDetailScreen({ post, onBack, onOpenProfile }: PostDetailScre
   return (
     <div className="flex flex-col w-full h-full sm:w-[390px] sm:h-[844px] bg-gradient-to-b from-[#F5EDE0] via-[#EAD8C8] to-[#D9C4AF] sm:rounded-[44px] sm:shadow-2xl overflow-hidden relative">
       <div className="flex flex-col flex-1 overflow-hidden">
-      <div className="flex items-center gap-3 px-4 pt-6 pb-4 border-b border-sara-linen/60 flex-shrink-0">
-        <button onClick={onBack} aria-label="Voltar" className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-sara-linen">
-          <ChevronLeft size={20} className="text-graphite" />
-        </button>
-        <p className="text-sm font-semibold text-graphite">Publicação</p>
+      <div className="flex items-center justify-between gap-3 px-4 pt-6 pb-4 border-b border-sara-linen/60 flex-shrink-0">
+        <div className="flex items-center gap-3">
+          <button onClick={onBack} aria-label="Voltar" className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-sara-linen">
+            <ChevronLeft size={20} className="text-graphite" />
+          </button>
+          <p className="text-sm font-semibold text-graphite">Publicação</p>
+        </div>
+        <PostActionsMenu
+          postId={post.id}
+          isOwner={post.authorId === currentUserId}
+          onDeleted={onBack}
+        />
       </div>
 
       <div className="flex-1 overflow-y-auto">

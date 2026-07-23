@@ -1,9 +1,11 @@
 import { useState } from 'react';
 import { MessageCircle, Heart, Repeat2, Share2 } from 'lucide-react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useAppStore } from '../../store/useAppStore';
 import { apiFetch } from '../../lib/api';
 import { patchPostLikeInAllCaches } from '../../lib/helpers';
 import { SharePostSheet } from './SharePostSheet';
+import { PostActionsMenu } from './PostActionsMenu';
 import { getAvatarColor } from '../../utils/avatar';
 import type { CommunityPost } from '../../types';
 
@@ -16,9 +18,11 @@ interface PostCardProps {
   post: CommunityPost;
   onOpen: () => void;
   onOpenProfile: () => void;
+  onDeleted?: () => void;
 }
 
-export function PostCard({ post, onOpen, onOpenProfile }: PostCardProps) {
+export function PostCard({ post, onOpen, onOpenProfile, onDeleted }: PostCardProps) {
+  const currentUserId = useAppStore((s) => s.currentUserId);
   const queryClient = useQueryClient();
   const [liked, setLiked] = useState(post.likedByCurrentUser ?? false);
   const [reposted, setReposted] = useState(false);
@@ -74,7 +78,14 @@ export function PostCard({ post, onOpen, onOpenProfile }: PostCardProps) {
               )}
             </div>
           </button>
-          <span className="text-xs text-graphite-muted flex-shrink-0">{post.time}</span>
+          <div className="flex items-center gap-2 flex-shrink-0">
+            <span className="text-xs text-graphite-muted">{post.time}</span>
+            <PostActionsMenu
+              postId={post.id}
+              isOwner={post.authorId === currentUserId}
+              onDeleted={onDeleted}
+            />
+          </div>
         </div>
 
         {post.isRepost && post.repostOriginal ? (
