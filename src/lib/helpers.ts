@@ -122,6 +122,7 @@ export function apiPostToCommunityPost(post: ApiPost): CommunityPost {
     id: post.id,
     authorId: post.authorId,
     authorUsername: post.author.username ?? null,
+    authorArchetypeKey: post.author.archetypeKey ?? null,
     category: post.category,
     author: post.author.name,
     content: post.content,
@@ -140,6 +141,7 @@ export function apiPostToCommunityPost(post: ApiPost): CommunityPost {
           author: post.repostFrom.author.name,
           authorId: post.repostFrom.author.id,
           authorUsername: post.repostFrom.author.username ?? null,
+          authorArchetypeKey: post.repostFrom.author.archetypeKey ?? null,
           category: post.repostFrom.category,
         }
       : undefined,

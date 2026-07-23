@@ -53,6 +53,7 @@ export interface CommunityPost {
   id: string;
   authorId?: string;
   authorUsername?: string | null;
+  authorArchetypeKey?: string | null;
   category: 'gestação' | 'pós-parto' | 'amamentação' | 'saúde mental';
   author: string;
   badge?: 'experiente' | 'profissional';
@@ -63,7 +64,7 @@ export interface CommunityPost {
   time: string;
   isRepost?: boolean;
   repostFrom?: string;
-  repostOriginal?: { content: string; author: string; authorId: string; authorUsername?: string | null; category: string; originalPostId?: string };
+  repostOriginal?: { content: string; author: string; authorId: string; authorUsername?: string | null; authorArchetypeKey?: string | null; category: string; originalPostId?: string };
   communityId?: string;
   imageUrl?: string;
   likedByCurrentUser?: boolean;
@@ -72,6 +73,7 @@ export interface CommunityPost {
 export interface PostComment {
   id: string;
   author: string;
+  authorArchetypeKey?: string | null;
   content: string;
   time: string;
   likes: number;
