@@ -301,7 +301,7 @@ describe('ComunidadeScreen — self profile navigation', () => {
     const avatarBtn = await screen.findByRole('button', { name: /ver perfil de mariana/i });
     fireEvent.click(avatarBtn);
 
-    // ProfileScreen chrome must appear (proves ProfileRouter chose self view)
+    // ProfileScreen chrome must appear (proves unified ProfileScreen picked self view)
     await waitFor(() => {
       expect(screen.getByRole('button', { name: /editar perfil/i })).toBeInTheDocument();
     });
