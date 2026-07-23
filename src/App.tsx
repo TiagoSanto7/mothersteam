@@ -226,6 +226,7 @@ export default function App() {
       {profileUserId && (
         <div className="fixed inset-0 z-50 sm:bg-black/40 sm:flex sm:items-center sm:justify-center">
           <ProfileScreen
+            key={profileUserId}
             userId={profileUserId}
             onClose={() => setProfileUserId(null)}
             onOpenProfile={(id) => setProfileUserId(id)}

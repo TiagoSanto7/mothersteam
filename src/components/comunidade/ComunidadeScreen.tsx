@@ -84,6 +84,7 @@ export function ComunidadeScreen() {
   if (profileUserId) {
     return (
       <ProfileScreen
+        key={profileUserId}
         userId={profileUserId}
         onClose={() => setProfileUserId(null)}
         onOpenProfile={(id) => setProfileUserId(id)}
