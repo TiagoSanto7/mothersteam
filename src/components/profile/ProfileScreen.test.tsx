@@ -64,3 +64,38 @@ describe('ProfileScreen', () => {
     });
   });
 });
+
+describe('ProfileScreen — real counts', () => {
+  it('shows real follower/following/posts counts from /users/:id', async () => {
+    useAppStore.setState({
+      isLoggedIn: true,
+      currentUserId: 'me-1',
+      motherName: 'Mariana',
+      phase: { stage: 'pregnant', week: 28 },
+      motherProfile: null,
+      savedVerses: [],
+    });
+    mockApiFetch.mockImplementation(async (path: string) => {
+      if (path.startsWith('/users/me-1/posts')) return EMPTY_POSTS;
+      if (path === '/users/me-1') {
+        return {
+          id: 'me-1', name: 'Mariana', bio: null,
+          pregnancyStage: 'pregnant', pregnancyWeek: 28, babyAgeInDays: null,
+          profileKey: null, archetypeKey: null,
+          _count: { posts: 7, followers: 42, following: 5 },
+          isSelf: true, isFollowedByCurrentUser: false,
+        };
+      }
+      return EMPTY_POSTS;
+    });
+
+    wrap(<ProfileScreen onClose={vi.fn()} />);
+
+    expect(await screen.findByText('42')).toBeInTheDocument(); // followers
+    expect(screen.getByText('5')).toBeInTheDocument();         // following
+    expect(screen.getByText('7')).toBeInTheDocument();         // posts
+    // Regression guard: hardcoded values must not appear
+    expect(screen.queryByText('248')).not.toBeInTheDocument();
+    expect(screen.queryByText('31')).not.toBeInTheDocument();
+  });
+});

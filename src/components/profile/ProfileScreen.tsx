@@ -9,7 +9,7 @@ import { PostDetailScreen } from '../post/PostDetailScreen';
 import { FollowListScreen } from './FollowListScreen';
 import { apiFetch } from '../../lib/api';
 import { apiPostToCommunityPost } from '../../lib/helpers';
-import type { PaginatedResult, ApiPost } from '../../lib/types';
+import type { PaginatedResult, ApiPost, ApiUserProfile } from '../../lib/types';
 import type { CommunityPost } from '../../types';
 import { SavedVersesScreen } from '../home/SavedVersesScreen';
 
@@ -27,6 +27,12 @@ export function ProfileScreen({ onClose }: ProfileScreenProps) {
   const { data } = useQuery({
     queryKey: ['userPosts', currentUserId],
     queryFn: () => apiFetch<PaginatedResult<ApiPost>>(`/users/${currentUserId}/posts`),
+    enabled: isLoggedIn && !!currentUserId,
+  });
+
+  const { data: profileData } = useQuery({
+    queryKey: ['user', currentUserId],
+    queryFn: () => apiFetch<ApiUserProfile>(`/users/${currentUserId}`),
     enabled: isLoggedIn && !!currentUserId,
   });
 
@@ -101,9 +107,9 @@ export function ProfileScreen({ onClose }: ProfileScreenProps) {
           </div>
           <div className="flex gap-4 flex-1 justify-around">
             {[
-              { label: 'Posts', value: userPosts.length, mode: null as 'followers' | 'following' | null },
-              { label: 'Seguidoras', value: 248, mode: 'followers' as const },
-              { label: 'Seguindo', value: 31, mode: 'following' as const },
+              { label: 'Posts',      value: profileData?._count.posts     ?? 0, mode: null as 'followers' | 'following' | null },
+              { label: 'Seguidoras', value: profileData?._count.followers ?? 0, mode: 'followers' as const },
+              { label: 'Seguindo',   value: profileData?._count.following ?? 0, mode: 'following' as const },
             ].map(({ label, value, mode }) => (
               mode ? (
                 <button
