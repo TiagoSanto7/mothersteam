@@ -18,12 +18,11 @@ import { ComunidadeScreen } from './components/comunidade/ComunidadeScreen';
 import { ShoppingScreen } from './components/shopping/ShoppingScreen';
 import { LoginScreen } from './components/auth/LoginScreen';
 import { ReceptionFlow } from './components/reception/ReceptionFlow';
-import { ProfileScreen } from './components/profile/ProfileScreen';
+import { ProfileRouter } from './components/profile/ProfileRouter';
 import { SettingsScreen } from './components/profile/SettingsScreen';
 import { NotificationsScreen } from './components/notifications/NotificationsScreen';
 import { ChatListScreen } from './components/chat/ChatListScreen';
 import { SearchScreen } from './components/search/SearchScreen';
-import { UserProfileScreen } from './components/profile/UserProfileScreen';
 import { CommunityDetailScreen } from './components/comunidade/CommunityDetailScreen';
 import { PostDetailScreen } from './components/post/PostDetailScreen';
 import { SocialOnboardingScreen } from './components/onboarding/SocialOnboardingScreen'
@@ -46,7 +45,6 @@ export default function App() {
 
   const [restoring,         setRestoring]         = useState(true);
   const [drawerOpen,        setDrawerOpen]        = useState(false);
-  const [showProfile,       setShowProfile]       = useState(false);
   const [showSettings,      setShowSettings]      = useState(false);
   const [showSavedVerses,   setShowSavedVerses]   = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
@@ -151,7 +149,7 @@ export default function App() {
     home:       <DashboardScreen />,
     maeIA:      <MaeIAScreen />,
     baby:       <BabyScreen />,
-    rotina:     <HomeScreen onOpenProfile={() => setShowProfile(true)} />,
+    rotina:     <HomeScreen onOpenProfile={() => currentUserId && setProfileUserId(currentUserId)} />,
     comunidade: <ComunidadeScreen />,
     shopping:   <ShoppingScreen />,
   };
@@ -162,7 +160,7 @@ export default function App() {
         drawerOpen={drawerOpen}
         onOpenDrawer={() => setDrawerOpen(true)}
         onCloseDrawer={() => setDrawerOpen(false)}
-        onOpenProfile={() => setShowProfile(true)}
+        onOpenProfile={() => currentUserId && setProfileUserId(currentUserId)}
         onOpenSettings={() => setShowSettings(true)}
         onOpenSavedVerses={() => setShowSavedVerses(true)}
         headerRightSlot={headerRightSlot}
@@ -175,19 +173,13 @@ export default function App() {
         unreadChats={unreadChats}
         onOpenNotifications={() => setShowNotifications(true)}
         onOpenChat={() => setShowChat(true)}
-        onOpenProfile={() => setShowProfile(true)}
+        onOpenProfile={() => currentUserId && setProfileUserId(currentUserId)}
         onOpenSettings={() => setShowSettings(true)}
         onOpenUser={(id) => setProfileUserId(id)}
         onOpenCommunity={(id) => setOpenCommunityId(id)}
       >
         {screens[activeTab]}
       </WebLayout>
-
-      {showProfile && (
-        <div className="fixed inset-0 z-50 sm:bg-black/40 sm:flex sm:items-center sm:justify-center">
-          <ProfileScreen onClose={() => setShowProfile(false)} />
-        </div>
-      )}
 
       {showSettings && (
         <div className="fixed inset-0 z-50 sm:bg-black/40 sm:flex sm:items-center sm:justify-center">
@@ -229,8 +221,7 @@ export default function App() {
 
       {profileUserId && (
         <div className="fixed inset-0 z-50 sm:bg-black/40 sm:flex sm:items-center sm:justify-center">
-          <UserProfileScreen
-            key={profileUserId}
+          <ProfileRouter
             userId={profileUserId}
             onBack={() => setProfileUserId(null)}
             onOpenProfile={(id) => setProfileUserId(id)}

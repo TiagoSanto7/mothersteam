@@ -53,3 +53,30 @@ describe('App routing', () => {
     expect(screen.getAllByRole('button', { name: /para você/i }).length).toBeGreaterThan(0);
   });
 });
+
+describe('App — profile navigation', () => {
+  it('opens ProfileScreen (self) when profileUserId matches currentUserId (regression: "meu perfil como visitante")', async () => {
+    // Return an empty array for all API calls so RoutineTimeline doesn't crash
+    // (the global beforeEach mock returns an object which causes apiEntries.map to throw)
+    mockApiFetch.mockResolvedValue([]);
+    useAppStore.setState({
+      isLoggedIn: true,
+      onboardingDone: true,
+      socialOnboardingDone: true,
+      activeTab: 'rotina',
+      currentUserId: 'me-1',
+      motherName: 'Mariana',
+      phase: { stage: 'pregnant', week: 28 },
+      motherProfile: null,
+      savedVerses: [],
+    });
+    render(<App />, { wrapper: makeWrapper() });
+
+    // Clique no avatar do HomeScreen (aba Rotina) dispara onOpenProfile
+    // → setProfileUserId(currentUserId) → ProfileRouter → ProfileScreen (self).
+    // Both MobileShell and WebLayout render the screen, so use findAllByRole.
+    const avatarBtns = await screen.findAllByRole('button', { name: /abrir perfil/i });
+    avatarBtns[0].click();
+    expect(await screen.findByRole('button', { name: /editar perfil/i })).toBeInTheDocument();
+  });
+});
