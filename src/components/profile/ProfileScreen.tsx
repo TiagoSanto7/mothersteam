@@ -59,7 +59,7 @@ export function ProfileScreen({ onClose, userId, onOpenProfile }: ProfileScreenP
       ),
     initialPageParam: '',
     getNextPageParam: (lastPage) => (lastPage.hasMore ? lastPage.nextCursor : undefined),
-    enabled: !!effectiveUserId,
+    enabled: isLoggedIn && !!effectiveUserId,
   });
 
   useEffect(() => {
@@ -107,11 +107,7 @@ export function ProfileScreen({ onClose, userId, onOpenProfile }: ProfileScreenP
           userId={effectiveUserId}
           onOpenUser={(id) => {
             setFollowList(null);
-            if (profile?.isSelf) {
-              // self view — no recursive nav available here
-            } else {
-              onOpenProfile?.(id);
-            }
+            onOpenProfile?.(id);
           }}
           onBack={() => setFollowList(null)}
         />
@@ -270,7 +266,7 @@ export function ProfileScreen({ onClose, userId, onOpenProfile }: ProfileScreenP
               key={post.id}
               post={post}
               onOpen={() => setSelectedPost(post)}
-              onOpenProfile={() => onOpenProfile?.(effectiveUserId)}
+              onOpenProfile={() => post.authorId && onOpenProfile?.(post.authorId)}
             />
           ))
         )}
