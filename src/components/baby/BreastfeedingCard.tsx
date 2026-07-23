@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiFetch } from '../../lib/api';
 import { useAppStore } from '../../store/useAppStore';
@@ -8,8 +9,9 @@ export function BreastfeedingCard() {
   const setFeedSide = useAppStore((s) => s.setFeedSide);
   const toggleFeedSide = useAppStore((s) => s.toggleFeedSide);
   const queryClient = useQueryClient();
+  const [error, setError] = useState<string | null>(null);
 
-  const { mutate: registerFeed } = useMutation({
+  const { mutate: registerFeed, isPending } = useMutation({
     mutationFn: () => {
       const side = lastFeedSide === 'left' ? 'esquerdo' : 'direito';
       const now = new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
@@ -21,6 +23,10 @@ export function BreastfeedingCard() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['baby'] });
       toggleFeedSide();
+      setError(null);
+    },
+    onError: () => {
+      setError('Não foi possível registrar. Tente novamente.');
     },
   });
 
@@ -50,12 +56,19 @@ export function BreastfeedingCard() {
       </div>
 
       <button
-        onClick={() => registerFeed()}
+        onClick={() => { setError(null); registerFeed(); }}
+        disabled={isPending}
         aria-label="Registrar mamada"
-        className="w-full py-2.5 rounded-2xl bg-sara-linen text-sara-gold text-sm font-semibold active:scale-[0.98] transition-transform"
+        className="w-full py-2.5 rounded-2xl bg-sara-linen text-sara-gold text-sm font-semibold active:scale-[0.98] transition-transform disabled:opacity-60"
       >
-        Registrar mamada
+        {isPending ? 'Registrando...' : 'Registrar mamada'}
       </button>
+
+      {error && (
+        <p role="alert" className="text-[11px] text-sara-terracotta text-center">
+          {error}
+        </p>
+      )}
     </div>
   );
 }
