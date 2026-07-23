@@ -42,6 +42,7 @@ export default async function chatsRoutes(fastify: FastifyInstance) {
           { participants: { some: { userId: body.data.userId } } },
         ],
       },
+      include: { participants: { include: { user: { select: { id: true, name: true, archetypeKey: true } } } } },
     })
 
     if (existing) return reply.send({ ...existing, messages: [] })
