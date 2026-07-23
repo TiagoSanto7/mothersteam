@@ -15,9 +15,14 @@ const ROUTINE_ENTRY: ApiRoutineEntry = {
   category: 'appointment', done: false, userId: 'u1', createdAt: new Date().toISOString(),
 }
 
+// Anchor createdAt to today's UTC date so the "startsWith(todayStr)" filter in
+// DashboardScreen matches regardless of local timezone. Using Date.now() - 80min
+// would fall on yesterday (UTC) when the test runs late in the day in negative
+// UTC offsets, causing a deterministic-but-timezone-shaped failure.
 const FEED_ENTRY: ApiBabyEntry = {
   id: '1', time: '10:00', type: 'feed', detail: 'Esquerdo',
-  userId: 'u1', createdAt: new Date(Date.now() - 80 * 60_000).toISOString(),
+  userId: 'u1',
+  createdAt: `${new Date().toISOString().split('T')[0]}T10:00:00.000Z`,
 }
 
 function makeWrapper(

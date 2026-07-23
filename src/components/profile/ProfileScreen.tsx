@@ -46,7 +46,6 @@ export function ProfileScreen({ onClose }: ProfileScreenProps) {
 
   const archetype = motherProfile ? ARCHETYPES[motherProfile.archetypeKey] : null;
   const avatarColor = archetype?.color ?? '#9D8FCC';
-  const userPosts = communityPosts;
 
   const bio = archetype ? archetype.phrases[1] : 'Maternidade com presença e intenção.';
 
@@ -166,14 +165,14 @@ export function ProfileScreen({ onClose }: ProfileScreenProps) {
 
       {/* Feed */}
       <div className="flex-1 overflow-y-auto">
-        {userPosts.length === 0 ? (
+        {communityPosts.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full gap-2 py-12 text-graphite-muted">
             <p className="text-sm">Nenhuma publicação ainda</p>
             <p className="text-xs text-center px-8">Use o botão Desabafar na Comunidade para compartilhar</p>
           </div>
         ) : (
           <ul className="divide-y divide-gray-100">
-            {userPosts.map((post) => (
+            {communityPosts.map((post) => (
               <li key={post.id} className="px-4 py-4 active:bg-sara-linen transition-colors cursor-pointer" onClick={() => setSelectedPost(post)}>
                 <div className="flex items-start gap-3">
                   <div
