@@ -50,8 +50,6 @@ beforeEach(() => {
     motherName: 'Mariana',
     currentUserId: 'u1',
     isLoggedIn: true,
-    communityPosts: [],
-    postComments: {},
   });
   mockApiFetch.mockResolvedValue(MOCK_POST);
 });
