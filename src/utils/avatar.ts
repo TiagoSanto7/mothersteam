@@ -1,6 +1,6 @@
 import { ARCHETYPES } from './onboardingScoring';
 
-const FALLBACK = '#C97E5A'; // matches tailwind sara-terracotta
+const FALLBACK = '#BC8474'; // matches tailwind sara-terracotta (see tailwind.config.js)
 
 export function getAvatarColor(archetypeKey: string | null | undefined): string {
   if (archetypeKey && ARCHETYPES[archetypeKey as keyof typeof ARCHETYPES]) {
