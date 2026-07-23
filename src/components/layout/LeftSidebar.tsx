@@ -1,6 +1,7 @@
 import { Home, MessageCircle, Baby, Calendar, ShoppingBag, Bell, MessageSquare, User, Settings, LogOut, Heart, Users } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { useAppStore } from '../../store/useAppStore';
+import { apiFetch } from '../../lib/api';
 import type { TabId } from '../../types';
 
 interface LeftSidebarProps {
@@ -38,6 +39,11 @@ export function LeftSidebar({
   const setActiveTab = useAppStore((s) => s.setActiveTab);
   const motherName   = useAppStore((s) => s.motherName);
   const clearAuth    = useAppStore((s) => s.clearAuth);
+
+  function handleLogout() {
+    apiFetch('/auth/logout', { method: 'POST' }).catch(() => {/* ignore */});
+    clearAuth();
+  }
 
   const navBtnClass = (isActive: boolean) =>
     [
@@ -146,7 +152,7 @@ export function LeftSidebar({
         <button
           title="Sair"
           aria-label="Sair"
-          onClick={clearAuth}
+          onClick={handleLogout}
           className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-colors text-sara-terracotta hover:bg-sara-terracotta/10 md:justify-center lg:justify-start"
         >
           <LogOut size={20} strokeWidth={1.8} className="flex-shrink-0" />

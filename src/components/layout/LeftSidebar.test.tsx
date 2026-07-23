@@ -3,6 +3,9 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { LeftSidebar } from './LeftSidebar';
 import { useAppStore } from '../../store/useAppStore';
 
+const { mockApiFetch } = vi.hoisted(() => ({ mockApiFetch: vi.fn() }));
+vi.mock('../../lib/api', () => ({ apiFetch: mockApiFetch, ApiError: class extends Error {} }));
+
 beforeEach(() => {
   useAppStore.setState({
     isLoggedIn: true,
@@ -38,5 +41,15 @@ describe('LeftSidebar navigation parity', () => {
     const shopping = screen.getByRole('button', { name: 'Shopping' });
     fireEvent.click(shopping);
     expect(useAppStore.getState().activeTab).toBe('shopping');
+  });
+});
+
+describe('LeftSidebar logout', () => {
+  it('calls /auth/logout and clears auth when Sair is clicked', () => {
+    mockApiFetch.mockResolvedValue(undefined);
+    renderSidebar();
+    fireEvent.click(screen.getByRole('button', { name: 'Sair' }));
+    expect(mockApiFetch).toHaveBeenCalledWith('/auth/logout', { method: 'POST' });
+    expect(useAppStore.getState().isLoggedIn).toBe(false);
   });
 });
