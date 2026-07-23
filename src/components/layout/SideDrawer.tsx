@@ -2,6 +2,7 @@ import { X, User, Settings, LogOut, BookOpen, ShoppingBag } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAppStore } from '../../store/useAppStore';
 import { apiFetch } from '../../lib/api';
+import { getAvatarColor } from '../../utils/avatar';
 
 interface SideDrawerProps {
   isOpen: boolean;
@@ -12,8 +13,9 @@ interface SideDrawerProps {
 }
 
 export function SideDrawer({ isOpen, onClose, onOpenProfile, onOpenSettings, onOpenSavedVerses }: SideDrawerProps) {
-  const motherName = useAppStore((s) => s.motherName);
-  const clearAuth = useAppStore((s) => s.clearAuth);
+  const motherName    = useAppStore((s) => s.motherName);
+  const motherProfile = useAppStore((s) => s.motherProfile);
+  const clearAuth     = useAppStore((s) => s.clearAuth);
   const setActiveTab = useAppStore((s) => s.setActiveTab);
 
   const initial = (motherName || 'M').charAt(0).toUpperCase();
@@ -53,7 +55,8 @@ export function SideDrawer({ isOpen, onClose, onOpenProfile, onOpenSettings, onO
               <div className="flex flex-col gap-3">
                 <div
                   aria-hidden="true"
-                  className="w-14 h-14 rounded-full bg-sara-terracotta flex items-center justify-center text-white text-xl font-bold"
+                  style={{ background: getAvatarColor(motherProfile?.archetypeKey ?? null) }}
+                  className="w-14 h-14 rounded-full flex items-center justify-center text-white text-xl font-bold"
                 >
                   {initial}
                 </div>

@@ -104,6 +104,7 @@ export interface ChatMessage {
 export interface Chat {
   id: string;
   with: string;
+  withArchetypeKey?: string | null;
   lastMessage: string;
   time: string;
   unread: number;

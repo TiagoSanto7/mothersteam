@@ -5,6 +5,7 @@ import { apiFetch } from '../../lib/api';
 import { useAppStore } from '../../store/useAppStore';
 import { PostDetailScreen } from '../post/PostDetailScreen';
 import { apiPostToCommunityPost } from '../../lib/helpers';
+import { getAvatarColor } from '../../utils/avatar';
 import type { ApiMessage, ApiPost, PaginatedResult } from '../../lib/types';
 import type { Chat } from '../../types';
 
@@ -78,7 +79,10 @@ export function ChatScreen({ chat, onBack }: ChatScreenProps) {
         <button onClick={onBack} className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-sara-linen">
           <ChevronLeft size={20} className="text-graphite" />
         </button>
-        <div className="w-8 h-8 rounded-full bg-sara-terracotta flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
+        <div
+          style={{ background: getAvatarColor(chat.withArchetypeKey) }}
+          className="w-8 h-8 rounded-full flex items-center justify-center text-white font-bold text-sm flex-shrink-0"
+        >
           {chat.with.charAt(0).toUpperCase()}
         </div>
         <div className="flex-1 min-w-0">
@@ -92,7 +96,10 @@ export function ChatScreen({ chat, onBack }: ChatScreenProps) {
           return (
             <div key={msg.id} className={`flex ${isMe ? 'justify-end' : 'justify-start'}`}>
               {!isMe && (
-                <div className="w-7 h-7 rounded-full bg-sara-terracotta flex items-center justify-center text-white font-bold text-xs flex-shrink-0 mr-2 mt-1">
+                <div
+                  style={{ background: getAvatarColor(msg.sender.archetypeKey ?? null) }}
+                  className="w-7 h-7 rounded-full flex items-center justify-center text-white font-bold text-xs flex-shrink-0 mr-2 mt-1"
+                >
                   {msg.sender.name.charAt(0)}
                 </div>
               )}

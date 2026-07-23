@@ -5,6 +5,7 @@ import { useAppStore } from '../../store/useAppStore';
 import { apiFetch } from '../../lib/api';
 import { patchPostLikeInAllCaches, apiPostToCommunityPost } from '../../lib/helpers';
 import { SharePostSheet } from '../comunidade/SharePostSheet';
+import { getAvatarColor } from '../../utils/avatar';
 import type { CommunityPost, PostComment } from '../../types';
 import type { ApiPost, PaginatedResult } from '../../lib/types';
 
@@ -16,7 +17,7 @@ const BADGE_CONFIG = {
 interface ApiComment {
   id: string;
   content: string;
-  author: { id: string; name: string };
+  author: { id: string; name: string; archetypeKey?: string | null };
   likes: number;
   createdAt: string;
 }
@@ -28,7 +29,8 @@ interface PostDetailScreenProps {
 }
 
 export function PostDetailScreen({ post, onBack, onOpenProfile }: PostDetailScreenProps) {
-  const motherName = useAppStore((s) => s.motherName);
+  const motherName    = useAppStore((s) => s.motherName);
+  const motherProfile = useAppStore((s) => s.motherProfile);
   const queryClient = useQueryClient();
 
   const [liked, setLiked] = useState(post.likedByCurrentUser ?? false);
@@ -52,6 +54,7 @@ export function PostDetailScreen({ post, onBack, onOpenProfile }: PostDetailScre
   const comments: PostComment[] = (commentsData?.items ?? []).map((c) => ({
     id: c.id,
     author: c.author.name,
+    authorArchetypeKey: c.author.archetypeKey ?? null,
     content: c.content,
     time: '',
     likes: c.likes,
@@ -135,7 +138,10 @@ export function PostDetailScreen({ post, onBack, onOpenProfile }: PostDetailScre
               aria-label={`Ver perfil de ${post.author}`}
               className="flex items-center gap-2.5 text-left"
             >
-              <div className="w-10 h-10 rounded-full bg-sara-terracotta flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
+              <div
+                style={{ background: getAvatarColor(post.authorArchetypeKey) }}
+                className="w-10 h-10 rounded-full flex items-center justify-center text-white font-bold text-sm flex-shrink-0"
+              >
                 {post.author.charAt(0)}
               </div>
               <div>
@@ -221,7 +227,10 @@ export function PostDetailScreen({ post, onBack, onOpenProfile }: PostDetailScre
           )}
           {comments.map((c) => (
             <div key={c.id} className="flex items-start gap-2.5">
-              <div className="w-8 h-8 rounded-full bg-sara-terracotta flex items-center justify-center text-white font-bold text-xs flex-shrink-0">
+              <div
+                style={{ background: getAvatarColor(c.authorArchetypeKey) }}
+                className="w-8 h-8 rounded-full flex items-center justify-center text-white font-bold text-xs flex-shrink-0"
+              >
                 {c.author.charAt(0)}
               </div>
               <div className="flex-1 bg-white rounded-2xl px-3 py-2.5 shadow-sm">
@@ -243,7 +252,10 @@ export function PostDetailScreen({ post, onBack, onOpenProfile }: PostDetailScre
       {/* Comment input */}
       <div className="px-4 py-3 border-t border-sara-linen/60 flex-shrink-0 bg-sara-linen/80 backdrop-blur-sm">
         <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-full bg-sara-terracotta flex items-center justify-center text-white font-bold text-xs flex-shrink-0">
+          <div
+            style={{ background: getAvatarColor(motherProfile?.archetypeKey ?? null) }}
+            className="w-8 h-8 rounded-full flex items-center justify-center text-white font-bold text-xs flex-shrink-0"
+          >
             {motherName.charAt(0)}
           </div>
           <div className="flex-1 flex items-center gap-2 bg-white rounded-2xl border border-sara-linen px-3 py-2">

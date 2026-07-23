@@ -2,6 +2,7 @@ import { Home, MessageCircle, Baby, Calendar, ShoppingBag, Bell, MessageSquare, 
 import type { LucideIcon } from 'lucide-react';
 import { useAppStore } from '../../store/useAppStore';
 import { apiFetch } from '../../lib/api';
+import { getAvatarColor } from '../../utils/avatar';
 import type { TabId } from '../../types';
 
 interface LeftSidebarProps {
@@ -35,10 +36,11 @@ export function LeftSidebar({
   onOpenProfile,
   onOpenSettings,
 }: LeftSidebarProps) {
-  const activeTab    = useAppStore((s) => s.activeTab);
-  const setActiveTab = useAppStore((s) => s.setActiveTab);
-  const motherName   = useAppStore((s) => s.motherName);
-  const clearAuth    = useAppStore((s) => s.clearAuth);
+  const activeTab     = useAppStore((s) => s.activeTab);
+  const setActiveTab  = useAppStore((s) => s.setActiveTab);
+  const motherName    = useAppStore((s) => s.motherName);
+  const motherProfile = useAppStore((s) => s.motherProfile);
+  const clearAuth     = useAppStore((s) => s.clearAuth);
 
   function handleLogout() {
     apiFetch('/auth/logout', { method: 'POST' }).catch(() => {/* ignore */});
@@ -123,7 +125,10 @@ export function LeftSidebar({
       {/* Bottom section */}
       <div className="mt-auto flex flex-col gap-1 px-2 pb-4 flex-shrink-0">
         <div className="hidden lg:flex items-center gap-2 px-3 py-2 mb-1">
-          <div className="w-8 h-8 rounded-full bg-sara-terracotta flex items-center justify-center text-white text-sm font-bold flex-shrink-0">
+          <div
+            style={{ background: getAvatarColor(motherProfile?.archetypeKey ?? null) }}
+            className="w-8 h-8 rounded-full flex items-center justify-center text-white text-sm font-bold flex-shrink-0"
+          >
             {motherName ? motherName.charAt(0).toUpperCase() : 'M'}
           </div>
           <span className="text-sm font-medium text-graphite truncate">{motherName || 'Mãe'}</span>

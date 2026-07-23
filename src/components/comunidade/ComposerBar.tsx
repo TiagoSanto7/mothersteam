@@ -1,5 +1,6 @@
 import { Camera } from 'lucide-react';
 import { useAppStore } from '../../store/useAppStore';
+import { getAvatarColor } from '../../utils/avatar';
 
 interface ComposerBarProps {
   onOpen: () => void;
@@ -7,7 +8,8 @@ interface ComposerBarProps {
 }
 
 export function ComposerBar({ onOpen, onOpenWithImage }: ComposerBarProps) {
-  const motherName = useAppStore((s) => s.motherName);
+  const motherName    = useAppStore((s) => s.motherName);
+  const motherProfile = useAppStore((s) => s.motherProfile);
   const initial = motherName[0]?.toUpperCase() ?? 'M';
 
   return (
@@ -17,7 +19,10 @@ export function ComposerBar({ onOpen, onOpenWithImage }: ComposerBarProps) {
         aria-label="Escrever post"
         className="flex items-center gap-3 flex-1 text-left"
       >
-        <div className="w-8 h-8 rounded-full bg-sara-terracotta text-white text-sm font-bold flex items-center justify-center flex-shrink-0">
+        <div
+          style={{ background: getAvatarColor(motherProfile?.archetypeKey ?? null) }}
+          className="w-8 h-8 rounded-full text-white text-sm font-bold flex items-center justify-center flex-shrink-0"
+        >
           {initial}
         </div>
         <span className="flex-1 text-graphite-muted text-sm">

@@ -4,6 +4,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiFetch } from '../../lib/api';
 import { useAppStore } from '../../store/useAppStore';
 import { ChatScreen } from './ChatScreen';
+import { getAvatarColor } from '../../utils/avatar';
 import type { ApiChat, ApiFollowUser, PaginatedResult } from '../../lib/types';
 import { apiChatToChat } from '../../lib/helpers';
 import type { Chat } from '../../types';
@@ -95,7 +96,10 @@ export function ChatListScreen({ onBack }: ChatListScreenProps) {
                   onClick={() => setSelectedChat(chat)}
                   className="w-full flex items-center gap-3 px-4 py-3.5 active:bg-sara-linen transition-colors text-left"
                 >
-                  <div className="w-12 h-12 rounded-full bg-sara-terracotta flex items-center justify-center text-white font-bold text-lg flex-shrink-0">
+                  <div
+                    style={{ background: getAvatarColor(chat.withArchetypeKey) }}
+                    className="w-12 h-12 rounded-full flex items-center justify-center text-white font-bold text-lg flex-shrink-0"
+                  >
                     {chat.with.charAt(0).toUpperCase()}
                   </div>
                   <div className="flex-1 min-w-0">
@@ -143,7 +147,10 @@ export function ChatListScreen({ onBack }: ChatListScreenProps) {
                       disabled={createChatMutation.isPending}
                       className="w-full flex items-center gap-3 px-4 py-3.5 active:bg-sara-linen transition-colors text-left"
                     >
-                      <div className="w-10 h-10 rounded-full bg-sara-terracotta flex items-center justify-center text-white font-bold flex-shrink-0">
+                      <div
+                        style={{ background: getAvatarColor(null) }}
+                        className="w-10 h-10 rounded-full flex items-center justify-center text-white font-bold flex-shrink-0"
+                      >
                         {user.name.charAt(0).toUpperCase()}
                       </div>
                       <p className="text-sm font-medium text-graphite">{user.name}</p>

@@ -5,6 +5,7 @@ import { useAppStore } from '../../store/useAppStore'
 import { apiFetch } from '../../lib/api'
 import { getMensagemParaFase } from '../../data/mensagemDeDeus'
 import { getContextualPhrase } from '../../lib/helpers'
+import { getAvatarColor } from '../../utils/avatar'
 import type { ApiRoutineEntry, ApiBabyEntry } from '../../lib/types'
 import type { PregnancyPhase } from '../../types'
 import { QuickRegisterSheet } from './QuickRegisterSheet'
@@ -40,10 +41,11 @@ export function relativeTimeFeed(iso: string): string {
 }
 
 export function DashboardScreen() {
-  const motherName = useAppStore((s) => s.motherName)
-  const phase = useAppStore((s) => s.phase)
-  const isLoggedIn = useAppStore((s) => s.isLoggedIn)
-  const setActiveTab = useAppStore((s) => s.setActiveTab)
+  const motherName    = useAppStore((s) => s.motherName)
+  const motherProfile = useAppStore((s) => s.motherProfile)
+  const phase         = useAppStore((s) => s.phase)
+  const isLoggedIn    = useAppStore((s) => s.isLoggedIn)
+  const setActiveTab  = useAppStore((s) => s.setActiveTab)
   const [sheetOpen, setSheetOpen] = useState(false)
   const [babyDevOpen, setBabyDevOpen] = useState(false)
   const [momentoDeusOpen, setMomentoDeusOpen] = useState(false)
@@ -118,7 +120,10 @@ export function DashboardScreen() {
               {getContextualPhrase(phase)}
             </p>
           </div>
-          <div className="w-9 h-9 rounded-full bg-sara-terracotta flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
+          <div
+            style={{ background: getAvatarColor(motherProfile?.archetypeKey ?? null) }}
+            className="w-9 h-9 rounded-full flex items-center justify-center text-white font-bold text-sm flex-shrink-0"
+          >
             {initial}
           </div>
         </div>

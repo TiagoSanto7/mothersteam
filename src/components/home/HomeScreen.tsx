@@ -6,6 +6,7 @@ import { WeekCalendar } from './WeekCalendar';
 import { RoutineTimeline } from './RoutineTimeline';
 import { AddRoutineModal } from './AddRoutineModal';
 import { SARA_FRASES } from '../../data/reception/sara-frases';
+import { getAvatarColor } from '../../utils/avatar';
 import type { ReceptionData } from '../../types/reception';
 
 interface HomeScreenProps {
@@ -13,10 +14,11 @@ interface HomeScreenProps {
 }
 
 export function HomeScreen({ onOpenProfile }: HomeScreenProps) {
-  const phase = useAppStore((s) => s.phase);
-  const motherName = useAppStore((s) => s.motherName);
-  const babyName = useAppStore((s) => s.babyName);
-  const selectedDate = useAppStore((s) => s.selectedDate);
+  const phase         = useAppStore((s) => s.phase);
+  const motherName    = useAppStore((s) => s.motherName);
+  const motherProfile = useAppStore((s) => s.motherProfile);
+  const babyName      = useAppStore((s) => s.babyName);
+  const selectedDate  = useAppStore((s) => s.selectedDate);
   const receptionShape: ReceptionData = {
     phase: phase.stage,
     week: phase.stage === 'pregnant' ? phase.week : undefined,
@@ -34,7 +36,8 @@ export function HomeScreen({ onOpenProfile }: HomeScreenProps) {
         <button
           onClick={onOpenProfile}
           aria-label="Abrir perfil"
-          className="w-10 h-10 rounded-full bg-sara-terracotta flex items-center justify-center text-base font-bold text-white shadow-sm flex-shrink-0 active:scale-95 transition-transform"
+          style={{ background: getAvatarColor(motherProfile?.archetypeKey ?? null) }}
+          className="w-10 h-10 rounded-full flex items-center justify-center text-base font-bold text-white shadow-sm flex-shrink-0 active:scale-95 transition-transform"
         >
           {initial}
         </button>

@@ -3,6 +3,7 @@ import { Users } from 'lucide-react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useAppStore } from '../../store/useAppStore'
 import { apiFetch } from '../../lib/api'
+import { getAvatarColor } from '../../utils/avatar'
 import type { ApiCommunity, ApiFollowUser, PaginatedResult } from '../../lib/types'
 
 interface SocialOnboardingScreenProps {
@@ -77,7 +78,10 @@ export function SocialOnboardingScreen({ onDone }: SocialOnboardingScreenProps) 
                     key={community.id}
                     className="flex items-center gap-3 bg-white/60 rounded-2xl px-4 py-3"
                   >
-                    <div className="w-10 h-10 rounded-full bg-sara-terracotta flex items-center justify-center text-white font-bold flex-shrink-0">
+                    <div
+                      style={{ background: getAvatarColor(null) }}
+                      className="w-10 h-10 rounded-full flex items-center justify-center text-white font-bold flex-shrink-0"
+                    >
                       {community.name.charAt(0).toUpperCase()}
                     </div>
                     <div className="flex-1 min-w-0">

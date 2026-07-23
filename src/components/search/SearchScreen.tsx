@@ -2,9 +2,10 @@ import { useEffect, useState } from 'react';
 import { ChevronLeft, Search } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { apiFetch } from '../../lib/api';
+import { getAvatarColor } from '../../utils/avatar';
 
 interface SearchResults {
-  users: Array<{ id: string; name: string; pregnancyStage: string }>;
+  users: Array<{ id: string; name: string; pregnancyStage: string; archetypeKey?: string | null }>;
   communities: Array<{ id: string; name: string; description: string; category: string; colorKey: string; _count: { members: number } }>;
 }
 
@@ -63,7 +64,10 @@ export function SearchScreen({ onOpenUser, onOpenCommunity, onBack }: SearchScre
               {users.map((u) => (
                 <li key={u.id}>
                   <button onClick={() => onOpenUser(u.id)} className="w-full flex items-center gap-3 px-4 py-3 text-left">
-                    <div className="w-10 h-10 rounded-full bg-sara-terracotta flex items-center justify-center text-white text-sm font-bold flex-shrink-0">
+                    <div
+                      style={{ background: getAvatarColor(u.archetypeKey) }}
+                      className="w-10 h-10 rounded-full flex items-center justify-center text-white text-sm font-bold flex-shrink-0"
+                    >
                       {u.name.charAt(0).toUpperCase()}
                     </div>
                     <p className="text-sm font-semibold text-graphite">{u.name}</p>

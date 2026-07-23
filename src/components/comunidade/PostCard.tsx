@@ -4,6 +4,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiFetch } from '../../lib/api';
 import { patchPostLikeInAllCaches } from '../../lib/helpers';
 import { SharePostSheet } from './SharePostSheet';
+import { getAvatarColor } from '../../utils/avatar';
 import type { CommunityPost } from '../../types';
 
 const BADGE_CONFIG = {
@@ -54,7 +55,8 @@ export function PostCard({ post, onOpen, onOpenProfile }: PostCardProps) {
             <div
               data-testid="post-avatar"
               aria-hidden="true"
-              className="w-10 h-10 rounded-full bg-sara-terracotta flex items-center justify-center text-white text-sm font-bold flex-shrink-0"
+              style={{ background: getAvatarColor(post.authorArchetypeKey) }}
+              className="w-10 h-10 rounded-full flex items-center justify-center text-white text-sm font-bold flex-shrink-0"
             >
               {post.author.charAt(0)}
             </div>
