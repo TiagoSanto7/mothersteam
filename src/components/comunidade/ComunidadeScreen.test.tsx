@@ -1,4 +1,4 @@
-import { render, screen, fireEvent, waitForElementToBeRemoved } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor, waitForElementToBeRemoved } from '@testing-library/react';
 import { describe, expect, it, beforeEach, vi } from 'vitest';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ComunidadeScreen } from './ComunidadeScreen';
@@ -248,5 +248,62 @@ describe('ComunidadeScreen', () => {
     );
     await screen.findAllByTestId('post-card');
     expect(screen.getByRole('button', { name: 'Descurtir' })).toBeInTheDocument();
+  });
+});
+
+describe('ComunidadeScreen — self profile navigation', () => {
+  it('renders self ProfileScreen (Editar perfil) when the opened profile is the current user', async () => {
+    useAppStore.setState({
+      isLoggedIn: true,
+      currentUserId: 'me-1',
+      motherName: 'Mariana',
+      phase: { stage: 'pregnant', week: 28 },
+      motherProfile: null,
+      savedVerses: [],
+    });
+
+    mockApiFetch.mockImplementation(async (path: string) => {
+      if (typeof path === 'string' && path.startsWith('/posts')) {
+        return {
+          items: [{
+            id: 'p1',
+            content: 'meu post',
+            category: 'gestação',
+            authorId: 'me-1',
+            author: { id: 'me-1', name: 'Mariana', username: null },
+            _count: { likes: 0, comments: 0, reposts: 0 },
+            createdAt: new Date().toISOString(),
+            isRepost: false,
+            likedByCurrentUser: false,
+          }],
+          hasMore: false,
+        };
+      }
+      // profile fetch inside ProfileScreen
+      if (typeof path === 'string' && path.startsWith('/users/me-1/posts')) {
+        return { items: [], hasMore: false };
+      }
+      if (typeof path === 'string' && path === '/users/me-1') {
+        return {
+          id: 'me-1', name: 'Mariana', bio: null,
+          pregnancyStage: 'pregnant', pregnancyWeek: 28, babyAgeInDays: null,
+          profileKey: null, archetypeKey: null,
+          _count: { posts: 0, followers: 0, following: 0 },
+          isSelf: true, isFollowedByCurrentUser: false,
+        };
+      }
+      return { items: [], hasMore: false };
+    });
+
+    render(<ComunidadeScreen />, { wrapper });
+
+    // Click author avatar inside your own post
+    const avatarBtn = await screen.findByRole('button', { name: /ver perfil de mariana/i });
+    fireEvent.click(avatarBtn);
+
+    // ProfileScreen chrome must appear (proves ProfileRouter chose self view)
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: /editar perfil/i })).toBeInTheDocument();
+    });
   });
 });
