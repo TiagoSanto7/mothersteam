@@ -32,6 +32,13 @@ RUN npx prisma generate
 # Diretório de uploads (será montado como volume no compose)
 RUN mkdir -p uploads
 
+# Node não deve rodar como root — defense in depth se algum dia rolar RCE.
+# node:20-slim vem com user `node` (uid 1000) pré-criado. Precisa dar posse
+# de /app pra ele antes de trocar de user (volume uploads/ precisa ser
+# writable também — quem monta o volume no compose herda o dono do dir).
+RUN chown -R node:node /app
+USER node
+
 EXPOSE 3001
 
 # Roda com tsx direto do source — sem etapa de build
