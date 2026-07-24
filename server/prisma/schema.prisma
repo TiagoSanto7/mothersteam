@@ -8,20 +8,24 @@ datasource db {
 }
 
 model User {
-  id                String    @id @default(cuid())
-  email             String    @unique
-  username          String?   @unique
+  id                String  @id @default(cuid())
+  email             String  @unique
+  username          String? @unique
   passwordHash      String
   name              String
   babyName          String?
   pregnancyStage    String
   pregnancyWeek     Int?
   babyAgeInDays     Int?
-  onboardingDone    Boolean   @default(false)
+  onboardingDone    Boolean @default(false)
   onboardingAnswers Json?
   profileKey        String?
   archetypeKey      String?
-  bio               String?  @db.Text
+  bio               String? @db.Text
+  role              String  @default("USER")
+  motherBirthDate   DateTime?
+  babyBirthDate     DateTime?
+  expectedBirthDate DateTime?
 
   posts              Post[]
   comments           Comment[]
@@ -51,16 +55,16 @@ model Follow {
 }
 
 model Community {
-  id          String  @id @default(cuid())
+  id          String            @id @default(cuid())
   name        String
-  description String  @db.Text
+  description String            @db.Text
   category    String
   colorKey    String
   creatorId   String
-  creator     User    @relation("CommunityCreator", fields: [creatorId], references: [id])
+  creator     User              @relation("CommunityCreator", fields: [creatorId], references: [id])
   members     CommunityMember[]
   posts       Post[]
-  createdAt   DateTime @default(now())
+  createdAt   DateTime          @default(now())
 }
 
 model CommunityMember {
@@ -123,8 +127,8 @@ model Chat {
 model ChatParticipant {
   userId String
   chatId String
-  user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
-  chat   Chat @relation(fields: [chatId], references: [id], onDelete: Cascade)
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  chat   Chat   @relation(fields: [chatId], references: [id], onDelete: Cascade)
 
   @@id([userId, chatId])
 }
@@ -178,4 +182,45 @@ model Notification {
   actorName   String?
   postExcerpt String?  @db.VarChar(300)
   createdAt   DateTime @default(now())
+}
+
+model Category {
+  id        String    @id @default(cuid())
+  name      String
+  slug      String    @unique
+  icon      String    @default("🛍️")
+  active    Boolean   @default(true)
+  sortOrder Int       @default(0)
+  products  Product[]
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+}
+
+model Product {
+  id           String         @id @default(cuid())
+  name         String
+  description  String         @db.Text
+  price        Decimal        @db.Decimal(10, 2)
+  affiliateUrl String?
+  images       Json           @default("[]")
+  phases       Json           @default("[]")
+  stock        Int?
+  featured     Boolean        @default(false)
+  active       Boolean        @default(true)
+  categoryId   String
+  category     Category       @relation(fields: [categoryId], references: [id])
+  clicks       ProductClick[]
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+}
+
+model ProductClick {
+  id        String   @id @default(cuid())
+  productId String
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  userId    String?
+  clickedAt DateTime @default(now())
+
+  @@index([productId])
+  @@index([clickedAt])
 }

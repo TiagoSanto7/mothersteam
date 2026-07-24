@@ -10,6 +10,7 @@ const updateMeSchema = z.object({
   pregnancyStage: z.enum(['pregnant', 'postpartum']).optional(),
   pregnancyWeek: z.number().int().min(1).max(42).optional().nullable(),
   babyAgeInDays: z.number().int().min(0).optional().nullable(),
+  onboardingDone: z.boolean().optional(),
 })
 
 export default async function usersRoutes(fastify: FastifyInstance) {
