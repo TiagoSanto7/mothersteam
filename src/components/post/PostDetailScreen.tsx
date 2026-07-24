@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { ChevronLeft, Heart, MessageCircle, Share2, Repeat2, Send } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAppStore } from '../../store/useAppStore';
-import { apiFetch } from '../../lib/api';
+import { apiFetch, resolveMediaUrl } from '../../lib/api';
 import { patchPostLikeInAllCaches, apiPostToCommunityPost } from '../../lib/helpers';
 import { SharePostSheet } from '../comunidade/SharePostSheet';
 import { PostActionsMenu } from '../comunidade/PostActionsMenu';
@@ -194,7 +194,7 @@ export function PostDetailScreen({ post, onBack, onOpenProfile }: PostDetailScre
 
           {post.imageUrl && (
             <img
-              src={post.imageUrl}
+              src={resolveMediaUrl(post.imageUrl)}
               alt="Imagem do post"
               className="w-full rounded-xl object-cover max-h-64 mb-4"
             />

@@ -1,0 +1,4 @@
+# Não commitar arquivos de env com segredos reais
+.env.production
+.env.production.local
+*.env.local

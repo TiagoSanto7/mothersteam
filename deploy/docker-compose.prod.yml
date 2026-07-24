@@ -1,0 +1,67 @@
+# Docker Compose de produção — Mother's Team
+# Sobe: backend Fastify + MySQL 8
+# Nginx no host faz reverse proxy pra api.santoti.com → 127.0.0.1:3001
+#
+# Uso na VPS:
+#   docker compose -f docker-compose.prod.yml --env-file .env.production up -d
+#
+# Primeira vez, depois de subir:
+#   docker compose -f docker-compose.prod.yml exec api npx prisma db push
+#   docker compose -f docker-compose.prod.yml exec api npx prisma db seed  # opcional
+
+services:
+  mysql:
+    image: mysql:8
+    container_name: mothersteam-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: mothers_team
+      MYSQL_USER: mothers
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+    volumes:
+      - mothersteam-mysql-data:/var/lib/mysql
+    networks:
+      - mothersteam-net
+    # NÃO expõe porta pro host — só acessível dentro do compose network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-p${MYSQL_ROOT_PASSWORD}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+
+  api:
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile
+    container_name: mothersteam-api
+    restart: unless-stopped
+    depends_on:
+      mysql:
+        condition: service_healthy
+    environment:
+      NODE_ENV: production
+      PORT: 3001
+      DATABASE_URL: mysql://mothers:${MYSQL_PASSWORD}@mysql:3306/mothers_team
+      JWT_SECRET: ${JWT_SECRET}
+      REFRESH_SECRET: ${REFRESH_SECRET}
+      FRONTEND_URL: ${FRONTEND_URL}
+      ELEVENLABS_API_KEY: ${ELEVENLABS_API_KEY}
+      ELEVENLABS_SARA_VOICE_ID: ${ELEVENLABS_SARA_VOICE_ID}
+    volumes:
+      - mothersteam-uploads:/app/uploads
+    ports:
+      # Bind APENAS em 127.0.0.1 — só nginx (no host) enxerga.
+      # Nada exposto direto pra internet.
+      - "127.0.0.1:3001:3001"
+    networks:
+      - mothersteam-net
+
+volumes:
+  mothersteam-mysql-data:
+  mothersteam-uploads:
+
+networks:
+  mothersteam-net:
+    driver: bridge

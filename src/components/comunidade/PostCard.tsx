@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { MessageCircle, Heart, Repeat2, Share2 } from 'lucide-react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAppStore } from '../../store/useAppStore';
-import { apiFetch } from '../../lib/api';
+import { apiFetch, resolveMediaUrl } from '../../lib/api';
 import { patchPostLikeInAllCaches } from '../../lib/helpers';
 import { SharePostSheet } from './SharePostSheet';
 import { PostActionsMenu } from './PostActionsMenu';
@@ -104,7 +104,7 @@ export function PostCard({ post, onOpen, onOpenProfile, onDeleted }: PostCardPro
             <p className="text-sm text-graphite-light leading-relaxed">{post.content}</p>
             {post.imageUrl && (
               <img
-                src={post.imageUrl}
+                src={resolveMediaUrl(post.imageUrl)}
                 alt="Imagem do post"
                 className="w-full rounded-xl object-cover max-h-64 mt-2"
               />
