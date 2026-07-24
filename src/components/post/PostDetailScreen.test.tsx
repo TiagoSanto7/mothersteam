@@ -7,7 +7,10 @@ import type { CommunityPost } from '../../types';
 import type { ApiChat, ApiFollowUser, PaginatedResult } from '../../lib/types';
 
 const { mockApiFetch } = vi.hoisted(() => ({ mockApiFetch: vi.fn() }));
-vi.mock('../../lib/api', () => ({ apiFetch: mockApiFetch, ApiError: class extends Error {} }));
+vi.mock('../../lib/api', async () => ({
+  ...(await vi.importActual<typeof import('../../lib/api')>('../../lib/api')),
+  apiFetch: mockApiFetch,
+}));
 
 const POST_WITH_IMAGE: CommunityPost = {
   id: '1', category: 'gestação', author: 'Fernanda S.',

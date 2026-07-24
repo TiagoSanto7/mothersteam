@@ -14,7 +14,10 @@ vi.mock('framer-motion', async (importOriginal) => {
 });
 
 const mockApiFetch = vi.hoisted(() => vi.fn());
-vi.mock('../../lib/api', () => ({ apiFetch: mockApiFetch, ApiError: class extends Error {} }));
+vi.mock('../../lib/api', async () => ({
+  ...(await vi.importActual<typeof import('../../lib/api')>('../../lib/api')),
+  apiFetch: mockApiFetch,
+}));
 
 const API_POSTS = [
   {
