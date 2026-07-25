@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Send } from 'lucide-react';
+import { Send, ChevronLeft } from 'lucide-react';
 
 interface Message {
   id: string;
@@ -29,7 +29,11 @@ const STATIC_REPLIES: Record<string, string> = {
 const DEFAULT_REPLY =
   'Estou aqui para te ajudar! Para questões específicas de saúde, consulte sempre seu médico ou pediatra. O que mais posso esclarecer? 💜';
 
-export function MaeIAScreen() {
+interface MaeIAScreenProps {
+  onBack?: () => void;
+}
+
+export function MaeIAScreen({ onBack }: MaeIAScreenProps = {}) {
   const [messages, setMessages] = useState<Message[]>([
     {
       id: '0',
@@ -58,9 +62,18 @@ export function MaeIAScreen() {
 
   return (
     <div className="flex flex-col h-full">
-      <div className="px-4 pt-4 pb-3 border-b border-sara-linen/60 bg-sara-cream/80 backdrop-blur-sm">
-        <h1 className="text-base font-semibold font-serif text-graphite">MãeIA</h1>
-        <p className="text-xs text-graphite-muted">Assistente de saúde materno-infantil</p>
+      <div className="relative px-4 pt-4 pb-3 border-b border-sara-linen/60 bg-sara-cream/80 backdrop-blur-sm">
+        {onBack && (
+          <button
+            onClick={onBack}
+            aria-label="Voltar"
+            className="absolute top-4 left-4 w-8 h-8 rounded-full bg-white/20 flex items-center justify-center z-10"
+          >
+            <ChevronLeft size={18} className="text-graphite" />
+          </button>
+        )}
+        <h1 className={`text-base font-semibold font-serif text-graphite${onBack ? ' pl-10' : ''}`}>MãeIA</h1>
+        <p className={`text-xs text-graphite-muted${onBack ? ' pl-10' : ''}`}>Assistente de saúde materno-infantil</p>
       </div>
 
       <div className="flex gap-2 overflow-x-auto scrollbar-hide px-4 py-3 bg-sara-cream">

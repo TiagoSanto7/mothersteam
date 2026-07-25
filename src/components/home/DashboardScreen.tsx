@@ -13,6 +13,7 @@ import { BabyDevCard } from './BabyDevCard'
 import { BabyDevScreen } from './BabyDevScreen'
 import { MomentoDeusCard } from './MomentoDeusCard'
 import { MomentoDeusScreen } from './MomentoDeusScreen'
+import { MaeIAScreen } from '../maeIA/MaeIAScreen'
 
 export function getGreeting(): string {
   const h = new Date().getHours()
@@ -49,6 +50,7 @@ export function DashboardScreen() {
   const [sheetOpen, setSheetOpen] = useState(false)
   const [babyDevOpen, setBabyDevOpen] = useState(false)
   const [momentoDeusOpen, setMomentoDeusOpen] = useState(false)
+  const [showMaeIA, setShowMaeIA] = useState(false)
 
   const selectedDate = useAppStore((s) => s.selectedDate)
 
@@ -189,6 +191,24 @@ export function DashboardScreen() {
         <BabyDevCard onClick={() => setBabyDevOpen(true)} />
         <MomentoDeusCard onClick={() => setMomentoDeusOpen(true)} />
       </div>
+
+      {/* Sara FAB */}
+      <button
+        onClick={() => setShowMaeIA(true)}
+        aria-label="Conversar com a Sara"
+        className="fixed bottom-[84px] right-4 w-14 h-14 rounded-full bg-gradient-to-br from-sara-gold to-sara-terracotta text-white shadow-lg shadow-sara-terracotta/30 flex items-center justify-center active:scale-95 transition-transform z-30 text-xl"
+      >
+        ✦
+      </button>
+
+      {/* MaeIA overlay */}
+      {showMaeIA && (
+        <div className="fixed inset-0 z-50 sm:bg-black/40 sm:flex sm:items-center sm:justify-center">
+          <div className="w-full h-full sm:w-[390px] sm:h-[844px] bg-gradient-to-b from-[#F5EDE0] via-[#EAD8C8] to-[#D9C4AF] sm:rounded-[44px] sm:shadow-2xl overflow-hidden">
+            <MaeIAScreen onBack={() => setShowMaeIA(false)} />
+          </div>
+        </div>
+      )}
 
       <QuickRegisterSheet open={sheetOpen} onClose={() => setSheetOpen(false)} />
       <BabyDevScreen open={babyDevOpen} onClose={() => setBabyDevOpen(false)} />
