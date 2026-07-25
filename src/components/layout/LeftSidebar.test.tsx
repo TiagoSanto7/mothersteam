@@ -7,11 +7,12 @@ const { mockApiFetch } = vi.hoisted(() => ({ mockApiFetch: vi.fn() }));
 vi.mock('../../lib/api', () => ({ apiFetch: mockApiFetch, ApiError: class extends Error {} }));
 
 beforeEach(() => {
+  mockApiFetch.mockResolvedValue(undefined);
   useAppStore.setState({
     isLoggedIn: true,
     currentUserId: 'me-1',
     motherName: 'Mariana',
-    activeTab: 'home',
+    activeTab: 'hoje',
   });
 });
 
@@ -22,31 +23,44 @@ function renderSidebar() {
       unreadChats={0}
       onOpenNotifications={vi.fn()}
       onOpenChat={vi.fn()}
-      onOpenProfile={vi.fn()}
       onOpenSettings={vi.fn()}
     />,
   );
 }
 
-describe('LeftSidebar navigation parity', () => {
+describe('LeftSidebar navigation', () => {
+  it('has Hoje in the primary nav', () => {
+    renderSidebar();
+    fireEvent.click(screen.getByRole('button', { name: 'Hoje' }));
+    expect(useAppStore.getState().activeTab).toBe('hoje');
+  });
+
+  it('has Jornada in the primary nav', () => {
+    renderSidebar();
+    fireEvent.click(screen.getByRole('button', { name: 'Jornada' }));
+    expect(useAppStore.getState().activeTab).toBe('jornada');
+  });
+
   it('has Comunidade in the primary nav', () => {
     renderSidebar();
-    const comunidade = screen.getByRole('button', { name: 'Comunidade' });
-    fireEvent.click(comunidade);
+    fireEvent.click(screen.getByRole('button', { name: 'Comunidade' }));
     expect(useAppStore.getState().activeTab).toBe('comunidade');
   });
 
-  it('has Shopping accessible from the sidebar (secondary section, not primary)', () => {
+  it('has Perfil in the primary nav (sets tab, not overlay)', () => {
     renderSidebar();
-    const shopping = screen.getByRole('button', { name: 'Shopping' });
-    fireEvent.click(shopping);
-    expect(useAppStore.getState().activeTab).toBe('shopping');
+    fireEvent.click(screen.getByRole('button', { name: 'Perfil' }));
+    expect(useAppStore.getState().activeTab).toBe('perfil');
+  });
+
+  it('does not have Shopping button', () => {
+    renderSidebar();
+    expect(screen.queryByRole('button', { name: 'Shopping' })).not.toBeInTheDocument();
   });
 });
 
 describe('LeftSidebar logout', () => {
   it('calls /auth/logout and clears auth when Sair is clicked', () => {
-    mockApiFetch.mockResolvedValue(undefined);
     renderSidebar();
     fireEvent.click(screen.getByRole('button', { name: 'Sair' }));
     expect(mockApiFetch).toHaveBeenCalledWith('/auth/logout', { method: 'POST' });

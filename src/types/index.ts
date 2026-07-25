@@ -1,4 +1,4 @@
-export type TabId = 'hoje' | 'jornada' | 'comunidade' | 'perfil' | 'maeIA';
+export type TabId = 'hoje' | 'jornada' | 'comunidade' | 'perfil' | 'maeIA' | 'shopping';
 
 export type PregnancyPhase =
   | { stage: 'pregnant'; week: number }

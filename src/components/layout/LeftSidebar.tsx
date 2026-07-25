@@ -1,4 +1,4 @@
-import { Home, MessageCircle, Baby, Calendar, ShoppingBag, Bell, MessageSquare, User, Settings, LogOut, Heart, Users } from 'lucide-react';
+import { Home, Heart, Users, User, Bell, MessageSquare, Settings, LogOut, ShoppingBag } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { useAppStore } from '../../store/useAppStore';
 import { apiFetch } from '../../lib/api';
@@ -10,22 +10,14 @@ interface LeftSidebarProps {
   unreadChats: number;
   onOpenNotifications: () => void;
   onOpenChat: () => void;
-  onOpenProfile: () => void;
   onOpenSettings: () => void;
 }
 
-interface NavItem {
-  id: TabId;
-  icon: LucideIcon;
-  label: string;
-}
-
-const mainNavItems: NavItem[] = [
-  { id: 'home',       icon: Home,          label: 'Home' },
-  { id: 'maeIA',      icon: MessageCircle, label: 'MãeIA' },
-  { id: 'baby',       icon: Baby,          label: 'Bebê' },
-  { id: 'rotina',     icon: Calendar,      label: 'Rotina' },
-  { id: 'comunidade', icon: Users,         label: 'Comunidade' },
+const MAIN_NAV: { id: TabId; icon: LucideIcon; label: string }[] = [
+  { id: 'hoje',       icon: Home,   label: 'Hoje' },
+  { id: 'jornada',    icon: Heart,  label: 'Jornada' },
+  { id: 'comunidade', icon: Users,  label: 'Comunidade' },
+  { id: 'perfil',     icon: User,   label: 'Perfil' },
 ];
 
 export function LeftSidebar({
@@ -33,7 +25,6 @@ export function LeftSidebar({
   unreadChats,
   onOpenNotifications,
   onOpenChat,
-  onOpenProfile,
   onOpenSettings,
 }: LeftSidebarProps) {
   const activeTab     = useAppStore((s) => s.activeTab);
@@ -43,7 +34,7 @@ export function LeftSidebar({
   const clearAuth     = useAppStore((s) => s.clearAuth);
 
   function handleLogout() {
-    apiFetch('/auth/logout', { method: 'POST' }).catch(() => {/* ignore */});
+    apiFetch('/auth/logout', { method: 'POST' }).catch(() => {});
     clearAuth();
   }
 
@@ -69,9 +60,9 @@ export function LeftSidebar({
         </span>
       </div>
 
-      {/* Main nav */}
+      {/* Main nav — 4 tabs */}
       <nav className="flex flex-col gap-1 px-2 flex-shrink-0">
-        {mainNavItems.map(({ id, icon: Icon, label }) => (
+        {MAIN_NAV.map(({ id, icon: Icon, label }) => (
           <button
             key={id}
             title={label}
@@ -85,7 +76,7 @@ export function LeftSidebar({
         ))}
       </nav>
 
-      {/* Separator + secondary nav */}
+      {/* Secondary — notifications + messages + recomendações */}
       <div className="mt-4 pt-4 border-t border-sara-linen/60 flex flex-col gap-1 px-2 flex-shrink-0">
         <button
           title="Notificações"
@@ -120,9 +111,19 @@ export function LeftSidebar({
           </span>
           <span className="text-sm font-medium hidden lg:block">Mensagens</span>
         </button>
+
+        <button
+          title="Recomendações"
+          aria-label="Recomendações"
+          onClick={() => setActiveTab('shopping' as TabId)}
+          className={navBtnClass(activeTab === ('shopping' as TabId))}
+        >
+          <ShoppingBag size={20} strokeWidth={1.8} className="flex-shrink-0" />
+          <span className="text-sm font-medium hidden lg:block">Recomendações</span>
+        </button>
       </div>
 
-      {/* Bottom section */}
+      {/* Bottom — user chip + settings + logout */}
       <div className="mt-auto flex flex-col gap-1 px-2 pb-4 flex-shrink-0">
         <div className="hidden lg:flex items-center gap-2 px-3 py-2 mb-1">
           <div
@@ -134,24 +135,14 @@ export function LeftSidebar({
           <span className="text-sm font-medium text-graphite truncate">{motherName || 'Mãe'}</span>
         </div>
 
-        <button title="Perfil" aria-label="Perfil" onClick={onOpenProfile} className={actionBtnClass}>
-          <User size={20} strokeWidth={1.8} className="flex-shrink-0" />
-          <span className="text-sm font-medium hidden lg:block">Perfil</span>
-        </button>
-
-        <button title="Configurações" aria-label="Configurações" onClick={onOpenSettings} className={actionBtnClass}>
+        <button
+          title="Configurações"
+          aria-label="Configurações"
+          onClick={onOpenSettings}
+          className={actionBtnClass}
+        >
           <Settings size={20} strokeWidth={1.8} className="flex-shrink-0" />
           <span className="text-sm font-medium hidden lg:block">Configurações</span>
-        </button>
-
-        <button
-          title="Shopping"
-          aria-label="Shopping"
-          onClick={() => setActiveTab('shopping')}
-          className={navBtnClass(activeTab === 'shopping')}
-        >
-          <ShoppingBag size={20} strokeWidth={1.8} className="flex-shrink-0" />
-          <span className="text-sm font-medium hidden lg:block">Shopping</span>
         </button>
 
         <button
