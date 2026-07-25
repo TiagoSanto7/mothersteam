@@ -17,12 +17,13 @@ import type { CommunityPost } from '../../types';
 import { SavedVersesScreen } from '../home/SavedVersesScreen';
 
 interface ProfileScreenProps {
-  onClose: () => void;
+  onClose?: () => void;                   // optional now
   userId?: string;                        // NEW — when omitted, falls back to currentUserId (backward-compat with old callers)
   onOpenProfile?: (id: string) => void;   // NEW
+  isTab?: boolean;                        // NEW — when true, hides back button
 }
 
-export function ProfileScreen({ onClose, userId, onOpenProfile }: ProfileScreenProps) {
+export function ProfileScreen({ onClose, userId, onOpenProfile, isTab = false }: ProfileScreenProps) {
   const currentUserId = useAppStore((s) => s.currentUserId);
   const savedVerses = useAppStore((s) => s.savedVerses);
   const isLoggedIn = useAppStore((s) => s.isLoggedIn);
@@ -145,13 +146,17 @@ export function ProfileScreen({ onClose, userId, onOpenProfile }: ProfileScreenP
     <div className="flex flex-col w-full h-full sm:w-[390px] sm:h-[844px] bg-gradient-to-b from-[#F5EDE0] via-[#EAD8C8] to-[#D9C4AF] sm:rounded-[44px] sm:shadow-2xl overflow-hidden">
       {/* Header */}
       <div className="flex items-center justify-between px-4 pt-6 pb-3 flex-shrink-0">
-        <button
-          onClick={onClose}
-          aria-label="Voltar"
-          className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-sara-linen"
-        >
-          <ChevronLeft size={20} className="text-graphite" />
-        </button>
+        {isTab ? (
+          <div className="w-8" />
+        ) : (
+          <button
+            onClick={onClose}
+            aria-label="Voltar"
+            className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-sara-linen"
+          >
+            <ChevronLeft size={20} className="text-graphite" />
+          </button>
+        )}
         <p className="text-sm font-semibold font-serif text-graphite">{profile.name}</p>
         {isSelf ? (
           <button

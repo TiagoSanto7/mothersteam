@@ -214,3 +214,27 @@ describe('ProfileScreen — regression guard', () => {
     expect(screen.queryByText('31')).not.toBeInTheDocument();
   });
 });
+
+// ─── Tab mode ────────────────────────────────────────────────────────────────
+
+describe('ProfileScreen — tab mode', () => {
+  beforeEach(() => {
+    mockApiFetch.mockImplementation(async (path: string) => {
+      if (path === '/users/me-1') return SELF_PROFILE;
+      if (path.includes('/users/me-1/posts')) return EMPTY_POSTS;
+      return EMPTY_POSTS;
+    });
+  });
+
+  it('hides back button when isTab is true', async () => {
+    wrap(<ProfileScreen userId="me-1" onClose={vi.fn()} isTab />);
+    await screen.findByText('Mariana'); // wait for profile to load
+    expect(screen.queryByRole('button', { name: /voltar/i })).not.toBeInTheDocument();
+  });
+
+  it('shows back button when isTab is false (default)', async () => {
+    wrap(<ProfileScreen userId="me-1" onClose={vi.fn()} />);
+    await screen.findByText('Mariana'); // wait for profile to load
+    expect(screen.getByRole('button', { name: /voltar/i })).toBeInTheDocument();
+  });
+});
