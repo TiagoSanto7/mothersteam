@@ -7,12 +7,11 @@ import { getAvatarColor } from '../../utils/avatar';
 interface SideDrawerProps {
   isOpen: boolean;
   onClose: () => void;
-  onOpenProfile: () => void;
   onOpenSettings: () => void;
   onOpenSavedVerses: () => void;
 }
 
-export function SideDrawer({ isOpen, onClose, onOpenProfile, onOpenSettings, onOpenSavedVerses }: SideDrawerProps) {
+export function SideDrawer({ isOpen, onClose, onOpenSettings, onOpenSavedVerses }: SideDrawerProps) {
   const motherName    = useAppStore((s) => s.motherName);
   const motherProfile = useAppStore((s) => s.motherProfile);
   const clearAuth     = useAppStore((s) => s.clearAuth);
@@ -75,7 +74,7 @@ export function SideDrawer({ isOpen, onClose, onOpenProfile, onOpenSettings, onO
 
             <nav className="flex-1 px-4 flex flex-col gap-1">
               <button
-                onClick={() => handleItem(onOpenProfile)}
+                onClick={() => handleItem(() => setActiveTab('perfil'))}
                 className="w-full flex items-center gap-3 px-3 py-3.5 rounded-xl text-graphite hover:bg-white/50 active:bg-white/70 transition-colors"
               >
                 <User size={20} strokeWidth={1.8} />

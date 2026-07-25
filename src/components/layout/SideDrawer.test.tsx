@@ -32,7 +32,6 @@ beforeEach(() => {
 const defaultProps = {
   isOpen: true,
   onClose: vi.fn(),
-  onOpenProfile: vi.fn(),
   onOpenSettings: vi.fn(),
   onOpenSavedVerses: vi.fn(),
 };
@@ -82,13 +81,12 @@ describe('SideDrawer', () => {
     expect(onClose).toHaveBeenCalledOnce();
   });
 
-  it('calls onClose and onOpenProfile when Perfil is clicked', () => {
+  it('calls onClose and navigates to perfil tab when Perfil is clicked', () => {
     const onClose = vi.fn();
-    const onOpenProfile = vi.fn();
-    render(<SideDrawer {...defaultProps} onClose={onClose} onOpenProfile={onOpenProfile} />, { wrapper });
+    render(<SideDrawer {...defaultProps} onClose={onClose} />, { wrapper });
     fireEvent.click(screen.getByRole('button', { name: /perfil/i }));
     expect(onClose).toHaveBeenCalledOnce();
-    expect(onOpenProfile).toHaveBeenCalledOnce();
+    expect(useAppStore.getState().activeTab).toBe('perfil');
   });
 
   it('calls onClose and onOpenSettings when Configurações is clicked', () => {

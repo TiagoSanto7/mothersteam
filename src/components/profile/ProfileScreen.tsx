@@ -119,7 +119,7 @@ export function ProfileScreen({ onClose, userId, onOpenProfile, isTab = false }:
   if (showSettings) {
     return (
       <div className="flex flex-col w-full h-full sm:w-[390px] sm:h-[844px] bg-gradient-to-b from-[#F5EDE0] via-[#EAD8C8] to-[#D9C4AF] sm:rounded-[44px] sm:shadow-2xl overflow-hidden">
-        <SettingsScreen onBack={() => setShowSettings(false)} onClose={onClose} />
+        <SettingsScreen onBack={() => setShowSettings(false)} onClose={onClose ?? (() => setShowSettings(false))} />
       </div>
     );
   }

@@ -8,7 +8,6 @@ interface MobileShellProps {
   drawerOpen: boolean;
   onOpenDrawer: () => void;
   onCloseDrawer: () => void;
-  onOpenProfile: () => void;
   onOpenSettings: () => void;
   onOpenSavedVerses: () => void;
   headerRightSlot?: ReactNode;
@@ -19,7 +18,6 @@ export function MobileShell({
   drawerOpen,
   onOpenDrawer,
   onCloseDrawer,
-  onOpenProfile,
   onOpenSettings,
   onOpenSavedVerses,
   headerRightSlot,
@@ -36,7 +34,6 @@ export function MobileShell({
         <SideDrawer
           isOpen={drawerOpen}
           onClose={onCloseDrawer}
-          onOpenProfile={onOpenProfile}
           onOpenSettings={onOpenSettings}
           onOpenSavedVerses={onOpenSavedVerses}
         />

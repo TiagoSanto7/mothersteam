@@ -143,7 +143,7 @@ describe('DashboardScreen — Sara hero CTA', () => {
   })
 
   it('"Conversar com a Sara" navigates to maeIA tab', () => {
-    useAppStore.setState({ isLoggedIn: true, motherName: 'Ana', phase: { stage: 'pregnant', week: 28 }, activeTab: 'home' })
+    useAppStore.setState({ isLoggedIn: true, motherName: 'Ana', phase: { stage: 'pregnant', week: 28 }, activeTab: 'hoje' })
     render(<DashboardScreen />, { wrapper: makeWrapper() })
     // Click the first button (the Sara card CTA, not the FAB)
     fireEvent.click(screen.getAllByRole('button', { name: /conversar com a sara/i })[0])

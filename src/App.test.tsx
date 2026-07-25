@@ -1,4 +1,4 @@
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import { describe, expect, it, beforeEach, vi } from 'vitest';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import App from './App';
@@ -27,7 +27,7 @@ beforeEach(() => {
     isLoggedIn: true,
     onboardingDone: true,
     socialOnboardingDone: true,
-    activeTab: 'home',
+    activeTab: 'hoje',
     motherName: 'Mariana',
     phase: { stage: 'pregnant', week: 28 },
     motherProfile: null,
@@ -35,14 +35,14 @@ beforeEach(() => {
 });
 
 describe('App routing', () => {
-  it('home tab renders DashboardScreen (mother name visible in greeting)', () => {
-    useAppStore.setState({ activeTab: 'home' });
+  it('hoje tab renders DashboardScreen (mother name visible in greeting)', () => {
+    useAppStore.setState({ activeTab: 'hoje' });
     render(<App />, { wrapper: makeWrapper() });
     expect(screen.getAllByText('Mariana').length).toBeGreaterThan(0);
   });
 
-  it('rotina tab renders HomeScreen (Para Você tab absent)', () => {
-    useAppStore.setState({ activeTab: 'rotina' });
+  it('jornada tab renders JornadaScreen (Para Você tab absent)', () => {
+    useAppStore.setState({ activeTab: 'jornada' });
     render(<App />, { wrapper: makeWrapper() });
     expect(screen.queryAllByRole('button', { name: /para você/i })).toHaveLength(0);
   });
@@ -55,9 +55,8 @@ describe('App routing', () => {
 });
 
 describe('App — profile navigation', () => {
-  it('opens ProfileScreen (self) when profileUserId matches currentUserId (regression: "meu perfil como visitante")', async () => {
-    // Return [] for HomeScreen API calls (RoutineTimeline etc.) and proper
-    // shaped data for ProfileScreen's /users/:id and /users/:id/posts queries.
+  it('perfil tab renders ProfileScreen (self) with editar perfil button', async () => {
+    // Return proper shaped data for ProfileScreen's /users/:id and /users/:id/posts queries.
     mockApiFetch.mockImplementation(async (path: string) => {
       if (path === '/users/me-1') {
         return {
@@ -71,14 +70,13 @@ describe('App — profile navigation', () => {
       if (typeof path === 'string' && path.includes('/users/me-1/posts')) {
         return { items: [], hasMore: false };
       }
-      // Fallback: empty array for HomeScreen timeline calls
       return [];
     });
     useAppStore.setState({
       isLoggedIn: true,
       onboardingDone: true,
       socialOnboardingDone: true,
-      activeTab: 'rotina',
+      activeTab: 'perfil',
       currentUserId: 'me-1',
       motherName: 'Mariana',
       phase: { stage: 'pregnant', week: 28 },
@@ -87,11 +85,9 @@ describe('App — profile navigation', () => {
     });
     render(<App />, { wrapper: makeWrapper() });
 
-    // Clique no avatar do HomeScreen (aba Rotina) dispara onOpenProfile
-    // → setProfileUserId(currentUserId) → ProfileScreen (self, via unified component).
-    // Both MobileShell and WebLayout render the screen, so use findAllByRole.
-    const avatarBtns = await screen.findAllByRole('button', { name: /abrir perfil/i });
-    fireEvent.click(avatarBtns[0]);
-    expect(await screen.findByRole('button', { name: /editar perfil/i })).toBeInTheDocument();
+    // perfil tab renders ProfileScreen (isTab=true) for currentUserId
+    // isSelf: true → "editar perfil" button is visible (rendered in both MobileShell and WebLayout)
+    const editBtns = await screen.findAllByRole('button', { name: /editar perfil/i });
+    expect(editBtns.length).toBeGreaterThan(0);
   });
 });

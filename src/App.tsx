@@ -10,9 +10,8 @@ import type { ApiUser } from './lib/types';
 import { apiPostToCommunityPost } from './lib/helpers';
 import { MobileShell } from './components/layout/MobileShell';
 import { WebLayout } from './components/layout/WebLayout';
-import { HomeScreen } from './components/home/HomeScreen';
 import { DashboardScreen } from './components/home/DashboardScreen';
-import { BabyScreen } from './components/baby/BabyScreen';
+import { JornadaScreen } from './components/jornada/JornadaScreen';
 import { MaeIAScreen } from './components/maeIA/MaeIAScreen';
 import { ComunidadeScreen } from './components/comunidade/ComunidadeScreen';
 import { ShoppingScreen } from './components/shopping/ShoppingScreen';
@@ -107,7 +106,7 @@ export default function App() {
     return last && last.senderId !== currentUserId && !last.read;
   }).length;
 
-  const isHomeTab = activeTab === 'home' || activeTab === 'comunidade';
+  const isHomeTab = activeTab === 'hoje' || activeTab === 'comunidade';
 
   const headerRightSlot = isHomeTab ? (
     <div className="flex items-center gap-2">
@@ -145,16 +144,20 @@ export default function App() {
     </div>
   ) : undefined;
 
-  const openMyProfile = () => {
-    if (currentUserId) setProfileUserId(currentUserId);
-  };
-
+  const goToHoje = () => useAppStore.getState().setActiveTab('hoje');
   const screens: Record<TabId, ReactElement> = {
-    home:       <DashboardScreen />,
-    maeIA:      <MaeIAScreen />,
-    baby:       <BabyScreen />,
-    rotina:     <HomeScreen onOpenProfile={openMyProfile} />,
+    hoje:       <DashboardScreen />,
+    maeIA:      <MaeIAScreen onBack={goToHoje} />,
+    jornada:    <JornadaScreen />,
     comunidade: <ComunidadeScreen />,
+    perfil: (
+      <ProfileScreen
+        key={currentUserId ?? 'self'}
+        userId={currentUserId ?? undefined}
+        isTab
+        onOpenProfile={(id) => setProfileUserId(id)}
+      />
+    ),
     shopping:   <ShoppingScreen />,
   };
 
@@ -164,7 +167,6 @@ export default function App() {
         drawerOpen={drawerOpen}
         onOpenDrawer={() => setDrawerOpen(true)}
         onCloseDrawer={() => setDrawerOpen(false)}
-        onOpenProfile={openMyProfile}
         onOpenSettings={() => setShowSettings(true)}
         onOpenSavedVerses={() => setShowSavedVerses(true)}
         headerRightSlot={headerRightSlot}
@@ -177,7 +179,6 @@ export default function App() {
         unreadChats={unreadChats}
         onOpenNotifications={() => setShowNotifications(true)}
         onOpenChat={() => setShowChat(true)}
-        onOpenProfile={openMyProfile}
         onOpenSettings={() => setShowSettings(true)}
         onOpenUser={(id) => setProfileUserId(id)}
         onOpenCommunity={(id) => setOpenCommunityId(id)}
