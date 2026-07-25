@@ -40,6 +40,7 @@ interface AppState {
   // Profile actions
   completeOnboarding: (answers: OnboardingAnswers) => void;
   applyReceptionData: (data: ReceptionData) => void;
+  completeReception: () => void;
   resetOnboarding: () => void;
   completeSocialOnboarding: () => void;
   // UI actions
@@ -64,9 +65,33 @@ const safeLocalStorage = {
   },
 };
 
+const OLD_TAB_MAP: Record<string, TabId> = {
+  home:       'hoje',
+  maeIA:      'maeIA',
+  baby:       'jornada',
+  rotina:     'jornada',
+  shopping:   'hoje',
+};
+
+export function migrateAppState(
+  persistedState: unknown,
+  fromVersion: number,
+): Partial<AppState> {
+  const state = persistedState as Partial<AppState>;
+  if (fromVersion === 0) {
+    const oldTab = state.activeTab as string | undefined;
+    const newTab = oldTab ? (OLD_TAB_MAP[oldTab] ?? oldTab) : 'hoje';
+    return {
+      ...state,
+      activeTab: newTab as TabId,
+    };
+  }
+  return state;
+}
+
 export const useAppStore = create<AppState>()(
   persist(
-    (set) => ({
+    (set, get) => ({
       // Auth — memory only
       isLoggedIn: false,
       accessToken: null,
@@ -80,7 +105,7 @@ export const useAppStore = create<AppState>()(
       phase: { stage: 'pregnant', week: 28 },
       socialOnboardingDone: false,
       // UI
-      activeTab: 'home',
+      activeTab: 'hoje',
       selectedDate: new Date().toISOString().split('T')[0],
       lastFeedSide: 'left',
       savedVerses: [],
@@ -119,13 +144,13 @@ export const useAppStore = create<AppState>()(
         };
         const profile = computeProfile(answers);
         set({
-          motherName: data.motherName ?? '',
-          babyName: data.babyName ?? '',
+          motherName: data.motherName || get().motherName,
+          babyName: data.babyName || get().babyName,
           phase,
-          onboardingDone: true,
           motherProfile: profile,
         });
       },
+      completeReception: () => set({ onboardingDone: true }),
       resetOnboarding: () => set({ onboardingDone: false, motherProfile: null }),
       completeSocialOnboarding: () => set({ socialOnboardingDone: true }),
       // UI actions
@@ -141,6 +166,8 @@ export const useAppStore = create<AppState>()(
     {
       name: 'mothers-team-v3',
       storage: createJSONStorage(() => safeLocalStorage),
+      version: 1,
+      migrate: migrateAppState,
       partialize: (state) => ({
         onboardingDone: state.onboardingDone,
         motherProfile: state.motherProfile,
