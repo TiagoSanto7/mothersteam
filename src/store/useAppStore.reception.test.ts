@@ -30,8 +30,13 @@ describe('useAppStore.applyReceptionData', () => {
     expect(s.motherName).toBe('Ana')
     expect(s.babyName).toBe('Sofia')
     expect(s.phase).toEqual({ stage: 'pregnant', week: 30 })
-    expect(s.onboardingDone).toBe(true)
+    expect(s.onboardingDone).toBe(false)
     expect(s.motherProfile).not.toBeNull()
+  })
+
+  it('completeReception marks onboardingDone as true', () => {
+    useAppStore.getState().completeReception()
+    expect(useAppStore.getState().onboardingDone).toBe(true)
   })
 
   it('hydrates postpartum mother with defaults for missing fields', () => {

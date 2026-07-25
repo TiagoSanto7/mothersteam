@@ -12,8 +12,8 @@ describe('versiculoParaHumor', () => {
     expect(versiculoParaHumor('B').referencia).toBe('Mateus 11:28')
   })
 
-  it('C (ansiosa) → Filipenses 4:6-7', () => {
-    expect(versiculoParaHumor('C').referencia).toBe('Filipenses 4:6-7')
+  it('C (ansiosa) → Filipenses 4:6', () => {
+    expect(versiculoParaHumor('C').referencia).toBe('Filipenses 4:6')
   })
 
   it('D (sobrecarregada) → Isaías 40:31', () => {

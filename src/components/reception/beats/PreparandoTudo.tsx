@@ -25,7 +25,7 @@ export function PreparandoTudo({ data, onReady }: PreparandoTudoProps) {
         transition={{ duration: 0.6, delay: 0.4 }}
         className="text-[15px] text-graphite-muted text-center"
       >
-        Preparando tudo pra você…
+        Só mais um instantinho… 🌷
       </motion.p>
     </div>
   )

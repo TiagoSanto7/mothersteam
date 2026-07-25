@@ -1,12 +1,15 @@
 import { renderHook, act, waitFor } from '@testing-library/react'
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { useSaraNarration, receptionDataFromCapitulo1 } from './useSaraNarration'
+import {
+  useSaraNarration,
+  receptionDataFromCapitulo1,
+  CAP1_CONFIG,
+} from './useSaraNarration'
 
 const endSession = vi.fn(() => Promise.resolve())
 const getOutputVolume = vi.fn(() => 0)
 let capturedHandlers: {
   onStatusChange?: (e: { status: string }) => void
-  onMessage?: (e: { message: string; source: string }) => void
   onError?: (msg: string) => void
   clientTools?: Record<string, (params: unknown) => Promise<string>>
 } = {}
@@ -37,7 +40,7 @@ describe('useSaraNarration', () => {
   it('transitions to listening after connect event', async () => {
     const { result } = renderHook(() => useSaraNarration())
     await act(async () => {
-      await result.current.startCapitulo1()
+      await result.current.startConversation(CAP1_CONFIG)
     })
     act(() => {
       capturedHandlers.onStatusChange?.({ status: 'connected' })
@@ -50,7 +53,7 @@ describe('useSaraNarration', () => {
   it('captures data and moves to done when confirmar_capitulo_1_fatos fires', async () => {
     const { result } = renderHook(() => useSaraNarration())
     await act(async () => {
-      await result.current.startCapitulo1()
+      await result.current.startConversation(CAP1_CONFIG)
     })
     const payload = {
       motherName: 'Ana',
@@ -69,7 +72,7 @@ describe('useSaraNarration', () => {
   it('stop() sets state to idle and endSession is called', async () => {
     const { result } = renderHook(() => useSaraNarration())
     await act(async () => {
-      await result.current.startCapitulo1()
+      await result.current.startConversation(CAP1_CONFIG)
     })
     act(() => {
       result.current.stop()
@@ -81,7 +84,7 @@ describe('useSaraNarration', () => {
   it('surfaces error state via onError', async () => {
     const { result } = renderHook(() => useSaraNarration())
     await act(async () => {
-      await result.current.startCapitulo1()
+      await result.current.startConversation(CAP1_CONFIG)
     })
     act(() => {
       capturedHandlers.onError?.('boom')

@@ -26,6 +26,9 @@ export function RegisterScreen({ onBack }: RegisterScreenProps) {
   const [pregnancyWeek, setPregnancyWeek] = useState('');
   const [babyAgeInDays, setBabyAgeInDays] = useState('');
   const [babyName, setBabyName] = useState('');
+  const [babyBirthDate, setBabyBirthDate] = useState('');
+  const [expectedBirthDate, setExpectedBirthDate] = useState('');
+  const [motherBirthDate, setMotherBirthDate] = useState('');
 
   // Debounced username availability check
   useEffect(() => {
@@ -53,10 +56,14 @@ export function RegisterScreen({ onBack }: RegisterScreenProps) {
     password.length >= 8 &&
     usernameOk;
 
+  const today = new Date().toISOString().split('T')[0];
+  const minExpected = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+  const maxExpected = new Date(Date.now() + 42 * 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+
   const step2Valid =
     pregnancyStage === 'pregnant'
-      ? pregnancyWeek !== '' && Number(pregnancyWeek) >= 1 && Number(pregnancyWeek) <= 42
-      : babyAgeInDays !== '' && Number(babyAgeInDays) >= 0;
+      ? expectedBirthDate !== '' || (pregnancyWeek !== '' && Number(pregnancyWeek) >= 1 && Number(pregnancyWeek) <= 42)
+      : babyBirthDate !== '' || (babyAgeInDays !== '' && Number(babyAgeInDays) >= 0);
 
   const { mutate, isPending, isError, error } = useMutation({
     mutationFn: () =>
@@ -68,9 +75,12 @@ export function RegisterScreen({ onBack }: RegisterScreenProps) {
           email: email.trim(),
           password,
           pregnancyStage,
-          pregnancyWeek: pregnancyStage === 'pregnant' ? Number(pregnancyWeek) : undefined,
-          babyAgeInDays: pregnancyStage === 'postpartum' ? Number(babyAgeInDays) : undefined,
+          pregnancyWeek: pregnancyStage === 'pregnant' && !expectedBirthDate ? Number(pregnancyWeek) || undefined : undefined,
+          babyAgeInDays: pregnancyStage === 'postpartum' && !babyBirthDate ? Number(babyAgeInDays) || undefined : undefined,
           babyName: babyName.trim() || undefined,
+          expectedBirthDate: pregnancyStage === 'pregnant' && expectedBirthDate ? expectedBirthDate : undefined,
+          babyBirthDate: pregnancyStage === 'postpartum' && babyBirthDate ? babyBirthDate : undefined,
+          motherBirthDate: motherBirthDate || undefined,
         }),
       }),
     onSuccess: ({ accessToken, user }) => {
@@ -234,32 +244,81 @@ export function RegisterScreen({ onBack }: RegisterScreenProps) {
 
             {pregnancyStage === 'pregnant' ? (
               <div className="flex flex-col gap-1">
-                <label className="text-xs font-medium text-graphite-muted" htmlFor="reg-week">Semana da gravidez</label>
+                <label className="text-xs font-medium text-graphite-muted" htmlFor="reg-expected">
+                  Data prevista do parto
+                </label>
                 <input
-                  id="reg-week"
-                  type="number"
-                  min={1}
-                  max={42}
-                  value={pregnancyWeek}
-                  onChange={(e) => setPregnancyWeek(e.target.value)}
-                  placeholder="ex: 28"
-                  className="w-full px-4 py-3 rounded-2xl bg-white border border-sara-linen text-sm text-graphite placeholder:text-sara-muted focus:outline-none focus:border-sara-gold"
+                  id="reg-expected"
+                  type="date"
+                  min={minExpected}
+                  max={maxExpected}
+                  value={expectedBirthDate}
+                  onChange={(e) => { setExpectedBirthDate(e.target.value); setPregnancyWeek(''); }}
+                  className="w-full px-4 py-3 rounded-2xl bg-white border border-sara-linen text-sm text-graphite focus:outline-none focus:border-sara-gold"
                 />
+                {!expectedBirthDate && (
+                  <div className="flex flex-col gap-1 mt-2">
+                    <label className="text-xs font-medium text-graphite-muted" htmlFor="reg-week">
+                      Ou informe a semana da gravidez
+                    </label>
+                    <input
+                      id="reg-week"
+                      type="number"
+                      min={1}
+                      max={42}
+                      value={pregnancyWeek}
+                      onChange={(e) => setPregnancyWeek(e.target.value)}
+                      placeholder="ex: 28"
+                      className="w-full px-4 py-3 rounded-2xl bg-white border border-sara-linen text-sm text-graphite placeholder:text-sara-muted focus:outline-none focus:border-sara-gold"
+                    />
+                  </div>
+                )}
               </div>
             ) : (
               <div className="flex flex-col gap-1">
-                <label className="text-xs font-medium text-graphite-muted" htmlFor="reg-days">Dias de vida do bebê</label>
+                <label className="text-xs font-medium text-graphite-muted" htmlFor="reg-baby-birth">
+                  Data de nascimento do bebê
+                </label>
                 <input
-                  id="reg-days"
-                  type="number"
-                  min={0}
-                  value={babyAgeInDays}
-                  onChange={(e) => setBabyAgeInDays(e.target.value)}
-                  placeholder="ex: 45"
-                  className="w-full px-4 py-3 rounded-2xl bg-white border border-sara-linen text-sm text-graphite placeholder:text-sara-muted focus:outline-none focus:border-sara-gold"
+                  id="reg-baby-birth"
+                  type="date"
+                  max={today}
+                  value={babyBirthDate}
+                  onChange={(e) => { setBabyBirthDate(e.target.value); setBabyAgeInDays(''); }}
+                  className="w-full px-4 py-3 rounded-2xl bg-white border border-sara-linen text-sm text-graphite focus:outline-none focus:border-sara-gold"
                 />
+                {!babyBirthDate && (
+                  <div className="flex flex-col gap-1 mt-2">
+                    <label className="text-xs font-medium text-graphite-muted" htmlFor="reg-days">
+                      Ou informe os dias de vida do bebê
+                    </label>
+                    <input
+                      id="reg-days"
+                      type="number"
+                      min={0}
+                      value={babyAgeInDays}
+                      onChange={(e) => setBabyAgeInDays(e.target.value)}
+                      placeholder="ex: 45"
+                      className="w-full px-4 py-3 rounded-2xl bg-white border border-sara-linen text-sm text-graphite placeholder:text-sara-muted focus:outline-none focus:border-sara-gold"
+                    />
+                  </div>
+                )}
               </div>
             )}
+
+            <div className="flex flex-col gap-1">
+              <label className="text-xs font-medium text-graphite-muted" htmlFor="reg-mother-birth">
+                Sua data de nascimento <span className="font-normal text-graphite-muted/60">(opcional)</span>
+              </label>
+              <input
+                id="reg-mother-birth"
+                type="date"
+                max={today}
+                value={motherBirthDate}
+                onChange={(e) => setMotherBirthDate(e.target.value)}
+                className="w-full px-4 py-3 rounded-2xl bg-white border border-sara-linen text-sm text-graphite focus:outline-none focus:border-sara-gold"
+              />
+            </div>
 
             <div className="flex flex-col gap-1">
               <label className="text-xs font-medium text-graphite-muted" htmlFor="reg-baby-name">
