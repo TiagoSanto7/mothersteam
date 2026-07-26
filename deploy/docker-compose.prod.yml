@@ -61,6 +61,7 @@ services:
       FRONTEND_URL: ${FRONTEND_URL}
       ELEVENLABS_API_KEY: ${ELEVENLABS_API_KEY}
       ELEVENLABS_SARA_VOICE_ID: ${ELEVENLABS_SARA_VOICE_ID}
+      ELEVENLABS_AGENT_ID: ${ELEVENLABS_AGENT_ID}
     volumes:
       - mothersteam-uploads:/app/uploads
     ports:
