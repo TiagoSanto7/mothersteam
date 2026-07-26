@@ -14,7 +14,7 @@ export function BemVinda({ onContinue }: BemVindaProps) {
     >
       <div className="text-center max-w-sm">
         <h1 className="text-[26px] leading-snug font-serif font-semibold text-graphite">
-          Uma companhia para cada fase da maternidade.
+          Companhia para cada fase da maternidade.
         </h1>
       </div>
       <button

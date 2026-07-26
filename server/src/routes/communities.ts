@@ -6,6 +6,9 @@ const createSchema = z.object({
   description: z.string().min(1),
   category: z.enum(['gestação', 'pós-parto', 'amamentação', 'saúde mental']),
   colorKey: z.enum(['gold', 'terracotta', 'warm', 'linen', 'cream']),
+  imageUrl: z.string().url().optional().or(z.literal('')).transform((v) => v || undefined),
+  isPrivate: z.boolean().optional().default(false),
+  isOpen: z.boolean().optional().default(true),
 })
 
 const updateSchema = createSchema.partial()
@@ -83,15 +86,21 @@ export default async function communitiesRoutes(fastify: FastifyInstance) {
     '/:id/posts',
     async (request, reply) => {
       const limit = Math.min(Number(request.query.limit ?? 20), 50)
+      // Combine isPrivate check into the posts query to avoid an extra DB round-trip.
+      // The where clause filters posts to communities the user can access:
+      // public communities OR private communities where the user is a member.
       const rows = await fastify.prisma.post.findMany({
-        where: { communityId: request.params.id },
+        where: {
+          communityId: request.params.id,
+          community: { OR: [{ isPrivate: false }, { members: { some: { userId: request.userId } } }] },
+        },
         take: limit + 1,
         ...(request.query.cursor ? { cursor: { id: request.query.cursor }, skip: 1 } : {}),
         include: {
-          author: { select: { id: true, name: true, username: true } },
+          author: { select: { id: true, name: true, username: true, archetypeKey: true } },
           _count: { select: { likes: true, comments: true, reposts: true } },
           likes: { where: { userId: request.userId }, select: { userId: true } },
-          repostFrom: { include: { author: { select: { id: true, name: true, username: true } } } },
+          repostFrom: { include: { author: { select: { id: true, name: true, username: true, archetypeKey: true } } } },
         },
         orderBy: { createdAt: 'desc' },
       })
@@ -105,7 +114,58 @@ export default async function communitiesRoutes(fastify: FastifyInstance) {
     }
   )
 
+  fastify.get<{ Params: { id: string } }>('/:id/members', async (request, reply) => {
+    const community = await fastify.prisma.community.findUnique({
+      where: { id: request.params.id },
+      select: { id: true, isPrivate: true, members: { where: { userId: request.userId }, select: { userId: true } } },
+    })
+    if (!community) return reply.status(404).send({ error: 'Community not found' })
+    if (community.isPrivate && community.members.length === 0) {
+      return reply.status(403).send({ error: 'Apenas membras podem ver os membros desta comunidade' })
+    }
+
+    const members = await fastify.prisma.communityMember.findMany({
+      where: { communityId: request.params.id },
+      include: {
+        user: {
+          select: {
+            id: true,
+            name: true,
+            username: true,
+            archetypeKey: true,
+            followers: { where: { followerId: request.userId }, select: { followerId: true } },
+          },
+        },
+      },
+      orderBy: [
+        { role: 'asc' },
+        { joinedAt: 'asc' },
+      ],
+    })
+
+    reply.send(
+      members.map((m) => ({
+        id: m.user.id,
+        name: m.user.name,
+        username: m.user.username,
+        archetypeKey: m.user.archetypeKey,
+        role: m.role,
+        isFollowedByCurrentUser: m.user.followers.length > 0,
+        isSelf: m.user.id === request.userId,
+      }))
+    )
+  })
+
   fastify.post<{ Params: { id: string } }>('/:id/join', async (request, reply) => {
+    const community = await fastify.prisma.community.findUnique({
+      where: { id: request.params.id },
+      select: { isOpen: true },
+    })
+    if (!community) return reply.status(404).send({ error: 'Community not found' })
+    if (!community.isOpen) {
+      return reply.status(403).send({ error: 'Comunidade fechada' })
+    }
+
     await fastify.prisma.communityMember.upsert({
       where: { userId_communityId: { userId: request.userId, communityId: request.params.id } },
       update: {},

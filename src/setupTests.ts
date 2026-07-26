@@ -1,5 +1,10 @@
 import '@testing-library/jest-dom'
 
+// jsdom does not implement scrollIntoView — provide a no-op stub
+if (typeof window !== 'undefined' && !window.HTMLElement.prototype.scrollIntoView) {
+  window.HTMLElement.prototype.scrollIntoView = function () {}
+}
+
 // jsdom does not implement EventSource — provide a no-op stub
 if (typeof EventSource === 'undefined') {
   class EventSourceStub {

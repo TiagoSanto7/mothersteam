@@ -1,4 +1,4 @@
-# Análise de Features — Reunião 2026-07-13
+1.# Análise de Features — Reunião 2026-07-13
 
 > Documento de leitura para avaliação. Não é um plano de implementação — é a pesquisa e análise de cada ponto levantado na reunião para orientar decisões de produto antes de começar a construir.
 >
@@ -70,6 +70,8 @@ A Sara tem dois estados visuais: parada (idle, pequena animação de respiraçã
 **Vantagem:** experiência muito mais rica visualmente, Sara parece "viva", sem custo adicional de API.  
 **Desvantagem:** exige trabalho de design (separar as camadas da Sara, criar estados de animação) — entre 1-3 dias de design + 1-2 dias de desenvolvimento da animação.
 
+
+
 ---
 
 #### Opção C — Vídeo Real com HeyGen (para momentos pré-definidos, não para chat)
@@ -86,11 +88,15 @@ HeyGen tem uma API de **Photo Avatar** — você envia a foto da Sara + um texto
 **Vantagem:** qualidade máxima, a Sara parece absolutamente real falando.  
 **Desvantagem:** não é interativo — a Sara só pode falar textos pré-definidos. Se a resposta da usuária fugir do roteiro, o sistema não consegue gerar uma resposta nova em tempo real (latência de geração de vídeo é de 30-60 segundos). **Não serve para conversa livre.**
 
+
 ---
 
 #### Opção D — Híbrido: Opção C para onboarding + Opção B para chat
 
 O onboarding tem um roteiro fixo (sempre as mesmas perguntas), então vídeos pré-gerados funcionam perfeitamente aqui. Para chat livre na MãeIA, usa a Opção B (animação). Essa é a abordagem mais premium visualmente mas também a mais trabalhosa de manter (cada mudança no roteiro do onboarding exige regenerar os vídeos).
+
+> Vamos fazer esse mesmo, queremos entregar algo profissional, e a partir de hoje trabalharemos assim. Não estamos aqui pra entregar o que é facil, e sim o que é bom e profissional.
+
 
 ---
 
@@ -145,6 +151,8 @@ O onboarding tem um roteiro fixo (sempre as mesmas perguntas), então vídeos pr
 
 Importante: a escolha deve ser salva. Se a usuária saiu no meio da conversa e voltou, ela não precisa repetir o que já respondeu.
 
+> Legal, curti, vamos assim mesmo.
+
 ---
 
 ### Voz da Sara — Clonagem
@@ -154,6 +162,8 @@ Para que a Sara tenha uma voz consistente em todo o app:
 - **Instant Voice Cloning (ElevenLabs):** requer 1-2 minutos de áudio gravado da atriz/voz da Sara. Disponível a partir do plano Starter ($11/mês). Boa fidelidade.
 - **Professional Voice Cloning:** requer 30+ minutos de áudio. Exige plano Creator ($44/mês). Qualidade muito superior — captura nuances emocionais, sotaque, timbre. Recomendado se a Sara será a voz oficial do produto.
 - **Voz pronta PT-BR:** ElevenLabs tem várias vozes femininas em português brasileiro pré-prontas. Opção temporária para protótipo antes de gravar a voz oficial.
+
+> Vamos fazer a ultima opção do elevenLabs e depois eu digo quie tem outras opções para os investidores do app para ver se estão dispostos a investir no recurso, ja tenho o plano creative
 
 ---
 
@@ -186,6 +196,8 @@ Logo após concluir o onboarding (seja por conversa ou formulário), a usuária 
 
 1. O texto é **sempre bíblico** ou pode ser espiritual mais amplo (para alcançar mães que não são cristãs)?
 2. A mensagem de Deus muda no aniversário do bebê, no dia do parto previsto, ou é só no primeiro onboarding?
+
+> Sempre bíblico, ela vai ficar rodando diariamente na tela principal do app, talvez logo abaixo do input de novo post sabe? como uma sombra de text muted.
 
 ### Esforço técnico
 
@@ -244,6 +256,8 @@ As quick chips (perguntas sugeridas) na MãeIA e os cards de conteúdo no app mu
 | Criança 1-2 anos | | Andador, birra, linguagem |
 | Criança 2+ anos | | Desfralde, escola, sibling |
 
+> Ok
+
 ### Dados que já temos
 
 O perfil já tem `pregnancyStage` + `pregnancyWeek` + `babyAgeInDays`. A fase é calculável sem nenhuma pergunta adicional. Só precisamos criar a tabela de conteúdo e a lógica de seleção.
@@ -251,7 +265,9 @@ O perfil já tem `pregnancyStage` + `pregnancyWeek` + `babyAgeInDays`. A fase é
 ### Considerações
 
 - `babyAgeInDays` no cadastro vai ficando desatualizado. Idealmente calculamos a idade em tempo real a partir de uma **data de nascimento do bebê** (ver Feature 8 — Idade da Mãe).
+
 - Sugestão: migrar de `babyAgeInDays` (estático) para `babyBirthDate` (dinâmico). A idade é calculada ao abrir o app.
+>Sim, vamos fazer a sugestão mesmo.
 
 ### Esforço
 
@@ -340,6 +356,8 @@ Dados biométricos são **dados sensíveis** pela LGPD. Exigem:
 - Prazo de retenção definido
 - Impossibilidade de compartilhamento sem consentimento adicional
 
+> Esse ainda está em validação com os investidores, pularemos por enquanto
+
 ---
 
 ## 6. Tutorial Interno Guiado com Sara
@@ -378,6 +396,8 @@ O tutorial se integra com a Feature 1 (Onboarding com Sara). Se a usuária já f
 - Versão 1 (React Joyride): 1-2 dias de desenvolvimento
 - Versão 2 (HeyGen): + 1 dia para gravar roteiros + geração dos vídeos (~$2 de custo)
 
+>Ok, vamos pra versão 1 por enquanto, mas queria depois em algum momento lembrar que há opção da versao 2
+
 ---
 
 ## 7. Sugestões de Shopping Ativáveis
@@ -397,6 +417,8 @@ Um JSON de produtos por fase, administrado pela equipe. Cada produto tem: nome, 
 - Pode incluir links de afiliado (Amazon, Mercado Livre) para monetização
 - Atualização manual
 
+> Podemos fazer desse modo, inclusive a atualização manual poderia ser gerenciado pela pagina na web que foi criada.
+
 #### Modo 2 — API do Mercado Livre ou Amazon
 
 Busca automática de produtos por categoria e fase.
@@ -410,6 +432,8 @@ Busca automática de produtos por categoria e fase.
 Marcas pagam para aparecer nas sugestões contextualizadas. Modelo de receita.
 - Mais custoso para desenvolver (painel admin, gestão de campanhas)
 - Maior potencial de receita
+
+>Ok, vamos fazer o modo 1 por enquanto, mas esse é o proximo passo!! Se ja tiver algo pra deixar pronto no painel admin que ja temos ja podemos fazer
 
 ### Toggle nas configurações
 
@@ -466,6 +490,8 @@ Hoje o perfil tem `babyAgeInDays` — um número estático que fica desatualizad
 - Substituir por `babyBirthDate` (data de nascimento do bebê) e `expectedBirthDate` (data prevista do parto)
 - Calcular idade do bebê em tempo real
 - Isso também melhora as Features 3 (versículos temáticos) e 4 (perguntas dinâmicas)
+
+> Show de bola esse ta perfeito
 
 ---
 

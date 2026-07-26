@@ -10,9 +10,8 @@ import type { ApiUser } from './lib/types';
 import { apiPostToCommunityPost } from './lib/helpers';
 import { MobileShell } from './components/layout/MobileShell';
 import { WebLayout } from './components/layout/WebLayout';
-import { HomeScreen } from './components/home/HomeScreen';
 import { DashboardScreen } from './components/home/DashboardScreen';
-import { BabyScreen } from './components/baby/BabyScreen';
+import { JornadaScreen } from './components/jornada/JornadaScreen';
 import { MaeIAScreen } from './components/maeIA/MaeIAScreen';
 import { ComunidadeScreen } from './components/comunidade/ComunidadeScreen';
 import { ShoppingScreen } from './components/shopping/ShoppingScreen';
@@ -23,7 +22,6 @@ import { SettingsScreen } from './components/profile/SettingsScreen';
 import { NotificationsScreen } from './components/notifications/NotificationsScreen';
 import { ChatListScreen } from './components/chat/ChatListScreen';
 import { SearchScreen } from './components/search/SearchScreen';
-import { UserProfileScreen } from './components/profile/UserProfileScreen';
 import { CommunityDetailScreen } from './components/comunidade/CommunityDetailScreen';
 import { PostDetailScreen } from './components/post/PostDetailScreen';
 import { SocialOnboardingScreen } from './components/onboarding/SocialOnboardingScreen'
@@ -46,7 +44,6 @@ export default function App() {
 
   const [restoring,         setRestoring]         = useState(true);
   const [drawerOpen,        setDrawerOpen]        = useState(false);
-  const [showProfile,       setShowProfile]       = useState(false);
   const [showSettings,      setShowSettings]      = useState(false);
   const [showSavedVerses,   setShowSavedVerses]   = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
@@ -109,7 +106,7 @@ export default function App() {
     return last && last.senderId !== currentUserId && !last.read;
   }).length;
 
-  const isHomeTab = activeTab === 'home' || activeTab === 'comunidade';
+  const isHomeTab = activeTab === 'hoje' || activeTab === 'comunidade';
 
   const headerRightSlot = isHomeTab ? (
     <div className="flex items-center gap-2">
@@ -147,12 +144,20 @@ export default function App() {
     </div>
   ) : undefined;
 
+  const goToHoje = () => useAppStore.getState().setActiveTab('hoje');
   const screens: Record<TabId, ReactElement> = {
-    home:       <DashboardScreen />,
-    maeIA:      <MaeIAScreen />,
-    baby:       <BabyScreen />,
-    rotina:     <HomeScreen onOpenProfile={() => setShowProfile(true)} />,
+    hoje:       <DashboardScreen />,
+    maeIA:      <MaeIAScreen onBack={goToHoje} />,
+    jornada:    <JornadaScreen />,
     comunidade: <ComunidadeScreen />,
+    perfil: (
+      <ProfileScreen
+        key={currentUserId ?? 'self'}
+        userId={currentUserId ?? undefined}
+        isTab
+        onOpenProfile={(id) => setProfileUserId(id)}
+      />
+    ),
     shopping:   <ShoppingScreen />,
   };
 
@@ -162,7 +167,6 @@ export default function App() {
         drawerOpen={drawerOpen}
         onOpenDrawer={() => setDrawerOpen(true)}
         onCloseDrawer={() => setDrawerOpen(false)}
-        onOpenProfile={() => setShowProfile(true)}
         onOpenSettings={() => setShowSettings(true)}
         onOpenSavedVerses={() => setShowSavedVerses(true)}
         headerRightSlot={headerRightSlot}
@@ -175,19 +179,12 @@ export default function App() {
         unreadChats={unreadChats}
         onOpenNotifications={() => setShowNotifications(true)}
         onOpenChat={() => setShowChat(true)}
-        onOpenProfile={() => setShowProfile(true)}
         onOpenSettings={() => setShowSettings(true)}
         onOpenUser={(id) => setProfileUserId(id)}
         onOpenCommunity={(id) => setOpenCommunityId(id)}
       >
         {screens[activeTab]}
       </WebLayout>
-
-      {showProfile && (
-        <div className="fixed inset-0 z-50 sm:bg-black/40 sm:flex sm:items-center sm:justify-center">
-          <ProfileScreen onClose={() => setShowProfile(false)} />
-        </div>
-      )}
 
       {showSettings && (
         <div className="fixed inset-0 z-50 sm:bg-black/40 sm:flex sm:items-center sm:justify-center">
@@ -213,7 +210,7 @@ export default function App() {
 
       {showChat && (
         <div className="fixed inset-0 z-50 sm:bg-black/40 sm:flex sm:items-center sm:justify-center">
-          <ChatListScreen onBack={() => setShowChat(false)} />
+          <ChatListScreen onBack={() => setShowChat(false)} onOpenProfile={(id) => { setShowChat(false); setProfileUserId(id); }} />
         </div>
       )}
 
@@ -229,10 +226,10 @@ export default function App() {
 
       {profileUserId && (
         <div className="fixed inset-0 z-50 sm:bg-black/40 sm:flex sm:items-center sm:justify-center">
-          <UserProfileScreen
+          <ProfileScreen
             key={profileUserId}
             userId={profileUserId}
-            onBack={() => setProfileUserId(null)}
+            onClose={() => setProfileUserId(null)}
             onOpenProfile={(id) => setProfileUserId(id)}
           />
         </div>

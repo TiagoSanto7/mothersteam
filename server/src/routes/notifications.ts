@@ -9,7 +9,27 @@ export default async function notificationsRoutes(fastify: FastifyInstance) {
       orderBy: { createdAt: 'desc' },
       take: 50,
     })
-    reply.send(notifications)
+
+    const followActorIds = notifications
+      .filter((n) => n.type === 'follow' && n.actorId)
+      .map((n) => n.actorId!)
+
+    const followingSet = new Set<string>()
+    if (followActorIds.length > 0) {
+      const follows = await fastify.prisma.follow.findMany({
+        where: { followerId: request.userId, followingId: { in: followActorIds } },
+        select: { followingId: true },
+      })
+      follows.forEach((f) => followingSet.add(f.followingId))
+    }
+
+    const enriched = notifications.map((n) => ({
+      ...n,
+      isFollowedByCurrentUser:
+        n.type === 'follow' && n.actorId ? followingSet.has(n.actorId) : undefined,
+    }))
+
+    reply.send(enriched)
   })
 
   fastify.post('/read-all', async (request, reply) => {

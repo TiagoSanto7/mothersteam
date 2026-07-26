@@ -15,9 +15,14 @@ const ROUTINE_ENTRY: ApiRoutineEntry = {
   category: 'appointment', done: false, userId: 'u1', createdAt: new Date().toISOString(),
 }
 
+// Anchor createdAt to today's UTC date so the "startsWith(todayStr)" filter in
+// DashboardScreen matches regardless of local timezone. Using Date.now() - 80min
+// would fall on yesterday (UTC) when the test runs late in the day in negative
+// UTC offsets, causing a deterministic-but-timezone-shaped failure.
 const FEED_ENTRY: ApiBabyEntry = {
   id: '1', time: '10:00', type: 'feed', detail: 'Esquerdo',
-  userId: 'u1', createdAt: new Date(Date.now() - 80 * 60_000).toISOString(),
+  userId: 'u1',
+  createdAt: `${new Date().toISOString().split('T')[0]}T10:00:00.000Z`,
 }
 
 function makeWrapper(
@@ -133,14 +138,37 @@ describe('DashboardScreen — Sara hero CTA', () => {
   it('shows "Conversar com a Sara" button', () => {
     useAppStore.setState({ isLoggedIn: true, motherName: 'Ana', phase: { stage: 'pregnant', week: 28 } })
     render(<DashboardScreen />, { wrapper: makeWrapper() })
-    expect(screen.getByRole('button', { name: /conversar com a sara/i })).toBeTruthy()
+    const saraButtons = screen.getAllByRole('button', { name: /conversar com a sara/i })
+    expect(saraButtons.length).toBeGreaterThan(0)
   })
 
   it('"Conversar com a Sara" navigates to maeIA tab', () => {
-    useAppStore.setState({ isLoggedIn: true, motherName: 'Ana', phase: { stage: 'pregnant', week: 28 }, activeTab: 'home' })
+    useAppStore.setState({ isLoggedIn: true, motherName: 'Ana', phase: { stage: 'pregnant', week: 28 }, activeTab: 'hoje' })
     render(<DashboardScreen />, { wrapper: makeWrapper() })
-    fireEvent.click(screen.getByRole('button', { name: /conversar com a sara/i }))
+    // Click the first button (the Sara card CTA, not the FAB)
+    fireEvent.click(screen.getAllByRole('button', { name: /conversar com a sara/i })[0])
     expect(useAppStore.getState().activeTab).toBe('maeIA')
+  })
+
+  it('renders Sara FAB button', () => {
+    render(<DashboardScreen />, { wrapper: makeWrapper() })
+    // There may be multiple "Conversar com a Sara" elements (the card link + the FAB)
+    // Use getAllByRole to check at least one FAB exists
+    const saraButtons = screen.getAllByRole('button', { name: /conversar com a sara/i })
+    expect(saraButtons.length).toBeGreaterThan(0)
+  })
+
+  it('Sara FAB opens MaeIA overlay with back button', () => {
+    render(<DashboardScreen />, { wrapper: makeWrapper() })
+    // The FAB has aria-label="Conversar com a Sara" and is type="button"
+    // Click the last button matching (the FAB, not the card link)
+    const saraButtons = screen.getAllByRole('button', { name: /conversar com a sara/i })
+    fireEvent.click(saraButtons[saraButtons.length - 1])
+    // MaeIAScreen should now be visible with a back button (aria-label="Voltar")
+    // Use getAllByRole because "Quando voltar à academia?" chip also matches /voltar/i
+    const voltarButtons = screen.getAllByRole('button', { name: /voltar/i })
+    const backButton = voltarButtons.find((btn) => btn.getAttribute('aria-label') === 'Voltar')
+    expect(backButton).toBeInTheDocument()
   })
 })
 

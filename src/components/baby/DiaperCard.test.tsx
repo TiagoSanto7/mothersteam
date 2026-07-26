@@ -23,7 +23,7 @@ function makeWrapper(initialEntries: ApiBabyEntry[] = []) {
 
 beforeEach(() => {
   useAppStore.setState({ isLoggedIn: true });
-  mockApiFetch.mockImplementation((url: string, opts?: RequestInit) => {
+  mockApiFetch.mockImplementation((_url: string, opts?: RequestInit) => {
     if (opts?.method === 'POST') {
       return Promise.resolve({ ...DIAPER_ENTRY, id: Date.now().toString() });
     }

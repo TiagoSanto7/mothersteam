@@ -1,6 +1,7 @@
 import { ChevronLeft } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiFetch } from '../../lib/api';
+import { getAvatarColor } from '../../utils/avatar';
 import type { ApiFollowUser, PaginatedResult } from '../../lib/types';
 
 interface FollowListScreenProps {
@@ -54,7 +55,10 @@ export function FollowListScreen({ mode, userId, onOpenUser, onBack }: FollowLis
                   onClick={() => onOpenUser(u.id)}
                   className="flex items-center gap-3 flex-1 text-left"
                 >
-                  <div className="w-10 h-10 rounded-full bg-sara-terracotta flex items-center justify-center text-white text-sm font-bold flex-shrink-0">
+                  <div
+                    style={{ background: getAvatarColor(null) }}
+                    className="w-10 h-10 rounded-full flex items-center justify-center text-white text-sm font-bold flex-shrink-0"
+                  >
                     {u.name.charAt(0).toUpperCase()}
                   </div>
                   <p className="text-sm font-semibold text-graphite">{u.name}</p>

@@ -3,6 +3,7 @@ import { persist, createJSONStorage } from 'zustand/middleware';
 import type { TabId, PregnancyPhase, OnboardingAnswers, MotherProfile, Q1Answer } from '../types';
 import { computeProfile } from '../utils/onboardingScoring';
 import type { ApiUser } from '../lib/types';
+import { apiFetch } from '../lib/api';
 import { buildPhase } from '../lib/helpers';
 import type { ReceptionData } from '../types/reception';
 
@@ -30,7 +31,12 @@ interface AppState {
   activeTab: TabId;
   selectedDate: string;
   lastFeedSide: 'left' | 'right';
+  /** @deprecated use versesByUser — kept only for v1→v2 migration */
   savedVerses: string[];
+  /** Verses keyed by userId so different users don't share verse lists */
+  versesByUser: Record<string, string[]>;
+  /** User-written prayer texts keyed by userId → verse-ref */
+  prayersByUser: Record<string, Record<string, string>>;
   // UI — NOT persisted
   pendingShareContent: string | null;
   // Auth actions
@@ -40,6 +46,7 @@ interface AppState {
   // Profile actions
   completeOnboarding: (answers: OnboardingAnswers) => void;
   applyReceptionData: (data: ReceptionData) => void;
+  completeReception: () => void;
   resetOnboarding: () => void;
   completeSocialOnboarding: () => void;
   // UI actions
@@ -50,6 +57,7 @@ interface AppState {
   saveVerse: (ref: string) => void;
   unsaveVerse: (ref: string) => void;
   setPendingShareContent: (content: string | null) => void;
+  savePrayer: (ref: string, text: string) => void;
 }
 
 const safeLocalStorage = {
@@ -64,9 +72,46 @@ const safeLocalStorage = {
   },
 };
 
+const OLD_TAB_MAP: Record<string, TabId> = {
+  home:       'hoje',
+  maeIA:      'maeIA',
+  baby:       'jornada',
+  rotina:     'jornada',
+  shopping:   'hoje',
+};
+
+export function migrateAppState(
+  persistedState: unknown,
+  fromVersion: number,
+): Partial<AppState> {
+  const state = persistedState as Partial<AppState>;
+  if (fromVersion === 0) {
+    const oldTab = state.activeTab as string | undefined;
+    const newTab = oldTab ? (OLD_TAB_MAP[oldTab] ?? oldTab) : 'hoje';
+    return {
+      ...state,
+      activeTab: newTab as TabId,
+      versesByUser: {},
+      prayersByUser: {},
+    };
+  }
+  if (fromVersion === 1) {
+    // Migrate flat savedVerses to versesByUser under a legacy bucket so
+    // pre-login verses are not lost but also not mixed with other users.
+    const legacyVerses: string[] = (state as any).savedVerses ?? [];
+    return {
+      ...state,
+      savedVerses: [],
+      versesByUser: legacyVerses.length > 0 ? { '__legacy__': legacyVerses } : {},
+      prayersByUser: {},
+    };
+  }
+  return state;
+}
+
 export const useAppStore = create<AppState>()(
   persist(
-    (set) => ({
+    (set, get) => ({
       // Auth — memory only
       isLoggedIn: false,
       accessToken: null,
@@ -80,10 +125,12 @@ export const useAppStore = create<AppState>()(
       phase: { stage: 'pregnant', week: 28 },
       socialOnboardingDone: false,
       // UI
-      activeTab: 'home',
+      activeTab: 'hoje',
       selectedDate: new Date().toISOString().split('T')[0],
       lastFeedSide: 'left',
       savedVerses: [],
+      versesByUser: {},
+      prayersByUser: {},
       pendingShareContent: null,
       // Auth actions
       setAccessToken: (token) => set({ accessToken: token }),
@@ -119,13 +166,13 @@ export const useAppStore = create<AppState>()(
         };
         const profile = computeProfile(answers);
         set({
-          motherName: data.motherName ?? '',
-          babyName: data.babyName ?? '',
+          motherName: data.motherName || get().motherName,
+          babyName: data.babyName || get().babyName,
           phase,
-          onboardingDone: true,
           motherProfile: profile,
         });
       },
+      completeReception: () => set({ onboardingDone: true }),
       resetOnboarding: () => set({ onboardingDone: false, motherProfile: null }),
       completeSocialOnboarding: () => set({ socialOnboardingDone: true }),
       // UI actions
@@ -134,13 +181,68 @@ export const useAppStore = create<AppState>()(
       toggleFeedSide: () =>
         set((s) => ({ lastFeedSide: s.lastFeedSide === 'left' ? 'right' : 'left' })),
       setFeedSide: (side) => set({ lastFeedSide: side }),
-      saveVerse: (ref) => set((s) => ({ savedVerses: s.savedVerses.includes(ref) ? s.savedVerses : [...s.savedVerses, ref] })),
-      unsaveVerse: (ref) => set((s) => ({ savedVerses: s.savedVerses.filter((r) => r !== ref) })),
+      saveVerse: (ref) =>
+        set((s) => {
+          const uid = s.currentUserId ?? '__anon__';
+          const current = s.versesByUser[uid] ?? [];
+          if (current.includes(ref)) return {};
+          // If the verse was in the __legacy__ bucket, remove it from there
+          // so the progressive migration moves it to the current user's bucket.
+          const legacy = s.versesByUser['__legacy__'] ?? [];
+          const newLegacy = legacy.filter((r) => r !== ref);
+          const newVersesByUser: Record<string, string[]> = {
+            ...s.versesByUser,
+            [uid]: [...current, ref],
+          };
+          if (newLegacy.length !== legacy.length) {
+            newVersesByUser['__legacy__'] = newLegacy;
+          }
+          if (uid !== '__anon__') {
+            apiFetch('/users/me/verses', { method: 'POST', body: JSON.stringify({ verseRef: ref }) }).catch(() => {
+              set((s) => ({
+                versesByUser: {
+                  ...s.versesByUser,
+                  [uid]: (s.versesByUser[uid] ?? []).filter((r) => r !== ref),
+                },
+              }));
+            });
+          }
+          return { versesByUser: newVersesByUser };
+        }),
+      unsaveVerse: (ref) =>
+        set((s) => {
+          const uid = s.currentUserId ?? '__anon__';
+          const current = s.versesByUser[uid] ?? [];
+          if (uid !== '__anon__') {
+            apiFetch(`/users/me/verses/${encodeURIComponent(ref)}`, { method: 'DELETE' }).catch(() => {
+              set((s) => ({
+                versesByUser: {
+                  ...s.versesByUser,
+                  [uid]: [...(s.versesByUser[uid] ?? []), ref],
+                },
+              }));
+            });
+          }
+          return { versesByUser: { ...s.versesByUser, [uid]: current.filter((r) => r !== ref) } };
+        }),
       setPendingShareContent: (content) => set({ pendingShareContent: content }),
+      savePrayer: (ref, text) =>
+        set((s) => {
+          const uid = s.currentUserId ?? '__anon__';
+          const userPrayers = s.prayersByUser[uid] ?? {};
+          return {
+            prayersByUser: {
+              ...s.prayersByUser,
+              [uid]: { ...userPrayers, [ref]: text },
+            },
+          };
+        }),
     }),
     {
       name: 'mothers-team-v3',
       storage: createJSONStorage(() => safeLocalStorage),
+      version: 2,
+      migrate: migrateAppState,
       partialize: (state) => ({
         onboardingDone: state.onboardingDone,
         motherProfile: state.motherProfile,
@@ -150,8 +252,35 @@ export const useAppStore = create<AppState>()(
         socialOnboardingDone: state.socialOnboardingDone,
         activeTab: state.activeTab,
         lastFeedSide: state.lastFeedSide,
-        savedVerses: state.savedVerses,
+        versesByUser: state.versesByUser,
+        prayersByUser: state.prayersByUser,
       }),
     },
   ),
 );
+
+// Stable fallback references — never create new objects in selector hot path
+const EMPTY_VERSES: string[] = [];
+const EMPTY_PRAYERS: Record<string, string> = {};
+
+/**
+ * Selector: returns the saved verse refs for the currently logged-in user.
+ * Also merges in any verses stored in the __legacy__ bucket (pre-migration)
+ * so that verses saved before the user logged in are not lost.
+ */
+export const selectSavedVerses = (s: AppState): string[] => {
+  const userId = s.currentUserId ?? '__anon__'
+  const userVerses = s.versesByUser[userId] ?? EMPTY_VERSES
+  const legacyVerses = userId !== '__legacy__' ? (s.versesByUser['__legacy__'] ?? EMPTY_VERSES) : EMPTY_VERSES
+  if (legacyVerses.length === 0) return userVerses
+  // Merge legacy into user bucket on first read (deduplicated)
+  return Array.from(new Set([...userVerses, ...legacyVerses]))
+}
+
+/**
+ * Selector: returns the prayer map (ref → text) for the current user.
+ */
+export function selectPrayersByVerse(s: AppState): Record<string, string> {
+  const uid = s.currentUserId ?? '__anon__';
+  return s.prayersByUser[uid] ?? EMPTY_PRAYERS;
+}

@@ -9,24 +9,28 @@
 
 Você já tem o **Plano Creator**. Faça na ordem:
 
-- [ ] Acesse [elevenlabs.io](https://elevenlabs.io) → **Conversational AI** → **+ New Agent**
-- [ ] Configure o agente:
+- [X] Acesse [elevenlabs.io](https://elevenlabs.io) → **Conversational AI** → **+ New Agent**
+- [X] Configure o agente:
   - **Nome:** Sara
   - **Language:** Portuguese (Brazil)
   - **First message:** "Oi, que alegria ter você aqui! Sou a Sara, e vou estar com você em cada passo da sua maternidade. 💛"
   - **System prompt:** descreva a personalidade da Sara (acolhedora, cristã, empática, nunca julga, sempre encoraja)
-- [ ] Em **Voice** → escolha uma voz feminina PT-BR do catálogo (recomendadas: "Valentina" ou "Camila")
-- [ ] Copie o **Agent ID** e a **API Key** → cole no arquivo `.env` do servidor:
+- [X] Em **Voice** → escolha uma voz feminina PT-BR do catálogo (recomendadas: "Valentina" ou "Camila")
+- [X] Copie o **Agent ID** e a **API Key** → cole no arquivo `.env` do servidor:
   ```
   ELEVENLABS_AGENT_ID=seu_agent_id_aqui
   ELEVENLABS_API_KEY=sua_api_key_aqui
   ```
-- [ ] Teste a conversa diretamente no painel da ElevenLabs antes de integrar
+- [X] Teste a conversa diretamente no painel da ElevenLabs antes de integrar
 - [ ] *Futuramente:* gravar 2 min de áudio da atriz da Sara para **Instant Voice Cloning**
+
+
 
 ---
 
 ## 🎬 HeyGen — Vídeos da Sara (Onboarding)
+
+> TIAGO: Vamos primeiro deixar uma bolinha tipo a do chatgpt para testar somente a interação de audio, sem prototipo de Sara visual.
 
 > Só necessário para a Opção D (vídeos pré-gravados). O agente já deixou o player de vídeo pronto no onboarding.
 

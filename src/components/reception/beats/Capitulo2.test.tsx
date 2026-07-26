@@ -1,29 +1,68 @@
-import { render, screen } from '@testing-library/react'
+import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { describe, it, expect, vi } from 'vitest'
+import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { Capitulo2 } from './Capitulo2'
 
+let mockState = {
+  state: 'listening' as string,
+  amplitude: 0,
+  collectedFatos: null as unknown,
+  error: null as string | null,
+  startConversation: vi.fn(() => Promise.resolve()),
+  sendTextResponse: vi.fn(),
+  stop: vi.fn(),
+}
+
+vi.mock('../hooks/useSaraNarration', async () => {
+  const actual = await vi.importActual<typeof import('../hooks/useSaraNarration')>(
+    '../hooks/useSaraNarration',
+  )
+  return {
+    ...actual,
+    useSaraNarration: () => mockState,
+  }
+})
+
+beforeEach(() => {
+  mockState = {
+    state: 'listening',
+    amplitude: 0,
+    collectedFatos: null,
+    error: null,
+    startConversation: vi.fn(() => Promise.resolve()),
+    sendTextResponse: vi.fn(),
+    stop: vi.fn(),
+  }
+})
+
 describe('Capitulo2', () => {
-  it('starts with mood question', () => {
+  it('renders orb and text input', () => {
     render(<Capitulo2 onComplete={() => {}} />)
-    expect(screen.getByText(/como você tem se sentido/i)).toBeInTheDocument()
-    expect(screen.getByText(/Confiante/i)).toBeInTheDocument()
+    expect(screen.getByLabelText('Sara')).toBeInTheDocument()
+    expect(screen.getByLabelText(/Digite sua resposta/i)).toBeInTheDocument()
   })
 
-  it('advances to support question after mood selected', async () => {
+  it('sends text response on submit', async () => {
     const user = userEvent.setup()
     render(<Capitulo2 onComplete={() => {}} />)
-    await user.click(screen.getByText(/Cansada/i))
-    expect(await screen.findByText(/frequência você consegue contar/i)).toBeInTheDocument()
-    expect(screen.getByText(/Sempre tenho ajuda/i)).toBeInTheDocument()
+    await user.type(screen.getByLabelText(/Digite sua resposta/i), 'cansada')
+    await user.click(screen.getByRole('button', { name: /enviar/i }))
+    expect(mockState.sendTextResponse).toHaveBeenCalledWith('cansada')
   })
 
-  it('calls onComplete with both answers after support selected', async () => {
+  it('calls onComplete with mood and supportNetwork when collectedFatos fires', async () => {
     const onComplete = vi.fn()
-    const user = userEvent.setup()
+    mockState.collectedFatos = { mood: 'C', supportNetwork: 'B' }
     render(<Capitulo2 onComplete={onComplete} />)
-    await user.click(screen.getByText(/Ansiosa/i))
-    await user.click(await screen.findByText(/Só em momentos específicos/i))
-    expect(onComplete).toHaveBeenCalledWith({ mood: 'C', supportNetwork: 'B' })
+    await waitFor(() => {
+      expect(onComplete).toHaveBeenCalledWith({ mood: 'C', supportNetwork: 'B' })
+    })
+  })
+
+  it('shows retry button on error', () => {
+    mockState.state = 'error'
+    mockState.error = 'network fail'
+    render(<Capitulo2 onComplete={() => {}} />)
+    expect(screen.getByRole('button', { name: /tentar de novo/i })).toBeInTheDocument()
   })
 })

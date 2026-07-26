@@ -31,18 +31,19 @@ afterEach(() => {
 })
 
 describe('PreparandoTudo', () => {
-  it('renders orb and preparing text', () => {
+  it('renders orb and holding text', () => {
     render(<PreparandoTudo data={baseData} onReady={() => {}} />)
-    expect(screen.getByText(/preparando tudo/i)).toBeInTheDocument()
+    expect(screen.getByText(/instantinho/i)).toBeInTheDocument()
     expect(screen.getByLabelText('Sara')).toBeInTheDocument()
   })
 
-  it('applies reception data to store on mount', () => {
+  it('applies reception data to store on mount without marking onboardingDone', () => {
     render(<PreparandoTudo data={baseData} onReady={() => {}} />)
     const s = useAppStore.getState()
     expect(s.motherName).toBe('Ana')
-    expect(s.onboardingDone).toBe(true)
     expect(s.motherProfile).not.toBeNull()
+    // onboardingDone só vira true no clique de "Entrar" no Presente
+    expect(s.onboardingDone).toBe(false)
   })
 
   it('calls onReady after 4 seconds', () => {

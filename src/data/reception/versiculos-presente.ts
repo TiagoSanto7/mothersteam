@@ -15,8 +15,8 @@ const MAPA: Record<MoodAnswer, Versiculo> = {
     referencia: 'Mateus 11:28',
   },
   C: {
-    verso: 'Não estejais inquietos por coisa alguma; antes as vossas petições sejam conhecidas diante de Deus.',
-    referencia: 'Filipenses 4:6-7',
+    verso: 'Não estejais inquietos por coisa alguma; antes, em tudo, pela oração e súplicas, apresentem seus pedidos a Deus.',
+    referencia: 'Filipenses 4:6',
   },
   D: {
     verso: 'Os que esperam no Senhor renovarão as suas forças e subirão com asas como águias.',

@@ -14,7 +14,7 @@ import { CommunityDetailScreen } from './CommunityDetailScreen';
 import { CreateCommunityScreen } from './CreateCommunityScreen';
 import { ComposerBar } from './ComposerBar';
 import { PostCard } from './PostCard';
-import { UserProfileScreen } from '../profile/UserProfileScreen';
+import { ProfileScreen } from '../profile/ProfileScreen';
 import type { CommunityPost } from '../../types';
 
 type TopTab = 'para-voce' | 'comunidades';
@@ -83,9 +83,10 @@ export function ComunidadeScreen() {
 
   if (profileUserId) {
     return (
-      <UserProfileScreen
+      <ProfileScreen
+        key={profileUserId}
         userId={profileUserId}
-        onBack={() => setProfileUserId(null)}
+        onClose={() => setProfileUserId(null)}
         onOpenProfile={(id) => setProfileUserId(id)}
       />
     );
@@ -177,6 +178,7 @@ export function ComunidadeScreen() {
                   post={post}
                   onOpen={() => setSelectedPost(post)}
                   onOpenProfile={() => post.authorId && setProfileUserId(post.authorId)}
+                  onOpenCommunity={(id) => setOpenCommunityId(id)}
                 />
               ))}
               <div ref={sentinelRef} className="h-4" />

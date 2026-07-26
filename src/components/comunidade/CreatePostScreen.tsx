@@ -5,6 +5,7 @@ import { useAppStore } from '../../store/useAppStore';
 import { apiFetch, uploadImage } from '../../lib/api';
 import type { ApiPost } from '../../lib/types';
 import type { CommunityPost } from '../../types';
+import { MentionInput } from '../shared/MentionInput';
 
 type PostCategory = CommunityPost['category'];
 
@@ -110,12 +111,13 @@ export function CreatePostScreen({ onBack, autoOpenImage, initialCommunityId, in
       </div>
 
       <div className="px-4 flex flex-col gap-3 flex-1">
-        <textarea
+        <MentionInput
           value={content}
-          onChange={(e) => setContent(e.target.value)}
+          onChange={setContent}
           placeholder="O que você está sentindo? Este é um espaço seguro 💜"
-          autoFocus
           rows={7}
+          aria-label="Conteúdo do post"
+          autoFocus
           className="w-full px-4 py-3 rounded-2xl bg-white border border-sara-linen text-sm text-graphite placeholder:text-graphite-muted leading-relaxed resize-none focus:outline-none focus:border-sara-gold"
         />
 

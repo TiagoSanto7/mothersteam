@@ -9,6 +9,10 @@ const ALLOWED_MIMES = new Map([
   ['image/png',  '.png'],
   ['image/webp', '.webp'],
   ['image/gif',  '.gif'],
+  ['audio/webm', '.webm'],
+  ['audio/ogg',  '.ogg'],
+  ['audio/mp4',  '.m4a'],
+  ['audio/mpeg', '.mp3'],
 ])
 
 const UPLOADS_DIR = join(process.cwd(), 'uploads')

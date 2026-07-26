@@ -7,9 +7,12 @@ const updateMeSchema = z.object({
   username: z.string().min(3).max(30).regex(/^[a-z0-9_]+$/).optional().nullable(),
   babyName: z.string().max(80).optional().nullable(),
   bio: z.string().max(280).optional().nullable(),
+  avatarUrl: z.string().max(500).optional().nullable(),
   pregnancyStage: z.enum(['pregnant', 'postpartum']).optional(),
   pregnancyWeek: z.number().int().min(1).max(42).optional().nullable(),
   babyAgeInDays: z.number().int().min(0).optional().nullable(),
+  onboardingDone: z.boolean().optional(),
+  versesPublic: z.boolean().optional(),
 })
 
 export default async function usersRoutes(fastify: FastifyInstance) {
@@ -23,11 +26,14 @@ export default async function usersRoutes(fastify: FastifyInstance) {
         name: true,
         username: true,
         bio: true,
+        avatarUrl: true,
         pregnancyStage: true,
         pregnancyWeek: true,
         babyAgeInDays: true,
         profileKey: true,
         archetypeKey: true,
+        versesPublic: true,
+        role: true,
         _count: { select: { posts: true, followers: true, following: true } },
       },
     })
@@ -62,7 +68,8 @@ export default async function usersRoutes(fastify: FastifyInstance) {
       data: body.data,
       select: {
         id: true, name: true, username: true, babyName: true, bio: true,
-        pregnancyStage: true, pregnancyWeek: true, babyAgeInDays: true,
+        avatarUrl: true, pregnancyStage: true, pregnancyWeek: true, babyAgeInDays: true,
+        versesPublic: true,
       },
     })
     reply.send(user)
@@ -199,8 +206,28 @@ export default async function usersRoutes(fastify: FastifyInstance) {
     }
   )
 
-  fastify.get<{ Querystring: { limit?: string } }>('/', async (request, reply) => {
+  fastify.get<{ Querystring: { limit?: string; q?: string } }>('/', {
+    config: { rateLimit: { max: 30, timeWindow: '1 minute' } },
+  }, async (request, reply) => {
     const limit = Math.min(Number(request.query.limit ?? 10), 50)
+    const q = request.query.q?.trim().slice(0, 50)
+
+    if (q) {
+      // Mention autocomplete: search by username or name prefix
+      const users = await fastify.prisma.user.findMany({
+        where: {
+          id: { not: request.userId },
+          OR: [
+            { username: { contains: q } },
+            { name: { contains: q } },
+          ],
+        },
+        select: { id: true, name: true, username: true },
+        take: limit,
+      })
+      return reply.send({ items: users.map((u) => ({ ...u, isFollowedByCurrentUser: false, isSelf: false })), hasMore: false })
+    }
+
     const alreadyFollowing = await fastify.prisma.follow.findMany({
       where: { followerId: request.userId },
       select: { followingId: true },
@@ -229,5 +256,58 @@ export default async function usersRoutes(fastify: FastifyInstance) {
       isSelf: false,
     }))
     reply.send({ items, hasMore: false })
+  })
+
+  // Saved verses — own
+  fastify.get('/me/verses', async (request, reply) => {
+    const verses = await fastify.prisma.savedVerse.findMany({
+      where: { userId: request.userId },
+      select: { verseRef: true, createdAt: true },
+      orderBy: { createdAt: 'asc' },
+    })
+    reply.send(verses.map((v) => v.verseRef))
+  })
+
+  fastify.post<{ Body: { verseRef: string } }>('/me/verses', async (request, reply) => {
+    const { verseRef } = request.body ?? {}
+    if (!verseRef || typeof verseRef !== 'string') return reply.status(400).send({ error: 'verseRef required' })
+    if (verseRef.length > 100) return reply.status(400).send({ error: 'verseRef too long' })
+    await fastify.prisma.savedVerse.upsert({
+      where: { userId_verseRef: { userId: request.userId, verseRef } },
+      create: { userId: request.userId, verseRef },
+      update: {},
+    })
+    reply.status(201).send({ ok: true })
+  })
+
+  fastify.delete<{ Params: { ref: string } }>('/me/verses/:ref', async (request, reply) => {
+    await fastify.prisma.savedVerse.deleteMany({
+      where: { userId: request.userId, verseRef: request.params.ref },
+    })
+    reply.send({ ok: true })
+  })
+
+  // Saved verses — other user (only if versesPublic)
+  fastify.get<{ Params: { id: string } }>('/:id/verses', async (request, reply) => {
+    if (request.params.id === request.userId) {
+      const verses = await fastify.prisma.savedVerse.findMany({
+        where: { userId: request.userId },
+        select: { verseRef: true },
+        orderBy: { createdAt: 'asc' },
+      })
+      return reply.send(verses.map((v) => v.verseRef))
+    }
+    const user = await fastify.prisma.user.findUnique({
+      where: { id: request.params.id },
+      select: { versesPublic: true },
+    })
+    if (!user) return reply.status(404).send({ error: 'User not found' })
+    if (!user.versesPublic) return reply.status(403).send({ error: 'Verses are private' })
+    const verses = await fastify.prisma.savedVerse.findMany({
+      where: { userId: request.params.id },
+      select: { verseRef: true },
+      orderBy: { createdAt: 'asc' },
+    })
+    reply.send(verses.map((v) => v.verseRef))
   })
 }

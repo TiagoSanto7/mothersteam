@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { OrbeVisual } from '../OrbeVisual'
+import { SaraSays } from '../SaraSays'
+import { useAppStore } from '../../../store/useAppStore'
 import { SARA_FRASES } from '../../../data/reception/sara-frases'
 import { versiculoParaHumor } from '../../../data/reception/versiculos-presente'
 import type { MoodAnswer } from '../../../types/reception'
@@ -10,43 +11,52 @@ interface PresenteProps {
   onEnter: () => void
 }
 
+const VERSICULO_DELAY_MS = 2000
+const BOTAO_DELAY_MS = 3000
+const FALLBACK_SPEECH_MS = 15000
+
 export function Presente({ mood, onEnter }: PresenteProps) {
   const versiculo = versiculoParaHumor(mood)
-  const [showVersiculo, setShowVersiculo] = useState(false)
+  const [showVerso, setShowVerso] = useState(false)
+  const [speechEnded, setSpeechEnded] = useState(false)
   const [showBotao, setShowBotao] = useState(false)
 
+  // Versículo aparece DURANTE a fala — Sara continua narrando
   useEffect(() => {
-    const t1 = setTimeout(() => setShowVersiculo(true), 2200)
-    const t2 = setTimeout(() => setShowBotao(true), 5200)
-    return () => {
-      clearTimeout(t1)
-      clearTimeout(t2)
-    }
+    const t = setTimeout(() => setShowVerso(true), VERSICULO_DELAY_MS)
+    return () => clearTimeout(t)
+  }, [])
+
+  // Botão aparece 3s DEPOIS de ela terminar (silêncio contemplativo)
+  useEffect(() => {
+    if (!speechEnded) return
+    const t = setTimeout(() => setShowBotao(true), BOTAO_DELAY_MS)
+    return () => clearTimeout(t)
+  }, [speechEnded])
+
+  // Fallback: se onSpeechEnd nunca disparar (falha TTS), força
+  useEffect(() => {
+    const t = setTimeout(() => setSpeechEnded(true), FALLBACK_SPEECH_MS)
+    return () => clearTimeout(t)
   }, [])
 
   return (
-    <div className="min-h-screen flex flex-col bg-sara-cream">
-      <div className="flex flex-col items-center pt-16 gap-6 px-6">
-        <OrbeVisual amplitude={0} state="idle" size="sm" />
+    <div className="min-h-screen flex flex-col bg-sara-cream px-6 py-12">
+      <div className="flex-1 flex flex-col items-center justify-center gap-10">
+        <SaraSays
+          message={SARA_FRASES.presenteIntro()}
+          tts
+          responseType="none"
+          onSpeechEnd={() => setSpeechEnded(true)}
+        />
 
-        <motion.p
-          initial={{ opacity: 0, y: 8 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, delay: 0.4 }}
-          className="text-[15px] leading-relaxed text-graphite text-center font-serif max-w-sm"
-        >
-          {SARA_FRASES.presenteIntro()}
-        </motion.p>
-      </div>
-
-      <div className="flex-1 flex flex-col items-center justify-center px-10">
         <AnimatePresence>
-          {showVersiculo && (
+          {showVerso && (
             <motion.div
               key="versiculo"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              transition={{ duration: 1.2, ease: 'easeOut' }}
+              transition={{ duration: 1.6, ease: 'easeOut' }}
               className="flex flex-col items-center gap-4 max-w-sm text-center"
             >
               <blockquote className="text-[22px] leading-snug font-serif text-graphite italic">
@@ -60,13 +70,16 @@ export function Presente({ mood, onEnter }: PresenteProps) {
         </AnimatePresence>
       </div>
 
-      <div className="px-6 pb-12">
+      <div className="min-h-[64px]">
         <AnimatePresence>
           {showBotao && (
             <motion.button
               key="entrar"
               type="button"
-              onClick={onEnter}
+              onClick={() => {
+                useAppStore.getState().completeReception()
+                onEnter()
+              }}
               aria-label="Entrar"
               initial={{ opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}

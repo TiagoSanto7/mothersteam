@@ -6,18 +6,37 @@ const createSchema = z.object({
   date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
   title: z.string().min(1),
   category: z.enum(['task', 'appointment', 'medication']),
+  notes: z.string().max(300).optional(),
 })
 
 const updateSchema = z.object({
   done: z.boolean().optional(),
   title: z.string().min(1).optional(),
+  time: z.string().optional(),
+  date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+  category: z.enum(['task', 'appointment', 'medication']).optional(),
+  notes: z.string().max(300).nullable().optional(),
 })
 
 export default async function routineRoutes(fastify: FastifyInstance) {
   fastify.addHook('preHandler', fastify.authenticate)
 
-  fastify.get<{ Querystring: { date?: string } }>('/', async (request, reply) => {
-    const where = { userId: request.userId, ...(request.query.date ? { date: request.query.date } : {}) }
+  fastify.get<{ Querystring: { date?: string; future?: string; limit?: string } }>('/', async (request, reply) => {
+    const { date, future, limit } = request.query
+    if (future === 'true') {
+      // Returns upcoming entries (date >= today) sorted by date then time
+      // Use local-date arithmetic (not toISOString which is UTC) so the cutoff
+      // matches the server's local clock even when TZ offsets differ.
+      const now = new Date()
+      const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`
+      const entries = await fastify.prisma.routineEntry.findMany({
+        where: { userId: request.userId, date: { gte: today } },
+        orderBy: [{ date: 'asc' }, { time: 'asc' }],
+        take: limit ? Math.min(parseInt(limit, 10), 100) : 50,
+      })
+      return reply.send(entries)
+    }
+    const where = { userId: request.userId, ...(date ? { date } : {}) }
     const entries = await fastify.prisma.routineEntry.findMany({ where, orderBy: { time: 'asc' } })
     reply.send(entries)
   })

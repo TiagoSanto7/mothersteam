@@ -8,23 +8,31 @@ datasource db {
 }
 
 model User {
-  id                String    @id @default(cuid())
-  email             String    @unique
-  username          String?   @unique
+  id                String  @id @default(cuid())
+  email             String  @unique
+  username          String? @unique
   passwordHash      String
   name              String
   babyName          String?
   pregnancyStage    String
   pregnancyWeek     Int?
   babyAgeInDays     Int?
-  onboardingDone    Boolean   @default(false)
+  onboardingDone    Boolean @default(false)
   onboardingAnswers Json?
   profileKey        String?
   archetypeKey      String?
-  bio               String?  @db.Text
+  // After adding avatarUrl: npx prisma db push
+  avatarUrl         String? @db.VarChar(500)
+  bio               String? @db.Text
+  role              String  @default("USER")
+  versesPublic      Boolean @default(false)
+  motherBirthDate   DateTime?
+  babyBirthDate     DateTime?
+  expectedBirthDate DateTime?
 
   posts              Post[]
   comments           Comment[]
+  savedVerses        SavedVerse[]
   routineEntries     RoutineEntry[]
   babyEntries        BabyEntry[]
   notifications      Notification[]
@@ -50,17 +58,32 @@ model Follow {
   @@id([followerId, followingId])
 }
 
+model SavedVerse {
+  id        String   @id @default(cuid())
+  verseRef  String
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@unique([userId, verseRef])
+}
+
+// After changing isPrivate/isOpen fields, run on the server:
+//   npx prisma migrate dev --name add_community_privacy
 model Community {
-  id          String  @id @default(cuid())
+  id          String            @id @default(cuid())
   name        String
-  description String  @db.Text
+  description String            @db.Text
   category    String
   colorKey    String
+  imageUrl    String?
+  isPrivate   Boolean           @default(false) // true = posts only visible to members
+  isOpen      Boolean           @default(true)  // false = closed community (admin adds members only)
   creatorId   String
-  creator     User    @relation("CommunityCreator", fields: [creatorId], references: [id])
+  creator     User              @relation("CommunityCreator", fields: [creatorId], references: [id])
   members     CommunityMember[]
   posts       Post[]
-  createdAt   DateTime @default(now())
+  createdAt   DateTime          @default(now())
 }
 
 model CommunityMember {
@@ -123,8 +146,8 @@ model Chat {
 model ChatParticipant {
   userId String
   chatId String
-  user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
-  chat   Chat @relation(fields: [chatId], references: [id], onDelete: Cascade)
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  chat   Chat   @relation(fields: [chatId], references: [id], onDelete: Cascade)
 
   @@id([userId, chatId])
 }
@@ -139,6 +162,7 @@ model Message {
   sharedPostId      String?
   sharedPostAuthor  String?
   sharedPostExcerpt String?
+  audioUrl          String?  // npx prisma db push needed
   read              Boolean  @default(false)
   createdAt         DateTime @default(now())
 }
@@ -178,4 +202,45 @@ model Notification {
   actorName   String?
   postExcerpt String?  @db.VarChar(300)
   createdAt   DateTime @default(now())
+}
+
+model Category {
+  id        String    @id @default(cuid())
+  name      String
+  slug      String    @unique
+  icon      String    @default("🛍️")
+  active    Boolean   @default(true)
+  sortOrder Int       @default(0)
+  products  Product[]
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+}
+
+model Product {
+  id           String         @id @default(cuid())
+  name         String
+  description  String         @db.Text
+  price        Decimal        @db.Decimal(10, 2)
+  affiliateUrl String?
+  images       Json           @default("[]")
+  phases       Json           @default("[]")
+  stock        Int?
+  featured     Boolean        @default(false)
+  active       Boolean        @default(true)
+  categoryId   String
+  category     Category       @relation(fields: [categoryId], references: [id])
+  clicks       ProductClick[]
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+}
+
+model ProductClick {
+  id        String   @id @default(cuid())
+  productId String
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  userId    String?
+  clickedAt DateTime @default(now())
+
+  @@index([productId])
+  @@index([clickedAt])
 }

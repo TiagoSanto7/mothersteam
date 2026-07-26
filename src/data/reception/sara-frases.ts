@@ -2,7 +2,7 @@ import type { ReceptionData } from '../../types/reception'
 
 export const SARA_FRASES = {
   saraAparece: (motherName: string) =>
-    `Oi, ${motherName}. Fico feliz que você esteja aqui. Antes da gente começar, queria conhecer você um pouquinho. Prometo que é rapidinho.`,
+    `Oi, ${motherName}. Fico feliz que você esteja aqui. Antes da gente começar, queria conhecer um pouquinho de você. Prometo que é rapidinho.`,
 
   capitulo1_pergunta1: () =>
     'Me conta… você está esperando o bebê ou ele já chegou?',
@@ -11,13 +11,13 @@ export const SARA_FRASES = {
     'E me conta uma coisa… como você tem se sentido nesses últimos dias?',
 
   capitulo2_pergunta2: () =>
-    'E hoje em dia, com que frequência você consegue contar com alguém pra te ajudar?',
+    'E quando as coisas apertam… você sente que tem alguém com quem contar?',
 
   capitulo3_pergunta1: () =>
     'E, olhando pra tudo que você está vivendo agora… o que você mais gostaria que fosse um pouquinho mais fácil?',
 
   capitulo3_pergunta2: () =>
-    'E se você me contasse uma coisa que anda tirando um pouquinho do seu sono ou da sua paz… o que seria?',
+    'Tem alguma preocupação que tem ocupado bastante os seus pensamentos?',
 
   presenteIntro: () =>
     'Antes da gente seguir… queria deixar uma palavra com você. Espero que ela encontre um lugar no seu coração hoje.',

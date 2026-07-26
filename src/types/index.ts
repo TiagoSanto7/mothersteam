@@ -1,5 +1,4 @@
-// 'comunidade' kept for backward-compat with persisted Zustand sessions
-export type TabId = 'home' | 'maeIA' | 'baby' | 'rotina' | 'comunidade' | 'shopping';
+export type TabId = 'hoje' | 'jornada' | 'comunidade' | 'perfil' | 'maeIA' | 'shopping';
 
 export type PregnancyPhase =
   | { stage: 'pregnant'; week: number }
@@ -14,6 +13,7 @@ export interface RoutineEntry {
   title: string;
   category: 'task' | 'appointment' | 'medication';
   done: boolean;
+  notes?: string | null;
 }
 
 export interface BabyEntry {
@@ -53,18 +53,22 @@ export interface CommunityPost {
   id: string;
   authorId?: string;
   authorUsername?: string | null;
+  authorArchetypeKey?: string | null;
   category: 'gestação' | 'pós-parto' | 'amamentação' | 'saúde mental';
   author: string;
   badge?: 'experiente' | 'profissional';
   content: string;
+  /** The reposter's own comment on a quote repost (non-empty only for quote posts). */
+  quoteContent?: string;
   likes: number;
   replies: number;
   reposts: number;
   time: string;
   isRepost?: boolean;
   repostFrom?: string;
-  repostOriginal?: { content: string; author: string; authorId: string; authorUsername?: string | null; category: string; originalPostId?: string };
+  repostOriginal?: { content: string; author: string; authorId: string; authorUsername?: string | null; authorArchetypeKey?: string | null; category: string; originalPostId?: string };
   communityId?: string;
+  communityName?: string | null;
   imageUrl?: string;
   likedByCurrentUser?: boolean;
 }
@@ -72,6 +76,7 @@ export interface CommunityPost {
 export interface PostComment {
   id: string;
   author: string;
+  authorArchetypeKey?: string | null;
   content: string;
   time: string;
   likes: number;
@@ -97,11 +102,15 @@ export interface ChatMessage {
   content: string;
   time: string;
   sharedPost?: SharedPost;
+  audioUrl?: string | null;
 }
 
 export interface Chat {
   id: string;
   with: string;
+  withUserId?: string | null;
+  withUsername?: string | null;
+  withArchetypeKey?: string | null;
   lastMessage: string;
   time: string;
   unread: number;

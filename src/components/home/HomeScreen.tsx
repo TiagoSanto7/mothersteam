@@ -2,10 +2,13 @@ import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Plus } from 'lucide-react';
 import { useAppStore } from '../../store/useAppStore';
+import { formatDateHeading } from '../../lib/dateUtils';
 import { WeekCalendar } from './WeekCalendar';
 import { RoutineTimeline } from './RoutineTimeline';
 import { AddRoutineModal } from './AddRoutineModal';
+import { UpcomingEventsCard } from './UpcomingEventsCard';
 import { SARA_FRASES } from '../../data/reception/sara-frases';
+import { getAvatarColor } from '../../utils/avatar';
 import type { ReceptionData } from '../../types/reception';
 
 interface HomeScreenProps {
@@ -13,10 +16,11 @@ interface HomeScreenProps {
 }
 
 export function HomeScreen({ onOpenProfile }: HomeScreenProps) {
-  const phase = useAppStore((s) => s.phase);
-  const motherName = useAppStore((s) => s.motherName);
-  const babyName = useAppStore((s) => s.babyName);
-  const selectedDate = useAppStore((s) => s.selectedDate);
+  const phase         = useAppStore((s) => s.phase);
+  const motherName    = useAppStore((s) => s.motherName);
+  const motherProfile = useAppStore((s) => s.motherProfile);
+  const babyName      = useAppStore((s) => s.babyName);
+  const selectedDate  = useAppStore((s) => s.selectedDate);
   const receptionShape: ReceptionData = {
     phase: phase.stage,
     week: phase.stage === 'pregnant' ? phase.week : undefined,
@@ -34,7 +38,8 @@ export function HomeScreen({ onOpenProfile }: HomeScreenProps) {
         <button
           onClick={onOpenProfile}
           aria-label="Abrir perfil"
-          className="w-10 h-10 rounded-full bg-sara-terracotta flex items-center justify-center text-base font-bold text-white shadow-sm flex-shrink-0 active:scale-95 transition-transform"
+          style={{ background: getAvatarColor(motherProfile?.archetypeKey ?? null) }}
+          className="w-10 h-10 rounded-full flex items-center justify-center text-base font-bold text-white shadow-sm flex-shrink-0 active:scale-95 transition-transform"
         >
           {initial}
         </button>
@@ -47,14 +52,12 @@ export function HomeScreen({ onOpenProfile }: HomeScreenProps) {
 
       <WeekCalendar referenceDate={selectedDate} />
 
+      <UpcomingEventsCard />
+
       <div className="flex items-center justify-between px-4">
         <h2 className="text-sm font-semibold text-graphite">Sua Rotina</h2>
         <span className="text-xs text-graphite-muted">
-          {new Date(selectedDate + 'T12:00:00').toLocaleDateString('pt-BR', {
-            weekday: 'long',
-            day: 'numeric',
-            month: 'long',
-          })}
+          {formatDateHeading(selectedDate)}
         </span>
       </div>
 

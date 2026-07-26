@@ -21,6 +21,9 @@ const registerSchema = z.object({
   pregnancyWeek: z.number().int().min(1).max(42).optional(),
   babyAgeInDays: z.number().int().min(0).optional(),
   babyName: z.string().optional(),
+  motherBirthDate: z.string().optional(),
+  babyBirthDate: z.string().optional(),
+  expectedBirthDate: z.string().optional(),
 })
 
 const loginSchema = z.object({
@@ -32,6 +35,7 @@ const USER_SELECT = {
   id: true, email: true, name: true, username: true, babyName: true,
   pregnancyStage: true, pregnancyWeek: true, babyAgeInDays: true,
   onboardingDone: true, profileKey: true, archetypeKey: true,
+  motherBirthDate: true, babyBirthDate: true, expectedBirthDate: true,
 } as const
 
 export default async function authRoutes(fastify: FastifyInstance) {
@@ -63,6 +67,8 @@ export default async function authRoutes(fastify: FastifyInstance) {
     }
 
     const passwordHash = await bcrypt.hash(body.data.password, 12)
+    const parseDate = (s?: string) => s ? new Date(s) : undefined
+
     const user = await fastify.prisma.user.create({
       data: {
         email: body.data.email,
@@ -73,6 +79,9 @@ export default async function authRoutes(fastify: FastifyInstance) {
         pregnancyWeek: body.data.pregnancyWeek,
         babyAgeInDays: body.data.babyAgeInDays,
         babyName: body.data.babyName,
+        motherBirthDate: parseDate(body.data.motherBirthDate),
+        babyBirthDate: parseDate(body.data.babyBirthDate),
+        expectedBirthDate: parseDate(body.data.expectedBirthDate),
       },
       select: USER_SELECT,
     })

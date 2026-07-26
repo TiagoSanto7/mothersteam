@@ -1,11 +1,12 @@
-import { useEffect, useState, type FormEvent } from 'react'
-import { motion } from 'framer-motion'
+import { useEffect, useRef, useState, type FormEvent } from 'react'
 import { OrbeVisual } from '../OrbeVisual'
 import { ProgressBar } from '../ProgressBar'
-import { SARA_FRASES } from '../../../data/reception/sara-frases'
+import { useAppStore } from '../../../store/useAppStore'
 import {
   useSaraNarration,
   receptionDataFromCapitulo1,
+  CAP1_CONFIG,
+  type Capitulo1Fatos,
 } from '../hooks/useSaraNarration'
 import type { ReceptionData } from '../../../types/reception'
 
@@ -17,18 +18,31 @@ export function Capitulo1({ onComplete }: Capitulo1Props) {
   const {
     state,
     amplitude,
-    transcript,
     collectedFatos,
-    error,
-    startCapitulo1,
+    startConversation,
     sendTextResponse,
     stop,
   } = useSaraNarration()
 
   const [textInput, setTextInput] = useState('')
+  const skippedRef = useRef(false)
 
   useEffect(() => {
-    void startCapitulo1()
+    // Se o cadastro já preencheu phase e nome, não precisa perguntar de novo.
+    const s = useAppStore.getState()
+    if (!skippedRef.current && s.motherName && s.phase) {
+      skippedRef.current = true
+      onComplete({
+        motherName: s.motherName,
+        phase: s.phase.stage,
+        week: s.phase.stage === 'pregnant' ? s.phase.week : undefined,
+        ageInDays: s.phase.stage === 'postpartum' ? s.phase.ageInDays : undefined,
+        babyName: s.babyName || null,
+        otherChildren: [],
+      })
+      return
+    }
+    void startConversation(CAP1_CONFIG)
     return () => {
       stop()
     }
@@ -37,7 +51,7 @@ export function Capitulo1({ onComplete }: Capitulo1Props) {
 
   useEffect(() => {
     if (collectedFatos) {
-      onComplete(receptionDataFromCapitulo1(collectedFatos))
+      onComplete(receptionDataFromCapitulo1(collectedFatos as Capitulo1Fatos))
     }
   }, [collectedFatos, onComplete])
 
@@ -58,36 +72,28 @@ export function Capitulo1({ onComplete }: Capitulo1Props) {
       <div className="flex-1 flex flex-col items-center justify-center gap-6 px-6">
         <OrbeVisual amplitude={amplitude} state={state} size="md" />
 
-        <motion.p
-          initial={{ opacity: 0, y: 8 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6 }}
-          className="text-[17px] leading-relaxed text-graphite text-center font-serif max-w-sm"
-        >
-          {SARA_FRASES.capitulo1_pergunta1()}
-        </motion.p>
-
-        {transcript && state !== 'connecting' && (
-          <p className="text-[13px] text-graphite-muted italic text-center max-w-sm">
-            {transcript}
-          </p>
-        )}
-
         {state === 'connecting' && (
           <p className="text-[13px] text-graphite-muted">Conectando…</p>
         )}
 
         {state === 'error' && (
-          <div className="flex flex-col items-center gap-2">
-            <p className="text-[13px] text-sara-terracotta text-center">
-              {error || 'Algo não deu certo na conexão.'}
+          <div className="flex flex-col items-center gap-3">
+            <p className="text-[13px] text-sara-terracotta text-center max-w-xs">
+              Não foi possível conectar com a Sara. Verifique as permissões de microfone e tente novamente.
             </p>
             <button
               type="button"
-              onClick={() => void startCapitulo1()}
+              onClick={() => void startConversation(CAP1_CONFIG)}
               className="px-4 py-2 rounded-2xl bg-sara-gold text-white text-xs font-semibold"
             >
               Tentar de novo
+            </button>
+            <button
+              type="button"
+              onClick={() => { stop(); onComplete({}) }}
+              className="px-4 py-2 rounded-2xl border border-graphite-muted text-graphite-muted text-xs"
+            >
+              Pular esta etapa
             </button>
           </div>
         )}
@@ -105,16 +111,13 @@ export function Capitulo1({ onComplete }: Capitulo1Props) {
           />
           <button
             type="submit"
-            disabled={!textInput.trim() || state !== 'listening'}
+            disabled={!textInput.trim() || (state !== 'listening' && state !== 'error')}
             aria-label="Enviar"
             className="px-4 py-3 rounded-2xl bg-sara-gold text-white text-sm font-semibold disabled:opacity-40"
           >
             →
           </button>
         </form>
-        <p className="text-[11px] text-graphite-muted text-center">
-          Ou toque no orbe e fale com a Sara.
-        </p>
       </div>
     </div>
   )

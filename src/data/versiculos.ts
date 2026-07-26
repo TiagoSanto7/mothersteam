@@ -3,10 +3,10 @@ export interface Versiculo {
   referencia: string;
 }
 
-type TabVersiculos = 'home' | 'maeIA' | 'baby' | 'rotina' | 'shopping';
+type TabVersiculos = 'hoje' | 'jornada' | 'comunidade' | 'perfil' | 'maeIA' | 'shopping';
 
 const versiculos: Record<TabVersiculos, Versiculo[]> = {
-  home: [
+  hoje: [
     { texto: "Tudo posso naquele que me fortalece.", referencia: "Filipenses 4:13" },
     { texto: "Sabemos que todas as coisas cooperam para o bem daqueles que amam a Deus.", referencia: "Romanos 8:28" },
     { texto: "Não tenha medo, pois estou com você; não se apavore, pois sou o seu Deus.", referencia: "Isaías 41:10" },
@@ -40,7 +40,7 @@ const versiculos: Record<TabVersiculos, Versiculo[]> = {
     { texto: "Clama a mim e te responderei; dir-te-ei coisas grandes e ocultas que você não conhece.", referencia: "Jeremias 33:3" },
   ],
 
-  baby: [
+  jornada: [
     { texto: "Os filhos são uma herança do SENHOR; o fruto do ventre é uma recompensa.", referencia: "Salmos 127:3" },
     { texto: "Instrua a criança no caminho em que deve andar, e mesmo quando envelhecer não se desviará dele.", referencia: "Provérbios 22:6" },
     { texto: "Deixem as crianças virem a mim; não as impeçam, pois o reino de Deus pertence aos que são como elas.", referencia: "Marcos 10:14" },
@@ -57,7 +57,7 @@ const versiculos: Record<TabVersiculos, Versiculo[]> = {
     { texto: "Pois eu derramo água sobre a terra sedenta e riachos sobre o solo seco; derramarei o meu Espírito sobre a sua descendência.", referencia: "Isaías 44:3" },
   ],
 
-  rotina: [
+  comunidade: [
     { texto: "Não nos cansemos de fazer o bem, pois, se não desanimar, ceifaremos no tempo oportuno.", referencia: "Gálatas 6:9" },
     { texto: "Tudo o que fizerem, façam de todo o coração, como se fosse para o Senhor, e não para os homens.", referencia: "Colossenses 3:23" },
     { texto: "Façam tudo para a glória de Deus.", referencia: "1 Coríntios 10:31" },
@@ -72,6 +72,23 @@ const versiculos: Record<TabVersiculos, Versiculo[]> = {
     { texto: "O SENHOR abençoará a sua entrada e a sua saída, desde agora e para sempre.", referencia: "Salmos 121:8" },
     { texto: "Venha o teu reino, seja feita a tua vontade, assim na terra como no céu.", referencia: "Mateus 6:10" },
     { texto: "Não se preocupem com o amanhã, pois o amanhã cuidará de si mesmo. A cada dia basta o seu mal.", referencia: "Mateus 6:34" },
+  ],
+
+  perfil: [
+    { texto: "Portanto, se alguém está em Cristo, é nova criação. As coisas antigas já passaram; eis que chegaram as coisas novas!", referencia: "2 Coríntios 5:17" },
+    { texto: "Pois somos feitura de Deus, criados em Cristo Jesus para realizar boas obras.", referencia: "Efésios 2:10" },
+    { texto: "Tu me formaste no ventre de minha mãe. Graças te dou porque fui feito de modo espantoso e maravilhoso.", referencia: "Salmos 139:14" },
+    { texto: "Confie no SENHOR de todo o seu coração e não se apoie em seu próprio entendimento.", referencia: "Provérbios 3:5" },
+    { texto: "Portanto, não percam a confiança de vocês; ela trará grande recompensa.", referencia: "Hebreus 10:35" },
+    { texto: "Estou convencido de que aquele que começou boa obra em vocês a levará até à perfeição.", referencia: "Filipenses 1:6" },
+    { texto: "Porque Deus nos deu espírito de poder, de amor e de bom senso.", referencia: "2 Timóteo 1:7" },
+    { texto: "Você é a luz do mundo. Brilhe diante de todos.", referencia: "Mateus 5:14-16" },
+    { texto: "Seja imitador de Deus em tudo o que vocês fizerem, como filhos muito amados.", referencia: "Efésios 5:1" },
+    { texto: "Porque você é precioso aos meus olhos e honrado, e eu o amo.", referencia: "Isaías 43:4" },
+    { texto: "Revistam-se da nova natureza, criada para ser semelhante a Deus em verdadeira justiça e santidade.", referencia: "Efésios 4:24" },
+    { texto: "Porque nele vivemos, nos movemos e existimos, como também alguns dos seus poetas disseram.", referencia: "Atos 17:28" },
+    { texto: "Que a paz de Cristo governe em seus corações, pois para isso vocês foram chamados em um só corpo.", referencia: "Colossenses 3:15" },
+    { texto: "E a graça de nosso Senhor transbordou para mim, junto com a fé e o amor que há em Cristo Jesus.", referencia: "1 Timóteo 1:14" },
   ],
 
   shopping: [
@@ -105,5 +122,5 @@ export function getVersiculoDoDia(tab: TabVersiculos): Versiculo {
 }
 
 export function getVersiculoHome(): Versiculo {
-  return getVersiculoDoDia('home');
+  return getVersiculoDoDia('hoje');
 }

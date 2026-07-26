@@ -46,7 +46,7 @@ export function LoginScreen() {
           <div className="w-16 h-16 rounded-full bg-sara-terracotta flex items-center justify-center text-2xl">
             🤱
           </div>
-          <h1 className="text-xl font-bold text-graphite">Mothers Team</h1>
+          <h1 className="text-xl font-bold text-graphite">Mother's Team</h1>
           <p className="text-xs text-graphite-muted text-center">
             Seu espaço de cuidado e acolhimento na maternidade
           </p>

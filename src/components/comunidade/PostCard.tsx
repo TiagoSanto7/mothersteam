@@ -1,9 +1,14 @@
 import { useState } from 'react';
 import { MessageCircle, Heart, Repeat2, Share2 } from 'lucide-react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { apiFetch } from '../../lib/api';
+import { useAppStore } from '../../store/useAppStore';
+import { apiFetch, resolveMediaUrl } from '../../lib/api';
 import { patchPostLikeInAllCaches } from '../../lib/helpers';
 import { SharePostSheet } from './SharePostSheet';
+import { QuoteRepostSheet } from './QuoteRepostSheet';
+import { MentionText } from '../shared/MentionText';
+import { PostActionsMenu } from './PostActionsMenu';
+import { getAvatarColor } from '../../utils/avatar';
 import type { CommunityPost } from '../../types';
 
 const BADGE_CONFIG = {
@@ -15,13 +20,17 @@ interface PostCardProps {
   post: CommunityPost;
   onOpen: () => void;
   onOpenProfile: () => void;
+  onOpenCommunity?: (communityId: string) => void;
+  onDeleted?: () => void;
 }
 
-export function PostCard({ post, onOpen, onOpenProfile }: PostCardProps) {
+export function PostCard({ post, onOpen, onOpenProfile, onOpenCommunity, onDeleted }: PostCardProps) {
+  const currentUserId = useAppStore((s) => s.currentUserId);
   const queryClient = useQueryClient();
   const [liked, setLiked] = useState(post.likedByCurrentUser ?? false);
   const [reposted, setReposted] = useState(false);
   const [showShare, setShowShare] = useState(false);
+  const [showRepostSheet, setShowRepostSheet] = useState(false);
   const badge = post.badge ? BADGE_CONFIG[post.badge] : null;
 
   const likeMutation = useMutation({
@@ -33,8 +42,15 @@ export function PostCard({ post, onOpen, onOpenProfile }: PostCardProps) {
   });
 
   const repostMutation = useMutation({
-    mutationFn: () => apiFetch(`/posts/${post.id}/repost`, { method: 'POST' }),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['posts'] }),
+    mutationFn: (quoteText?: string) =>
+      apiFetch(`/posts/${post.id}/repost`, {
+        method: 'POST',
+        body: quoteText ? JSON.stringify({ content: quoteText }) : undefined,
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['posts'] });
+      setShowRepostSheet(false);
+    },
   });
 
   return (
@@ -54,7 +70,8 @@ export function PostCard({ post, onOpen, onOpenProfile }: PostCardProps) {
             <div
               data-testid="post-avatar"
               aria-hidden="true"
-              className="w-10 h-10 rounded-full bg-sara-terracotta flex items-center justify-center text-white text-sm font-bold flex-shrink-0"
+              style={{ background: getAvatarColor(post.authorArchetypeKey) }}
+              className="w-10 h-10 rounded-full flex items-center justify-center text-white text-sm font-bold flex-shrink-0"
             >
               {post.author.charAt(0)}
             </div>
@@ -70,28 +87,57 @@ export function PostCard({ post, onOpen, onOpenProfile }: PostCardProps) {
                   {badge.label}
                 </span>
               )}
+              {post.communityName && (
+                onOpenCommunity && post.communityId ? (
+                  <button
+                    type="button"
+                    onClick={(e) => { e.stopPropagation(); onOpenCommunity(post.communityId!); }}
+                    aria-label={`Ver comunidade ${post.communityName}`}
+                    className="text-[10px] font-medium px-2 py-0.5 rounded-full w-fit bg-sara-cream text-sara-warm"
+                  >
+                    Em {post.communityName}
+                  </button>
+                ) : (
+                  <span className="text-[10px] font-medium px-2 py-0.5 rounded-full w-fit bg-sara-cream text-sara-warm">
+                    Em {post.communityName}
+                  </span>
+                )
+              )}
             </div>
           </button>
-          <span className="text-xs text-graphite-muted flex-shrink-0">{post.time}</span>
+          <div className="flex items-center gap-2 flex-shrink-0">
+            <span className="text-xs text-graphite-muted">{post.time}</span>
+            <PostActionsMenu
+              postId={post.id}
+              isOwner={post.authorId === currentUserId}
+              onDeleted={onDeleted}
+            />
+          </div>
         </div>
 
         {post.isRepost && post.repostOriginal ? (
           <button onClick={onOpen} aria-label={`Ver post de ${post.author}`} className="text-left w-full">
             <div className="flex items-center gap-1 mb-2">
               <Repeat2 size={12} className="text-graphite-muted" />
-              <span className="text-[11px] text-graphite-muted">Republicou</span>
+              <span className="text-[11px] text-graphite-muted">
+                {post.quoteContent ? 'Citou' : 'Republicou'}
+              </span>
             </div>
+            {/* Quote comment — shown above the quoted block when present */}
+            {post.quoteContent && (
+              <p className="text-sm text-graphite leading-relaxed mb-2">{post.quoteContent}</p>
+            )}
             <div className="border border-sara-linen rounded-2xl p-3 bg-white/60">
               <p className="text-[11px] font-semibold text-graphite mb-1">{post.repostOriginal.author}</p>
-              <p className="text-sm text-graphite-light leading-relaxed">{post.repostOriginal.content}</p>
+              <MentionText text={post.repostOriginal.content} className="text-sm text-graphite-light leading-relaxed block" />
             </div>
           </button>
         ) : (
           <button onClick={onOpen} aria-label={`Ver post de ${post.author}`} className="text-left flex flex-col gap-2">
-            <p className="text-sm text-graphite-light leading-relaxed">{post.content}</p>
+            <MentionText text={post.content} className="text-sm text-graphite-light leading-relaxed block" />
             {post.imageUrl && (
               <img
-                src={post.imageUrl}
+                src={resolveMediaUrl(post.imageUrl)}
                 alt="Imagem do post"
                 className="w-full rounded-xl object-cover max-h-64 mt-2"
               />
@@ -127,7 +173,7 @@ export function PostCard({ post, onOpen, onOpenProfile }: PostCardProps) {
           <button
             onClick={(e) => {
               e.stopPropagation();
-              if (!reposted) { repostMutation.mutate(); setReposted(true); }
+              if (!reposted) setShowRepostSheet(true);
             }}
             aria-label={reposted ? 'Republicado' : 'Republicar'}
             aria-pressed={reposted}
@@ -149,6 +195,17 @@ export function PostCard({ post, onOpen, onOpenProfile }: PostCardProps) {
       </div>
 
       {showShare && <SharePostSheet post={post} onClose={() => setShowShare(false)} />}
+      {showRepostSheet && (
+        <QuoteRepostSheet
+          post={post}
+          onClose={() => setShowRepostSheet(false)}
+          onConfirm={(quoteText) => {
+            repostMutation.mutate(quoteText);
+            setReposted(true);
+          }}
+          isPending={repostMutation.isPending}
+        />
+      )}
     </>
   );
 }

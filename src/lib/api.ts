@@ -1,6 +1,24 @@
 import { useAppStore } from '../store/useAppStore'
 
-const BASE = '/api'
+// Em dev: VITE_API_URL undefined → BASE = '/api', batendo no Vite proxy que
+// redireciona pra localhost:3001 (strippa o /api antes).
+// Em produção (APK/web deploy): VITE_API_URL = 'https://api.santoti.com' → BASE
+// vira essa URL absoluta e o backend responde direto (nginx cuida do reverse
+// proxy). Não usa /api porque não tem proxy nesse caminho.
+const API_ORIGIN = import.meta.env.VITE_API_URL?.replace(/\/$/, '')
+const BASE = API_ORIGIN ?? '/api'
+
+/**
+ * Resolve URLs de mídia (imagens de post, uploads etc.) — o backend retorna
+ * paths relativos tipo `/uploads/xyz.png`. Em dev o Vite proxy resolve; em
+ * produção precisamos prefixar com o origin da API.
+ */
+export function resolveMediaUrl(path: string | null | undefined): string | undefined {
+  if (!path) return undefined
+  if (/^(https?|data|blob):/i.test(path)) return path // já absoluta ou inline
+  if (!API_ORIGIN) return path // dev: Vite proxy cuida
+  return `${API_ORIGIN}${path.startsWith('/') ? '' : '/'}${path}`
+}
 
 export class ApiError extends Error {
   constructor(public status: number, public body: unknown) {
@@ -25,7 +43,9 @@ async function doRefresh(): Promise<string | null> {
 export async function apiFetch<T>(path: string, init: RequestInit = {}): Promise<T> {
   const token = useAppStore.getState().accessToken
   const headers: Record<string, string> = {
-    ...(init.body ? { 'Content-Type': 'application/json' } : {}),
+    // Only set JSON content-type for non-FormData bodies (FormData needs the
+    // browser to set the multipart boundary automatically).
+    ...(init.body && !(init.body instanceof FormData) ? { 'Content-Type': 'application/json' } : {}),
     ...(init.headers as Record<string, string>),
   }
   if (token) headers['Authorization'] = `Bearer ${token}`

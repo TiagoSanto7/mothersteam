@@ -6,6 +6,10 @@ import { useAppStore } from '../../store/useAppStore';
 import type { ApiNotification } from '../../lib/types';
 import { relativeTime } from '../../lib/helpers';
 
+// Maps notification id → true once the current user successfully followed that actor.
+// This provides optimistic UI without waiting for a full refetch.
+type FollowedMap = Record<string, boolean>;
+
 interface NotificationsScreenProps {
   onBack: () => void;
   onOpenPost?: (postId: string) => void;
@@ -42,12 +46,15 @@ export function NotificationsScreen({ onBack, onOpenPost, onOpenUser, onOpenComm
   });
 
   const [followError, setFollowError] = useState<string | null>(null);
+  // Optimistic local state: notificationId → true means "already following"
+  const [followedMap, setFollowedMap] = useState<FollowedMap>({});
 
   const followMutation = useMutation({
-    mutationFn: (userId: string) =>
+    mutationFn: ({ userId }: { userId: string; notificationId: string }) =>
       apiFetch(`/users/${userId}/follow`, { method: 'POST' }),
-    onSuccess: () => {
+    onSuccess: (_data, { notificationId }) => {
       setFollowError(null);
+      setFollowedMap((prev) => ({ ...prev, [notificationId]: true }));
       queryClient.invalidateQueries({ queryKey: ['notifications'] });
     },
     onError: () => setFollowError('Não foi possível seguir. Tente novamente.'),
@@ -104,12 +111,21 @@ export function NotificationsScreen({ onBack, onOpenPost, onOpenUser, onOpenComm
         ) : (
           <ul className="divide-y divide-gray-100">
             {notifications.map((n) => {
-              const isFollowBack = n.type === 'follow' && n.actorId && n.actorId !== currentUserId;
+              const isFollowNotif = n.type === 'follow' && n.actorId && n.actorId !== currentUserId;
+              // Determine whether we are already following this actor:
+              // prefer the optimistic local flag, then fall back to the server value.
+              const isFollowing = followedMap[n.id] ?? n.isFollowedByCurrentUser ?? false;
               return (
                 <li key={n.id}>
-                  <button
+                  {/* Bug fix: outer wrapper must NOT be a <button> because it contains
+                      a <button> (follow-back). Nested buttons are invalid HTML and cause
+                      the inner click to be swallowed in most browsers. Use a div instead. */}
+                  <div
+                    role="button"
+                    tabIndex={0}
                     onClick={() => handleNotificationClick(n)}
-                    className={`w-full flex items-start gap-3 px-4 py-4 text-left ${!n.read ? 'bg-sara-linen' : 'bg-white'} hover:brightness-95 transition-all`}
+                    onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') handleNotificationClick(n); }}
+                    className={`w-full flex items-start gap-3 px-4 py-4 cursor-pointer ${!n.read ? 'bg-sara-linen' : 'bg-white'} hover:brightness-95 transition-all`}
                   >
                     {/* Actor avatar */}
                     <div className="w-9 h-9 rounded-full bg-sara-cream flex items-center justify-center flex-shrink-0">
@@ -147,19 +163,29 @@ export function NotificationsScreen({ onBack, onOpenPost, onOpenUser, onOpenComm
                       {!n.read && (
                         <div className="w-2 h-2 rounded-full bg-sara-gold" />
                       )}
-                      {/* Follow-back button */}
-                      {isFollowBack && (
+                      {/* Follow-back button — only for follow notifications from other users */}
+                      {isFollowNotif && (
                         <button
                           type="button"
-                          onClick={(e) => { e.stopPropagation(); followMutation.mutate(n.actorId!); }}
-                          className="flex items-center gap-1 text-[11px] font-semibold px-2 py-1 rounded-full bg-sara-gold text-white active:scale-95 transition-all"
+                          disabled={isFollowing || followMutation.isPending}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            if (!isFollowing) {
+                              followMutation.mutate({ userId: n.actorId!, notificationId: n.id });
+                            }
+                          }}
+                          className={`flex items-center gap-1 text-[11px] font-semibold px-2 py-1 rounded-full active:scale-95 transition-all ${
+                            isFollowing
+                              ? 'bg-transparent border border-sara-gold text-sara-gold cursor-default'
+                              : 'bg-sara-gold text-white'
+                          }`}
                         >
                           <UserCheck size={11} />
-                          Seguir
+                          {isFollowing ? 'Seguindo' : 'Seguir'}
                         </button>
                       )}
                     </div>
-                  </button>
+                  </div>
                 </li>
               );
             })}

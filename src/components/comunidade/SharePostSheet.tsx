@@ -3,6 +3,7 @@ import { X } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAppStore } from '../../store/useAppStore';
 import { apiFetch } from '../../lib/api';
+import { getAvatarColor } from '../../utils/avatar';
 import type { ApiChat, ApiFollowUser, PaginatedResult } from '../../lib/types';
 import type { CommunityPost } from '../../types';
 
@@ -129,7 +130,10 @@ export function SharePostSheet({ post, onClose }: SharePostSheetProps) {
                       selected ? 'bg-sara-linen' : 'active:bg-sara-linen'
                     }`}
                   >
-                    <div className="w-10 h-10 rounded-full bg-sara-terracotta flex items-center justify-center text-white font-bold text-base flex-shrink-0">
+                    <div
+                      style={{ background: getAvatarColor(null) }}
+                      className="w-10 h-10 rounded-full flex items-center justify-center text-white font-bold text-base flex-shrink-0"
+                    >
                       {r.name.charAt(0).toUpperCase()}
                     </div>
                     <p className="flex-1 text-sm font-medium text-graphite text-left">{r.name}</p>

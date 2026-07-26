@@ -2,14 +2,14 @@ import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { Capitulo1 } from './Capitulo1'
+import { useAppStore } from '../../../store/useAppStore'
 
 let mockState = {
   state: 'listening' as string,
   amplitude: 0,
-  transcript: '',
   collectedFatos: null as unknown,
   error: null as string | null,
-  startCapitulo1: vi.fn(() => Promise.resolve()),
+  startConversation: vi.fn(() => Promise.resolve()),
   sendTextResponse: vi.fn(),
   stop: vi.fn(),
 }
@@ -28,20 +28,25 @@ beforeEach(() => {
   mockState = {
     state: 'listening',
     amplitude: 0,
-    transcript: '',
     collectedFatos: null,
     error: null,
-    startCapitulo1: vi.fn(() => Promise.resolve()),
+    startConversation: vi.fn(() => Promise.resolve()),
     sendTextResponse: vi.fn(),
     stop: vi.fn(),
   }
+  // Zera o store pra o Cap1 não pular por já ter dados do cadastro
+  useAppStore.setState({
+    motherName: '',
+    babyName: '',
+    phase: { stage: 'pregnant', week: 28 },
+  })
 })
 
 describe('Capitulo1', () => {
-  it('renders the canonical pergunta and orb', () => {
+  it('renders the orb and text input when no data from cadastro', () => {
     render(<Capitulo1 onComplete={() => {}} />)
-    expect(screen.getByText(/esperando o bebê ou ele já chegou/i)).toBeInTheDocument()
     expect(screen.getByLabelText('Sara')).toBeInTheDocument()
+    expect(screen.getByLabelText(/Digite sua resposta/i)).toBeInTheDocument()
   })
 
   it('sends text response on submit', async () => {
@@ -83,5 +88,26 @@ describe('Capitulo1', () => {
     render(<Capitulo1 onComplete={() => {}} />)
     expect(screen.getByText(/boom/i)).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /tentar de novo/i })).toBeInTheDocument()
+  })
+
+  it('auto-completes when cadastro data is already in store', async () => {
+    useAppStore.setState({
+      motherName: 'Maria',
+      babyName: 'Bento',
+      phase: { stage: 'pregnant', week: 30 },
+    })
+    const onComplete = vi.fn()
+    render(<Capitulo1 onComplete={onComplete} />)
+    await waitFor(() => {
+      expect(onComplete).toHaveBeenCalledWith(
+        expect.objectContaining({
+          motherName: 'Maria',
+          phase: 'pregnant',
+          week: 30,
+          babyName: 'Bento',
+        }),
+      )
+    })
+    expect(mockState.startConversation).not.toHaveBeenCalled()
   })
 })

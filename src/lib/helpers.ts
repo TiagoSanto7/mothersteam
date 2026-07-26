@@ -72,7 +72,7 @@ export function patchPostLikeInAllCaches(
 export function patchUserProfileInCaches(
   queryClient: QueryClient,
   userId: string,
-  patch: Partial<{ name: string; bio: string | null }>,
+  patch: Partial<{ name: string; bio: string | null; avatarUrl: string | null }>,
 ): void {
   queryClient.setQueryData<ApiUserProfile>(['user', userId], (old) =>
     old ? { ...old, ...patch } : old,
@@ -122,6 +122,7 @@ export function apiPostToCommunityPost(post: ApiPost): CommunityPost {
     id: post.id,
     authorId: post.authorId,
     authorUsername: post.author.username ?? null,
+    authorArchetypeKey: post.author.archetypeKey ?? null,
     category: post.category,
     author: post.author.name,
     content: post.content,
@@ -131,8 +132,14 @@ export function apiPostToCommunityPost(post: ApiPost): CommunityPost {
     reposts: post._count.reposts ?? 0,
     time: relativeTime(post.createdAt),
     communityId: post.communityId ?? undefined,
+    communityName: post.communityName ?? null,
     isRepost: post.isRepost,
     likedByCurrentUser: post.likedByCurrentUser,
+    // quoteContent is the reposter's own comment; present when content differs from the original post
+    quoteContent:
+      post.isRepost && post.repostFrom && post.content !== post.repostFrom.content && post.content
+        ? post.content
+        : undefined,
     repostOriginal: post.repostFrom
       ? {
           originalPostId: post.repostFrom.id,
@@ -140,6 +147,7 @@ export function apiPostToCommunityPost(post: ApiPost): CommunityPost {
           author: post.repostFrom.author.name,
           authorId: post.repostFrom.author.id,
           authorUsername: post.repostFrom.author.username ?? null,
+          authorArchetypeKey: post.repostFrom.author.archetypeKey ?? null,
           category: post.repostFrom.category,
         }
       : undefined,
@@ -163,6 +171,9 @@ export function apiChatToChat(c: ApiChat, currentUserId: string): Chat {
   return {
     id: c.id,
     with: other?.user.name ?? 'Usuária',
+    withUserId: other?.user.id ?? null,
+    withUsername: other?.user.username ?? null,
+    withArchetypeKey: other?.user.archetypeKey ?? null,
     lastMessage: lastMsg?.content ?? '',
     time: lastMsg ? relativeTime(lastMsg.createdAt) : relativeTime(c.createdAt),
     unread: lastMsg && lastMsg.senderId !== currentUserId && !lastMsg.read ? 1 : 0,

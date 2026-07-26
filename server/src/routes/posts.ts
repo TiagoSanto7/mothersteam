@@ -21,19 +21,27 @@ export default async function postsRoutes(fastify: FastifyInstance) {
     async (request, reply) => {
       const limit = Math.min(Number(request.query.limit ?? 20), 50)
       const rows = await fastify.prisma.post.findMany({
+        where: {
+          OR: [
+            { communityId: null },
+            { community: { isPrivate: false } },
+          ],
+        },
         take: limit + 1,
         ...(request.query.cursor ? { cursor: { id: request.query.cursor }, skip: 1 } : {}),
         include: {
-          author: { select: { id: true, name: true, username: true } },
+          author: { select: { id: true, name: true, username: true, archetypeKey: true } },
+          community: { select: { name: true } },
           _count: { select: { likes: true, comments: true, reposts: true } },
           likes: { where: { userId: request.userId }, select: { userId: true } },
-          repostFrom: { include: { author: { select: { id: true, name: true, username: true } } } },
+          repostFrom: { include: { author: { select: { id: true, name: true, username: true, archetypeKey: true } } } },
         },
         orderBy: { createdAt: 'desc' },
       })
       const hasMore = rows.length > limit
-      const items = rows.slice(0, limit).map(({ likes, ...post }) => ({
+      const items = rows.slice(0, limit).map(({ likes, community, ...post }) => ({
         ...post,
+        communityName: community?.name ?? null,
         likedByCurrentUser: likes.length > 0,
       }))
       const nextCursor = items.length > 0 ? items[items.length - 1].id : undefined
@@ -48,7 +56,7 @@ export default async function postsRoutes(fastify: FastifyInstance) {
     const post = await fastify.prisma.post.create({
       data: { ...body.data, authorId: request.userId },
       include: {
-        author: { select: { id: true, name: true, username: true } },
+        author: { select: { id: true, name: true, username: true, archetypeKey: true } },
         _count: { select: { likes: true, comments: true } },
       },
     })
@@ -59,10 +67,10 @@ export default async function postsRoutes(fastify: FastifyInstance) {
     const post = await fastify.prisma.post.findUnique({
       where: { id: request.params.id },
       include: {
-        author: { select: { id: true, name: true, username: true } },
+        author: { select: { id: true, name: true, username: true, archetypeKey: true } },
         _count: { select: { likes: true, comments: true, reposts: true } },
         likes: { where: { userId: request.userId }, select: { userId: true } },
-        repostFrom: { include: { author: { select: { id: true, name: true, username: true } } } },
+        repostFrom: { include: { author: { select: { id: true, name: true, username: true, archetypeKey: true } } } },
       },
     })
     if (!post) return reply.status(404).send({ error: 'Post not found' })
@@ -128,9 +136,14 @@ export default async function postsRoutes(fastify: FastifyInstance) {
     const original = await fastify.prisma.post.findUnique({ where: { id: request.params.id } })
     if (!original) return reply.status(404).send({ error: 'Post not found' })
 
+    // Optional quote comment — if provided this becomes a "quote repost"
+    const quoteSchema = z.object({ content: z.string().optional() })
+    const parsed = quoteSchema.safeParse(request.body)
+    const quoteContent = (parsed.success ? parsed.data.content?.trim() : undefined) ?? ''
+
     const repost = await fastify.prisma.post.create({
       data: {
-        content: original.content,
+        content: quoteContent || original.content,
         category: original.category,
         authorId: request.userId,
         isRepost: true,
@@ -138,9 +151,9 @@ export default async function postsRoutes(fastify: FastifyInstance) {
         communityId: original.communityId,
       },
       include: {
-        author: { select: { id: true, name: true, username: true } },
+        author: { select: { id: true, name: true, username: true, archetypeKey: true } },
         _count: { select: { likes: true, comments: true, reposts: true } },
-        repostFrom: { include: { author: { select: { id: true, name: true, username: true } } } },
+        repostFrom: { include: { author: { select: { id: true, name: true, username: true, archetypeKey: true } } } },
       },
     })
     reply.status(201).send({ ...repost, likedByCurrentUser: false })
@@ -154,7 +167,7 @@ export default async function postsRoutes(fastify: FastifyInstance) {
         where: { postId: request.params.id },
         take: limit + 1,
         ...(request.query.cursor ? { cursor: { id: request.query.cursor }, skip: 1 } : {}),
-        include: { author: { select: { id: true, name: true } } },
+        include: { author: { select: { id: true, name: true, archetypeKey: true } } },
         orderBy: { createdAt: 'asc' },
       })
       const hasMore = comments.length > limit
@@ -168,7 +181,7 @@ export default async function postsRoutes(fastify: FastifyInstance) {
 
     const comment = await fastify.prisma.comment.create({
       data: { content: body.data.content, authorId: request.userId, postId: request.params.id },
-      include: { author: { select: { id: true, name: true } } },
+      include: { author: { select: { id: true, name: true, archetypeKey: true } } },
     })
 
     const [post, actor] = await Promise.all([

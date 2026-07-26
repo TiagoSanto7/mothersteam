@@ -2,11 +2,15 @@ import { useState } from 'react';
 import { ChevronLeft, Heart, MessageCircle, Share2, Repeat2, Send } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAppStore } from '../../store/useAppStore';
-import { apiFetch } from '../../lib/api';
+import { apiFetch, resolveMediaUrl } from '../../lib/api';
 import { patchPostLikeInAllCaches, apiPostToCommunityPost } from '../../lib/helpers';
 import { SharePostSheet } from '../comunidade/SharePostSheet';
+import { QuoteRepostSheet } from '../comunidade/QuoteRepostSheet';
+import { PostActionsMenu } from '../comunidade/PostActionsMenu';
+import { getAvatarColor } from '../../utils/avatar';
 import type { CommunityPost, PostComment } from '../../types';
 import type { ApiPost, PaginatedResult } from '../../lib/types';
+import { MentionText } from '../shared/MentionText';
 
 const BADGE_CONFIG = {
   experiente:   { label: 'Mãe Experiente',       color: 'bg-sara-linen text-sara-terracotta' },
@@ -16,7 +20,7 @@ const BADGE_CONFIG = {
 interface ApiComment {
   id: string;
   content: string;
-  author: { id: string; name: string };
+  author: { id: string; name: string; archetypeKey?: string | null };
   likes: number;
   createdAt: string;
 }
@@ -28,13 +32,16 @@ interface PostDetailScreenProps {
 }
 
 export function PostDetailScreen({ post, onBack, onOpenProfile }: PostDetailScreenProps) {
-  const motherName = useAppStore((s) => s.motherName);
+  const motherName    = useAppStore((s) => s.motherName);
+  const motherProfile = useAppStore((s) => s.motherProfile);
+  const currentUserId = useAppStore((s) => s.currentUserId);
   const queryClient = useQueryClient();
 
   const [liked, setLiked] = useState(post.likedByCurrentUser ?? false);
   const [reposted, setReposted] = useState(false);
   const [commentText, setCommentText] = useState('');
   const [showShareSheet, setShowShareSheet] = useState(false);
+  const [showRepostSheet, setShowRepostSheet] = useState(false);
   const [viewingOriginalId, setViewingOriginalId] = useState<string | null>(null);
 
   const { data: commentsData } = useQuery<PaginatedResult<ApiComment>>({
@@ -52,6 +59,7 @@ export function PostDetailScreen({ post, onBack, onOpenProfile }: PostDetailScre
   const comments: PostComment[] = (commentsData?.items ?? []).map((c) => ({
     id: c.id,
     author: c.author.name,
+    authorArchetypeKey: c.author.archetypeKey ?? null,
     content: c.content,
     time: '',
     likes: c.likes,
@@ -66,8 +74,15 @@ export function PostDetailScreen({ post, onBack, onOpenProfile }: PostDetailScre
   });
 
   const repostMutation = useMutation({
-    mutationFn: () => apiFetch(`/posts/${post.id}/repost`, { method: 'POST' }),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['posts'] }),
+    mutationFn: (quoteText?: string) =>
+      apiFetch(`/posts/${post.id}/repost`, {
+        method: 'POST',
+        body: quoteText ? JSON.stringify({ content: quoteText }) : undefined,
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['posts'] });
+      setShowRepostSheet(false);
+    },
   });
 
   const commentMutation = useMutation({
@@ -96,10 +111,7 @@ export function PostDetailScreen({ post, onBack, onOpenProfile }: PostDetailScre
   }
 
   function handleRepost() {
-    if (!reposted) {
-      repostMutation.mutate();
-      setReposted(true);
-    }
+    if (!reposted) setShowRepostSheet(true);
   }
 
   function handleComment() {
@@ -111,11 +123,18 @@ export function PostDetailScreen({ post, onBack, onOpenProfile }: PostDetailScre
   return (
     <div className="flex flex-col w-full h-full sm:w-[390px] sm:h-[844px] bg-gradient-to-b from-[#F5EDE0] via-[#EAD8C8] to-[#D9C4AF] sm:rounded-[44px] sm:shadow-2xl overflow-hidden relative">
       <div className="flex flex-col flex-1 overflow-hidden">
-      <div className="flex items-center gap-3 px-4 pt-6 pb-4 border-b border-sara-linen/60 flex-shrink-0">
-        <button onClick={onBack} aria-label="Voltar" className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-sara-linen">
-          <ChevronLeft size={20} className="text-graphite" />
-        </button>
-        <p className="text-sm font-semibold text-graphite">Publicação</p>
+      <div className="flex items-center justify-between gap-3 px-4 pt-6 pb-4 border-b border-sara-linen/60 flex-shrink-0">
+        <div className="flex items-center gap-3">
+          <button onClick={onBack} aria-label="Voltar" className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-sara-linen">
+            <ChevronLeft size={20} className="text-graphite" />
+          </button>
+          <p className="text-sm font-semibold text-graphite">Publicação</p>
+        </div>
+        <PostActionsMenu
+          postId={post.id}
+          isOwner={post.authorId === currentUserId}
+          onDeleted={onBack}
+        />
       </div>
 
       <div className="flex-1 overflow-y-auto">
@@ -124,7 +143,9 @@ export function PostDetailScreen({ post, onBack, onOpenProfile }: PostDetailScre
           {post.isRepost && (
             <div className="flex items-center gap-1.5 mb-2">
               <Repeat2 size={12} className="text-graphite-muted" />
-              <span className="text-[11px] text-graphite-muted">Republicado</span>
+              <span className="text-[11px] text-graphite-muted">
+                {post.quoteContent ? 'Citou' : 'Republicado'}
+              </span>
             </div>
           )}
 
@@ -135,7 +156,10 @@ export function PostDetailScreen({ post, onBack, onOpenProfile }: PostDetailScre
               aria-label={`Ver perfil de ${post.author}`}
               className="flex items-center gap-2.5 text-left"
             >
-              <div className="w-10 h-10 rounded-full bg-sara-terracotta flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
+              <div
+                style={{ background: getAvatarColor(post.authorArchetypeKey) }}
+                className="w-10 h-10 rounded-full flex items-center justify-center text-white font-bold text-sm flex-shrink-0"
+              >
                 {post.author.charAt(0)}
               </div>
               <div>
@@ -155,31 +179,37 @@ export function PostDetailScreen({ post, onBack, onOpenProfile }: PostDetailScre
             <span className="text-xs text-graphite-muted flex-shrink-0">{post.time}</span>
           </div>
 
-          {/* Repost original — clickable to navigate to the original post */}
+          {/* Repost / quote post */}
           {post.isRepost && post.repostOriginal ? (
-            <button
-              type="button"
-              onClick={() => post.repostOriginal?.originalPostId && setViewingOriginalId(post.repostOriginal.originalPostId)}
-              className="w-full text-left border border-sara-linen rounded-2xl p-3 mb-4 bg-white/60 active:bg-sara-linen/50 transition-colors"
-            >
-              <div className="flex items-baseline gap-1.5 mb-1">
-                <p className="text-[11px] font-semibold text-graphite">{post.repostOriginal.author}</p>
-                {post.repostOriginal.authorUsername && (
-                  <span className="text-[10px] text-graphite-muted/70">@{post.repostOriginal.authorUsername}</span>
-                )}
-              </div>
-              <p className="text-sm text-graphite leading-relaxed">{post.repostOriginal.content}</p>
-              {post.repostOriginal.originalPostId && (
-                <p className="text-[10px] text-sara-gold mt-1.5">Toque para ver a publicação original →</p>
+            <div className="mb-4">
+              {/* Quote comment — shown above the quoted block when present */}
+              {post.quoteContent && (
+                <p className="text-sm text-graphite leading-relaxed mb-3">{post.quoteContent}</p>
               )}
-            </button>
+              <button
+                type="button"
+                onClick={() => post.repostOriginal?.originalPostId && setViewingOriginalId(post.repostOriginal.originalPostId)}
+                className="w-full text-left border border-sara-linen rounded-2xl p-3 bg-white/60 active:bg-sara-linen/50 transition-colors"
+              >
+                <div className="flex items-baseline gap-1.5 mb-1">
+                  <p className="text-[11px] font-semibold text-graphite">{post.repostOriginal.author}</p>
+                  {post.repostOriginal.authorUsername && (
+                    <span className="text-[10px] text-graphite-muted/70">@{post.repostOriginal.authorUsername}</span>
+                  )}
+                </div>
+                <p className="text-sm text-graphite leading-relaxed">{post.repostOriginal.content}</p>
+                {post.repostOriginal.originalPostId && (
+                  <p className="text-[10px] text-sara-gold mt-1.5">Toque para ver a publicação original →</p>
+                )}
+              </button>
+            </div>
           ) : (
-            <p className="text-sm text-graphite leading-relaxed mb-4">{post.content}</p>
+            <MentionText text={post.content} className="text-sm text-graphite leading-relaxed mb-4 block" />
           )}
 
           {post.imageUrl && (
             <img
-              src={post.imageUrl}
+              src={resolveMediaUrl(post.imageUrl)}
               alt="Imagem do post"
               className="w-full rounded-xl object-cover max-h-64 mb-4"
             />
@@ -195,7 +225,7 @@ export function PostDetailScreen({ post, onBack, onOpenProfile }: PostDetailScre
             </button>
             <button className="flex items-center gap-1.5 text-xs text-graphite-muted">
               <MessageCircle size={16} strokeWidth={1.8} />
-              <span>{post.replies + comments.length}</span>
+              <span>{comments.length > 0 ? comments.length : post.replies}</span>
             </button>
             <button
               onClick={handleRepost}
@@ -221,7 +251,10 @@ export function PostDetailScreen({ post, onBack, onOpenProfile }: PostDetailScre
           )}
           {comments.map((c) => (
             <div key={c.id} className="flex items-start gap-2.5">
-              <div className="w-8 h-8 rounded-full bg-sara-terracotta flex items-center justify-center text-white font-bold text-xs flex-shrink-0">
+              <div
+                style={{ background: getAvatarColor(c.authorArchetypeKey) }}
+                className="w-8 h-8 rounded-full flex items-center justify-center text-white font-bold text-xs flex-shrink-0"
+              >
                 {c.author.charAt(0)}
               </div>
               <div className="flex-1 bg-white rounded-2xl px-3 py-2.5 shadow-sm">
@@ -229,7 +262,7 @@ export function PostDetailScreen({ post, onBack, onOpenProfile }: PostDetailScre
                   <p className="text-[11px] font-semibold text-graphite">{c.author}</p>
                   <span className="text-[10px] text-graphite-muted">{c.time}</span>
                 </div>
-                <p className="text-xs text-graphite leading-relaxed mt-0.5">{c.content}</p>
+                <MentionText text={c.content} className="text-xs text-graphite leading-relaxed mt-0.5 block" />
                 <button className="flex items-center gap-1 mt-2 text-graphite-muted">
                   <Heart size={10} />
                   <span className="text-[10px]">{c.likes}</span>
@@ -243,7 +276,10 @@ export function PostDetailScreen({ post, onBack, onOpenProfile }: PostDetailScre
       {/* Comment input */}
       <div className="px-4 py-3 border-t border-sara-linen/60 flex-shrink-0 bg-sara-linen/80 backdrop-blur-sm">
         <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-full bg-sara-terracotta flex items-center justify-center text-white font-bold text-xs flex-shrink-0">
+          <div
+            style={{ background: getAvatarColor(motherProfile?.archetypeKey ?? null) }}
+            className="w-8 h-8 rounded-full flex items-center justify-center text-white font-bold text-xs flex-shrink-0"
+          >
             {motherName.charAt(0)}
           </div>
           <div className="flex-1 flex items-center gap-2 bg-white rounded-2xl border border-sara-linen px-3 py-2">
@@ -270,6 +306,17 @@ export function PostDetailScreen({ post, onBack, onOpenProfile }: PostDetailScre
 
       {showShareSheet && (
         <SharePostSheet post={post} onClose={() => setShowShareSheet(false)} />
+      )}
+      {showRepostSheet && (
+        <QuoteRepostSheet
+          post={post}
+          onClose={() => setShowRepostSheet(false)}
+          onConfirm={(quoteText) => {
+            repostMutation.mutate(quoteText);
+            setReposted(true);
+          }}
+          isPending={repostMutation.isPending}
+        />
       )}
     </div>
   );
