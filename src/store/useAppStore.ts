@@ -198,7 +198,14 @@ export const useAppStore = create<AppState>()(
             newVersesByUser['__legacy__'] = newLegacy;
           }
           if (uid !== '__anon__') {
-            apiFetch('/users/me/verses', { method: 'POST', body: JSON.stringify({ verseRef: ref }) }).catch(() => {});
+            apiFetch('/users/me/verses', { method: 'POST', body: JSON.stringify({ verseRef: ref }) }).catch(() => {
+              set((s) => ({
+                versesByUser: {
+                  ...s.versesByUser,
+                  [uid]: (s.versesByUser[uid] ?? []).filter((r) => r !== ref),
+                },
+              }));
+            });
           }
           return { versesByUser: newVersesByUser };
         }),
@@ -207,7 +214,14 @@ export const useAppStore = create<AppState>()(
           const uid = s.currentUserId ?? '__anon__';
           const current = s.versesByUser[uid] ?? [];
           if (uid !== '__anon__') {
-            apiFetch(`/users/me/verses/${encodeURIComponent(ref)}`, { method: 'DELETE' }).catch(() => {});
+            apiFetch(`/users/me/verses/${encodeURIComponent(ref)}`, { method: 'DELETE' }).catch(() => {
+              set((s) => ({
+                versesByUser: {
+                  ...s.versesByUser,
+                  [uid]: [...(s.versesByUser[uid] ?? []), ref],
+                },
+              }));
+            });
           }
           return { versesByUser: { ...s.versesByUser, [uid]: current.filter((r) => r !== ref) } };
         }),

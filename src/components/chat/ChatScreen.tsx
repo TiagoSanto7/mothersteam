@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { ChevronLeft, Send, Smile, ImagePlus, Mic, Square, Play, Pause } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { apiFetch, resolveMediaUrl } from '../../lib/api';
+import { apiFetch, resolveMediaUrl, uploadImage } from '../../lib/api';
 import { useAppStore } from '../../store/useAppStore';
 import { PostDetailScreen } from '../post/PostDetailScreen';
 import { apiPostToCommunityPost } from '../../lib/helpers';
@@ -419,25 +419,8 @@ export function ChatScreen({ chat, onBack, onOpenProfile }: ChatScreenProps) {
       try {
         const ext = mimeType.includes('ogg') ? '.ogg' : mimeType.includes('mp4') ? '.m4a' : '.webm';
         const file = new File([blob], `audio${ext}`, { type: mimeType });
-        const formData = new FormData();
-        formData.append('file', file);
-
-        const headers: HeadersInit = {};
-        if (accessToken) headers['Authorization'] = `Bearer ${accessToken}`;
-
-        const API_ORIGIN = import.meta.env.VITE_API_URL?.replace(/\/$/, '');
-        const BASE = API_ORIGIN ?? '/api';
-
-        const res = await fetch(`${BASE}/uploads`, {
-          method: 'POST',
-          headers,
-          body: formData,
-          credentials: 'include',
-        });
-
-        if (!res.ok) throw new Error('Upload failed');
-        const data = (await res.json()) as { url: string };
-        sendMutation.mutate({ audioUrl: data.url });
+        const url = await uploadImage(file, accessToken);
+        sendMutation.mutate({ audioUrl: url });
       } catch {
         // Upload failed — silently discard
       } finally {

@@ -110,7 +110,7 @@ export function SavedVersesScreen({ open, onClose, readOnlyVerses, readOnlyUserN
                   const entry = findMomentoByRef(ref)
                   if (!entry) return null
                   const isPrayerOpen = prayerOpen[ref] ?? false
-                  const savedPrayer = prayersByVerse[ref] ?? ''
+                  const savedPrayer = isReadOnly ? '' : (prayersByVerse[ref] ?? '')
                   const draft = prayerDraft[ref] ?? ''
 
                   return (

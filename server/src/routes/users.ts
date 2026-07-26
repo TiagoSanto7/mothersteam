@@ -206,9 +206,11 @@ export default async function usersRoutes(fastify: FastifyInstance) {
     }
   )
 
-  fastify.get<{ Querystring: { limit?: string; q?: string } }>('/', async (request, reply) => {
+  fastify.get<{ Querystring: { limit?: string; q?: string } }>('/', {
+    config: { rateLimit: { max: 30, timeWindow: '1 minute' } },
+  }, async (request, reply) => {
     const limit = Math.min(Number(request.query.limit ?? 10), 50)
-    const q = request.query.q?.trim()
+    const q = request.query.q?.trim().slice(0, 50)
 
     if (q) {
       // Mention autocomplete: search by username or name prefix
@@ -269,6 +271,7 @@ export default async function usersRoutes(fastify: FastifyInstance) {
   fastify.post<{ Body: { verseRef: string } }>('/me/verses', async (request, reply) => {
     const { verseRef } = request.body ?? {}
     if (!verseRef || typeof verseRef !== 'string') return reply.status(400).send({ error: 'verseRef required' })
+    if (verseRef.length > 100) return reply.status(400).send({ error: 'verseRef too long' })
     await fastify.prisma.savedVerse.upsert({
       where: { userId_verseRef: { userId: request.userId, verseRef } },
       create: { userId: request.userId, verseRef },

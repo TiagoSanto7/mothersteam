@@ -92,6 +92,7 @@ export function MaeIAScreen({ onBack }: MaeIAScreenProps = {}) {
           setTimeout(() => setStatus('idle'), 3000);
         },
         onModeChange: ({ mode }) => {
+          if (!convRef.current) return;
           if (mode === 'listening') setStatus('listening');
           else if (mode === 'speaking') setStatus('speaking');
         },

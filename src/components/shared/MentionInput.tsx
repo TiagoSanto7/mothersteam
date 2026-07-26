@@ -9,6 +9,7 @@ interface Props {
   rows?: number;
   maxLength?: number;
   className?: string;
+  autoFocus?: boolean;
   'aria-label'?: string;
 }
 
@@ -25,7 +26,7 @@ function getActiveMention(text: string, cursor: number): string | null {
   return match ? match[1] : null;
 }
 
-export function MentionInput({ value, onChange, placeholder, rows = 3, maxLength, className, ...rest }: Props) {
+export function MentionInput({ value, onChange, placeholder, rows = 3, maxLength, className, autoFocus, ...rest }: Props) {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const [mentionQuery, setMentionQuery] = useState<string | null>(null);
 
@@ -58,7 +59,8 @@ export function MentionInput({ value, onChange, placeholder, rows = 3, maxLength
     const cursor = el.selectionStart ?? value.length;
     const before = value.slice(0, cursor);
     const after = value.slice(cursor);
-    const replaced = before.replace(/@([a-z0-9_]*)$/i, `@${user.username ?? user.name} `);
+    const handle = user.username ?? user.name.replace(/\s+/g, '_')
+    const replaced = before.replace(/@([a-z0-9_]*)$/i, `@${handle} `);
     onChange(replaced + after);
     setMentionQuery(null);
     setTimeout(() => {
@@ -89,6 +91,7 @@ export function MentionInput({ value, onChange, placeholder, rows = 3, maxLength
         rows={rows}
         maxLength={maxLength}
         className={className}
+        autoFocus={autoFocus}
         {...rest}
       />
       {mentionQuery !== null && suggestions.length > 0 && (

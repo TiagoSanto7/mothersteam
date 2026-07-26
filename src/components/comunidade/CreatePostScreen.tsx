@@ -117,6 +117,7 @@ export function CreatePostScreen({ onBack, autoOpenImage, initialCommunityId, in
           placeholder="O que você está sentindo? Este é um espaço seguro 💜"
           rows={7}
           aria-label="Conteúdo do post"
+          autoFocus
           className="w-full px-4 py-3 rounded-2xl bg-white border border-sara-linen text-sm text-graphite placeholder:text-graphite-muted leading-relaxed resize-none focus:outline-none focus:border-sara-gold"
         />
 
