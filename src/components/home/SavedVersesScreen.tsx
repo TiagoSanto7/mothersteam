@@ -3,7 +3,13 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { useAppStore, selectSavedVerses, selectPrayersByVerse } from '../../store/useAppStore'
 import { findMomentoByRef } from '../../data/momentoDeus'
 
-interface Props { open: boolean; onClose: () => void }
+interface Props {
+  open: boolean
+  onClose: () => void
+  /** When provided, renders in read-only mode showing another user's public verses */
+  readOnlyVerses?: string[]
+  readOnlyUserName?: string
+}
 
 /**
  * Shares a verse via Web Share API when available, otherwise copies to clipboard.
@@ -27,11 +33,14 @@ export async function shareVerse(verso: string, referencia: string): Promise<'sh
   }
 }
 
-export function SavedVersesScreen({ open, onClose }: Props) {
-  const savedVerses = useAppStore(selectSavedVerses)
+export function SavedVersesScreen({ open, onClose, readOnlyVerses, readOnlyUserName }: Props) {
+  const ownVerses = useAppStore(selectSavedVerses)
   const unsaveVerse = useAppStore((s) => s.unsaveVerse)
   const prayersByVerse = useAppStore(selectPrayersByVerse)
   const savePrayer = useAppStore((s) => s.savePrayer)
+
+  const isReadOnly = readOnlyVerses !== undefined
+  const savedVerses = isReadOnly ? readOnlyVerses : ownVerses
 
   // ref → whether the prayer textarea is open
   const [prayerOpen, setPrayerOpen] = useState<Record<string, boolean>>({})
@@ -73,7 +82,7 @@ export function SavedVersesScreen({ open, onClose }: Props) {
         >
           <div className="flex items-center justify-between px-5 pt-14 pb-4 flex-shrink-0">
             <p className="text-[11px] font-bold text-graphite-muted uppercase tracking-wide">
-              Versículos salvos
+              {isReadOnly ? `Versículos de ${readOnlyUserName ?? 'outra mãe'}` : 'Versículos salvos'}
             </p>
             <button
               onClick={onClose}
@@ -123,8 +132,8 @@ export function SavedVersesScreen({ open, onClose }: Props) {
                         </p>
                       )}
 
-                      {/* Prayer textarea — no AnimatePresence so tests see instant toggle */}
-                      {isPrayerOpen && (
+                      {/* Prayer textarea — hidden in read-only mode */}
+                      {!isReadOnly && isPrayerOpen && (
                         <div className="mb-3">
                           <textarea
                             aria-label="Escreva sua oração"
@@ -156,13 +165,15 @@ export function SavedVersesScreen({ open, onClose }: Props) {
                       {/* Action row */}
                       <div className="flex items-center justify-between">
                         <div className="flex gap-2">
-                          <button
-                            onClick={() => togglePrayer(ref)}
-                            aria-label={isPrayerOpen ? 'Fechar oração' : savedPrayer ? 'Editar oração' : 'Escrever oração'}
-                            className="text-[11px] text-graphite-muted/70 font-medium flex items-center gap-1"
-                          >
-                            🙏 {isPrayerOpen ? 'Fechar' : savedPrayer ? 'Editar oração' : 'Oração'}
-                          </button>
+                          {!isReadOnly && (
+                            <button
+                              onClick={() => togglePrayer(ref)}
+                              aria-label={isPrayerOpen ? 'Fechar oração' : savedPrayer ? 'Editar oração' : 'Escrever oração'}
+                              className="text-[11px] text-graphite-muted/70 font-medium flex items-center gap-1"
+                            >
+                              🙏 {isPrayerOpen ? 'Fechar' : savedPrayer ? 'Editar oração' : 'Oração'}
+                            </button>
+                          )}
                           <button
                             onClick={() => shareVerse(entry.verso, entry.referencia)}
                             aria-label="Compartilhar versículo"
@@ -171,13 +182,15 @@ export function SavedVersesScreen({ open, onClose }: Props) {
                             📤 Compartilhar
                           </button>
                         </div>
-                        <button
-                          onClick={() => unsaveVerse(ref)}
-                          aria-label="Remover versículo dos salvos"
-                          className="text-[10px] text-graphite-muted/60 font-medium"
-                        >
-                          Remover
-                        </button>
+                        {!isReadOnly && (
+                          <button
+                            onClick={() => unsaveVerse(ref)}
+                            aria-label="Remover versículo dos salvos"
+                            className="text-[10px] text-graphite-muted/60 font-medium"
+                          >
+                            Remover
+                          </button>
+                        )}
                       </div>
                     </div>
                   )

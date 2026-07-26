@@ -1,7 +1,10 @@
 import { useState } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAppStore } from '../../store/useAppStore';
 import { apiFetch } from '../../lib/api';
+import type { ApiUserProfile } from '../../lib/types';
+import { AdminPanel } from '../admin/AdminPanel';
 
 interface SettingsScreenProps {
   onBack: () => void;
@@ -12,14 +15,38 @@ export function SettingsScreen({ onBack, onClose }: SettingsScreenProps) {
   const motherName = useAppStore((s) => s.motherName);
   const email = useAppStore((s) => s.email);
   const clearAuth = useAppStore((s) => s.clearAuth);
+  const currentUserId = useAppStore((s) => s.currentUserId);
 
   const [notifLikes, setNotifLikes] = useState(true);
   const [notifPosts, setNotifPosts] = useState(false);
+  const [showAdmin, setShowAdmin] = useState(false);
+
+  const queryClient = useQueryClient();
+
+  const { data: profile } = useQuery({
+    queryKey: ['user', currentUserId],
+    queryFn: () => apiFetch<ApiUserProfile>(`/users/${currentUserId}`),
+    enabled: !!currentUserId,
+  });
+
+  const versesMutation = useMutation({
+    mutationFn: (versesPublic: boolean) =>
+      apiFetch('/users/me', { method: 'PATCH', body: JSON.stringify({ versesPublic }) }),
+    onSuccess: (_, versesPublic) => {
+      queryClient.setQueryData<ApiUserProfile>(['user', currentUserId], (old) =>
+        old ? { ...old, versesPublic } : old
+      );
+    },
+  });
 
   function handleLogout() {
     apiFetch('/auth/logout', { method: 'POST' }).catch(() => {});
     clearAuth();
     onClose();
+  }
+
+  if (showAdmin) {
+    return <AdminPanel onBack={() => setShowAdmin(false)} />;
   }
 
   return (
@@ -94,6 +121,41 @@ export function SettingsScreen({ onBack, onClose }: SettingsScreenProps) {
             </div>
           </div>
         </section>
+
+        <section>
+          <p className="text-[10px] font-semibold text-graphite-muted uppercase tracking-wide mb-2 px-1">Privacidade</p>
+          <div className="bg-white rounded-2xl overflow-hidden divide-y divide-gray-100">
+            <div className="flex items-center justify-between px-4 py-3.5">
+              <div>
+                <p className="text-sm text-graphite">Versículos salvos públicos</p>
+                <p className="text-[11px] text-graphite-muted mt-0.5">Outras mães podem ver seus versículos</p>
+              </div>
+              <button
+                aria-label="Versículos salvos públicos"
+                onClick={() => versesMutation.mutate(!(profile?.versesPublic ?? false))}
+                disabled={versesMutation.isPending}
+                className={`w-10 h-6 rounded-full p-0 transition-colors relative ${(profile?.versesPublic ?? false) ? 'bg-sara-gold' : 'bg-gray-200'}`}
+              >
+                <span className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${(profile?.versesPublic ?? false) ? 'translate-x-[18px]' : ''}`} />
+              </button>
+            </div>
+          </div>
+        </section>
+
+        {profile?.role === 'ADMIN' && (
+          <section>
+            <p className="text-[10px] font-semibold text-graphite-muted uppercase tracking-wide mb-2 px-1">Administração</p>
+            <div className="bg-white rounded-2xl overflow-hidden">
+              <button
+                onClick={() => setShowAdmin(true)}
+                className="flex items-center justify-between w-full px-4 py-3.5"
+              >
+                <p className="text-sm text-graphite">Painel da Loja</p>
+                <ChevronRight size={16} className="text-graphite-muted" />
+              </button>
+            </div>
+          </section>
+        )}
 
         <section>
           <p className="text-[10px] font-semibold text-graphite-muted uppercase tracking-wide mb-2 px-1">Sobre</p>

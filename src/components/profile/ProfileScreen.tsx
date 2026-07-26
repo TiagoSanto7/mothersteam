@@ -37,6 +37,7 @@ export function ProfileScreen({ onClose, userId, onOpenProfile, isTab = false }:
   const [selectedPost, setSelectedPost] = useState<CommunityPost | null>(null);
   const [followList, setFollowList] = useState<'followers' | 'following' | null>(null);
   const [showSavedVerses, setShowSavedVerses] = useState(false);
+  const [showOtherVerses, setShowOtherVerses] = useState(false);
 
   const sentinelRef = useRef<HTMLDivElement>(null);
   const isAtBottom = useIntersection(sentinelRef);
@@ -45,6 +46,13 @@ export function ProfileScreen({ onClose, userId, onOpenProfile, isTab = false }:
     queryKey: ['user', effectiveUserId],
     queryFn: () => apiFetch<ApiUserProfile>(`/users/${effectiveUserId}`),
     enabled: isLoggedIn && !!effectiveUserId,
+  });
+
+  const { data: otherVerses } = useQuery({
+    queryKey: ['userVerses', effectiveUserId],
+    queryFn: () => apiFetch<string[]>(`/users/${effectiveUserId}/verses`),
+    enabled: isLoggedIn && !!effectiveUserId && !!profile && !profile.isSelf && (profile.versesPublic ?? false),
+    retry: false,
   });
 
   const {
@@ -252,17 +260,32 @@ export function ProfileScreen({ onClose, userId, onOpenProfile, isTab = false }:
             )}
           </>
         ) : (
-          <div className="flex gap-2 mt-3">
-            <button
-              onClick={() => followMutation.mutate(!profile.isFollowedByCurrentUser)}
-              className={`flex-1 py-2 rounded-xl text-xs font-semibold active:scale-95 transition-transform ${
-                profile.isFollowedByCurrentUser
-                  ? 'bg-white text-graphite-muted border border-sara-linen'
-                  : 'bg-sara-gold text-white'
-              }`}
-            >
-              {profile.isFollowedByCurrentUser ? 'Seguindo' : 'Seguir'}
-            </button>
+          <div className="flex flex-col gap-2 mt-3">
+            <div className="flex gap-2">
+              <button
+                onClick={() => followMutation.mutate(!profile.isFollowedByCurrentUser)}
+                className={`flex-1 py-2 rounded-xl text-xs font-semibold active:scale-95 transition-transform ${
+                  profile.isFollowedByCurrentUser
+                    ? 'bg-white text-graphite-muted border border-sara-linen'
+                    : 'bg-sara-gold text-white'
+                }`}
+              >
+                {profile.isFollowedByCurrentUser ? 'Seguindo' : 'Seguir'}
+              </button>
+            </div>
+            {profile.versesPublic && otherVerses && otherVerses.length > 0 && (
+              <button
+                onClick={() => setShowOtherVerses(true)}
+                className="w-full flex items-center justify-between px-1 py-2 rounded-xl active:bg-sara-linen transition-colors"
+              >
+                <span className="text-[12px] font-semibold text-graphite flex items-center gap-2">
+                  📖 Versículos salvos
+                </span>
+                <span className="text-[11px] text-sara-gold font-semibold">
+                  {otherVerses.length} →
+                </span>
+              </button>
+            )}
           </div>
         )}
       </div>
@@ -297,6 +320,15 @@ export function ProfileScreen({ onClose, userId, onOpenProfile, isTab = false }:
       {/* Self-only: saved verses sheet */}
       {isSelf && (
         <SavedVersesScreen open={showSavedVerses} onClose={() => setShowSavedVerses(false)} />
+      )}
+      {/* Other user: read-only verses sheet */}
+      {!isSelf && (
+        <SavedVersesScreen
+          open={showOtherVerses}
+          onClose={() => setShowOtherVerses(false)}
+          readOnlyVerses={otherVerses ?? []}
+          readOnlyUserName={profile.name}
+        />
       )}
     </div>
   );

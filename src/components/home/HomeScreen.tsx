@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Plus } from 'lucide-react';
 import { useAppStore } from '../../store/useAppStore';
+import { formatDateHeading } from '../../lib/dateUtils';
 import { WeekCalendar } from './WeekCalendar';
 import { RoutineTimeline } from './RoutineTimeline';
 import { AddRoutineModal } from './AddRoutineModal';
@@ -56,11 +57,7 @@ export function HomeScreen({ onOpenProfile }: HomeScreenProps) {
       <div className="flex items-center justify-between px-4">
         <h2 className="text-sm font-semibold text-graphite">Sua Rotina</h2>
         <span className="text-xs text-graphite-muted">
-          {new Date(selectedDate + 'T12:00:00').toLocaleDateString('pt-BR', {
-            weekday: 'long',
-            day: 'numeric',
-            month: 'long',
-          })}
+          {formatDateHeading(selectedDate)}
         </span>
       </div>
 

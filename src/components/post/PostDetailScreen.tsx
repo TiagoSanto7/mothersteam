@@ -10,6 +10,7 @@ import { PostActionsMenu } from '../comunidade/PostActionsMenu';
 import { getAvatarColor } from '../../utils/avatar';
 import type { CommunityPost, PostComment } from '../../types';
 import type { ApiPost, PaginatedResult } from '../../lib/types';
+import { MentionText } from '../shared/MentionText';
 
 const BADGE_CONFIG = {
   experiente:   { label: 'Mãe Experiente',       color: 'bg-sara-linen text-sara-terracotta' },
@@ -203,7 +204,7 @@ export function PostDetailScreen({ post, onBack, onOpenProfile }: PostDetailScre
               </button>
             </div>
           ) : (
-            <p className="text-sm text-graphite leading-relaxed mb-4">{post.content}</p>
+            <MentionText text={post.content} className="text-sm text-graphite leading-relaxed mb-4 block" />
           )}
 
           {post.imageUrl && (
@@ -261,7 +262,7 @@ export function PostDetailScreen({ post, onBack, onOpenProfile }: PostDetailScre
                   <p className="text-[11px] font-semibold text-graphite">{c.author}</p>
                   <span className="text-[10px] text-graphite-muted">{c.time}</span>
                 </div>
-                <p className="text-xs text-graphite leading-relaxed mt-0.5">{c.content}</p>
+                <MentionText text={c.content} className="text-xs text-graphite leading-relaxed mt-0.5 block" />
                 <button className="flex items-center gap-1 mt-2 text-graphite-muted">
                   <Heart size={10} />
                   <span className="text-[10px]">{c.likes}</span>

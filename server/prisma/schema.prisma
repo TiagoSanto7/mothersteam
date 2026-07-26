@@ -25,12 +25,14 @@ model User {
   avatarUrl         String? @db.VarChar(500)
   bio               String? @db.Text
   role              String  @default("USER")
+  versesPublic      Boolean @default(false)
   motherBirthDate   DateTime?
   babyBirthDate     DateTime?
   expectedBirthDate DateTime?
 
   posts              Post[]
   comments           Comment[]
+  savedVerses        SavedVerse[]
   routineEntries     RoutineEntry[]
   babyEntries        BabyEntry[]
   notifications      Notification[]
@@ -54,6 +56,16 @@ model Follow {
   createdAt   DateTime @default(now())
 
   @@id([followerId, followingId])
+}
+
+model SavedVerse {
+  id        String   @id @default(cuid())
+  verseRef  String
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@unique([userId, verseRef])
 }
 
 // After changing isPrivate/isOpen fields, run on the server:

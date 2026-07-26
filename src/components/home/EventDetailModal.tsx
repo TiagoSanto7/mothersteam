@@ -4,6 +4,7 @@ import { X, Calendar, Clock, Tag, Trash2, Pencil, ArrowRight } from 'lucide-reac
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiFetch } from '../../lib/api';
 import { useAppStore } from '../../store/useAppStore';
+import { formatDateFull } from '../../lib/dateUtils';
 import type { ApiRoutineEntry } from '../../lib/types';
 import { AddRoutineModal } from './AddRoutineModal';
 import type { RoutineEntry } from '../../types';
@@ -13,12 +14,6 @@ const CATEGORY_LABELS: Record<ApiRoutineEntry['category'], string> = {
   appointment: '📅 Consulta',
   medication: '💊 Medicação',
 };
-
-function formatDatePT(iso: string): string {
-  const [year, month, day] = iso.split('-').map(Number);
-  const d = new Date(year, month - 1, day);
-  return d.toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
-}
 
 interface EventDetailModalProps {
   entry: ApiRoutineEntry;
@@ -96,7 +91,7 @@ export function EventDetailModal({ entry, onClose }: EventDetailModalProps) {
         <div className="flex flex-col gap-2">
           <div className="flex items-center gap-2 text-sm text-graphite-muted">
             <Calendar size={15} className="flex-shrink-0" />
-            <span>{formatDatePT(entry.date)}</span>
+            <span>{formatDateFull(entry.date)}</span>
           </div>
           <div className="flex items-center gap-2 text-sm text-graphite-muted">
             <Clock size={15} className="flex-shrink-0" />

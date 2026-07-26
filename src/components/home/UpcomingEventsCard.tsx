@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { ChevronRight } from 'lucide-react';
 import { apiFetch } from '../../lib/api';
 import { useAppStore } from '../../store/useAppStore';
+import { formatDateCompact } from '../../lib/dateUtils';
 import type { ApiRoutineEntry } from '../../lib/types';
 import { EventDetailModal } from './EventDetailModal';
 import { AllFutureEventsScreen } from './AllFutureEventsScreen';
@@ -12,12 +13,6 @@ const CATEGORY_EMOJI: Record<ApiRoutineEntry['category'], string> = {
   appointment: '📅',
   medication: '💊',
 };
-
-function formatShortDate(iso: string): string {
-  const [year, month, day] = iso.split('-').map(Number);
-  const d = new Date(year, month - 1, day);
-  return d.toLocaleDateString('pt-BR', { day: 'numeric', month: 'short' });
-}
 
 export function UpcomingEventsCard() {
   const isLoggedIn = useAppStore((s) => s.isLoggedIn);
@@ -69,7 +64,7 @@ export function UpcomingEventsCard() {
                 )}
               </div>
               <div className="flex flex-col items-end flex-shrink-0">
-                <span className="text-[11px] text-graphite-muted">{formatShortDate(entry.date)}</span>
+                <span className="text-[11px] text-graphite-muted">{formatDateCompact(entry.date)}</span>
                 <span className="text-[10px] text-graphite-muted/70">{entry.time}</span>
               </div>
             </button>

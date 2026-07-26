@@ -13,6 +13,7 @@ export interface ApiUser {
   profileKey?: string | null
   archetypeKey?: string | null
   role?: string
+  versesPublic?: boolean
   motherBirthDate?: string | null
   babyBirthDate?: string | null
   expectedBirthDate?: string | null
@@ -29,6 +30,8 @@ export interface ApiUserProfile {
   babyAgeInDays?: number | null
   profileKey?: string | null
   archetypeKey?: string | null
+  versesPublic?: boolean
+  role?: string
   _count: { posts: number; followers: number; following: number }
   isSelf: boolean
   isFollowedByCurrentUser: boolean

@@ -2,9 +2,7 @@ import { useRef } from 'react';
 import { motion } from 'framer-motion';
 import { X } from 'lucide-react';
 import { useAppStore } from '../../store/useAppStore';
-
-const DAYS_PT = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
-const MONTHS_PT = ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez'];
+import { DAYS_PT, MONTHS_PT } from '../../lib/dateUtils';
 
 /** Returns the last 7 days ending today (index 6 = today). */
 function getRollingWeek(): Date[] {

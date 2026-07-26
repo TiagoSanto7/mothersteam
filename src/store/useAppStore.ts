@@ -3,6 +3,7 @@ import { persist, createJSONStorage } from 'zustand/middleware';
 import type { TabId, PregnancyPhase, OnboardingAnswers, MotherProfile, Q1Answer } from '../types';
 import { computeProfile } from '../utils/onboardingScoring';
 import type { ApiUser } from '../lib/types';
+import { apiFetch } from '../lib/api';
 import { buildPhase } from '../lib/helpers';
 import type { ReceptionData } from '../types/reception';
 
@@ -196,12 +197,18 @@ export const useAppStore = create<AppState>()(
           if (newLegacy.length !== legacy.length) {
             newVersesByUser['__legacy__'] = newLegacy;
           }
+          if (uid !== '__anon__') {
+            apiFetch('/users/me/verses', { method: 'POST', body: JSON.stringify({ verseRef: ref }) }).catch(() => {});
+          }
           return { versesByUser: newVersesByUser };
         }),
       unsaveVerse: (ref) =>
         set((s) => {
           const uid = s.currentUserId ?? '__anon__';
           const current = s.versesByUser[uid] ?? [];
+          if (uid !== '__anon__') {
+            apiFetch(`/users/me/verses/${encodeURIComponent(ref)}`, { method: 'DELETE' }).catch(() => {});
+          }
           return { versesByUser: { ...s.versesByUser, [uid]: current.filter((r) => r !== ref) } };
         }),
       setPendingShareContent: (content) => set({ pendingShareContent: content }),

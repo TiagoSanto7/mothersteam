@@ -1,6 +1,8 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
-import { Send, ChevronLeft } from 'lucide-react';
+import { Send, ChevronLeft, Mic, MicOff, Phone, PhoneOff } from 'lucide-react';
+import { Conversation } from '@elevenlabs/client';
+import { apiFetch } from '../../lib/api';
 
 interface Message {
   id: string;
@@ -8,26 +10,32 @@ interface Message {
   text: string;
 }
 
+type ConvStatus = 'idle' | 'connecting' | 'listening' | 'processing' | 'speaking' | 'error';
+
 const QUICK_CHIPS = [
   'Dicas para cólica do bebê',
-  'Como lidar com o cansaço no puerpério?',
-  'Amamentação: posição correta',
+  'Como lidar com o cansaço?',
+  'Amamentação: pega correta',
   'Quando voltar à academia?',
 ];
 
-const STATIC_REPLIES: Record<string, string> = {
-  'Dicas para cólica do bebê':
-    'A cólica é comum nas primeiras semanas. Tente: massagem circular na barriga no sentido horário, a posição "aviãozinho" (barriga do bebê sobre seu antebraço) e calor suave. Se persistir por mais de 3h/dia, consulte seu pediatra. 💚',
-  'Como lidar com o cansaço no puerpério?':
-    'O cansaço pós-parto é real e validado pela ciência. Durma quando o bebê dorme, peça ajuda sem culpa e não exija perfeição de si mesma. Se o cansaço vier com tristeza persistente, procure apoio profissional. Você está indo muito bem! 💜',
-  'Amamentação: posição correta':
-    'A pega correta é fundamental: bebê de frente para o peito (barriga com barriga), boca bem aberta cobrindo toda a aréola, não só o bico. Costas da mãe apoiadas. Está doendo? A pega pode não estar certa — tente ajustar. 🤱',
-  'Quando voltar à academia?':
-    'Geralmente a liberação é com 6 semanas após parto normal ou 8 semanas após cesárea — sempre com avaliação médica. Comece com caminhadas leves e priorize a fisioterapia pélvica antes de exercícios de impacto. 💪',
+const STATUS_LABELS: Record<ConvStatus, string> = {
+  idle: 'Toque em Conectar para falar com a MãeIA',
+  connecting: 'Conectando...',
+  listening: 'Ouvindo você...',
+  processing: 'Processando...',
+  speaking: 'MãeIA respondendo...',
+  error: 'Erro na conexão',
 };
 
-const DEFAULT_REPLY =
-  'Estou aqui para te ajudar! Para questões específicas de saúde, consulte sempre seu médico ou pediatra. O que mais posso esclarecer? 💜';
+const STATUS_COLORS: Record<ConvStatus, string> = {
+  idle: 'text-graphite-muted',
+  connecting: 'text-sara-gold',
+  listening: 'text-green-600',
+  processing: 'text-sara-warm',
+  speaking: 'text-sara-gold',
+  error: 'text-red-500',
+};
 
 interface MaeIAScreenProps {
   onBack?: () => void;
@@ -38,30 +46,101 @@ export function MaeIAScreen({ onBack }: MaeIAScreenProps = {}) {
     {
       id: '0',
       role: 'assistant',
-      text: 'Olá! Sou a MãeIA, sua assistente de saúde materno-infantil. Como posso te ajudar hoje? 💜',
+      text: 'Olá! Sou a MãeIA, sua assistente de saúde materno-infantil. Conecte-se para conversar por voz, ou digite sua pergunta abaixo. 💜',
     },
   ]);
   const [input, setInput] = useState('');
+  const [status, setStatus] = useState<ConvStatus>('idle');
+  const [isMuted, setIsMuted] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
+  const convRef = useRef<Conversation | null>(null);
+  const isConnected = status !== 'idle' && status !== 'error' && status !== 'connecting';
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
-  function sendMessage(text: string) {
-    const trimmed = text.trim();
-    if (!trimmed) return;
-    const reply = STATIC_REPLIES[trimmed] ?? DEFAULT_REPLY;
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => { convRef.current?.endSession().catch(() => {}); };
+  }, []);
+
+  const addMessage = useCallback((role: 'user' | 'assistant', text: string) => {
     setMessages((prev) => [
       ...prev,
-      { id: Date.now().toString(), role: 'user', text: trimmed },
-      { id: (Date.now() + 1).toString(), role: 'assistant', text: reply },
+      { id: `${Date.now()}-${Math.random()}`, role, text },
     ]);
-    setInput('');
+  }, []);
+
+  async function connectVoice() {
+    if (convRef.current) return;
+    setStatus('connecting');
+    try {
+      const { signedUrl } = await apiFetch<{ signedUrl: string }>('/mae-ia/token', { method: 'POST' });
+
+      const conv = await Conversation.startSession({
+        signedUrl,
+        onConnect: () => setStatus('listening'),
+        onDisconnect: () => {
+          convRef.current = null;
+          setStatus('idle');
+        },
+        onError: (error) => {
+          console.error('MãeIA error:', error);
+          convRef.current = null;
+          setStatus('error');
+          setTimeout(() => setStatus('idle'), 3000);
+        },
+        onModeChange: ({ mode }) => {
+          if (mode === 'listening') setStatus('listening');
+          else if (mode === 'speaking') setStatus('speaking');
+        },
+        onMessage: ({ message, source }) => {
+          if (source === 'user') addMessage('user', message);
+          else if (source === 'ai') addMessage('assistant', message);
+        },
+      });
+
+      convRef.current = conv;
+    } catch (err) {
+      convRef.current = null;
+      setStatus('error');
+      setTimeout(() => setStatus('idle'), 3000);
+      addMessage('assistant', 'Não foi possível conectar à MãeIA. Verifique sua conexão e tente novamente.');
+    }
   }
+
+  async function disconnectVoice() {
+    await convRef.current?.endSession().catch(() => {});
+    convRef.current = null;
+    setStatus('idle');
+  }
+
+  async function toggleMute() {
+    if (!convRef.current) return;
+    const newMuted = !isMuted;
+    convRef.current.setMicMuted(newMuted);
+    setIsMuted(newMuted);
+  }
+
+  function sendText(text: string) {
+    const trimmed = text.trim();
+    if (!trimmed) return;
+    addMessage('user', trimmed);
+    setInput('');
+    // Fallback static replies when not connected via voice
+    if (!isConnected) {
+      setTimeout(() => {
+        addMessage('assistant', 'Para obter uma resposta personalizada da MãeIA, conecte-se usando o botão de voz. Para questões urgentes de saúde, consulte sempre seu médico. 💜');
+      }, 800);
+    }
+  }
+
+  const pulsing = status === 'listening' || status === 'speaking';
 
   return (
     <div className="flex flex-col h-full">
+      {/* Header */}
       <div className="relative px-4 pt-4 pb-3 border-b border-sara-linen/60 bg-sara-cream/80 backdrop-blur-sm">
         {onBack && (
           <button
@@ -73,14 +152,17 @@ export function MaeIAScreen({ onBack }: MaeIAScreenProps = {}) {
           </button>
         )}
         <h1 className={`text-base font-semibold font-serif text-graphite${onBack ? ' pl-10' : ''}`}>MãeIA</h1>
-        <p className={`text-xs text-graphite-muted${onBack ? ' pl-10' : ''}`}>Assistente de saúde materno-infantil</p>
+        <p className={`text-xs mt-0.5 ${STATUS_COLORS[status]}${onBack ? ' pl-10' : ''}`}>
+          {STATUS_LABELS[status]}
+        </p>
       </div>
 
-      <div className="flex gap-2 overflow-x-auto scrollbar-hide px-4 py-3 bg-sara-cream">
+      {/* Quick chips */}
+      <div className="flex gap-2 overflow-x-auto scrollbar-hide px-4 py-3 bg-sara-cream flex-shrink-0">
         {QUICK_CHIPS.map((chip) => (
           <button
             key={chip}
-            onClick={() => sendMessage(chip)}
+            onClick={() => sendText(chip)}
             aria-label={chip}
             className="flex-shrink-0 px-3 py-1.5 rounded-full bg-sara-linen text-sara-gold text-xs font-medium whitespace-nowrap"
           >
@@ -89,12 +171,10 @@ export function MaeIAScreen({ onBack }: MaeIAScreenProps = {}) {
         ))}
       </div>
 
+      {/* Messages */}
       <div className="flex-1 overflow-y-auto scrollbar-hide px-4 py-3 flex flex-col gap-3">
         {messages.map((msg) => (
-          <div
-            key={msg.id}
-            className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
-          >
+          <div key={msg.id} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
             <div
               className={`max-w-[80%] px-4 py-2.5 rounded-2xl text-sm leading-relaxed ${
                 msg.role === 'user'
@@ -109,27 +189,68 @@ export function MaeIAScreen({ onBack }: MaeIAScreenProps = {}) {
         <div ref={bottomRef} />
       </div>
 
-      <div className="px-4 pb-4 pt-2 bg-sara-linen/80 border-t border-sara-linen/60">
-        <div className="flex items-center gap-2 bg-offwhite rounded-2xl px-3 py-2">
-          <input
-            type="text"
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && sendMessage(input)}
-            placeholder="Pergunte à MãeIA…"
-            aria-label="Mensagem para a MãeIA"
-            className="flex-1 bg-transparent text-sm text-graphite placeholder:text-graphite-muted outline-none"
+      {/* Voice status indicator */}
+      {pulsing && (
+        <div className="flex items-center justify-center py-2 flex-shrink-0">
+          <motion.div
+            animate={{ scale: [1, 1.3, 1], opacity: [0.6, 1, 0.6] }}
+            transition={{ repeat: Infinity, duration: 1.2 }}
+            className={`w-3 h-3 rounded-full ${status === 'listening' ? 'bg-green-500' : 'bg-sara-gold'}`}
           />
-          <motion.button
-            onClick={() => sendMessage(input)}
-            disabled={!input.trim()}
-            aria-label="Enviar mensagem"
-            whileTap={{ scale: 0.97 }}
-            transition={{ duration: 0.15, ease: 'easeOut' }}
-            className="w-8 h-8 rounded-xl bg-sara-gold flex items-center justify-center disabled:opacity-40"
+          <span className={`text-xs ml-2 ${STATUS_COLORS[status]}`}>{STATUS_LABELS[status]}</span>
+        </div>
+      )}
+
+      {/* Input bar */}
+      <div className="px-4 pb-4 pt-2 bg-sara-linen/80 border-t border-sara-linen/60 flex-shrink-0">
+        <div className="flex items-center gap-2">
+          {/* Voice connect/disconnect button */}
+          <button
+            onClick={isConnected ? disconnectVoice : connectVoice}
+            disabled={status === 'connecting'}
+            aria-label={isConnected ? 'Encerrar conversa por voz' : 'Iniciar conversa por voz'}
+            className={`w-10 h-10 rounded-full flex items-center justify-center transition-colors flex-shrink-0 ${
+              isConnected ? 'bg-red-100 text-red-500' : 'bg-sara-gold text-white'
+            } disabled:opacity-50`}
           >
-            <Send size={14} className="text-white" strokeWidth={2} />
-          </motion.button>
+            {isConnected ? <PhoneOff size={16} /> : <Phone size={16} />}
+          </button>
+
+          {/* Mute toggle — only when connected */}
+          {isConnected && (
+            <button
+              onClick={toggleMute}
+              aria-label={isMuted ? 'Ativar microfone' : 'Silenciar microfone'}
+              className={`w-10 h-10 rounded-full flex items-center justify-center transition-colors flex-shrink-0 ${
+                isMuted ? 'bg-red-100 text-red-500' : 'bg-white text-graphite-muted'
+              }`}
+            >
+              {isMuted ? <MicOff size={16} /> : <Mic size={16} />}
+            </button>
+          )}
+
+          {/* Text input */}
+          <div className="flex-1 flex items-center gap-2 bg-white rounded-2xl px-3 py-2">
+            <input
+              type="text"
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && sendText(input)}
+              placeholder="Pergunte à MãeIA…"
+              aria-label="Mensagem para a MãeIA"
+              className="flex-1 bg-transparent text-sm text-graphite placeholder:text-graphite-muted outline-none"
+            />
+            <motion.button
+              onClick={() => sendText(input)}
+              disabled={!input.trim()}
+              aria-label="Enviar mensagem"
+              whileTap={{ scale: 0.97 }}
+              transition={{ duration: 0.15, ease: 'easeOut' }}
+              className="w-7 h-7 rounded-xl bg-sara-gold flex items-center justify-center disabled:opacity-40"
+            >
+              <Send size={13} className="text-white" strokeWidth={2} />
+            </motion.button>
+          </div>
         </div>
       </div>
     </div>

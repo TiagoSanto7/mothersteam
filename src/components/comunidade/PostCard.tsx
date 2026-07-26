@@ -6,6 +6,7 @@ import { apiFetch, resolveMediaUrl } from '../../lib/api';
 import { patchPostLikeInAllCaches } from '../../lib/helpers';
 import { SharePostSheet } from './SharePostSheet';
 import { QuoteRepostSheet } from './QuoteRepostSheet';
+import { MentionText } from '../shared/MentionText';
 import { PostActionsMenu } from './PostActionsMenu';
 import { getAvatarColor } from '../../utils/avatar';
 import type { CommunityPost } from '../../types';
@@ -128,12 +129,12 @@ export function PostCard({ post, onOpen, onOpenProfile, onOpenCommunity, onDelet
             )}
             <div className="border border-sara-linen rounded-2xl p-3 bg-white/60">
               <p className="text-[11px] font-semibold text-graphite mb-1">{post.repostOriginal.author}</p>
-              <p className="text-sm text-graphite-light leading-relaxed">{post.repostOriginal.content}</p>
+              <MentionText text={post.repostOriginal.content} className="text-sm text-graphite-light leading-relaxed block" />
             </div>
           </button>
         ) : (
           <button onClick={onOpen} aria-label={`Ver post de ${post.author}`} className="text-left flex flex-col gap-2">
-            <p className="text-sm text-graphite-light leading-relaxed">{post.content}</p>
+            <MentionText text={post.content} className="text-sm text-graphite-light leading-relaxed block" />
             {post.imageUrl && (
               <img
                 src={resolveMediaUrl(post.imageUrl)}

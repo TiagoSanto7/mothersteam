@@ -4,6 +4,7 @@ import { X, ChevronLeft } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { apiFetch } from '../../lib/api';
 import { useAppStore } from '../../store/useAppStore';
+import { formatDateHeading } from '../../lib/dateUtils';
 import type { ApiRoutineEntry } from '../../lib/types';
 import { EventDetailModal } from './EventDetailModal';
 
@@ -12,12 +13,6 @@ const CATEGORY_EMOJI: Record<ApiRoutineEntry['category'], string> = {
   appointment: '📅',
   medication: '💊',
 };
-
-function formatDateHeading(iso: string): string {
-  const [year, month, day] = iso.split('-').map(Number);
-  const d = new Date(year, month - 1, day);
-  return d.toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' });
-}
 
 interface AllFutureEventsScreenProps {
   onClose: () => void;
