@@ -19,10 +19,11 @@ interface PostCardProps {
   post: CommunityPost;
   onOpen: () => void;
   onOpenProfile: () => void;
+  onOpenCommunity?: (communityId: string) => void;
   onDeleted?: () => void;
 }
 
-export function PostCard({ post, onOpen, onOpenProfile, onDeleted }: PostCardProps) {
+export function PostCard({ post, onOpen, onOpenProfile, onOpenCommunity, onDeleted }: PostCardProps) {
   const currentUserId = useAppStore((s) => s.currentUserId);
   const queryClient = useQueryClient();
   const [liked, setLiked] = useState(post.likedByCurrentUser ?? false);
@@ -86,9 +87,20 @@ export function PostCard({ post, onOpen, onOpenProfile, onDeleted }: PostCardPro
                 </span>
               )}
               {post.communityName && (
-                <span className="text-[10px] font-medium px-2 py-0.5 rounded-full w-fit bg-sara-cream text-sara-warm">
-                  Em {post.communityName}
-                </span>
+                onOpenCommunity && post.communityId ? (
+                  <button
+                    type="button"
+                    onClick={(e) => { e.stopPropagation(); onOpenCommunity(post.communityId!); }}
+                    aria-label={`Ver comunidade ${post.communityName}`}
+                    className="text-[10px] font-medium px-2 py-0.5 rounded-full w-fit bg-sara-cream text-sara-warm"
+                  >
+                    Em {post.communityName}
+                  </button>
+                ) : (
+                  <span className="text-[10px] font-medium px-2 py-0.5 rounded-full w-fit bg-sara-cream text-sara-warm">
+                    Em {post.communityName}
+                  </span>
+                )
               )}
             </div>
           </button>

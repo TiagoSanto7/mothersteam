@@ -224,7 +224,7 @@ export function PostDetailScreen({ post, onBack, onOpenProfile }: PostDetailScre
             </button>
             <button className="flex items-center gap-1.5 text-xs text-graphite-muted">
               <MessageCircle size={16} strokeWidth={1.8} />
-              <span>{post.replies + comments.length}</span>
+              <span>{comments.length > 0 ? comments.length : post.replies}</span>
             </button>
             <button
               onClick={handleRepost}

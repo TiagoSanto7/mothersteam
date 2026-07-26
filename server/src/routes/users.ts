@@ -7,6 +7,7 @@ const updateMeSchema = z.object({
   username: z.string().min(3).max(30).regex(/^[a-z0-9_]+$/).optional().nullable(),
   babyName: z.string().max(80).optional().nullable(),
   bio: z.string().max(280).optional().nullable(),
+  avatarUrl: z.string().max(500).optional().nullable(),
   pregnancyStage: z.enum(['pregnant', 'postpartum']).optional(),
   pregnancyWeek: z.number().int().min(1).max(42).optional().nullable(),
   babyAgeInDays: z.number().int().min(0).optional().nullable(),
@@ -24,6 +25,7 @@ export default async function usersRoutes(fastify: FastifyInstance) {
         name: true,
         username: true,
         bio: true,
+        avatarUrl: true,
         pregnancyStage: true,
         pregnancyWeek: true,
         babyAgeInDays: true,
@@ -63,7 +65,7 @@ export default async function usersRoutes(fastify: FastifyInstance) {
       data: body.data,
       select: {
         id: true, name: true, username: true, babyName: true, bio: true,
-        pregnancyStage: true, pregnancyWeek: true, babyAgeInDays: true,
+        avatarUrl: true, pregnancyStage: true, pregnancyWeek: true, babyAgeInDays: true,
       },
     })
     reply.send(user)

@@ -43,7 +43,9 @@ async function doRefresh(): Promise<string | null> {
 export async function apiFetch<T>(path: string, init: RequestInit = {}): Promise<T> {
   const token = useAppStore.getState().accessToken
   const headers: Record<string, string> = {
-    ...(init.body ? { 'Content-Type': 'application/json' } : {}),
+    // Only set JSON content-type for non-FormData bodies (FormData needs the
+    // browser to set the multipart boundary automatically).
+    ...(init.body && !(init.body instanceof FormData) ? { 'Content-Type': 'application/json' } : {}),
     ...(init.headers as Record<string, string>),
   }
   if (token) headers['Authorization'] = `Bearer ${token}`

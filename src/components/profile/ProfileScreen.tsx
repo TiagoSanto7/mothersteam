@@ -9,7 +9,7 @@ import { EditProfileScreen } from './EditProfileScreen';
 import { PostDetailScreen } from '../post/PostDetailScreen';
 import { FollowListScreen } from './FollowListScreen';
 import { PostCard } from '../comunidade/PostCard';
-import { apiFetch } from '../../lib/api';
+import { apiFetch, resolveMediaUrl } from '../../lib/api';
 import { apiPostToCommunityPost } from '../../lib/helpers';
 import { useIntersection } from '../../lib/useIntersection';
 import type { ApiPost, ApiUserProfile } from '../../lib/types';
@@ -179,12 +179,20 @@ export function ProfileScreen({ onClose, userId, onOpenProfile, isTab = false }:
       {/* Profile info */}
       <div className="px-4 pb-3 flex-shrink-0">
         <div className="flex items-center gap-5">
-          <div
-            style={{ background: avatarColor }}
-            className="w-20 h-20 rounded-full flex items-center justify-center text-white text-3xl font-bold flex-shrink-0"
-          >
-            {profile.name.charAt(0).toUpperCase()}
-          </div>
+          {profile.avatarUrl ? (
+            <img
+              src={resolveMediaUrl(profile.avatarUrl)}
+              alt={`Foto de ${profile.name}`}
+              className="w-20 h-20 rounded-full object-cover flex-shrink-0"
+            />
+          ) : (
+            <div
+              style={{ background: avatarColor }}
+              className="w-20 h-20 rounded-full flex items-center justify-center text-white text-3xl font-bold flex-shrink-0"
+            >
+              {profile.name.charAt(0).toUpperCase()}
+            </div>
+          )}
           <div className="flex gap-4 flex-1 justify-around">
             {[
               { label: 'Posts',      value: profile._count.posts,     mode: null as 'followers' | 'following' | null },

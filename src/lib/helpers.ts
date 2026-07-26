@@ -72,7 +72,7 @@ export function patchPostLikeInAllCaches(
 export function patchUserProfileInCaches(
   queryClient: QueryClient,
   userId: string,
-  patch: Partial<{ name: string; bio: string | null }>,
+  patch: Partial<{ name: string; bio: string | null; avatarUrl: string | null }>,
 ): void {
   queryClient.setQueryData<ApiUserProfile>(['user', userId], (old) =>
     old ? { ...old, ...patch } : old,

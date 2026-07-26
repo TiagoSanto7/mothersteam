@@ -21,6 +21,8 @@ model User {
   onboardingAnswers Json?
   profileKey        String?
   archetypeKey      String?
+  // After adding avatarUrl: npx prisma db push
+  avatarUrl         String? @db.VarChar(500)
   bio               String? @db.Text
   role              String  @default("USER")
   motherBirthDate   DateTime?
@@ -148,6 +150,7 @@ model Message {
   sharedPostId      String?
   sharedPostAuthor  String?
   sharedPostExcerpt String?
+  audioUrl          String?  // npx prisma db push needed
   read              Boolean  @default(false)
   createdAt         DateTime @default(now())
 }

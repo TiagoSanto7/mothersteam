@@ -5,6 +5,7 @@ export interface ApiUser {
   username?: string | null
   babyName?: string | null
   bio?: string | null
+  avatarUrl?: string | null
   pregnancyStage: 'pregnant' | 'postpartum'
   pregnancyWeek?: number | null
   babyAgeInDays?: number | null
@@ -22,6 +23,7 @@ export interface ApiUserProfile {
   name: string
   username?: string | null
   bio?: string | null
+  avatarUrl?: string | null
   pregnancyStage: 'pregnant' | 'postpartum'
   pregnancyWeek?: number | null
   babyAgeInDays?: number | null
@@ -111,6 +113,7 @@ export interface ApiMessage {
   sharedPostId?: string | null
   sharedPostAuthor?: string | null
   sharedPostExcerpt?: string | null
+  audioUrl?: string | null
   read: boolean
   createdAt: string
 }

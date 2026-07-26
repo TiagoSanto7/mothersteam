@@ -79,7 +79,7 @@ export function EventDetailModal({ entry, onClose }: EventDetailModalProps) {
         animate={{ opacity: 1, y: 0 }}
         exit={{ opacity: 0, y: 24 }}
         transition={{ duration: 0.2, ease: 'easeOut' }}
-        className="fixed bottom-0 left-1/2 -translate-x-1/2 w-[390px] bg-sara-linen/95 backdrop-blur-md rounded-t-[32px] z-50 px-6 pt-5 pb-10 flex flex-col gap-4 shadow-2xl"
+        className="fixed bottom-0 left-0 right-0 mx-auto max-w-[390px] w-full bg-sara-linen/95 backdrop-blur-md rounded-t-[32px] z-50 px-6 pt-5 pb-10 flex flex-col gap-4 shadow-2xl overflow-y-auto max-h-[90vh]"
       >
         {/* Handle + close */}
         <div className="flex items-center justify-between">

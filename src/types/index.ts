@@ -102,6 +102,7 @@ export interface ChatMessage {
   content: string;
   time: string;
   sharedPost?: SharedPost;
+  audioUrl?: string | null;
 }
 
 export interface Chat {

@@ -178,6 +178,7 @@ export function ComunidadeScreen() {
                   post={post}
                   onOpen={() => setSelectedPost(post)}
                   onOpenProfile={() => post.authorId && setProfileUserId(post.authorId)}
+                  onOpenCommunity={(id) => setOpenCommunityId(id)}
                 />
               ))}
               <div ref={sentinelRef} className="h-4" />

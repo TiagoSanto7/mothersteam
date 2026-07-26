@@ -1,8 +1,10 @@
 import { useRef } from 'react';
 import { motion } from 'framer-motion';
+import { X } from 'lucide-react';
 import { useAppStore } from '../../store/useAppStore';
 
 const DAYS_PT = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
+const MONTHS_PT = ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez'];
 
 /** Returns the last 7 days ending today (index 6 = today). */
 function getRollingWeek(): Date[] {
@@ -19,12 +21,23 @@ function toISO(date: Date): string {
   return date.toISOString().split('T')[0];
 }
 
+/** Formats an ISO date string as "Qua, 30 jul" in PT-BR. */
+function formatSelectedDateLabel(iso: string): string {
+  const [year, month, day] = iso.split('-').map(Number);
+  const d = new Date(year, month - 1, day);
+  return `${DAYS_PT[d.getDay()]}, ${day} ${MONTHS_PT[month - 1]}`;
+}
+
 /** Rolling 7-day window ending today. `referenceDate` prop kept for backward compat. */
 export function WeekCalendar({ referenceDate: _referenceDate }: { referenceDate?: string }) {
   const { selectedDate, setSelectedDate } = useAppStore();
   const dateInputRef = useRef<HTMLInputElement>(null);
   const days = getRollingWeek();
   const today = toISO(new Date());
+
+  // Whether the selected date falls outside the rolling 7-day window
+  const windowISOs = new Set(days.map(toISO));
+  const isOutsideWindow = selectedDate !== today && !windowISOs.has(selectedDate);
 
   function handlePickerChange(e: React.ChangeEvent<HTMLInputElement>) {
     if (e.target.value) {
@@ -35,6 +48,10 @@ export function WeekCalendar({ referenceDate: _referenceDate }: { referenceDate?
   function openDatePicker() {
     dateInputRef.current?.showPicker?.();
     dateInputRef.current?.click();
+  }
+
+  function clearToToday() {
+    setSelectedDate(today);
   }
 
   return (
@@ -71,6 +88,28 @@ export function WeekCalendar({ referenceDate: _referenceDate }: { referenceDate?
           );
         })}
       </div>
+
+      {/* Pill indicator: shown when the selected date is outside the rolling window */}
+      {isOutsideWindow && (
+        <motion.div
+          initial={{ opacity: 0, y: -4 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -4 }}
+          transition={{ duration: 0.18 }}
+          className="flex justify-center"
+        >
+          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-sara-gold/15 border border-sara-gold/30 text-sara-gold text-[11px] font-medium">
+            📅 {formatSelectedDateLabel(selectedDate)}
+            <button
+              onClick={clearToToday}
+              aria-label="Voltar para hoje"
+              className="ml-0.5 rounded-full hover:bg-sara-gold/20 transition-colors p-0.5"
+            >
+              <X size={10} strokeWidth={2.5} />
+            </button>
+          </span>
+        </motion.div>
+      )}
 
       <div className="flex justify-center">
         <button

@@ -3,10 +3,11 @@ import { z } from 'zod'
 import { emitMessage } from '../sse'
 
 const sendMessageSchema = z.object({
-  content: z.string(),
+  content: z.string().optional().default(''),
   sharedPostId: z.string().optional(),
   sharedPostAuthor: z.string().optional(),
   sharedPostExcerpt: z.string().optional(),
+  audioUrl: z.string().optional(),
 })
 
 const createChatSchema = z.object({
@@ -92,15 +93,18 @@ export default async function chatsRoutes(fastify: FastifyInstance) {
     if (!body.success) return reply.status(400).send({ error: body.error.flatten() })
 
     const message = await fastify.prisma.message.create({
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       data: {
-        content: body.data.content,
+        content: body.data.content ?? '',
         chatId: request.params.id,
         senderId: request.userId,
         sharedPostId: body.data.sharedPostId,
         sharedPostAuthor: body.data.sharedPostAuthor,
         sharedPostExcerpt: body.data.sharedPostExcerpt,
-      },
-      include: { sender: { select: { id: true, name: true } } },
+        // audioUrl requires `npx prisma db push` — cast until client is regenerated
+        audioUrl: body.data.audioUrl,
+      } as Parameters<typeof fastify.prisma.message.create>[0]['data'],
+      include: { sender: { select: { id: true, name: true, archetypeKey: true } } },
     })
 
     // Notify all OTHER participants via SSE
