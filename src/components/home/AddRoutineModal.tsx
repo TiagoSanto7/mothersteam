@@ -39,7 +39,7 @@ export function AddRoutineModal({ onClose, defaultDate }: AddRoutineModalProps) 
     mutationFn: () =>
       apiFetch('/routine', {
         method: 'POST',
-        body: JSON.stringify({ title: title.trim(), time, category, date: selectedDate }),
+        body: JSON.stringify({ title: title.trim(), time, category, date: date }),
       }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['routine', selectedDate] });

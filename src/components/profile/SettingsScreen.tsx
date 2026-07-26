@@ -12,7 +12,6 @@ export function SettingsScreen({ onBack, onClose }: SettingsScreenProps) {
   const motherName = useAppStore((s) => s.motherName);
   const email = useAppStore((s) => s.email);
   const clearAuth = useAppStore((s) => s.clearAuth);
-  const resetOnboarding = useAppStore((s) => s.resetOnboarding);
 
   const [notifLikes, setNotifLikes] = useState(true);
   const [notifPosts, setNotifPosts] = useState(false);
@@ -20,11 +19,6 @@ export function SettingsScreen({ onBack, onClose }: SettingsScreenProps) {
   function handleLogout() {
     apiFetch('/auth/logout', { method: 'POST' }).catch(() => {});
     clearAuth();
-    onClose();
-  }
-
-  function handleReset() {
-    resetOnboarding();
     onClose();
   }
 
@@ -71,13 +65,6 @@ export function SettingsScreen({ onBack, onClose }: SettingsScreenProps) {
               className="w-full py-3 rounded-2xl bg-white border border-gray-200 text-sm font-medium text-graphite-light active:scale-95 transition-transform"
             >
               Sair da conta
-            </button>
-            <button
-              onClick={handleReset}
-              className="w-full py-3 rounded-2xl bg-white border border-dashed border-gray-300 text-sm font-medium text-graphite-muted active:scale-95 transition-transform flex items-center justify-center gap-2"
-            >
-              Resetar Onboarding
-              <span className="text-[9px] bg-gray-100 text-graphite-muted px-1.5 py-0.5 rounded-full font-semibold">teste</span>
             </button>
           </div>
         </section>

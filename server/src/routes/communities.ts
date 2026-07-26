@@ -6,6 +6,9 @@ const createSchema = z.object({
   description: z.string().min(1),
   category: z.enum(['gestação', 'pós-parto', 'amamentação', 'saúde mental']),
   colorKey: z.enum(['gold', 'terracotta', 'warm', 'linen', 'cream']),
+  imageUrl: z.string().url().optional().or(z.literal('')).transform((v) => v || undefined),
+  isPrivate: z.boolean().optional().default(false),
+  isOpen: z.boolean().optional().default(true),
 })
 
 const updateSchema = createSchema.partial()
@@ -82,6 +85,16 @@ export default async function communitiesRoutes(fastify: FastifyInstance) {
   fastify.get<{ Params: { id: string }; Querystring: { cursor?: string; limit?: string } }>(
     '/:id/posts',
     async (request, reply) => {
+      // If community is private, only members can see posts
+      const community = await fastify.prisma.community.findUnique({
+        where: { id: request.params.id },
+        select: { isPrivate: true, members: { where: { userId: request.userId }, select: { userId: true } } },
+      })
+      if (!community) return reply.status(404).send({ error: 'Community not found' })
+      if (community.isPrivate && community.members.length === 0) {
+        return reply.status(403).send({ error: 'Apenas membros podem ver as publicações desta comunidade' })
+      }
+
       const limit = Math.min(Number(request.query.limit ?? 20), 50)
       const rows = await fastify.prisma.post.findMany({
         where: { communityId: request.params.id },
@@ -105,7 +118,45 @@ export default async function communitiesRoutes(fastify: FastifyInstance) {
     }
   )
 
+  fastify.get<{ Params: { id: string } }>('/:id/members', async (request, reply) => {
+    const community = await fastify.prisma.community.findUnique({
+      where: { id: request.params.id },
+      select: { id: true },
+    })
+    if (!community) return reply.status(404).send({ error: 'Community not found' })
+
+    const members = await fastify.prisma.communityMember.findMany({
+      where: { communityId: request.params.id },
+      include: {
+        user: { select: { id: true, name: true, username: true, archetypeKey: true } },
+      },
+      orderBy: [
+        { role: 'asc' },
+        { joinedAt: 'asc' },
+      ],
+    })
+
+    reply.send(
+      members.map((m) => ({
+        id: m.user.id,
+        name: m.user.name,
+        username: m.user.username,
+        archetypeKey: m.user.archetypeKey,
+        role: m.role,
+      }))
+    )
+  })
+
   fastify.post<{ Params: { id: string } }>('/:id/join', async (request, reply) => {
+    const community = await fastify.prisma.community.findUnique({
+      where: { id: request.params.id },
+      select: { isOpen: true },
+    })
+    if (!community) return reply.status(404).send({ error: 'Community not found' })
+    if (!community.isOpen) {
+      return reply.status(403).send({ error: 'Comunidade fechada' })
+    }
+
     await fastify.prisma.communityMember.upsert({
       where: { userId_communityId: { userId: request.userId, communityId: request.params.id } },
       update: {},

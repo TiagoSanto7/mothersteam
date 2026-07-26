@@ -1,7 +1,8 @@
-import { useState, type FormEvent } from 'react';
-import { ChevronLeft } from 'lucide-react';
+import { useState, useRef, useEffect, type FormEvent } from 'react';
+import { ChevronLeft, ImagePlus, X } from 'lucide-react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { apiFetch } from '../../lib/api';
+import { apiFetch, uploadImage } from '../../lib/api';
+import { useAppStore } from '../../store/useAppStore';
 
 type Category = 'gestação' | 'pós-parto' | 'amamentação' | 'saúde mental';
 type ColorKey = 'gold' | 'terracotta' | 'warm' | 'linen' | 'cream';
@@ -21,31 +22,97 @@ const COLORS: { value: ColorKey; className: string }[] = [
   { value: 'cream',      className: 'bg-sara-cream' },
 ];
 
+const COLOR_MAP: Record<ColorKey, string> = {
+  gold:       'bg-sara-gold',
+  terracotta: 'bg-sara-terracotta',
+  warm:       'bg-sara-warm',
+  linen:      'bg-sara-linen',
+  cream:      'bg-sara-cream',
+};
+
 interface CreateCommunityScreenProps {
   onCreated: (id: string) => void;
   onBack: () => void;
 }
 
+function Toggle({ checked, onChange, id }: { checked: boolean; onChange: (v: boolean) => void; id: string }) {
+  return (
+    <button
+      type="button"
+      id={id}
+      role="switch"
+      aria-checked={checked}
+      onClick={() => onChange(!checked)}
+      className={`relative inline-flex h-6 w-11 flex-shrink-0 rounded-full border-2 border-transparent transition-colors duration-200 focus:outline-none ${
+        checked ? 'bg-sara-gold' : 'bg-sara-linen'
+      }`}
+    >
+      <span
+        className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ${
+          checked ? 'translate-x-5' : 'translate-x-0'
+        }`}
+      />
+    </button>
+  );
+}
+
 export function CreateCommunityScreen({ onCreated, onBack }: CreateCommunityScreenProps) {
+  const accessToken = useAppStore((s) => s.accessToken);
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [category, setCategory] = useState<Category>('gestação');
   const [colorKey, setColorKey] = useState<ColorKey>('gold');
+  const [isPrivate, setIsPrivate] = useState(false);
+  const [isOpen, setIsOpen] = useState(true);
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imagePreviewUrl, setImagePreviewUrl] = useState<string | null>(null);
+  const [uploadError, setUploadError] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const queryClient = useQueryClient();
 
+  // Revoke object URL on unmount
+  useEffect(() => {
+    return () => {
+      if (imagePreviewUrl) URL.revokeObjectURL(imagePreviewUrl);
+    };
+  }, [imagePreviewUrl]);
+
   const { mutate, isPending } = useMutation({
-    mutationFn: () =>
-      apiFetch<{ id: string }>('/communities', {
+    mutationFn: async () => {
+      let imageUrl: string | undefined;
+      if (imageFile) {
+        imageUrl = await uploadImage(imageFile, accessToken);
+      }
+      return apiFetch<{ id: string }>('/communities', {
         method: 'POST',
-        body: JSON.stringify({ name: name.trim(), description: description.trim(), category, colorKey }),
-      }),
+        body: JSON.stringify({ name: name.trim(), description: description.trim(), category, colorKey, imageUrl, isPrivate, isOpen }),
+      });
+    },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['communities'] });
       onCreated(data.id);
     },
+    onError: (err) => {
+      setUploadError(err instanceof Error ? err.message : 'Erro ao criar comunidade');
+    },
   });
 
   const valid = name.trim().length > 0 && description.trim().length > 0;
+
+  function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0] ?? null;
+    setUploadError(null);
+    setImageFile(file);
+    if (imagePreviewUrl) URL.revokeObjectURL(imagePreviewUrl);
+    setImagePreviewUrl(file ? URL.createObjectURL(file) : null);
+  }
+
+  function handleRemoveImage() {
+    if (imagePreviewUrl) URL.revokeObjectURL(imagePreviewUrl);
+    setImageFile(null);
+    setImagePreviewUrl(null);
+    if (fileInputRef.current) fileInputRef.current.value = '';
+  }
 
   function handleSubmit(e: FormEvent) {
     e.preventDefault();
@@ -62,6 +129,68 @@ export function CreateCommunityScreen({ onCreated, onBack }: CreateCommunityScre
       </div>
 
       <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto px-4 pb-4 flex flex-col gap-4">
+
+        {/* Cover photo picker */}
+        <div className="flex flex-col gap-1">
+          <p className="text-xs font-medium text-graphite-muted">Foto de capa (opcional)</p>
+          <div className="relative w-full h-28 rounded-2xl overflow-hidden bg-white border border-sara-linen">
+            {imagePreviewUrl ? (
+              <>
+                <img
+                  src={imagePreviewUrl}
+                  alt="Pré-visualização da capa"
+                  className="w-full h-full object-cover"
+                />
+                <button
+                  type="button"
+                  onClick={handleRemoveImage}
+                  aria-label="Remover foto de capa"
+                  className="absolute top-2 right-2 bg-black/50 text-white rounded-full p-1"
+                >
+                  <X size={14} />
+                </button>
+              </>
+            ) : (
+              <div
+                className={`w-full h-full flex flex-col items-center justify-center gap-1 cursor-pointer ${COLOR_MAP[colorKey]} opacity-30`}
+              />
+            )}
+            {/* Overlay button to open picker when no image */}
+            {!imagePreviewUrl && (
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                className="absolute inset-0 flex flex-col items-center justify-center gap-1 text-graphite-muted hover:text-graphite transition-colors"
+                aria-label="Selecionar foto de capa"
+              >
+                <ImagePlus size={24} />
+                <span className="text-xs font-medium">Adicionar foto</span>
+              </button>
+            )}
+          </div>
+          {imagePreviewUrl && (
+            <button
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
+              className="flex items-center gap-1.5 text-xs text-sara-gold font-medium mt-0.5"
+            >
+              <ImagePlus size={14} />
+              Trocar foto
+            </button>
+          )}
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={handleFileChange}
+            data-testid="cover-file-input"
+          />
+          {uploadError && (
+            <p className="text-xs text-red-500">{uploadError}</p>
+          )}
+        </div>
+
         <div className="flex flex-col gap-1">
           <label htmlFor="cc-name" className="text-xs font-medium text-graphite-muted">Nome</label>
           <input
@@ -117,6 +246,41 @@ export function CreateCommunityScreen({ onCreated, onBack }: CreateCommunityScre
                 className={`w-10 h-10 rounded-full ${c.className} ${colorKey === c.value ? 'ring-2 ring-graphite ring-offset-2' : ''}`}
               />
             ))}
+          </div>
+        </div>
+
+        {/* Privacy settings */}
+        <div className="flex flex-col gap-3 bg-white/50 rounded-2xl p-3">
+          <p className="text-xs font-semibold text-graphite">Privacidade</p>
+
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex flex-col gap-0.5">
+              <label htmlFor="cc-private" className="text-xs font-medium text-graphite">
+                {isPrivate ? 'Apenas membros' : 'Posts visíveis para todos'}
+              </label>
+              <p className="text-[10px] text-graphite-muted">
+                {isPrivate
+                  ? 'Somente membros podem ver as publicações'
+                  : 'Qualquer pessoa pode ver as publicações'}
+              </p>
+            </div>
+            <Toggle id="cc-private" checked={isPrivate} onChange={setIsPrivate} />
+          </div>
+
+          <div className="border-t border-sara-linen/50" />
+
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex flex-col gap-0.5">
+              <label htmlFor="cc-closed" className="text-xs font-medium text-graphite">
+                {isOpen ? 'Entrada livre' : 'Comunidade fechada'}
+              </label>
+              <p className="text-[10px] text-graphite-muted">
+                {isOpen
+                  ? 'Qualquer pessoa pode entrar'
+                  : 'Somente a admin pode adicionar membros'}
+              </p>
+            </div>
+            <Toggle id="cc-closed" checked={!isOpen} onChange={(v) => setIsOpen(!v)} />
           </div>
         </div>
 

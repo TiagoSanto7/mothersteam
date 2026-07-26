@@ -15,7 +15,7 @@ const BASE = API_ORIGIN ?? '/api'
  */
 export function resolveMediaUrl(path: string | null | undefined): string | undefined {
   if (!path) return undefined
-  if (/^https?:\/\//i.test(path)) return path // já absoluta
+  if (/^(https?|data|blob):/i.test(path)) return path // já absoluta ou inline
   if (!API_ORIGIN) return path // dev: Vite proxy cuida
   return `${API_ORIGIN}${path.startsWith('/') ? '' : '/'}${path}`
 }

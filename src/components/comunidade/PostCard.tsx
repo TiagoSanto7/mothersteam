@@ -5,6 +5,7 @@ import { useAppStore } from '../../store/useAppStore';
 import { apiFetch, resolveMediaUrl } from '../../lib/api';
 import { patchPostLikeInAllCaches } from '../../lib/helpers';
 import { SharePostSheet } from './SharePostSheet';
+import { QuoteRepostSheet } from './QuoteRepostSheet';
 import { PostActionsMenu } from './PostActionsMenu';
 import { getAvatarColor } from '../../utils/avatar';
 import type { CommunityPost } from '../../types';
@@ -27,6 +28,7 @@ export function PostCard({ post, onOpen, onOpenProfile, onDeleted }: PostCardPro
   const [liked, setLiked] = useState(post.likedByCurrentUser ?? false);
   const [reposted, setReposted] = useState(false);
   const [showShare, setShowShare] = useState(false);
+  const [showRepostSheet, setShowRepostSheet] = useState(false);
   const badge = post.badge ? BADGE_CONFIG[post.badge] : null;
 
   const likeMutation = useMutation({
@@ -38,8 +40,15 @@ export function PostCard({ post, onOpen, onOpenProfile, onDeleted }: PostCardPro
   });
 
   const repostMutation = useMutation({
-    mutationFn: () => apiFetch(`/posts/${post.id}/repost`, { method: 'POST' }),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['posts'] }),
+    mutationFn: (quoteText?: string) =>
+      apiFetch(`/posts/${post.id}/repost`, {
+        method: 'POST',
+        body: quoteText ? JSON.stringify({ content: quoteText }) : undefined,
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['posts'] });
+      setShowRepostSheet(false);
+    },
   });
 
   return (
@@ -76,6 +85,11 @@ export function PostCard({ post, onOpen, onOpenProfile, onDeleted }: PostCardPro
                   {badge.label}
                 </span>
               )}
+              {post.communityName && (
+                <span className="text-[10px] font-medium px-2 py-0.5 rounded-full w-fit bg-sara-cream text-sara-warm">
+                  Em {post.communityName}
+                </span>
+              )}
             </div>
           </button>
           <div className="flex items-center gap-2 flex-shrink-0">
@@ -92,8 +106,14 @@ export function PostCard({ post, onOpen, onOpenProfile, onDeleted }: PostCardPro
           <button onClick={onOpen} aria-label={`Ver post de ${post.author}`} className="text-left w-full">
             <div className="flex items-center gap-1 mb-2">
               <Repeat2 size={12} className="text-graphite-muted" />
-              <span className="text-[11px] text-graphite-muted">Republicou</span>
+              <span className="text-[11px] text-graphite-muted">
+                {post.quoteContent ? 'Citou' : 'Republicou'}
+              </span>
             </div>
+            {/* Quote comment — shown above the quoted block when present */}
+            {post.quoteContent && (
+              <p className="text-sm text-graphite leading-relaxed mb-2">{post.quoteContent}</p>
+            )}
             <div className="border border-sara-linen rounded-2xl p-3 bg-white/60">
               <p className="text-[11px] font-semibold text-graphite mb-1">{post.repostOriginal.author}</p>
               <p className="text-sm text-graphite-light leading-relaxed">{post.repostOriginal.content}</p>
@@ -140,7 +160,7 @@ export function PostCard({ post, onOpen, onOpenProfile, onDeleted }: PostCardPro
           <button
             onClick={(e) => {
               e.stopPropagation();
-              if (!reposted) { repostMutation.mutate(); setReposted(true); }
+              if (!reposted) setShowRepostSheet(true);
             }}
             aria-label={reposted ? 'Republicado' : 'Republicar'}
             aria-pressed={reposted}
@@ -162,6 +182,17 @@ export function PostCard({ post, onOpen, onOpenProfile, onDeleted }: PostCardPro
       </div>
 
       {showShare && <SharePostSheet post={post} onClose={() => setShowShare(false)} />}
+      {showRepostSheet && (
+        <QuoteRepostSheet
+          post={post}
+          onClose={() => setShowRepostSheet(false)}
+          onConfirm={(quoteText) => {
+            repostMutation.mutate(quoteText);
+            setReposted(true);
+          }}
+          isPending={repostMutation.isPending}
+        />
+      )}
     </>
   );
 }

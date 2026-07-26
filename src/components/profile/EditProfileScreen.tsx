@@ -1,10 +1,11 @@
 import { useState, useEffect, type FormEvent } from 'react';
-import { ChevronLeft } from 'lucide-react';
+import { ChevronLeft, Camera } from 'lucide-react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useAppStore } from '../../store/useAppStore';
 import { apiFetch } from '../../lib/api';
 import { patchUserProfileInCaches } from '../../lib/helpers';
 import type { ApiUser, ApiUserProfile } from '../../lib/types';
+import { getAvatarColor } from '../../utils/avatar';
 
 interface EditProfileScreenProps {
   onBack: () => void;
@@ -24,6 +25,10 @@ export function EditProfileScreen({ onBack }: EditProfileScreenProps) {
     queryFn: () => apiFetch<ApiUserProfile>(`/users/${currentUserId}`),
     enabled: !!currentUserId,
   });
+
+  const username = profile?.username ?? null;
+  const avatarColor = getAvatarColor(profile?.archetypeKey ?? null);
+  const avatarLetter = (name || 'M').charAt(0).toUpperCase();
 
   useEffect(() => {
     if (profile?.bio) setBio(profile.bio);
@@ -69,6 +74,38 @@ export function EditProfileScreen({ onBack }: EditProfileScreenProps) {
       </div>
 
       <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto px-4 flex flex-col gap-4">
+        {/* Avatar preview — upload not yet available */}
+        <div className="flex flex-col items-center gap-2 pt-2 pb-1">
+          <div className="relative">
+            <div
+              style={{ background: avatarColor }}
+              className="w-20 h-20 rounded-full flex items-center justify-center text-white text-3xl font-bold select-none"
+              aria-hidden="true"
+            >
+              {avatarLetter}
+            </div>
+            <div
+              title="Upload de foto em breve"
+              className="absolute inset-0 rounded-full bg-black/40 flex flex-col items-center justify-center gap-0.5 cursor-not-allowed"
+            >
+              <Camera size={18} className="text-white" />
+              <span className="text-[9px] text-white font-medium leading-tight">Em breve</span>
+            </div>
+          </div>
+          <p className="text-[10px] text-graphite-muted">Foto de perfil</p>
+        </div>
+
+        {/* Read-only username */}
+        {username && (
+          <div className="flex flex-col gap-1">
+            <label className="text-xs font-medium text-graphite-muted">Nome de usuário</label>
+            <div className="w-full px-4 py-3 rounded-2xl bg-white/60 border border-sara-linen text-sm text-graphite-muted select-none cursor-default">
+              @{username}
+            </div>
+            <p className="text-[10px] text-graphite-muted pl-1">O nome de usuário não pode ser alterado aqui.</p>
+          </div>
+        )}
+
         <div className="flex flex-col gap-1">
           <label htmlFor="edit-name" className="text-xs font-medium text-graphite-muted">Nome</label>
           <input

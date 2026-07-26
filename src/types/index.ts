@@ -57,6 +57,8 @@ export interface CommunityPost {
   author: string;
   badge?: 'experiente' | 'profissional';
   content: string;
+  /** The reposter's own comment on a quote repost (non-empty only for quote posts). */
+  quoteContent?: string;
   likes: number;
   replies: number;
   reposts: number;
@@ -65,6 +67,7 @@ export interface CommunityPost {
   repostFrom?: string;
   repostOriginal?: { content: string; author: string; authorId: string; authorUsername?: string | null; authorArchetypeKey?: string | null; category: string; originalPostId?: string };
   communityId?: string;
+  communityName?: string | null;
   imageUrl?: string;
   likedByCurrentUser?: boolean;
 }

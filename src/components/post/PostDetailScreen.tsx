@@ -5,6 +5,7 @@ import { useAppStore } from '../../store/useAppStore';
 import { apiFetch, resolveMediaUrl } from '../../lib/api';
 import { patchPostLikeInAllCaches, apiPostToCommunityPost } from '../../lib/helpers';
 import { SharePostSheet } from '../comunidade/SharePostSheet';
+import { QuoteRepostSheet } from '../comunidade/QuoteRepostSheet';
 import { PostActionsMenu } from '../comunidade/PostActionsMenu';
 import { getAvatarColor } from '../../utils/avatar';
 import type { CommunityPost, PostComment } from '../../types';
@@ -39,6 +40,7 @@ export function PostDetailScreen({ post, onBack, onOpenProfile }: PostDetailScre
   const [reposted, setReposted] = useState(false);
   const [commentText, setCommentText] = useState('');
   const [showShareSheet, setShowShareSheet] = useState(false);
+  const [showRepostSheet, setShowRepostSheet] = useState(false);
   const [viewingOriginalId, setViewingOriginalId] = useState<string | null>(null);
 
   const { data: commentsData } = useQuery<PaginatedResult<ApiComment>>({
@@ -71,8 +73,15 @@ export function PostDetailScreen({ post, onBack, onOpenProfile }: PostDetailScre
   });
 
   const repostMutation = useMutation({
-    mutationFn: () => apiFetch(`/posts/${post.id}/repost`, { method: 'POST' }),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['posts'] }),
+    mutationFn: (quoteText?: string) =>
+      apiFetch(`/posts/${post.id}/repost`, {
+        method: 'POST',
+        body: quoteText ? JSON.stringify({ content: quoteText }) : undefined,
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['posts'] });
+      setShowRepostSheet(false);
+    },
   });
 
   const commentMutation = useMutation({
@@ -101,10 +110,7 @@ export function PostDetailScreen({ post, onBack, onOpenProfile }: PostDetailScre
   }
 
   function handleRepost() {
-    if (!reposted) {
-      repostMutation.mutate();
-      setReposted(true);
-    }
+    if (!reposted) setShowRepostSheet(true);
   }
 
   function handleComment() {
@@ -136,7 +142,9 @@ export function PostDetailScreen({ post, onBack, onOpenProfile }: PostDetailScre
           {post.isRepost && (
             <div className="flex items-center gap-1.5 mb-2">
               <Repeat2 size={12} className="text-graphite-muted" />
-              <span className="text-[11px] text-graphite-muted">Republicado</span>
+              <span className="text-[11px] text-graphite-muted">
+                {post.quoteContent ? 'Citou' : 'Republicado'}
+              </span>
             </div>
           )}
 
@@ -170,24 +178,30 @@ export function PostDetailScreen({ post, onBack, onOpenProfile }: PostDetailScre
             <span className="text-xs text-graphite-muted flex-shrink-0">{post.time}</span>
           </div>
 
-          {/* Repost original — clickable to navigate to the original post */}
+          {/* Repost / quote post */}
           {post.isRepost && post.repostOriginal ? (
-            <button
-              type="button"
-              onClick={() => post.repostOriginal?.originalPostId && setViewingOriginalId(post.repostOriginal.originalPostId)}
-              className="w-full text-left border border-sara-linen rounded-2xl p-3 mb-4 bg-white/60 active:bg-sara-linen/50 transition-colors"
-            >
-              <div className="flex items-baseline gap-1.5 mb-1">
-                <p className="text-[11px] font-semibold text-graphite">{post.repostOriginal.author}</p>
-                {post.repostOriginal.authorUsername && (
-                  <span className="text-[10px] text-graphite-muted/70">@{post.repostOriginal.authorUsername}</span>
-                )}
-              </div>
-              <p className="text-sm text-graphite leading-relaxed">{post.repostOriginal.content}</p>
-              {post.repostOriginal.originalPostId && (
-                <p className="text-[10px] text-sara-gold mt-1.5">Toque para ver a publicação original →</p>
+            <div className="mb-4">
+              {/* Quote comment — shown above the quoted block when present */}
+              {post.quoteContent && (
+                <p className="text-sm text-graphite leading-relaxed mb-3">{post.quoteContent}</p>
               )}
-            </button>
+              <button
+                type="button"
+                onClick={() => post.repostOriginal?.originalPostId && setViewingOriginalId(post.repostOriginal.originalPostId)}
+                className="w-full text-left border border-sara-linen rounded-2xl p-3 bg-white/60 active:bg-sara-linen/50 transition-colors"
+              >
+                <div className="flex items-baseline gap-1.5 mb-1">
+                  <p className="text-[11px] font-semibold text-graphite">{post.repostOriginal.author}</p>
+                  {post.repostOriginal.authorUsername && (
+                    <span className="text-[10px] text-graphite-muted/70">@{post.repostOriginal.authorUsername}</span>
+                  )}
+                </div>
+                <p className="text-sm text-graphite leading-relaxed">{post.repostOriginal.content}</p>
+                {post.repostOriginal.originalPostId && (
+                  <p className="text-[10px] text-sara-gold mt-1.5">Toque para ver a publicação original →</p>
+                )}
+              </button>
+            </div>
           ) : (
             <p className="text-sm text-graphite leading-relaxed mb-4">{post.content}</p>
           )}
@@ -291,6 +305,17 @@ export function PostDetailScreen({ post, onBack, onOpenProfile }: PostDetailScre
 
       {showShareSheet && (
         <SharePostSheet post={post} onClose={() => setShowShareSheet(false)} />
+      )}
+      {showRepostSheet && (
+        <QuoteRepostSheet
+          post={post}
+          onClose={() => setShowRepostSheet(false)}
+          onConfirm={(quoteText) => {
+            repostMutation.mutate(quoteText);
+            setReposted(true);
+          }}
+          isPending={repostMutation.isPending}
+        />
       )}
     </div>
   );

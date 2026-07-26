@@ -19,7 +19,6 @@ export function Capitulo1({ onComplete }: Capitulo1Props) {
     state,
     amplitude,
     collectedFatos,
-    error,
     startConversation,
     sendTextResponse,
     stop,
@@ -78,9 +77,9 @@ export function Capitulo1({ onComplete }: Capitulo1Props) {
         )}
 
         {state === 'error' && (
-          <div className="flex flex-col items-center gap-2">
-            <p className="text-[13px] text-sara-terracotta text-center">
-              {error || 'Algo não deu certo na conexão.'}
+          <div className="flex flex-col items-center gap-3">
+            <p className="text-[13px] text-sara-terracotta text-center max-w-xs">
+              Não foi possível conectar com a Sara. Verifique as permissões de microfone e tente novamente.
             </p>
             <button
               type="button"
@@ -88,6 +87,13 @@ export function Capitulo1({ onComplete }: Capitulo1Props) {
               className="px-4 py-2 rounded-2xl bg-sara-gold text-white text-xs font-semibold"
             >
               Tentar de novo
+            </button>
+            <button
+              type="button"
+              onClick={() => { stop(); onComplete({}) }}
+              className="px-4 py-2 rounded-2xl border border-graphite-muted text-graphite-muted text-xs"
+            >
+              Pular esta etapa
             </button>
           </div>
         )}
@@ -105,7 +111,7 @@ export function Capitulo1({ onComplete }: Capitulo1Props) {
           />
           <button
             type="submit"
-            disabled={!textInput.trim() || state !== 'listening'}
+            disabled={!textInput.trim() || (state !== 'listening' && state !== 'error')}
             aria-label="Enviar"
             className="px-4 py-3 rounded-2xl bg-sara-gold text-white text-sm font-semibold disabled:opacity-40"
           >

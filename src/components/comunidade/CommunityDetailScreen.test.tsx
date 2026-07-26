@@ -22,13 +22,19 @@ function renderScreen(id = 'c1', onBack = vi.fn()) {
 const mockCommunity = {
   id: 'c1', name: 'Gestantes 2026', description: 'Um espaço para gestantes',
   category: 'gestação', colorKey: 'gold', creatorId: 'x', createdAt: '2026-01-01',
+  isPrivate: false, isOpen: true,
   _count: { members: 42 }, isMember: false, role: null,
 };
+
+const mockMembers = [
+  { id: 'u1', name: 'Ana', username: 'ana', archetypeKey: null, role: 'owner' },
+];
 
 beforeEach(() => {
   vi.clearAllMocks();
   vi.mocked(api.apiFetch).mockImplementation(async (path: string) => {
     if (path.includes('/posts')) return { items: [], hasMore: false };
+    if (path.includes('/members')) return mockMembers;
     return mockCommunity;
   });
 });
@@ -53,6 +59,7 @@ describe('CommunityDetailScreen', () => {
   it('shows "Sair" when already a member', async () => {
     vi.mocked(api.apiFetch).mockImplementation(async (path: string) => {
       if (path.includes('/posts')) return { items: [], hasMore: false };
+      if (path.includes('/members')) return mockMembers;
       return { ...mockCommunity, isMember: true, role: 'member' };
     });
     renderScreen();

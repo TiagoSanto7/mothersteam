@@ -54,12 +54,17 @@ model Follow {
   @@id([followerId, followingId])
 }
 
+// After changing isPrivate/isOpen fields, run on the server:
+//   npx prisma migrate dev --name add_community_privacy
 model Community {
   id          String            @id @default(cuid())
   name        String
   description String            @db.Text
   category    String
   colorKey    String
+  imageUrl    String?
+  isPrivate   Boolean           @default(false) // true = posts only visible to members
+  isOpen      Boolean           @default(true)  // false = closed community (admin adds members only)
   creatorId   String
   creator     User              @relation("CommunityCreator", fields: [creatorId], references: [id])
   members     CommunityMember[]

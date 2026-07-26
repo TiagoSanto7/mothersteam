@@ -132,8 +132,14 @@ export function apiPostToCommunityPost(post: ApiPost): CommunityPost {
     reposts: post._count.reposts ?? 0,
     time: relativeTime(post.createdAt),
     communityId: post.communityId ?? undefined,
+    communityName: post.communityName ?? null,
     isRepost: post.isRepost,
     likedByCurrentUser: post.likedByCurrentUser,
+    // quoteContent is the reposter's own comment; present when content differs from the original post
+    quoteContent:
+      post.isRepost && post.repostFrom && post.content !== post.repostFrom.content && post.content
+        ? post.content
+        : undefined,
     repostOriginal: post.repostFrom
       ? {
           originalPostId: post.repostFrom.id,

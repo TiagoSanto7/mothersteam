@@ -49,6 +49,7 @@ export interface ApiPost {
   authorId: string
   author: { id: string; name: string; username?: string | null; archetypeKey?: string | null }
   communityId?: string | null
+  communityName?: string | null
   isRepost: boolean
   repostFromId?: string | null
   repostFrom?: { id: string; content: string; category: string; author: { id: string; name: string; username?: string | null; archetypeKey?: string | null } } | null
@@ -63,7 +64,10 @@ export interface ApiCommunity {
   description: string
   category: 'gestação' | 'pós-parto' | 'amamentação' | 'saúde mental'
   colorKey: 'gold' | 'terracotta' | 'warm' | 'linen' | 'cream'
+  imageUrl?: string | null
   creatorId: string
+  isPrivate: boolean
+  isOpen: boolean
   _count: { members: number }
   createdAt: string
 }
@@ -71,6 +75,14 @@ export interface ApiCommunity {
 export interface ApiCommunityDetail extends ApiCommunity {
   isMember: boolean
   role: 'owner' | 'admin' | 'member' | null
+}
+
+export interface ApiCommunityMember {
+  id: string
+  name: string
+  username?: string | null
+  archetypeKey?: string | null
+  role: 'owner' | 'admin' | 'member'
 }
 
 export interface ApiNotification {
@@ -85,6 +97,7 @@ export interface ApiNotification {
   actorId?: string | null
   actorName?: string | null
   postExcerpt?: string | null
+  isFollowedByCurrentUser?: boolean
 }
 
 export interface ApiMessage {

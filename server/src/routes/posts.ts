@@ -25,6 +25,7 @@ export default async function postsRoutes(fastify: FastifyInstance) {
         ...(request.query.cursor ? { cursor: { id: request.query.cursor }, skip: 1 } : {}),
         include: {
           author: { select: { id: true, name: true, username: true, archetypeKey: true } },
+          community: { select: { name: true } },
           _count: { select: { likes: true, comments: true, reposts: true } },
           likes: { where: { userId: request.userId }, select: { userId: true } },
           repostFrom: { include: { author: { select: { id: true, name: true, username: true, archetypeKey: true } } } },
@@ -32,8 +33,9 @@ export default async function postsRoutes(fastify: FastifyInstance) {
         orderBy: { createdAt: 'desc' },
       })
       const hasMore = rows.length > limit
-      const items = rows.slice(0, limit).map(({ likes, ...post }) => ({
+      const items = rows.slice(0, limit).map(({ likes, community, ...post }) => ({
         ...post,
+        communityName: community?.name ?? null,
         likedByCurrentUser: likes.length > 0,
       }))
       const nextCursor = items.length > 0 ? items[items.length - 1].id : undefined
@@ -128,9 +130,14 @@ export default async function postsRoutes(fastify: FastifyInstance) {
     const original = await fastify.prisma.post.findUnique({ where: { id: request.params.id } })
     if (!original) return reply.status(404).send({ error: 'Post not found' })
 
+    // Optional quote comment — if provided this becomes a "quote repost"
+    const quoteSchema = z.object({ content: z.string().optional() })
+    const parsed = quoteSchema.safeParse(request.body)
+    const quoteContent = (parsed.success ? parsed.data.content?.trim() : undefined) ?? ''
+
     const repost = await fastify.prisma.post.create({
       data: {
-        content: original.content,
+        content: quoteContent || original.content,
         category: original.category,
         authorId: request.userId,
         isRepost: true,

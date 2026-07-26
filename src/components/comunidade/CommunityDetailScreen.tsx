@@ -1,10 +1,11 @@
 import { useState, useRef, useEffect } from 'react';
-import { ChevronLeft, Pencil } from 'lucide-react';
+import { ChevronLeft, Pencil, Lock, EyeOff } from 'lucide-react';
 import { useQuery, useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { apiFetch } from '../../lib/api';
-import type { ApiCommunityDetail, ApiPost } from '../../lib/types';
+import { apiFetch, resolveMediaUrl } from '../../lib/api';
+import type { ApiCommunityDetail, ApiCommunityMember, ApiPost } from '../../lib/types';
 import { apiPostToCommunityPost } from '../../lib/helpers';
 import { useIntersection } from '../../lib/useIntersection';
+import { getAvatarColor } from '../../utils/avatar';
 import { PostDetailScreen } from '../post/PostDetailScreen';
 import { CreatePostScreen } from './CreatePostScreen';
 import { PostCard } from './PostCard';
@@ -57,6 +58,12 @@ export function CommunityDetailScreen({ communityId, onBack, onOpenProfile }: Co
     if (isAtBottom && hasNextPage && !isFetchingNextPage) fetchNextPage();
   }, [isAtBottom, hasNextPage, isFetchingNextPage, fetchNextPage]);
 
+  const { data: members } = useQuery({
+    queryKey: ['communityMembers', communityId],
+    queryFn: () => apiFetch<ApiCommunityMember[]>(`/communities/${communityId}/members`),
+    enabled: !!communityId,
+  });
+
   const joinMutation = useMutation({
     mutationFn: (isJoining: boolean) =>
       apiFetch(`/communities/${communityId}/join`, { method: isJoining ? 'POST' : 'DELETE' }),
@@ -72,6 +79,7 @@ export function CommunityDetailScreen({ communityId, onBack, onOpenProfile }: Co
           : old
       );
       queryClient.invalidateQueries({ queryKey: ['communities'] });
+      queryClient.invalidateQueries({ queryKey: ['communityMembers', communityId] });
     },
   });
 
@@ -114,7 +122,15 @@ export function CommunityDetailScreen({ communityId, onBack, onOpenProfile }: Co
       </div>
 
       <div className="relative flex-shrink-0">
-        <div className={`h-24 ${COLOR_MAP[community.colorKey] ?? 'bg-sara-gold'}`} />
+        {community.imageUrl ? (
+          <img
+            src={resolveMediaUrl(community.imageUrl)}
+            alt={`Capa de ${community.name}`}
+            className="w-full h-24 object-cover"
+          />
+        ) : (
+          <div className={`h-24 ${COLOR_MAP[community.colorKey] ?? 'bg-sara-gold'}`} />
+        )}
         <div className={`absolute left-4 -bottom-6 w-12 h-12 rounded-full border-4 border-white ${COLOR_MAP[community.colorKey] ?? 'bg-sara-gold'} flex items-center justify-center shadow-sm`}>
           <span className="text-white text-base font-bold">{community.name.charAt(0).toUpperCase()}</span>
         </div>
@@ -123,19 +139,54 @@ export function CommunityDetailScreen({ communityId, onBack, onOpenProfile }: Co
       <div className="px-4 pt-8 pb-4 flex-shrink-0 bg-white/40">
         <h1 className="text-base font-bold text-graphite">{community.name}</h1>
         <p className="text-xs text-graphite-muted mt-1">{community._count.members} membros · {community.category}</p>
+
+        {/* Privacy badges */}
+        {(community.isPrivate || !community.isOpen) && (
+          <div className="flex gap-1.5 mt-2">
+            {community.isPrivate && (
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-graphite/10 text-graphite text-[10px] font-medium">
+                <EyeOff size={10} />
+                Posts privados
+              </span>
+            )}
+            {!community.isOpen && (
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-graphite/10 text-graphite text-[10px] font-medium">
+                <Lock size={10} />
+                Comunidade fechada
+              </span>
+            )}
+          </div>
+        )}
+
         <p className="text-sm text-graphite mt-3 leading-relaxed">{community.description}</p>
 
         <div className="flex gap-2 mt-4">
-          <button
-            onClick={() => joinMutation.mutate(!community.isMember)}
-            className={`flex-1 py-2.5 rounded-xl text-xs font-semibold active:scale-95 transition-transform ${
-              community.isMember
-                ? 'bg-white text-graphite-muted border border-sara-linen'
-                : 'bg-sara-gold text-white'
-            }`}
-          >
-            {community.isMember ? 'Sair' : 'Entrar'}
-          </button>
+          {/* Join/leave button — disabled with tooltip when community is closed and user is not a member */}
+          {!community.isOpen && !community.isMember ? (
+            <div className="flex-1 relative group">
+              <button
+                disabled
+                className="w-full py-2.5 rounded-xl text-xs font-semibold bg-graphite/10 text-graphite-muted cursor-not-allowed flex items-center justify-center gap-1"
+              >
+                <Lock size={12} />
+                Comunidade fechada
+              </button>
+              <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 px-2 py-1 rounded-lg bg-graphite text-white text-[10px] whitespace-nowrap opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity">
+                Comunidade fechada
+              </span>
+            </div>
+          ) : (
+            <button
+              onClick={() => joinMutation.mutate(!community.isMember)}
+              className={`flex-1 py-2.5 rounded-xl text-xs font-semibold active:scale-95 transition-transform ${
+                community.isMember
+                  ? 'bg-white text-graphite-muted border border-sara-linen'
+                  : 'bg-sara-gold text-white'
+              }`}
+            >
+              {community.isMember ? 'Sair' : 'Entrar'}
+            </button>
+          )}
           {community.isMember && (
             <button
               onClick={() => setShowCreate(true)}
@@ -149,6 +200,52 @@ export function CommunityDetailScreen({ communityId, onBack, onOpenProfile }: Co
       </div>
 
       <div className="flex-1 overflow-y-auto px-4 py-4 flex flex-col gap-3">
+        {/* Members section */}
+        <div className="bg-white/50 rounded-2xl p-3">
+          <p className="text-xs font-semibold text-graphite mb-2">
+            Membros{members ? ` (${members.length})` : ''}
+          </p>
+          {!members ? (
+            <p className="text-xs text-graphite-muted text-center py-2">Carregando...</p>
+          ) : (
+            <div className="flex flex-col gap-2">
+              {members.map((member) => (
+                <button
+                  key={member.id}
+                  onClick={() => onOpenProfile?.(member.id)}
+                  className="flex items-center gap-2.5 w-full text-left active:opacity-70 transition-opacity"
+                >
+                  <div
+                    className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 text-white text-xs font-bold"
+                    style={{ background: getAvatarColor(member.archetypeKey) }}
+                  >
+                    {member.name.charAt(0).toUpperCase()}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs font-semibold text-graphite truncate">{member.name}</p>
+                    {member.username && (
+                      <p className="text-[10px] text-graphite-muted truncate">@{member.username}</p>
+                    )}
+                  </div>
+                  {(member.role === 'owner' || member.role === 'admin') && (
+                    <span
+                      className={`text-[9px] font-semibold px-1.5 py-0.5 rounded-full flex-shrink-0 ${
+                        member.role === 'owner'
+                          ? 'bg-sara-gold/20 text-sara-gold'
+                          : 'bg-sara-terracotta/20 text-sara-terracotta'
+                      }`}
+                    >
+                      {member.role === 'owner' ? 'Criadora' : 'Admin'}
+                    </span>
+                  )}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Posts section */}
+        <p className="text-xs font-semibold text-graphite px-1">Publicações</p>
         {posts.length === 0 ? (
           <p className="text-sm text-graphite-muted text-center py-8">Nenhuma publicação ainda</p>
         ) : (

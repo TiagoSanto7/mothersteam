@@ -157,7 +157,12 @@ export function ProfileScreen({ onClose, userId, onOpenProfile, isTab = false }:
             <ChevronLeft size={20} className="text-graphite" />
           </button>
         )}
-        <p className="text-sm font-semibold font-serif text-graphite">{profile.name}</p>
+        <div className="flex flex-col items-center">
+          <p className="text-sm font-semibold font-serif text-graphite">{profile.name}</p>
+          {profile.username && (
+            <p className="text-xs text-graphite-muted">@{profile.username}</p>
+          )}
+        </div>
         {isSelf ? (
           <button
             onClick={() => setShowSettings(true)}
