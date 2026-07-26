@@ -21,6 +21,12 @@ export default async function postsRoutes(fastify: FastifyInstance) {
     async (request, reply) => {
       const limit = Math.min(Number(request.query.limit ?? 20), 50)
       const rows = await fastify.prisma.post.findMany({
+        where: {
+          OR: [
+            { communityId: null },
+            { community: { isPrivate: false } },
+          ],
+        },
         take: limit + 1,
         ...(request.query.cursor ? { cursor: { id: request.query.cursor }, skip: 1 } : {}),
         include: {

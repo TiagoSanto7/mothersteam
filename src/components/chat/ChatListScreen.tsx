@@ -11,9 +11,10 @@ import type { Chat } from '../../types';
 
 interface ChatListScreenProps {
   onBack: () => void;
+  onOpenProfile?: (userId: string) => void;
 }
 
-export function ChatListScreen({ onBack }: ChatListScreenProps) {
+export function ChatListScreen({ onBack, onOpenProfile }: ChatListScreenProps) {
   const isLoggedIn    = useAppStore((s) => s.isLoggedIn);
   const currentUserId = useAppStore((s) => s.currentUserId) ?? '';
   const queryClient   = useQueryClient();
@@ -47,7 +48,7 @@ export function ChatListScreen({ onBack }: ChatListScreenProps) {
   if (selectedChat) {
     return (
       <div className="flex flex-col w-full h-full sm:w-[390px] sm:h-[844px] bg-gradient-to-b from-[#F5EDE0] via-[#EAD8C8] to-[#D9C4AF] sm:rounded-[44px] sm:shadow-2xl overflow-hidden">
-        <ChatScreen chat={selectedChat} onBack={() => setSelectedChat(null)} />
+        <ChatScreen chat={selectedChat} onBack={() => setSelectedChat(null)} onOpenProfile={onOpenProfile} />
       </div>
     );
   }

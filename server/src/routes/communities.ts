@@ -85,19 +85,15 @@ export default async function communitiesRoutes(fastify: FastifyInstance) {
   fastify.get<{ Params: { id: string }; Querystring: { cursor?: string; limit?: string } }>(
     '/:id/posts',
     async (request, reply) => {
-      // If community is private, only members can see posts
-      const community = await fastify.prisma.community.findUnique({
-        where: { id: request.params.id },
-        select: { isPrivate: true, members: { where: { userId: request.userId }, select: { userId: true } } },
-      })
-      if (!community) return reply.status(404).send({ error: 'Community not found' })
-      if (community.isPrivate && community.members.length === 0) {
-        return reply.status(403).send({ error: 'Apenas membros podem ver as publicações desta comunidade' })
-      }
-
       const limit = Math.min(Number(request.query.limit ?? 20), 50)
+      // Combine isPrivate check into the posts query to avoid an extra DB round-trip.
+      // The where clause filters posts to communities the user can access:
+      // public communities OR private communities where the user is a member.
       const rows = await fastify.prisma.post.findMany({
-        where: { communityId: request.params.id },
+        where: {
+          communityId: request.params.id,
+          community: { OR: [{ isPrivate: false }, { members: { some: { userId: request.userId } } }] },
+        },
         take: limit + 1,
         ...(request.query.cursor ? { cursor: { id: request.query.cursor }, skip: 1 } : {}),
         include: {
@@ -121,9 +117,12 @@ export default async function communitiesRoutes(fastify: FastifyInstance) {
   fastify.get<{ Params: { id: string } }>('/:id/members', async (request, reply) => {
     const community = await fastify.prisma.community.findUnique({
       where: { id: request.params.id },
-      select: { id: true },
+      select: { id: true, isPrivate: true, members: { where: { userId: request.userId }, select: { userId: true } } },
     })
     if (!community) return reply.status(404).send({ error: 'Community not found' })
+    if (community.isPrivate && community.members.length === 0) {
+      return reply.status(403).send({ error: 'Apenas membras podem ver os membros desta comunidade' })
+    }
 
     const members = await fastify.prisma.communityMember.findMany({
       where: { communityId: request.params.id },

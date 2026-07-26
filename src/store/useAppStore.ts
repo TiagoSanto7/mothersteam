@@ -185,7 +185,18 @@ export const useAppStore = create<AppState>()(
           const uid = s.currentUserId ?? '__anon__';
           const current = s.versesByUser[uid] ?? [];
           if (current.includes(ref)) return {};
-          return { versesByUser: { ...s.versesByUser, [uid]: [...current, ref] } };
+          // If the verse was in the __legacy__ bucket, remove it from there
+          // so the progressive migration moves it to the current user's bucket.
+          const legacy = s.versesByUser['__legacy__'] ?? [];
+          const newLegacy = legacy.filter((r) => r !== ref);
+          const newVersesByUser: Record<string, string[]> = {
+            ...s.versesByUser,
+            [uid]: [...current, ref],
+          };
+          if (newLegacy.length !== legacy.length) {
+            newVersesByUser['__legacy__'] = newLegacy;
+          }
+          return { versesByUser: newVersesByUser };
         }),
       unsaveVerse: (ref) =>
         set((s) => {
@@ -233,11 +244,16 @@ const EMPTY_PRAYERS: Record<string, string> = {};
 
 /**
  * Selector: returns the saved verse refs for the currently logged-in user.
- * Use this instead of reading `savedVerses` directly.
+ * Also merges in any verses stored in the __legacy__ bucket (pre-migration)
+ * so that verses saved before the user logged in are not lost.
  */
-export function selectSavedVerses(s: AppState): string[] {
-  const uid = s.currentUserId ?? '__anon__';
-  return s.versesByUser[uid] ?? EMPTY_VERSES;
+export const selectSavedVerses = (s: AppState): string[] => {
+  const userId = s.currentUserId ?? '__anon__'
+  const userVerses = s.versesByUser[userId] ?? EMPTY_VERSES
+  const legacyVerses = userId !== '__legacy__' ? (s.versesByUser['__legacy__'] ?? EMPTY_VERSES) : EMPTY_VERSES
+  if (legacyVerses.length === 0) return userVerses
+  // Merge legacy into user bucket on first read (deduplicated)
+  return Array.from(new Set([...userVerses, ...legacyVerses]))
 }
 
 /**

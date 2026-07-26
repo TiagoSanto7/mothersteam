@@ -12,6 +12,9 @@ const createSchema = z.object({
 const updateSchema = z.object({
   done: z.boolean().optional(),
   title: z.string().min(1).optional(),
+  time: z.string().optional(),
+  date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+  category: z.enum(['task', 'appointment', 'medication']).optional(),
   notes: z.string().max(300).nullable().optional(),
 })
 
@@ -22,7 +25,10 @@ export default async function routineRoutes(fastify: FastifyInstance) {
     const { date, future, limit } = request.query
     if (future === 'true') {
       // Returns upcoming entries (date >= today) sorted by date then time
-      const today = new Date().toISOString().split('T')[0]
+      // Use local-date arithmetic (not toISOString which is UTC) so the cutoff
+      // matches the server's local clock even when TZ offsets differ.
+      const now = new Date()
+      const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`
       const entries = await fastify.prisma.routineEntry.findMany({
         where: { userId: request.userId, date: { gte: today } },
         orderBy: [{ date: 'asc' }, { time: 'asc' }],

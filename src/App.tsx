@@ -210,7 +210,7 @@ export default function App() {
 
       {showChat && (
         <div className="fixed inset-0 z-50 sm:bg-black/40 sm:flex sm:items-center sm:justify-center">
-          <ChatListScreen onBack={() => setShowChat(false)} />
+          <ChatListScreen onBack={() => setShowChat(false)} onOpenProfile={(id) => { setShowChat(false); setProfileUserId(id); }} />
         </div>
       )}
 

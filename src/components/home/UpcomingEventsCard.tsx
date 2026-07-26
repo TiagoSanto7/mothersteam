@@ -26,7 +26,7 @@ export function UpcomingEventsCard() {
 
   const { data: futureEvents = [] } = useQuery({
     queryKey: ['routine', 'future'],
-    queryFn: () => apiFetch<ApiRoutineEntry[]>('/routine?future=true&limit=50'),
+    queryFn: () => apiFetch<ApiRoutineEntry[]>('/routine?future=true&limit=3'),
     enabled: isLoggedIn,
     staleTime: 60_000,
   });

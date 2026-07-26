@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { ChevronLeft, Settings } from 'lucide-react';
 import { useQuery, useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useAppStore } from '../../store/useAppStore';
+import { useAppStore, selectSavedVerses } from '../../store/useAppStore';
 import { ARCHETYPES } from '../../utils/onboardingScoring';
 import { getAvatarColor } from '../../utils/avatar';
 import { SettingsScreen } from './SettingsScreen';
@@ -25,7 +25,7 @@ interface ProfileScreenProps {
 
 export function ProfileScreen({ onClose, userId, onOpenProfile, isTab = false }: ProfileScreenProps) {
   const currentUserId = useAppStore((s) => s.currentUserId);
-  const savedVerses = useAppStore((s) => s.savedVerses);
+  const savedVerses = useAppStore(selectSavedVerses);
   const isLoggedIn = useAppStore((s) => s.isLoggedIn);
 
   const effectiveUserId = userId ?? currentUserId ?? '';

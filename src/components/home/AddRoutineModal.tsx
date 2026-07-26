@@ -59,7 +59,7 @@ export function AddRoutineModal({ onClose, defaultDate, editEntry }: AddRoutineM
     mutationFn: () =>
       apiFetch(`/routine/${editEntry!.id}`, {
         method: 'PATCH',
-        body: JSON.stringify({ title: title.trim(), notes: notes.trim() || null }),
+        body: JSON.stringify({ title: title.trim(), time, category, date, notes: notes.trim() || null }),
       }),
     onSuccess: () => { invalidate(); onClose(); },
   });
