@@ -128,7 +128,15 @@ export default async function communitiesRoutes(fastify: FastifyInstance) {
     const members = await fastify.prisma.communityMember.findMany({
       where: { communityId: request.params.id },
       include: {
-        user: { select: { id: true, name: true, username: true, archetypeKey: true } },
+        user: {
+          select: {
+            id: true,
+            name: true,
+            username: true,
+            archetypeKey: true,
+            followers: { where: { followerId: request.userId }, select: { followerId: true } },
+          },
+        },
       },
       orderBy: [
         { role: 'asc' },
@@ -143,6 +151,8 @@ export default async function communitiesRoutes(fastify: FastifyInstance) {
         username: m.user.username,
         archetypeKey: m.user.archetypeKey,
         role: m.role,
+        isFollowedByCurrentUser: m.user.followers.length > 0,
+        isSelf: m.user.id === request.userId,
       }))
     )
   })

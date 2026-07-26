@@ -6,6 +6,7 @@ import { useAppStore } from '../../store/useAppStore';
 import { PostDetailScreen } from '../post/PostDetailScreen';
 import { apiPostToCommunityPost } from '../../lib/helpers';
 import { getAvatarColor } from '../../utils/avatar';
+import { ChatProfilePreviewModal } from './ChatProfilePreviewModal';
 import type { ApiMessage, ApiPost, PaginatedResult } from '../../lib/types';
 import type { Chat } from '../../types';
 
@@ -113,11 +114,12 @@ function ComingSoonTooltip({ label, onClose }: ComingSoonTooltipProps) {
 interface ChatScreenProps {
   chat: Chat;
   onBack: () => void;
+  onOpenProfile?: (userId: string) => void;
 }
 
 type ActivePanel = 'emoji' | 'photo' | 'audio' | null;
 
-export function ChatScreen({ chat, onBack }: ChatScreenProps) {
+export function ChatScreen({ chat, onBack, onOpenProfile }: ChatScreenProps) {
   const currentUserId = useAppStore((s) => s.currentUserId);
   const isLoggedIn    = useAppStore((s) => s.isLoggedIn);
   const queryClient   = useQueryClient();
@@ -125,6 +127,7 @@ export function ChatScreen({ chat, onBack }: ChatScreenProps) {
   const [text, setText] = useState('');
   const [activePanel, setActivePanel] = useState<ActivePanel>(null);
   const [viewingPostId, setViewingPostId] = useState<string | null>(null);
+  const [showProfilePreview, setShowProfilePreview] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef  = useRef<HTMLInputElement>(null);
 
@@ -208,15 +211,21 @@ export function ChatScreen({ chat, onBack }: ChatScreenProps) {
         <button onClick={onBack} className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-sara-linen">
           <ChevronLeft size={20} className="text-graphite" />
         </button>
-        <div
-          style={{ background: getAvatarColor(chat.withArchetypeKey) }}
-          className="w-8 h-8 rounded-full flex items-center justify-center text-white font-bold text-sm flex-shrink-0"
+        <button
+          aria-label={`Ver perfil de ${chat.with}`}
+          onClick={() => setShowProfilePreview(true)}
+          className="flex items-center gap-3 flex-1 min-w-0 text-left"
         >
-          {chat.with.charAt(0).toUpperCase()}
-        </div>
-        <div className="flex-1 min-w-0">
-          <p className="text-sm font-semibold text-graphite truncate">{chat.with}</p>
-        </div>
+          <div
+            style={{ background: getAvatarColor(chat.withArchetypeKey) }}
+            className="w-8 h-8 rounded-full flex items-center justify-center text-white font-bold text-sm flex-shrink-0"
+          >
+            {chat.with.charAt(0).toUpperCase()}
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-semibold text-graphite truncate">{chat.with}</p>
+          </div>
+        </button>
       </div>
 
       {/* Messages */}
@@ -270,6 +279,19 @@ export function ChatScreen({ chat, onBack }: ChatScreenProps) {
         })}
         <div ref={bottomRef} />
       </div>
+
+      {/* Profile preview modal */}
+      {showProfilePreview && chat.withUserId && (
+        <ChatProfilePreviewModal
+          name={chat.with}
+          username={chat.withUsername}
+          archetypeKey={chat.withArchetypeKey}
+          userId={chat.withUserId}
+          messageCount={messages.length}
+          onClose={() => setShowProfilePreview(false)}
+          onOpenProfile={onOpenProfile ?? (() => {})}
+        />
+      )}
 
       {/* Input area */}
       <div className="px-4 py-3 border-t border-sara-linen/60 flex-shrink-0 bg-sara-linen/80 backdrop-blur-sm">

@@ -5,6 +5,7 @@ import { useAppStore } from '../../store/useAppStore';
 import { WeekCalendar } from './WeekCalendar';
 import { RoutineTimeline } from './RoutineTimeline';
 import { AddRoutineModal } from './AddRoutineModal';
+import { UpcomingEventsCard } from './UpcomingEventsCard';
 import { SARA_FRASES } from '../../data/reception/sara-frases';
 import { getAvatarColor } from '../../utils/avatar';
 import type { ReceptionData } from '../../types/reception';
@@ -49,6 +50,8 @@ export function HomeScreen({ onOpenProfile }: HomeScreenProps) {
       </div>
 
       <WeekCalendar referenceDate={selectedDate} />
+
+      <UpcomingEventsCard />
 
       <div className="flex items-center justify-between px-4">
         <h2 className="text-sm font-semibold text-graphite">Sua Rotina</h2>

@@ -13,6 +13,7 @@ export interface RoutineEntry {
   title: string;
   category: 'task' | 'appointment' | 'medication';
   done: boolean;
+  notes?: string | null;
 }
 
 export interface BabyEntry {
@@ -106,6 +107,8 @@ export interface ChatMessage {
 export interface Chat {
   id: string;
   with: string;
+  withUserId?: string | null;
+  withUsername?: string | null;
   withArchetypeKey?: string | null;
   lastMessage: string;
   time: string;

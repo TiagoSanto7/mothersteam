@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Check, Pill, Calendar, CheckSquare } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -5,6 +6,7 @@ import { apiFetch } from '../../lib/api';
 import { useAppStore } from '../../store/useAppStore';
 import type { ApiRoutineEntry } from '../../lib/types';
 import type { RoutineEntry } from '../../types';
+import { EventDetailModal } from './EventDetailModal';
 
 const CATEGORY_CONFIG = {
   medication:  { icon: Pill,        color: 'text-sara-terracotta', bg: 'bg-sara-linen' },
@@ -13,24 +15,41 @@ const CATEGORY_CONFIG = {
 } as const;
 
 function apiToRoutineEntry(e: ApiRoutineEntry): RoutineEntry {
-  return { id: e.id, time: e.time, date: e.date, title: e.title, category: e.category, done: e.done };
+  return { id: e.id, time: e.time, date: e.date, title: e.title, category: e.category, done: e.done, notes: e.notes };
 }
 
-function EntryCard({ entry, onToggle }: { entry: RoutineEntry; onToggle: (id: string) => void }) {
+interface EntryCardProps {
+  entry: RoutineEntry;
+  apiEntry: ApiRoutineEntry;
+  onToggle: (id: string) => void;
+  onDetail: (entry: ApiRoutineEntry) => void;
+}
+
+function EntryCard({ entry, apiEntry, onToggle, onDetail }: EntryCardProps) {
   const cfg = CATEGORY_CONFIG[entry.category];
   return (
-    <div className={`flex items-center gap-3 p-3 rounded-2xl bg-white/70 backdrop-blur-sm border border-white/50 transition-opacity ${entry.done ? 'opacity-50' : 'opacity-100'}`}>
+    <div
+      role="button"
+      tabIndex={0}
+      aria-label={`Ver detalhe: ${entry.title}`}
+      onClick={() => onDetail(apiEntry)}
+      onKeyDown={(e) => e.key === 'Enter' && onDetail(apiEntry)}
+      className={`flex items-center gap-3 p-3 rounded-2xl bg-white/70 backdrop-blur-sm border border-white/50 transition-opacity cursor-pointer active:scale-[0.98] ${entry.done ? 'opacity-50' : 'opacity-100'}`}
+    >
       <div className={`w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 ${cfg.bg}`}>
         <cfg.icon size={18} className={cfg.color} />
       </div>
       <div className="flex-1 min-w-0">
         <p className={`text-sm font-medium truncate ${entry.done ? 'line-through text-graphite-muted' : 'text-graphite'}`}>{entry.title}</p>
         <p className="text-xs text-graphite-muted">{entry.time}</p>
+        {entry.notes && (
+          <p className="text-[11px] text-graphite-muted/70 truncate">{entry.notes}</p>
+        )}
       </div>
       <button
-        onClick={() => onToggle(entry.id)}
+        onClick={(e) => { e.stopPropagation(); onToggle(entry.id); }}
         aria-label={entry.done ? `Desmarcar: ${entry.title}` : `Marcar como feita: ${entry.title}`}
-        className={`w-7 h-7 rounded-full flex items-center justify-center border-2 transition-colors ${
+        className={`w-7 h-7 rounded-full flex items-center justify-center border-2 transition-colors flex-shrink-0 ${
           entry.done ? 'bg-sara-gold border-sara-gold' : 'border-sara-linen bg-sara-cream'
         }`}
       >
@@ -44,6 +63,7 @@ export function RoutineTimeline() {
   const selectedDate = useAppStore((s) => s.selectedDate);
   const isLoggedIn   = useAppStore((s) => s.isLoggedIn);
   const queryClient  = useQueryClient();
+  const [detailEntry, setDetailEntry] = useState<ApiRoutineEntry | null>(null);
 
   const { data: apiEntries = [] } = useQuery({
     queryKey: ['routine', selectedDate],
@@ -77,17 +97,37 @@ export function RoutineTimeline() {
   }
 
   return (
-    <div className="flex flex-col gap-2 px-4">
-      {entries.map((entry, index) => (
-        <motion.div
-          key={entry.id}
-          initial={{ opacity: 0, y: 12 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: index * 0.06, duration: 0.3 }}
-        >
-          <EntryCard entry={entry} onToggle={handleToggle} />
-        </motion.div>
-      ))}
-    </div>
+    <>
+      <div className="flex flex-col gap-2 px-4">
+        {apiEntries
+          .slice()
+          .sort((a, b) => a.time.localeCompare(b.time))
+          .map((apiEntry, index) => {
+            const entry = apiToRoutineEntry(apiEntry);
+            return (
+              <motion.div
+                key={entry.id}
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: index * 0.06, duration: 0.3 }}
+              >
+                <EntryCard
+                  entry={entry}
+                  apiEntry={apiEntry}
+                  onToggle={handleToggle}
+                  onDetail={setDetailEntry}
+                />
+              </motion.div>
+            );
+          })}
+      </div>
+
+      {detailEntry && (
+        <EventDetailModal
+          entry={detailEntry}
+          onClose={() => setDetailEntry(null)}
+        />
+      )}
+    </>
   );
 }

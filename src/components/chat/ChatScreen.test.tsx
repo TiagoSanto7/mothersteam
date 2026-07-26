@@ -9,8 +9,8 @@ import type { ApiMessage, ApiPost, PaginatedResult } from '../../lib/types';
 const { mockApiFetch } = vi.hoisted(() => ({ mockApiFetch: vi.fn() }));
 vi.mock('../../lib/api', () => ({ apiFetch: mockApiFetch, ApiError: class extends Error {} }));
 
-const PLAIN_CHAT: Chat = { id: '1', with: 'Ana', lastMessage: 'Olá', time: '5min', unread: 0, messages: [] };
-const SHARED_CHAT: Chat = { id: '2', with: 'Fernanda', lastMessage: 'veja', time: '1h', unread: 0, messages: [] };
+const PLAIN_CHAT: Chat = { id: '1', with: 'Ana', withUserId: 'other', withUsername: 'ana_mae', lastMessage: 'Olá', time: '5min', unread: 0, messages: [] };
+const SHARED_CHAT: Chat = { id: '2', with: 'Fernanda', withUserId: 'u2', withUsername: null, lastMessage: 'veja', time: '1h', unread: 0, messages: [] };
 
 const PLAIN_MESSAGES: ApiMessage[] = [
   { id: '1', content: 'Olá!', chatId: '1', senderId: 'other', sender: { id: 'other', name: 'Ana' }, read: true, createdAt: '2024-01-01T10:00:00Z' },
@@ -85,5 +85,74 @@ describe('ChatScreen', () => {
   it('renders comment text when sharedPost message also has content', () => {
     render(<ChatScreen chat={SHARED_CHAT} onBack={() => {}} />, { wrapper: makeWrapper('2', SHARED_MESSAGES) });
     expect(screen.getByText('Olha isso!')).toBeInTheDocument();
+  });
+});
+
+describe('ChatScreen — profile preview modal', () => {
+  it('tapping the header opens the profile preview modal', () => {
+    render(
+      <ChatScreen chat={PLAIN_CHAT} onBack={() => {}} onOpenProfile={() => {}} />,
+      { wrapper: makeWrapper('1', PLAIN_MESSAGES) },
+    );
+    fireEvent.click(screen.getByRole('button', { name: /ver perfil de Ana/i }));
+    expect(screen.getByRole('dialog', { name: /preview de perfil/i })).toBeInTheDocument();
+  });
+
+  it('modal shows the partner name', () => {
+    render(
+      <ChatScreen chat={PLAIN_CHAT} onBack={() => {}} onOpenProfile={() => {}} />,
+      { wrapper: makeWrapper('1', PLAIN_MESSAGES) },
+    );
+    fireEvent.click(screen.getByRole('button', { name: /ver perfil de Ana/i }));
+    expect(screen.getAllByText('Ana').length).toBeGreaterThan(0);
+  });
+
+  it('modal shows @username when available', () => {
+    render(
+      <ChatScreen chat={PLAIN_CHAT} onBack={() => {}} onOpenProfile={() => {}} />,
+      { wrapper: makeWrapper('1', PLAIN_MESSAGES) },
+    );
+    fireEvent.click(screen.getByRole('button', { name: /ver perfil de Ana/i }));
+    expect(screen.getByText('@ana_mae')).toBeInTheDocument();
+  });
+
+  it('modal shows the message count', () => {
+    render(
+      <ChatScreen chat={PLAIN_CHAT} onBack={() => {}} onOpenProfile={() => {}} />,
+      { wrapper: makeWrapper('1', PLAIN_MESSAGES) },
+    );
+    fireEvent.click(screen.getByRole('button', { name: /ver perfil de Ana/i }));
+    expect(screen.getByText(/2 mensagens/i)).toBeInTheDocument();
+  });
+
+  it('"Visitar perfil" button calls onOpenProfile with the partner userId', () => {
+    const onOpenProfile = vi.fn();
+    render(
+      <ChatScreen chat={PLAIN_CHAT} onBack={() => {}} onOpenProfile={onOpenProfile} />,
+      { wrapper: makeWrapper('1', PLAIN_MESSAGES) },
+    );
+    fireEvent.click(screen.getByRole('button', { name: /ver perfil de Ana/i }));
+    fireEvent.click(screen.getByRole('button', { name: /visitar perfil/i }));
+    expect(onOpenProfile).toHaveBeenCalledWith('other');
+  });
+
+  it('close button dismisses the modal', () => {
+    render(
+      <ChatScreen chat={PLAIN_CHAT} onBack={() => {}} onOpenProfile={() => {}} />,
+      { wrapper: makeWrapper('1', PLAIN_MESSAGES) },
+    );
+    fireEvent.click(screen.getByRole('button', { name: /ver perfil de Ana/i }));
+    expect(screen.getByRole('dialog', { name: /preview de perfil/i })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: /fechar/i }));
+    expect(screen.queryByRole('dialog', { name: /preview de perfil/i })).not.toBeInTheDocument();
+  });
+
+  it('does not show @username when withUsername is null', () => {
+    render(
+      <ChatScreen chat={SHARED_CHAT} onBack={() => {}} onOpenProfile={() => {}} />,
+      { wrapper: makeWrapper('2', SHARED_MESSAGES) },
+    );
+    fireEvent.click(screen.getByRole('button', { name: /ver perfil de Fernanda/i }));
+    expect(screen.queryByText(/@/)).not.toBeInTheDocument();
   });
 });

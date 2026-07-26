@@ -83,6 +83,8 @@ export interface ApiCommunityMember {
   username?: string | null
   archetypeKey?: string | null
   role: 'owner' | 'admin' | 'member'
+  isFollowedByCurrentUser: boolean
+  isSelf: boolean
 }
 
 export interface ApiNotification {
@@ -115,7 +117,7 @@ export interface ApiMessage {
 
 export interface ApiChat {
   id: string
-  participants: Array<{ userId: string; chatId: string; user: { id: string; name: string; archetypeKey?: string | null } }>
+  participants: Array<{ userId: string; chatId: string; user: { id: string; name: string; username?: string | null; archetypeKey?: string | null } }>
   messages: ApiMessage[]
   createdAt: string
 }
@@ -127,6 +129,7 @@ export interface ApiRoutineEntry {
   title: string
   category: 'task' | 'appointment' | 'medication'
   done: boolean
+  notes?: string | null
   userId: string
   createdAt: string
 }

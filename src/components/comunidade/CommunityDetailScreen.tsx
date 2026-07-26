@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { ChevronLeft, Pencil, Lock, EyeOff } from 'lucide-react';
+import { ChevronLeft, Pencil, Lock, EyeOff, UserCheck, X } from 'lucide-react';
 import { useQuery, useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiFetch, resolveMediaUrl } from '../../lib/api';
 import type { ApiCommunityDetail, ApiCommunityMember, ApiPost } from '../../lib/types';
@@ -25,10 +25,145 @@ const COLOR_MAP: Record<string, string> = {
   cream:      'bg-sara-cream',
 };
 
+// Maps memberId → true once the current user successfully followed that member (optimistic).
+type MemberFollowedMap = Record<string, boolean>;
+
+// ---------------------------------------------------------------------------
+// MemberRow — renders one member with avatar, name/username, role badge and
+// a Seguir/Seguindo chip (hidden when isSelf).
+// ---------------------------------------------------------------------------
+interface MemberRowProps {
+  member: ApiCommunityMember;
+  isFollowing: boolean;
+  onFollow: (memberId: string) => void;
+  onOpenProfile?: (userId: string) => void;
+  isPending?: boolean;
+}
+
+function MemberRow({ member, isFollowing, onFollow, onOpenProfile, isPending }: MemberRowProps) {
+  return (
+    <div className="flex items-center gap-2.5 w-full">
+      <button
+        onClick={() => onOpenProfile?.(member.id)}
+        className="flex items-center gap-2.5 flex-1 min-w-0 text-left active:opacity-70 transition-opacity"
+      >
+        <div
+          className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 text-white text-xs font-bold"
+          style={{ background: getAvatarColor(member.archetypeKey) }}
+        >
+          {member.name.charAt(0).toUpperCase()}
+        </div>
+        <div className="flex-1 min-w-0">
+          <p className="text-xs font-semibold text-graphite truncate">{member.name}</p>
+          {member.username && (
+            <p className="text-[10px] text-graphite-muted truncate">@{member.username}</p>
+          )}
+        </div>
+        {(member.role === 'owner' || member.role === 'admin') && (
+          <span
+            className={`text-[9px] font-semibold px-1.5 py-0.5 rounded-full flex-shrink-0 ${
+              member.role === 'owner'
+                ? 'bg-sara-gold/20 text-sara-gold'
+                : 'bg-sara-terracotta/20 text-sara-terracotta'
+            }`}
+          >
+            {member.role === 'owner' ? 'Criadora' : 'Admin'}
+          </span>
+        )}
+      </button>
+
+      {/* Follow chip — hidden for self */}
+      {!member.isSelf && (
+        <button
+          type="button"
+          disabled={isFollowing || isPending}
+          onClick={(e) => {
+            e.stopPropagation();
+            if (!isFollowing) onFollow(member.id);
+          }}
+          className={`flex items-center gap-1 text-[11px] font-semibold px-2 py-1 rounded-full active:scale-95 transition-all flex-shrink-0 ${
+            isFollowing
+              ? 'bg-transparent border border-sara-gold text-sara-gold cursor-default'
+              : 'bg-sara-gold text-white'
+          }`}
+        >
+          <UserCheck size={11} />
+          {isFollowing ? 'Seguindo' : 'Seguir'}
+        </button>
+      )}
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// CommunityMembersModal — full list of all members in a bottom-sheet modal
+// ---------------------------------------------------------------------------
+interface CommunityMembersModalProps {
+  members: ApiCommunityMember[];
+  followedMap: MemberFollowedMap;
+  onFollow: (memberId: string) => void;
+  onClose: () => void;
+  onOpenProfile?: (userId: string) => void;
+  isPending?: boolean;
+}
+
+function CommunityMembersModal({
+  members,
+  followedMap,
+  onFollow,
+  onClose,
+  onOpenProfile,
+  isPending,
+}: CommunityMembersModalProps) {
+  return (
+    <div className="absolute inset-0 z-20 flex flex-col bg-gradient-to-b from-[#F5EDE0] via-[#EAD8C8] to-[#D9C4AF]">
+      {/* Header */}
+      <div className="flex items-center justify-between px-4 pt-6 pb-3 flex-shrink-0 border-b border-sara-linen/60">
+        <p className="text-sm font-semibold text-graphite">
+          Membros ({members.length})
+        </p>
+        <button
+          onClick={onClose}
+          aria-label="Fechar lista de membros"
+          className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-sara-linen"
+        >
+          <X size={18} className="text-graphite" />
+        </button>
+      </div>
+
+      {/* List */}
+      <div className="flex-1 overflow-y-auto px-4 py-3">
+        <div className="flex flex-col gap-2">
+          {members.map((member) => {
+            const isFollowing = followedMap[member.id] ?? member.isFollowedByCurrentUser;
+            return (
+              <MemberRow
+                key={member.id}
+                member={member}
+                isFollowing={isFollowing}
+                onFollow={onFollow}
+                onOpenProfile={onOpenProfile}
+                isPending={isPending}
+              />
+            );
+          })}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// CommunityDetailScreen
+// ---------------------------------------------------------------------------
+const MEMBERS_PREVIEW_COUNT = 3;
+
 export function CommunityDetailScreen({ communityId, onBack, onOpenProfile }: CommunityDetailScreenProps) {
   const queryClient = useQueryClient();
   const [selectedPost, setSelectedPost] = useState<CommunityPost | null>(null);
   const [showCreate, setShowCreate] = useState(false);
+  const [showAllMembers, setShowAllMembers] = useState(false);
+  const [followedMap, setFollowedMap] = useState<MemberFollowedMap>({});
 
   const sentinelRef = useRef<HTMLDivElement>(null);
   const isAtBottom = useIntersection(sentinelRef);
@@ -83,6 +218,20 @@ export function CommunityDetailScreen({ communityId, onBack, onOpenProfile }: Co
     },
   });
 
+  const followMutation = useMutation({
+    mutationFn: (userId: string) =>
+      apiFetch(`/users/${userId}/follow`, { method: 'POST' }),
+    onSuccess: (_data, userId) => {
+      setFollowedMap((prev) => ({ ...prev, [userId]: true }));
+    },
+  });
+
+  function handleFollow(memberId: string) {
+    if (!followedMap[memberId]) {
+      followMutation.mutate(memberId);
+    }
+  }
+
   if (showCreate) {
     return (
       <div className="flex flex-col w-full h-full sm:w-[390px] sm:h-[844px] bg-gradient-to-b from-[#F5EDE0] via-[#EAD8C8] to-[#D9C4AF] sm:rounded-[44px] sm:shadow-2xl overflow-hidden">
@@ -110,9 +259,11 @@ export function CommunityDetailScreen({ communityId, onBack, onOpenProfile }: Co
   }
 
   const posts = postsPages?.pages.flatMap((p) => p.items.map(apiPostToCommunityPost)) ?? [];
+  const previewMembers = members ? members.slice(0, MEMBERS_PREVIEW_COUNT) : [];
+  const hasMoreMembers = members ? members.length > MEMBERS_PREVIEW_COUNT : false;
 
   return (
-    <div className="flex flex-col w-full h-full sm:w-[390px] sm:h-[844px] bg-gradient-to-b from-[#F5EDE0] via-[#EAD8C8] to-[#D9C4AF] sm:rounded-[44px] sm:shadow-2xl overflow-hidden">
+    <div className="relative flex flex-col w-full h-full sm:w-[390px] sm:h-[844px] bg-gradient-to-b from-[#F5EDE0] via-[#EAD8C8] to-[#D9C4AF] sm:rounded-[44px] sm:shadow-2xl overflow-hidden">
       <div className="flex items-center justify-between px-4 pt-6 pb-3 flex-shrink-0">
         <button onClick={onBack} aria-label="Voltar" className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-sara-linen">
           <ChevronLeft size={20} className="text-graphite" />
@@ -209,37 +360,29 @@ export function CommunityDetailScreen({ communityId, onBack, onOpenProfile }: Co
             <p className="text-xs text-graphite-muted text-center py-2">Carregando...</p>
           ) : (
             <div className="flex flex-col gap-2">
-              {members.map((member) => (
+              {previewMembers.map((member) => {
+                const isFollowing = followedMap[member.id] ?? member.isFollowedByCurrentUser;
+                return (
+                  <MemberRow
+                    key={member.id}
+                    member={member}
+                    isFollowing={isFollowing}
+                    onFollow={handleFollow}
+                    onOpenProfile={onOpenProfile}
+                    isPending={followMutation.isPending}
+                  />
+                );
+              })}
+
+              {hasMoreMembers && (
                 <button
-                  key={member.id}
-                  onClick={() => onOpenProfile?.(member.id)}
-                  className="flex items-center gap-2.5 w-full text-left active:opacity-70 transition-opacity"
+                  type="button"
+                  onClick={() => setShowAllMembers(true)}
+                  className="text-[11px] text-sara-gold font-semibold text-left mt-1 hover:underline"
                 >
-                  <div
-                    className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 text-white text-xs font-bold"
-                    style={{ background: getAvatarColor(member.archetypeKey) }}
-                  >
-                    {member.name.charAt(0).toUpperCase()}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-xs font-semibold text-graphite truncate">{member.name}</p>
-                    {member.username && (
-                      <p className="text-[10px] text-graphite-muted truncate">@{member.username}</p>
-                    )}
-                  </div>
-                  {(member.role === 'owner' || member.role === 'admin') && (
-                    <span
-                      className={`text-[9px] font-semibold px-1.5 py-0.5 rounded-full flex-shrink-0 ${
-                        member.role === 'owner'
-                          ? 'bg-sara-gold/20 text-sara-gold'
-                          : 'bg-sara-terracotta/20 text-sara-terracotta'
-                      }`}
-                    >
-                      {member.role === 'owner' ? 'Criadora' : 'Admin'}
-                    </span>
-                  )}
+                  ver mais... ({members.length} membros)
                 </button>
-              ))}
+              )}
             </div>
           )}
         </div>
@@ -263,6 +406,18 @@ export function CommunityDetailScreen({ communityId, onBack, onOpenProfile }: Co
           <p className="text-center text-xs text-graphite-muted py-2">Carregando...</p>
         )}
       </div>
+
+      {/* Full members modal — layered on top */}
+      {showAllMembers && members && (
+        <CommunityMembersModal
+          members={members}
+          followedMap={followedMap}
+          onFollow={handleFollow}
+          onClose={() => setShowAllMembers(false)}
+          onOpenProfile={onOpenProfile}
+          isPending={followMutation.isPending}
+        />
+      )}
     </div>
   );
 }

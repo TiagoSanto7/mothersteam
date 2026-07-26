@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { useAppStore } from '../../store/useAppStore'
+import { useAppStore, selectSavedVerses } from '../../store/useAppStore'
 import { getMomentoDoDia, getMoodPeriod, MOOD_CONFIG } from '../../data/momentoDeus'
 import { SavedVersesScreen } from './SavedVersesScreen'
 import { ShareMomentoSheet } from './ShareMomentoSheet'
@@ -15,7 +15,7 @@ export function MomentoDeusScreen({ open, onClose }: Props) {
   const [savedOpen, setSavedOpen] = useState(false)
   const [shareOpen, setShareOpen] = useState(false)
 
-  const savedVerses = useAppStore((s) => s.savedVerses)
+  const savedVerses = useAppStore(selectSavedVerses)
   const saveVerse = useAppStore((s) => s.saveVerse)
   const unsaveVerse = useAppStore((s) => s.unsaveVerse)
   const setPendingShareContent = useAppStore((s) => s.setPendingShareContent)

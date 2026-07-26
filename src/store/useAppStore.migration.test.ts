@@ -32,9 +32,23 @@ describe('migrateAppState', () => {
     expect(result.activeTab).toBe('hoje');
   });
 
-  it('is a no-op for version >= 1 (returns state as-is)', () => {
-    const state = { activeTab: 'home', motherName: 'Ana' };
+  it('migrates v1 → v2: moves savedVerses into versesByUser.__legacy__', () => {
+    const state = { activeTab: 'home', motherName: 'Ana', savedVerses: ['Mateus 11:28'] };
     const result = migrateAppState(state, 1);
+    expect(result.versesByUser).toEqual({ '__legacy__': ['Mateus 11:28'] });
+    expect(result.prayersByUser).toEqual({});
+  });
+
+  it('migrates v1 → v2: empty savedVerses leaves versesByUser empty', () => {
+    const state = { activeTab: 'home', motherName: 'Ana', savedVerses: [] };
+    const result = migrateAppState(state, 1);
+    expect(result.versesByUser).toEqual({});
+    expect(result.prayersByUser).toEqual({});
+  });
+
+  it('is a no-op for version >= 2 (returns state as-is)', () => {
+    const state = { activeTab: 'home', motherName: 'Ana' };
+    const result = migrateAppState(state, 2);
     expect(result).toStrictEqual(state);
   });
 

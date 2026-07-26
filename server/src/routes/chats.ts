@@ -20,7 +20,7 @@ export default async function chatsRoutes(fastify: FastifyInstance) {
     const chats = await fastify.prisma.chat.findMany({
       where: { participants: { some: { userId: request.userId } } },
       include: {
-        participants: { include: { user: { select: { id: true, name: true, archetypeKey: true } } } },
+        participants: { include: { user: { select: { id: true, name: true } } } },
         messages: { orderBy: { createdAt: 'desc' }, take: 1 },
       },
       orderBy: { createdAt: 'desc' },
@@ -42,10 +42,13 @@ export default async function chatsRoutes(fastify: FastifyInstance) {
           { participants: { some: { userId: body.data.userId } } },
         ],
       },
-      include: { participants: { include: { user: { select: { id: true, name: true, archetypeKey: true } } } } },
+      include: {
+        participants: { include: { user: { select: { id: true, name: true } } } },
+        messages: { orderBy: { createdAt: 'desc' }, take: 1 },
+      },
     })
 
-    if (existing) return reply.send({ ...existing, messages: [] })
+    if (existing) return reply.send(existing)
 
     const chat = await fastify.prisma.chat.create({
       data: {
@@ -53,7 +56,7 @@ export default async function chatsRoutes(fastify: FastifyInstance) {
           create: [{ userId: request.userId }, { userId: body.data.userId }],
         },
       },
-      include: { participants: { include: { user: { select: { id: true, name: true, archetypeKey: true } } } } },
+      include: { participants: { include: { user: { select: { id: true, name: true } } } } },
     })
     reply.status(201).send({ ...chat, messages: [] })
   })
@@ -71,7 +74,7 @@ export default async function chatsRoutes(fastify: FastifyInstance) {
         where: { chatId: request.params.id },
         take: limit + 1,
         ...(request.query.cursor ? { cursor: { id: request.query.cursor }, skip: 1 } : {}),
-        include: { sender: { select: { id: true, name: true, archetypeKey: true } } },
+        include: { sender: { select: { id: true, name: true } } },
         orderBy: { createdAt: 'desc' },
       })
       const hasMore = messages.length > limit
@@ -97,7 +100,7 @@ export default async function chatsRoutes(fastify: FastifyInstance) {
         sharedPostAuthor: body.data.sharedPostAuthor,
         sharedPostExcerpt: body.data.sharedPostExcerpt,
       },
-      include: { sender: { select: { id: true, name: true, archetypeKey: true } } },
+      include: { sender: { select: { id: true, name: true } } },
     })
 
     // Notify all OTHER participants via SSE

@@ -1,18 +1,16 @@
-import { useState } from 'react';
+import { useRef } from 'react';
 import { motion } from 'framer-motion';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { useAppStore } from '../../store/useAppStore';
 
 const DAYS_PT = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
 
-function getWeekDays(referenceDate: string, weekOffset: number): Date[] {
-  const ref = new Date(referenceDate + 'T12:00:00');
-  const day = ref.getDay();
-  const monday = new Date(ref);
-  monday.setDate(ref.getDate() - day + (day === 0 ? -6 : 1) + weekOffset * 7);
+/** Returns the last 7 days ending today (index 6 = today). */
+function getRollingWeek(): Date[] {
+  const today = new Date();
+  today.setHours(12, 0, 0, 0);
   return Array.from({ length: 7 }, (_, i) => {
-    const d = new Date(monday);
-    d.setDate(monday.getDate() + i);
+    const d = new Date(today);
+    d.setDate(today.getDate() - (6 - i));
     return d;
   });
 }
@@ -21,34 +19,27 @@ function toISO(date: Date): string {
   return date.toISOString().split('T')[0];
 }
 
-export function WeekCalendar({ referenceDate }: { referenceDate: string }) {
+/** Rolling 7-day window ending today. `referenceDate` prop kept for backward compat. */
+export function WeekCalendar({ referenceDate: _referenceDate }: { referenceDate?: string }) {
   const { selectedDate, setSelectedDate } = useAppStore();
-  const [weekOffset, setWeekOffset] = useState(0);
-  const days = getWeekDays(referenceDate, weekOffset);
-  const today = new Date().toISOString().split('T')[0];
+  const dateInputRef = useRef<HTMLInputElement>(null);
+  const days = getRollingWeek();
+  const today = toISO(new Date());
 
-  function navigateWeek(direction: -1 | 1) {
-    const newOffset = weekOffset + direction;
-    const newDays = getWeekDays(referenceDate, newOffset);
-    // Keep the same weekday index (0=Mon … 6=Sun) as the currently selected date,
-    // falling back to Monday (index 0) of the new week.
-    const currentDayIndex = days.findIndex((d) => toISO(d) === selectedDate);
-    const targetDay = newDays[currentDayIndex >= 0 ? currentDayIndex : 0];
-    setWeekOffset(newOffset);
-    setSelectedDate(toISO(targetDay));
+  function handlePickerChange(e: React.ChangeEvent<HTMLInputElement>) {
+    if (e.target.value) {
+      setSelectedDate(e.target.value);
+    }
+  }
+
+  function openDatePicker() {
+    dateInputRef.current?.showPicker?.();
+    dateInputRef.current?.click();
   }
 
   return (
-    <div className="flex items-center gap-1 px-2 py-2">
-      <button
-        aria-label="Semana anterior"
-        onClick={() => navigateWeek(-1)}
-        className="flex-shrink-0 p-1 rounded-full text-graphite-muted active:text-sara-gold transition-colors"
-      >
-        <ChevronLeft size={20} strokeWidth={2} />
-      </button>
-
-      <div className="flex flex-1 gap-2 overflow-x-auto scrollbar-hide">
+    <div className="flex flex-col gap-1 px-2 py-2">
+      <div className="flex gap-2 overflow-x-auto scrollbar-hide">
         {days.map((day) => {
           const iso = toISO(day);
           const isSelected = iso === selectedDate;
@@ -81,13 +72,24 @@ export function WeekCalendar({ referenceDate }: { referenceDate: string }) {
         })}
       </div>
 
-      <button
-        aria-label="Próxima semana"
-        onClick={() => navigateWeek(1)}
-        className="flex-shrink-0 p-1 rounded-full text-graphite-muted active:text-sara-gold transition-colors"
-      >
-        <ChevronRight size={20} strokeWidth={2} />
-      </button>
+      <div className="flex justify-center">
+        <button
+          onClick={openDatePicker}
+          aria-label="Ver outras datas"
+          className="text-[11px] text-graphite-muted underline underline-offset-2 py-0.5"
+        >
+          ver outras datas
+        </button>
+        <input
+          ref={dateInputRef}
+          type="date"
+          aria-label="Selecionar data"
+          value={selectedDate}
+          onChange={handlePickerChange}
+          className="sr-only"
+          tabIndex={-1}
+        />
+      </div>
     </div>
   );
 }
