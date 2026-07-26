@@ -8,6 +8,11 @@ import { useAppStore } from '../store/useAppStore'
 const API_ORIGIN = import.meta.env.VITE_API_URL?.replace(/\/$/, '')
 const BASE = API_ORIGIN ?? '/api'
 
+/** Monta a URL absoluta de uma rota do backend (respeita VITE_API_URL). */
+export function resolveApiUrl(path: string): string {
+  return `${BASE}${path}`
+}
+
 /**
  * Resolve URLs de mídia (imagens de post, uploads etc.) — o backend retorna
  * paths relativos tipo `/uploads/xyz.png`. Em dev o Vite proxy resolve; em

@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useAppStore } from '../../../store/useAppStore'
+import { resolveApiUrl } from '../../../lib/api'
 
 export type TTSState = 'idle' | 'loading' | 'playing' | 'done' | 'error'
 
@@ -60,7 +61,7 @@ export function useSaraTTS(): UseSaraTTSReturn {
 
       try {
         const token = useAppStore.getState().accessToken
-        const res = await fetch('/api/sara/tts', {
+        const res = await fetch(resolveApiUrl('/sara/tts'), {
           method: 'POST',
           signal: controller.signal,
           credentials: 'include',
