@@ -36,3 +36,4 @@ dist-ssr
 # Server
 server/.env
 server/dist/
+.claude/worktrees/
