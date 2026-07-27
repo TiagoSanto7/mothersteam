@@ -178,6 +178,7 @@ export function ComunidadeScreen() {
                   post={post}
                   onOpen={() => setSelectedPost(post)}
                   onOpenProfile={() => post.authorId && setProfileUserId(post.authorId)}
+                  onOpenUser={(id) => setProfileUserId(id)}
                   onOpenCommunity={(id) => setOpenCommunityId(id)}
                 />
               ))}

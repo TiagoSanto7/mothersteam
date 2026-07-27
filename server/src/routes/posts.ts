@@ -60,6 +60,35 @@ export default async function postsRoutes(fastify: FastifyInstance) {
         _count: { select: { likes: true, comments: true } },
       },
     })
+
+    // Notify @mentioned users (fire-and-forget — don't delay the response)
+    const handles = [...body.data.content.matchAll(/@([a-z0-9_]+)/gi)].map((m) => m[1].toLowerCase())
+    if (handles.length > 0) {
+      fastify.prisma.user.findMany({
+        where: { username: { in: handles }, id: { not: request.userId } },
+        select: { id: true },
+      }).then(async (mentioned) => {
+        if (mentioned.length === 0) return
+        const actor = await fastify.prisma.user.findUnique({ where: { id: request.userId }, select: { name: true } })
+        const actorName = actor?.name ?? 'Alguém'
+        for (const u of mentioned) {
+          await fastify.prisma.notification.create({
+            data: {
+              type: 'mention',
+              text: `${actorName} citou você em uma publicação.`,
+              recipientId: u.id,
+              targetType: 'post',
+              targetId: post.id,
+              actorId: request.userId,
+              actorName,
+              postExcerpt: body.data.content.slice(0, 200),
+            },
+          })
+          emitNotification(u.id)
+        }
+      }).catch(() => {})
+    }
+
     reply.status(201).send({ ...post, likedByCurrentUser: false })
   })
 

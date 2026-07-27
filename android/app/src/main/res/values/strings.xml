@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Mother\'s Team</string>
+    <string name="title_activity_main">Mother\'s Team</string>
+    <string name="package_name">com.santoti.mothersteam</string>
+    <string name="custom_url_scheme">com.santoti.mothersteam</string>
+</resources>

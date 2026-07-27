@@ -11,6 +11,16 @@ import { PostActionsMenu } from './PostActionsMenu';
 import { getAvatarColor } from '../../utils/avatar';
 import type { CommunityPost } from '../../types';
 
+async function lookupAndOpen(username: string, onOpenUser: (id: string) => void) {
+  try {
+    const res = await apiFetch<{ items: { id: string; username: string | null }[] }>(
+      `/users?q=${encodeURIComponent(username)}&limit=10`
+    );
+    const match = res.items.find((u) => u.username?.toLowerCase() === username.toLowerCase());
+    if (match) onOpenUser(match.id);
+  } catch { /* ignore */ }
+}
+
 const BADGE_CONFIG = {
   experiente:   { label: 'Mãe Experiente',       color: 'bg-sara-linen text-sara-terracotta' },
   profissional: { label: 'Profissional de Saúde', color: 'bg-sara-cream text-sara-warm' },
@@ -20,11 +30,12 @@ interface PostCardProps {
   post: CommunityPost;
   onOpen: () => void;
   onOpenProfile: () => void;
+  onOpenUser?: (userId: string) => void;
   onOpenCommunity?: (communityId: string) => void;
   onDeleted?: () => void;
 }
 
-export function PostCard({ post, onOpen, onOpenProfile, onOpenCommunity, onDeleted }: PostCardProps) {
+export function PostCard({ post, onOpen, onOpenProfile, onOpenUser, onOpenCommunity, onDeleted }: PostCardProps) {
   const currentUserId = useAppStore((s) => s.currentUserId);
   const queryClient = useQueryClient();
   const [liked, setLiked] = useState(post.likedByCurrentUser ?? false);
@@ -129,12 +140,12 @@ export function PostCard({ post, onOpen, onOpenProfile, onOpenCommunity, onDelet
             )}
             <div className="border border-sara-linen rounded-2xl p-3 bg-white/60">
               <p className="text-[11px] font-semibold text-graphite mb-1">{post.repostOriginal.author}</p>
-              <MentionText text={post.repostOriginal.content} className="text-sm text-graphite-light leading-relaxed block" />
+              <MentionText text={post.repostOriginal.content} className="text-sm text-graphite-light leading-relaxed block" onMentionPress={onOpenUser ? (u) => lookupAndOpen(u, onOpenUser) : undefined} />
             </div>
           </button>
         ) : (
           <button onClick={onOpen} aria-label={`Ver post de ${post.author}`} className="text-left flex flex-col gap-2">
-            <MentionText text={post.content} className="text-sm text-graphite-light leading-relaxed block" />
+            <MentionText text={post.content} className="text-sm text-graphite-light leading-relaxed block" onMentionPress={onOpenUser ? (u) => lookupAndOpen(u, onOpenUser) : undefined} />
             {post.imageUrl && (
               <img
                 src={resolveMediaUrl(post.imageUrl)}

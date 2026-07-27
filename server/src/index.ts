@@ -29,7 +29,10 @@ import maeIARoutes from './routes/mae-ia'
 
 const fastify = Fastify({ logger: true })
 
-await fastify.register(helmet)
+await fastify.register(helmet, {
+  // Allow cross-origin image/media loads (frontend and API are on different origins in prod)
+  crossOriginResourcePolicy: { policy: 'cross-origin' },
+})
 // CORS aceita múltiplos origins via FRONTEND_URL (comma-separated).
 // Precisamos disso pra o mesmo backend servir web dev, web deploy e o Capacitor
 // APK (cujo origin no Android é http://localhost ou https://localhost).

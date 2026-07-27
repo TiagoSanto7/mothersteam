@@ -1,6 +1,7 @@
 import { useEffect } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import { useAppStore } from '../store/useAppStore'
+import { resolveApiUrl } from './api'
 
 export function useSSE() {
   const isLoggedIn = useAppStore((s) => s.isLoggedIn)
@@ -9,8 +10,9 @@ export function useSSE() {
   useEffect(() => {
     if (!isLoggedIn) return
 
-    // EventSource sends cookies automatically — the server authenticates via HttpOnly refresh cookie
-    const es = new EventSource('/api/sse')
+    // EventSource sends cookies automatically — the server authenticates via HttpOnly refresh cookie.
+    // withCredentials required for cross-origin (prod: frontend port 8080 → api.santoti.com).
+    const es = new EventSource(resolveApiUrl('/sse'), { withCredentials: true })
 
     es.onmessage = (e) => {
       try {

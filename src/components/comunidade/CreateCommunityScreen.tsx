@@ -2,6 +2,7 @@ import { useState, useRef, useEffect, type FormEvent } from 'react';
 import { ChevronLeft, ImagePlus, X } from 'lucide-react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiFetch, uploadImage } from '../../lib/api';
+import { resizeImage } from '../../lib/imageUtils';
 import { useAppStore } from '../../store/useAppStore';
 
 type Category = 'gestação' | 'pós-parto' | 'amamentação' | 'saúde mental';
@@ -81,7 +82,8 @@ export function CreateCommunityScreen({ onCreated, onBack }: CreateCommunityScre
     mutationFn: async () => {
       let imageUrl: string | undefined;
       if (imageFile) {
-        imageUrl = await uploadImage(imageFile, accessToken);
+        const resized = await resizeImage(imageFile, 1200, 800, 0.85);
+        imageUrl = await uploadImage(resized, accessToken);
       }
       return apiFetch<{ id: string }>('/communities', {
         method: 'POST',

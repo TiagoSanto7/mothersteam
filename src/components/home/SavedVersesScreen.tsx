@@ -25,9 +25,24 @@ export async function shareVerse(verso: string, referencia: string): Promise<'sh
       // user cancelled or share failed — fall through to clipboard
     }
   }
+  // navigator.clipboard requires secure context (HTTPS); fall back to execCommand for HTTP
+  if (typeof navigator !== 'undefined' && navigator.clipboard) {
+    try {
+      await navigator.clipboard.writeText(text)
+      return 'copied'
+    } catch { /* fall through */ }
+  }
   try {
-    await navigator.clipboard.writeText(text)
-    return 'copied'
+    const el = document.createElement('textarea')
+    el.value = text
+    el.style.position = 'fixed'
+    el.style.opacity = '0'
+    document.body.appendChild(el)
+    el.focus()
+    el.select()
+    const ok = document.execCommand('copy')
+    document.body.removeChild(el)
+    return ok ? 'copied' : 'error'
   } catch {
     return 'error'
   }
@@ -44,8 +59,8 @@ export function SavedVersesScreen({ open, onClose, readOnlyVerses, readOnlyUserN
 
   // ref → whether the prayer textarea is open
   const [prayerOpen, setPrayerOpen] = useState<Record<string, boolean>>({})
-  // ref → current textarea draft (before save)
   const [prayerDraft, setPrayerDraft] = useState<Record<string, string>>({})
+  const [shareLabel, setShareLabel] = useState<Record<string, string>>({})
 
   function togglePrayer(ref: string) {
     setPrayerOpen((prev) => {
@@ -175,11 +190,16 @@ export function SavedVersesScreen({ open, onClose, readOnlyVerses, readOnlyUserN
                             </button>
                           )}
                           <button
-                            onClick={() => shareVerse(entry.verso, entry.referencia)}
+                            onClick={async () => {
+                              const result = await shareVerse(entry.verso, entry.referencia);
+                              const label = result === 'shared' ? '✓ Compartilhado' : result === 'copied' ? '✓ Copiado' : '✗ Erro';
+                              setShareLabel((prev) => ({ ...prev, [ref]: label }));
+                              setTimeout(() => setShareLabel((prev) => { const n = { ...prev }; delete n[ref]; return n; }), 2000);
+                            }}
                             aria-label="Compartilhar versículo"
                             className="text-[11px] text-graphite-muted/70 font-medium flex items-center gap-1"
                           >
-                            📤 Compartilhar
+                            {shareLabel[ref] ?? '📤 Compartilhar'}
                           </button>
                         </div>
                         {!isReadOnly && (

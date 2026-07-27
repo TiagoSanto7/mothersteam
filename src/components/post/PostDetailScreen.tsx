@@ -12,6 +12,17 @@ import type { CommunityPost, PostComment } from '../../types';
 import type { ApiPost, PaginatedResult } from '../../lib/types';
 import { MentionText } from '../shared/MentionText';
 
+async function lookupAndOpen(username: string, onOpenProfile?: (id: string) => void) {
+  if (!onOpenProfile) return;
+  try {
+    const res = await apiFetch<{ items: { id: string; username: string | null }[] }>(
+      `/users?q=${encodeURIComponent(username)}&limit=10`
+    );
+    const match = res.items.find((u) => u.username?.toLowerCase() === username.toLowerCase());
+    if (match) onOpenProfile(match.id);
+  } catch { /* ignore */ }
+}
+
 const BADGE_CONFIG = {
   experiente:   { label: 'Mãe Experiente',       color: 'bg-sara-linen text-sara-terracotta' },
   profissional: { label: 'Profissional de Saúde', color: 'bg-sara-cream text-sara-warm' },
@@ -204,7 +215,7 @@ export function PostDetailScreen({ post, onBack, onOpenProfile }: PostDetailScre
               </button>
             </div>
           ) : (
-            <MentionText text={post.content} className="text-sm text-graphite leading-relaxed mb-4 block" />
+            <MentionText text={post.content} className="text-sm text-graphite leading-relaxed mb-4 block" onMentionPress={(u) => lookupAndOpen(u, onOpenProfile)} />
           )}
 
           {post.imageUrl && (
@@ -262,7 +273,7 @@ export function PostDetailScreen({ post, onBack, onOpenProfile }: PostDetailScre
                   <p className="text-[11px] font-semibold text-graphite">{c.author}</p>
                   <span className="text-[10px] text-graphite-muted">{c.time}</span>
                 </div>
-                <MentionText text={c.content} className="text-xs text-graphite leading-relaxed mt-0.5 block" />
+                <MentionText text={c.content} className="text-xs text-graphite leading-relaxed mt-0.5 block" onMentionPress={(u) => lookupAndOpen(u, onOpenProfile)} />
                 <button className="flex items-center gap-1 mt-2 text-graphite-muted">
                   <Heart size={10} />
                   <span className="text-[10px]">{c.likes}</span>

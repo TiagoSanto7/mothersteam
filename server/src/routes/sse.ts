@@ -15,6 +15,17 @@ export default async function sseRoutes(fastify: FastifyInstance) {
       return reply.status(401).send({ error: 'Unauthorized' })
     }
 
+    // Explicit CORS headers for SSE — @fastify/cors only sets them on reply (not reply.raw),
+    // but we flush raw headers directly, so we must set them manually here.
+    const origin = request.headers.origin
+    const allowed = (process.env.FRONTEND_URL ?? 'http://localhost:5173')
+      .split(',').map((o) => o.trim())
+    if (origin && (allowed.includes(origin) || ['capacitor://localhost', 'https://localhost', 'http://localhost'].includes(origin))) {
+      reply.raw.setHeader('Access-Control-Allow-Origin', origin)
+      reply.raw.setHeader('Access-Control-Allow-Credentials', 'true')
+      reply.raw.setHeader('Vary', 'Origin')
+    }
+
     reply.raw.setHeader('Content-Type', 'text/event-stream')
     reply.raw.setHeader('Cache-Control', 'no-cache')
     reply.raw.setHeader('Connection', 'keep-alive')

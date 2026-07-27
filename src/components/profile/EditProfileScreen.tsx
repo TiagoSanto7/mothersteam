@@ -3,6 +3,7 @@ import { ChevronLeft, Camera, Loader2 } from 'lucide-react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useAppStore } from '../../store/useAppStore';
 import { apiFetch, uploadImage, resolveMediaUrl } from '../../lib/api';
+import { resizeImage } from '../../lib/imageUtils';
 import { patchUserProfileInCaches } from '../../lib/helpers';
 import type { ApiUser, ApiUserProfile } from '../../lib/types';
 import { getAvatarColor } from '../../utils/avatar';
@@ -76,7 +77,8 @@ export function EditProfileScreen({ onBack }: EditProfileScreenProps) {
     setError(null);
     setIsUploading(true);
     try {
-      const url = await uploadImage(file, accessToken);
+      const resized = await resizeImage(file, 800, 800, 0.85);
+      const url = await uploadImage(resized, accessToken);
       await apiFetch<ApiUser>('/users/me', {
         method: 'PATCH',
         body: JSON.stringify({ avatarUrl: url }),

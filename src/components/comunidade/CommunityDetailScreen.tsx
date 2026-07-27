@@ -398,6 +398,7 @@ export function CommunityDetailScreen({ communityId, onBack, onOpenProfile }: Co
               post={post}
               onOpen={() => setSelectedPost(post)}
               onOpenProfile={() => post.authorId && onOpenProfile?.(post.authorId)}
+              onOpenUser={(id) => onOpenProfile?.(id)}
             />
           ))
         )}
