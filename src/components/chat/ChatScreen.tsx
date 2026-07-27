@@ -2,6 +2,7 @@ import { useState, useRef, useEffect, useCallback } from 'react';
 import { ChevronLeft, Send, Smile, ImagePlus, Mic, Square, Play, Pause } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiFetch, resolveMediaUrl, uploadImage } from '../../lib/api';
+import { resizeImage } from '../../lib/imageUtils';
 import { useAppStore } from '../../store/useAppStore';
 import { PostDetailScreen } from '../post/PostDetailScreen';
 import { apiPostToCommunityPost } from '../../lib/helpers';
@@ -72,39 +73,6 @@ function EmojiPicker({ onSelect, onClose }: EmojiPickerProps) {
           </div>
         </div>
       ))}
-    </div>
-  );
-}
-
-// ---------------------------------------------------------------------------
-// "Em breve" tooltip — shown for features not yet supported by the backend
-// ---------------------------------------------------------------------------
-interface ComingSoonTooltipProps {
-  label: string;
-  onClose: () => void;
-}
-
-function ComingSoonTooltip({ label, onClose }: ComingSoonTooltipProps) {
-  const ref = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    function handlePointerDown(e: PointerEvent) {
-      if (ref.current && !ref.current.contains(e.target as Node)) {
-        onClose();
-      }
-    }
-    document.addEventListener('pointerdown', handlePointerDown);
-    return () => document.removeEventListener('pointerdown', handlePointerDown);
-  }, [onClose]);
-
-  return (
-    <div
-      ref={ref}
-      role="tooltip"
-      className="absolute bottom-full mb-2 left-0 bg-graphite text-white text-xs rounded-xl px-3 py-2 whitespace-nowrap shadow-lg z-50"
-    >
-      {label} em breve ✨
-      <div className="absolute top-full left-4 w-0 h-0 border-x-4 border-x-transparent border-t-4 border-t-graphite" />
     </div>
   );
 }
@@ -240,7 +208,7 @@ interface ChatScreenProps {
   onOpenProfile?: (userId: string) => void;
 }
 
-type ActivePanel = 'emoji' | 'photo' | null;
+type ActivePanel = 'emoji' | null;
 
 export function ChatScreen({ chat, onBack, onOpenProfile }: ChatScreenProps) {
   const currentUserId = useAppStore((s) => s.currentUserId);
@@ -262,6 +230,10 @@ export function ChatScreen({ chat, onBack, onOpenProfile }: ChatScreenProps) {
   const recordingTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const streamRef        = useRef<MediaStream | null>(null);
 
+  // Photo upload state
+  const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
+  const photoInputRef = useRef<HTMLInputElement>(null);
+
   const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef  = useRef<HTMLInputElement>(null);
 
@@ -280,7 +252,7 @@ export function ChatScreen({ chat, onBack, onOpenProfile }: ChatScreenProps) {
   });
 
   const sendMutation = useMutation({
-    mutationFn: (payload: { content?: string; audioUrl?: string }) =>
+    mutationFn: (payload: { content?: string; audioUrl?: string; imageUrl?: string }) =>
       apiFetch<ApiMessage>(`/chats/${chat.id}/messages`, {
         method: 'POST',
         body: JSON.stringify(payload),
@@ -351,6 +323,24 @@ export function ChatScreen({ chat, onBack, onOpenProfile }: ChatScreenProps) {
 
   function togglePanel(panel: ActivePanel) {
     setActivePanel((prev) => (prev === panel ? null : panel));
+  }
+
+  async function handlePhotoSelected(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!e.target) return;
+    // reset so same file can be re-selected
+    (e.target as HTMLInputElement).value = '';
+    if (!file) return;
+    setIsUploadingPhoto(true);
+    try {
+      const resized = await resizeImage(file, 1200, 1200, 0.85);
+      const url = await uploadImage(resized, accessToken);
+      sendMutation.mutate({ imageUrl: url });
+    } catch {
+      // silently discard on failure
+    } finally {
+      setIsUploadingPhoto(false);
+    }
   }
 
   // ---------------------------------------------------------------------------
@@ -494,12 +484,19 @@ export function ChatScreen({ chat, onBack, onOpenProfile }: ChatScreenProps) {
                   {msg.sender.name.charAt(0)}
                 </div>
               )}
-              <div className={`max-w-[72%] rounded-2xl overflow-hidden ${
+              <div className={`${msg.imageUrl ? 'max-w-[85%]' : 'max-w-[72%]'} rounded-2xl overflow-hidden ${
                 isMe
                   ? 'bg-sara-gold text-white rounded-br-sm'
                   : 'bg-white text-graphite shadow-sm rounded-bl-sm'
               }`}>
-                {msg.audioUrl ? (
+                {msg.imageUrl ? (
+                  <img
+                    src={resolveMediaUrl(msg.imageUrl) ?? msg.imageUrl}
+                    alt="Imagem enviada"
+                    className="w-full object-cover rounded-2xl"
+                    style={{ maxHeight: '320px', minWidth: '200px' }}
+                  />
+                ) : msg.audioUrl ? (
                   <AudioPlayer
                     src={resolveMediaUrl(msg.audioUrl) ?? msg.audioUrl}
                     isMe={isMe}
@@ -560,11 +557,11 @@ export function ChatScreen({ chat, onBack, onOpenProfile }: ChatScreenProps) {
               onClose={() => setActivePanel(null)}
             />
           )}
-          {activePanel === 'photo' && (
-            <ComingSoonTooltip
-              label="Fotos"
-              onClose={() => setActivePanel(null)}
-            />
+          {isUploadingPhoto && (
+            <div className="absolute bottom-full mb-2 left-0 right-0 bg-white rounded-2xl shadow-lg border border-sara-linen px-4 py-3 z-50 flex items-center gap-3">
+              <div className="w-4 h-4 rounded-full border-2 border-sara-gold border-t-transparent animate-spin flex-shrink-0" />
+              <span className="text-sm text-graphite">Enviando foto...</span>
+            </div>
           )}
           {isRecording && (
             <RecordingIndicator durationSecs={recordingSecs} />
@@ -591,18 +588,24 @@ export function ChatScreen({ chat, onBack, onOpenProfile }: ChatScreenProps) {
             onChange={(e) => setText(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && handleSend()}
             onFocus={() => setActivePanel(null)}
-            placeholder={isUploadingAudio ? 'Enviando áudio...' : 'Escreva uma mensagem...'}
-            disabled={isUploadingAudio}
+            placeholder={isUploadingAudio ? 'Enviando áudio...' : isUploadingPhoto ? 'Enviando foto...' : 'Escreva uma mensagem...'}
+            disabled={isUploadingAudio || isUploadingPhoto}
             className="flex-1 bg-transparent text-sm text-graphite placeholder:text-sara-muted outline-none focus:outline-none disabled:opacity-50"
           />
 
-          {/* Photo button — Em breve */}
+          {/* Photo button */}
+          <input
+            ref={photoInputRef}
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={handlePhotoSelected}
+          />
           <button
-            onClick={() => togglePanel('photo')}
+            onClick={() => photoInputRef.current?.click()}
+            disabled={isUploadingPhoto || isUploadingAudio}
             aria-label="Enviar foto"
-            className={`w-7 h-7 flex items-center justify-center rounded-full transition-colors flex-shrink-0 ${
-              activePanel === 'photo' ? 'text-sara-gold' : 'text-sara-muted hover:text-graphite'
-            }`}
+            className="w-7 h-7 flex items-center justify-center rounded-full transition-colors flex-shrink-0 text-sara-muted hover:text-graphite disabled:opacity-40"
           >
             <ImagePlus size={18} />
           </button>
@@ -613,7 +616,7 @@ export function ChatScreen({ chat, onBack, onOpenProfile }: ChatScreenProps) {
             onPointerDown={handleMicPointerDown}
             onPointerUp={handleMicPointerUp}
             onPointerCancel={handleMicPointerCancel}
-            disabled={isUploadingAudio}
+            disabled={isUploadingAudio || isUploadingPhoto}
             className={`w-7 h-7 flex items-center justify-center rounded-full transition-colors flex-shrink-0 select-none touch-none ${
               isRecording
                 ? 'text-red-500 bg-red-50'
@@ -626,7 +629,7 @@ export function ChatScreen({ chat, onBack, onOpenProfile }: ChatScreenProps) {
           {/* Send button */}
           <button
             onClick={handleSend}
-            disabled={!text.trim() || isUploadingAudio}
+            disabled={!text.trim() || isUploadingAudio || isUploadingPhoto}
             className="w-8 h-8 rounded-full bg-sara-gold flex items-center justify-center disabled:opacity-40 transition-opacity active:scale-95 flex-shrink-0"
           >
             <Send size={14} className="text-white" />

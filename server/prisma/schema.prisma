@@ -162,7 +162,8 @@ model Message {
   sharedPostId      String?
   sharedPostAuthor  String?
   sharedPostExcerpt String?
-  audioUrl          String?  // npx prisma db push needed
+  audioUrl          String?
+  imageUrl          String?  // npx prisma db push needed
   read              Boolean  @default(false)
   createdAt         DateTime @default(now())
 }

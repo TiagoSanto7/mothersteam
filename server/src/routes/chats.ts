@@ -8,6 +8,7 @@ const sendMessageSchema = z.object({
   sharedPostAuthor: z.string().optional(),
   sharedPostExcerpt: z.string().optional(),
   audioUrl: z.string().optional(),
+  imageUrl: z.string().optional(),
 })
 
 const createChatSchema = z.object({
@@ -101,8 +102,8 @@ export default async function chatsRoutes(fastify: FastifyInstance) {
         sharedPostId: body.data.sharedPostId,
         sharedPostAuthor: body.data.sharedPostAuthor,
         sharedPostExcerpt: body.data.sharedPostExcerpt,
-        // audioUrl requires `npx prisma db push` — cast until client is regenerated
         audioUrl: body.data.audioUrl,
+        imageUrl: body.data.imageUrl,
       } as Parameters<typeof fastify.prisma.message.create>[0]['data'],
       include: { sender: { select: { id: true, name: true, archetypeKey: true } } },
     })

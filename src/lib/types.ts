@@ -117,6 +117,7 @@ export interface ApiMessage {
   sharedPostAuthor?: string | null
   sharedPostExcerpt?: string | null
   audioUrl?: string | null
+  imageUrl?: string | null
   read: boolean
   createdAt: string
 }
