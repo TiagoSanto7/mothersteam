@@ -6,7 +6,8 @@ import { useAppStore } from './store/useAppStore';
 import type { ApiPost } from './lib/types';
 
 const { mockApiFetch } = vi.hoisted(() => ({ mockApiFetch: vi.fn() }));
-vi.mock('./lib/api', () => ({ apiFetch: mockApiFetch, ApiError: class extends Error {} }));
+vi.mock('./lib/api', () => ({ apiFetch: mockApiFetch, resolveApiUrl: vi.fn((p: string) => p), ApiError: class extends Error {} }));
+vi.mock('./lib/useSSE', () => ({ useSSE: vi.fn() }));
 
 function makeWrapper() {
   return function Wrapper({ children }: { children: React.ReactNode }) {

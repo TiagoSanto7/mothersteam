@@ -91,7 +91,7 @@ describe('ProfileScreen — self chrome (isSelf: true)', () => {
   });
 
   it('shows "Ver versículos salvos" button when savedVerses has items', async () => {
-    useAppStore.setState({ savedVerses: ['Sl 23:1'] });
+    useAppStore.setState({ versesByUser: { 'me-1': ['Sl 23:1'] } });
     wrap(<ProfileScreen onClose={vi.fn()} userId="me-1" />);
     expect(await screen.findByRole('button', { name: /ver versículos salvos/i })).toBeInTheDocument();
   });

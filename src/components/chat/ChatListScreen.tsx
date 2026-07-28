@@ -4,7 +4,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiFetch } from '../../lib/api';
 import { useAppStore } from '../../store/useAppStore';
 import { ChatScreen } from './ChatScreen';
-import { getAvatarColor } from '../../utils/avatar';
+import { UserAvatar } from '../shared/UserAvatar';
 import type { ApiChat, ApiFollowUser, PaginatedResult } from '../../lib/types';
 import { apiChatToChat } from '../../lib/helpers';
 import type { Chat } from '../../types';
@@ -110,12 +110,11 @@ export function ChatListScreen({ onBack, onOpenProfile }: ChatListScreenProps) {
                   onClick={() => setSelectedChat(chat)}
                   className="w-full flex items-center gap-3 px-4 py-3.5 active:bg-sara-linen transition-colors text-left"
                 >
-                  <div
-                    style={{ background: getAvatarColor(chat.withArchetypeKey) }}
-                    className="w-12 h-12 rounded-full flex items-center justify-center text-white font-bold text-lg flex-shrink-0"
-                  >
-                    {chat.with.charAt(0).toUpperCase()}
-                  </div>
+                  <UserAvatar
+                    name={chat.with}
+                    archetypeKey={chat.withArchetypeKey}
+                    size={48}
+                  />
                   <div className="flex-1 min-w-0">
                     <div className="flex items-baseline justify-between gap-2">
                       <p className={`text-sm truncate ${chat.unread > 0 ? 'font-semibold text-graphite' : 'font-medium text-graphite'}`}>{chat.with}</p>
@@ -161,12 +160,11 @@ export function ChatListScreen({ onBack, onOpenProfile }: ChatListScreenProps) {
                       disabled={createChatMutation.isPending}
                       className="w-full flex items-center gap-3 px-4 py-3.5 active:bg-sara-linen transition-colors text-left"
                     >
-                      <div
-                        style={{ background: getAvatarColor(null) }}
-                        className="w-10 h-10 rounded-full flex items-center justify-center text-white font-bold flex-shrink-0"
-                      >
-                        {user.name.charAt(0).toUpperCase()}
-                      </div>
+                      <UserAvatar
+                        name={user.name}
+                        archetypeKey={null}
+                        size={40}
+                      />
                       <p className="text-sm font-medium text-graphite">{user.name}</p>
                     </button>
                   </li>

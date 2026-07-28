@@ -5,6 +5,7 @@ import { apiFetch } from '../../lib/api';
 interface Props {
   value: string;
   onChange: (val: string) => void;
+  onSubmit?: () => void;
   placeholder?: string;
   rows?: number;
   maxLength?: number;
@@ -26,7 +27,7 @@ function getActiveMention(text: string, cursor: number): string | null {
   return match ? match[1] : null;
 }
 
-export function MentionInput({ value, onChange, placeholder, rows = 3, maxLength, className, autoFocus, ...rest }: Props) {
+export function MentionInput({ value, onChange, onSubmit, placeholder, rows = 3, maxLength, className, autoFocus, ...rest }: Props) {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const [mentionQuery, setMentionQuery] = useState<string | null>(null);
 
@@ -87,6 +88,12 @@ export function MentionInput({ value, onChange, placeholder, rows = 3, maxLength
         value={value}
         onChange={handleChange}
         onKeyUp={handleKeyUp}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' && !e.shiftKey && onSubmit) {
+            e.preventDefault();
+            onSubmit();
+          }
+        }}
         placeholder={placeholder}
         rows={rows}
         maxLength={maxLength}

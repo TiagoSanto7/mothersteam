@@ -1,7 +1,7 @@
 import { X } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { apiFetch } from '../../lib/api';
-import { getAvatarColor } from '../../utils/avatar';
+import { UserAvatar } from '../shared/UserAvatar';
 import type { ApiUserProfile } from '../../lib/types';
 
 interface ChatProfilePreviewModalProps {
@@ -60,12 +60,12 @@ export function ChatProfilePreviewModal({
         </button>
 
         {/* Avatar */}
-        <div
-          style={{ background: getAvatarColor(archetypeKey) }}
-          className="w-20 h-20 rounded-full flex items-center justify-center text-white font-bold text-3xl"
-        >
-          {name.charAt(0).toUpperCase()}
-        </div>
+        <UserAvatar
+          name={name}
+          archetypeKey={archetypeKey}
+          avatarUrl={profile?.avatarUrl}
+          size={80}
+        />
 
         {/* Name */}
         <div className="flex flex-col items-center gap-1">

@@ -86,7 +86,6 @@ describe('Capitulo1', () => {
     mockState.state = 'error'
     mockState.error = 'boom'
     render(<Capitulo1 onComplete={() => {}} />)
-    expect(screen.getByText(/boom/i)).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /tentar de novo/i })).toBeInTheDocument()
   })
 

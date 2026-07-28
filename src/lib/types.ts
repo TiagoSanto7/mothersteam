@@ -52,15 +52,16 @@ export interface ApiPost {
   category: 'gestação' | 'pós-parto' | 'amamentação' | 'saúde mental'
   imageUrl?: string | null
   authorId: string
-  author: { id: string; name: string; username?: string | null; archetypeKey?: string | null }
+  author: { id: string; name: string; username?: string | null; archetypeKey?: string | null; avatarUrl?: string | null }
   communityId?: string | null
   communityName?: string | null
   isRepost: boolean
   repostFromId?: string | null
-  repostFrom?: { id: string; content: string; category: string; author: { id: string; name: string; username?: string | null; archetypeKey?: string | null } } | null
+  repostFrom?: { id: string; content: string; category: string; author: { id: string; name: string; username?: string | null; archetypeKey?: string | null; avatarUrl?: string | null } } | null
   _count: { likes: number; comments: number; reposts: number }
   createdAt: string
   likedByCurrentUser: boolean
+  isSuggestion?: boolean
 }
 
 export interface ApiCommunity {
@@ -103,6 +104,7 @@ export interface ApiNotification {
   targetId?: string
   actorId?: string | null
   actorName?: string | null
+  actorAvatarUrl?: string | null
   postExcerpt?: string | null
   isFollowedByCurrentUser?: boolean
 }

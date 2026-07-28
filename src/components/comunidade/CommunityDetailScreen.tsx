@@ -5,7 +5,7 @@ import { apiFetch, resolveMediaUrl } from '../../lib/api';
 import type { ApiCommunityDetail, ApiCommunityMember, ApiPost } from '../../lib/types';
 import { apiPostToCommunityPost } from '../../lib/helpers';
 import { useIntersection } from '../../lib/useIntersection';
-import { getAvatarColor } from '../../utils/avatar';
+import { UserAvatar } from '../shared/UserAvatar';
 import { PostDetailScreen } from '../post/PostDetailScreen';
 import { CreatePostScreen } from './CreatePostScreen';
 import { PostCard } from './PostCard';
@@ -47,12 +47,11 @@ function MemberRow({ member, isFollowing, onFollow, onOpenProfile, isPending }: 
         onClick={() => onOpenProfile?.(member.id)}
         className="flex items-center gap-2.5 flex-1 min-w-0 text-left active:opacity-70 transition-opacity"
       >
-        <div
-          className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 text-white text-xs font-bold"
-          style={{ background: getAvatarColor(member.archetypeKey) }}
-        >
-          {member.name.charAt(0).toUpperCase()}
-        </div>
+        <UserAvatar
+          name={member.name}
+          archetypeKey={member.archetypeKey}
+          size={32}
+        />
         <div className="flex-1 min-w-0">
           <p className="text-xs font-semibold text-graphite truncate">{member.name}</p>
           {member.username && (

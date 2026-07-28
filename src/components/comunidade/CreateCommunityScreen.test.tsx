@@ -12,6 +12,10 @@ vi.mock('../../lib/api', async () => ({
   uploadImage: vi.fn(),
 }));
 
+vi.mock('../../lib/imageUtils', () => ({
+  resizeImage: vi.fn((file: File) => Promise.resolve(file)),
+}));
+
 const FAKE_OBJECT_URL = 'blob:http://localhost/fake-object-url';
 
 function renderScreen(onCreated = vi.fn(), onBack = vi.fn()) {

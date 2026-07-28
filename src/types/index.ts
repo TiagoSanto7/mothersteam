@@ -54,6 +54,8 @@ export interface CommunityPost {
   authorId?: string;
   authorUsername?: string | null;
   authorArchetypeKey?: string | null;
+  authorAvatarUrl?: string | null;
+  isSuggestion?: boolean;
   category: 'gestação' | 'pós-parto' | 'amamentação' | 'saúde mental';
   author: string;
   badge?: 'experiente' | 'profissional';

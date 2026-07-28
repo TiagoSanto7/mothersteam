@@ -52,10 +52,12 @@ export function NotificationsScreen({ onBack, onOpenPost, onOpenUser, onOpenComm
   const followMutation = useMutation({
     mutationFn: ({ userId }: { userId: string; notificationId: string }) =>
       apiFetch(`/users/${userId}/follow`, { method: 'POST' }),
-    onSuccess: (_data, { notificationId }) => {
+    onSuccess: (_data, { userId, notificationId }) => {
       setFollowError(null);
       setFollowedMap((prev) => ({ ...prev, [notificationId]: true }));
       queryClient.invalidateQueries({ queryKey: ['notifications'] });
+      queryClient.invalidateQueries({ queryKey: ['user', userId] });
+      queryClient.invalidateQueries({ queryKey: ['userPosts', userId] });
     },
     onError: () => setFollowError('Não foi possível seguir. Tente novamente.'),
   });

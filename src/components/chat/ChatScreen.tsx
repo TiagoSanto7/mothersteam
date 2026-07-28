@@ -6,7 +6,7 @@ import { resizeImage } from '../../lib/imageUtils';
 import { useAppStore } from '../../store/useAppStore';
 import { PostDetailScreen } from '../post/PostDetailScreen';
 import { apiPostToCommunityPost } from '../../lib/helpers';
-import { getAvatarColor } from '../../utils/avatar';
+import { UserAvatar } from '../shared/UserAvatar';
 import { ChatProfilePreviewModal } from './ChatProfilePreviewModal';
 import { ImageSourceSheet } from '../shared/ImageSourceSheet';
 import type { ApiMessage, ApiPost, PaginatedResult } from '../../lib/types';
@@ -477,12 +477,11 @@ export function ChatScreen({ chat, onBack, onOpenProfile }: ChatScreenProps) {
           onClick={() => setShowProfilePreview(true)}
           className="flex items-center gap-3 flex-1 min-w-0 text-left"
         >
-          <div
-            style={{ background: getAvatarColor(chat.withArchetypeKey) }}
-            className="w-8 h-8 rounded-full flex items-center justify-center text-white font-bold text-sm flex-shrink-0"
-          >
-            {chat.with.charAt(0).toUpperCase()}
-          </div>
+          <UserAvatar
+            name={chat.with}
+            archetypeKey={chat.withArchetypeKey}
+            size={32}
+          />
           <div className="flex-1 min-w-0">
             <p className="text-sm font-semibold text-graphite truncate">{chat.with}</p>
           </div>
@@ -496,12 +495,12 @@ export function ChatScreen({ chat, onBack, onOpenProfile }: ChatScreenProps) {
           return (
             <div key={msg.id} className={`flex ${isMe ? 'justify-end' : 'justify-start'}`}>
               {!isMe && (
-                <div
-                  style={{ background: getAvatarColor(msg.sender.archetypeKey ?? null) }}
-                  className="w-7 h-7 rounded-full flex items-center justify-center text-white font-bold text-xs flex-shrink-0 mr-2 mt-1"
-                >
-                  {msg.sender.name.charAt(0)}
-                </div>
+                <UserAvatar
+                  name={msg.sender.name}
+                  archetypeKey={msg.sender.archetypeKey ?? null}
+                  size={28}
+                  className="mr-2 mt-1"
+                />
               )}
               <div className={`${msg.imageUrl ? 'max-w-[85%]' : 'max-w-[72%]'} rounded-2xl overflow-hidden ${
                 isMe

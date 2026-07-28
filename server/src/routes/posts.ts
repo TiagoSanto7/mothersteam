@@ -20,32 +20,91 @@ export default async function postsRoutes(fastify: FastifyInstance) {
     '/',
     async (request, reply) => {
       const limit = Math.min(Number(request.query.limit ?? 20), 50)
-      const rows = await fastify.prisma.post.findMany({
-        where: {
-          OR: [
-            { communityId: null },
-            { community: { isPrivate: false } },
-          ],
-        },
-        take: limit + 1,
-        ...(request.query.cursor ? { cursor: { id: request.query.cursor }, skip: 1 } : {}),
-        include: {
-          author: { select: { id: true, name: true, username: true, archetypeKey: true } },
-          community: { select: { name: true } },
-          _count: { select: { likes: true, comments: true, reposts: true } },
-          likes: { where: { userId: request.userId }, select: { userId: true } },
-          repostFrom: { include: { author: { select: { id: true, name: true, username: true, archetypeKey: true } } } },
-        },
-        orderBy: { createdAt: 'desc' },
-      })
-      const hasMore = rows.length > limit
-      const items = rows.slice(0, limit).map(({ likes, community, ...post }) => ({
-        ...post,
-        communityName: community?.name ?? null,
-        likedByCurrentUser: likes.length > 0,
-      }))
-      const nextCursor = items.length > 0 ? items[items.length - 1].id : undefined
-      reply.send({ items, hasMore, nextCursor })
+
+      const [following, memberships] = await Promise.all([
+        fastify.prisma.follow.findMany({
+          where: { followerId: request.userId },
+          select: { followingId: true },
+        }),
+        fastify.prisma.communityMember.findMany({
+          where: { userId: request.userId },
+          select: { communityId: true },
+        }),
+      ])
+      const followingIds = following.map((f) => f.followingId)
+      const communityIds = memberships.map((m) => m.communityId)
+
+      const postInclude = {
+        author: { select: { id: true, name: true, username: true, archetypeKey: true, avatarUrl: true } },
+        community: { select: { name: true } },
+        _count: { select: { likes: true, comments: true, reposts: true } },
+        likes: { where: { userId: request.userId }, select: { userId: true } },
+        repostFrom: { include: { author: { select: { id: true, name: true, username: true, archetypeKey: true, avatarUrl: true } } } },
+      } as const
+
+      function mapRow<T extends { likes: { userId: string }[]; community: { name: string } | null }>(
+        isSuggestion: boolean,
+      ) {
+        return ({ likes, community, ...post }: T) => ({
+          ...post,
+          communityName: community?.name ?? null,
+          likedByCurrentUser: likes.length > 0,
+          isSuggestion,
+        })
+      }
+
+      const hasPriority = followingIds.length > 0 || communityIds.length > 0
+
+      if (hasPriority) {
+        const [priorityRows, suggestionRows] = await Promise.all([
+          fastify.prisma.post.findMany({
+            where: {
+              isRepost: false,
+              OR: [
+                { authorId: { in: followingIds } },
+                ...(communityIds.length > 0 ? [{ communityId: { in: communityIds } }] : []),
+              ],
+            },
+            orderBy: { createdAt: 'desc' },
+            take: 20,
+            include: postInclude,
+          }),
+          fastify.prisma.post.findMany({
+            where: {
+              isRepost: false,
+              authorId: { notIn: [...followingIds, request.userId] },
+              ...(communityIds.length > 0 ? { communityId: { notIn: communityIds } } : {}),
+              OR: [{ communityId: null }, { community: { isPrivate: false } }],
+            },
+            orderBy: { createdAt: 'desc' },
+            take: 10,
+            include: postInclude,
+          }),
+        ])
+
+        const items = [
+          ...priorityRows.map(mapRow(false)),
+          ...suggestionRows.map(mapRow(true)),
+        ]
+        reply.send({ items, hasMore: false })
+      } else {
+        const rows = await fastify.prisma.post.findMany({
+          where: {
+            OR: [
+              { communityId: null },
+              { community: { isPrivate: false } },
+            ],
+          },
+          take: limit + 1,
+          ...(request.query.cursor ? { cursor: { id: request.query.cursor }, skip: 1 } : {}),
+          include: postInclude,
+          orderBy: { createdAt: 'desc' },
+        })
+        const hasMore = rows.length > limit
+        const items = rows.slice(0, limit).map(mapRow(false))
+        const nextCursor = items.length > 0 ? items[items.length - 1].id : undefined
+        reply.send({ items, hasMore, nextCursor })
+      }
     }
   )
 
@@ -56,7 +115,7 @@ export default async function postsRoutes(fastify: FastifyInstance) {
     const post = await fastify.prisma.post.create({
       data: { ...body.data, authorId: request.userId },
       include: {
-        author: { select: { id: true, name: true, username: true, archetypeKey: true } },
+        author: { select: { id: true, name: true, username: true, archetypeKey: true, avatarUrl: true } },
         _count: { select: { likes: true, comments: true } },
       },
     })
@@ -96,10 +155,10 @@ export default async function postsRoutes(fastify: FastifyInstance) {
     const post = await fastify.prisma.post.findUnique({
       where: { id: request.params.id },
       include: {
-        author: { select: { id: true, name: true, username: true, archetypeKey: true } },
+        author: { select: { id: true, name: true, username: true, archetypeKey: true, avatarUrl: true } },
         _count: { select: { likes: true, comments: true, reposts: true } },
         likes: { where: { userId: request.userId }, select: { userId: true } },
-        repostFrom: { include: { author: { select: { id: true, name: true, username: true, archetypeKey: true } } } },
+        repostFrom: { include: { author: { select: { id: true, name: true, username: true, archetypeKey: true, avatarUrl: true } } } },
       },
     })
     if (!post) return reply.status(404).send({ error: 'Post not found' })
@@ -180,9 +239,9 @@ export default async function postsRoutes(fastify: FastifyInstance) {
         communityId: original.communityId,
       },
       include: {
-        author: { select: { id: true, name: true, username: true, archetypeKey: true } },
+        author: { select: { id: true, name: true, username: true, archetypeKey: true, avatarUrl: true } },
         _count: { select: { likes: true, comments: true, reposts: true } },
-        repostFrom: { include: { author: { select: { id: true, name: true, username: true, archetypeKey: true } } } },
+        repostFrom: { include: { author: { select: { id: true, name: true, username: true, archetypeKey: true, avatarUrl: true } } } },
       },
     })
     reply.status(201).send({ ...repost, likedByCurrentUser: false })
@@ -201,6 +260,23 @@ export default async function postsRoutes(fastify: FastifyInstance) {
       })
       const hasMore = comments.length > limit
       reply.send({ items: comments.slice(0, limit), hasMore })
+    }
+  )
+
+  fastify.post<{ Params: { id: string; commentId: string } }>(
+    '/:id/comments/:commentId/like',
+    async (request, reply) => {
+      const comment = await fastify.prisma.comment.findUnique({
+        where: { id: request.params.commentId, postId: request.params.id },
+      })
+      if (!comment) return reply.status(404).send({ error: 'Comment not found' })
+
+      const updated = await fastify.prisma.comment.update({
+        where: { id: request.params.commentId },
+        data: { likes: { increment: 1 } },
+        select: { id: true, likes: true },
+      })
+      reply.send(updated)
     }
   )
 

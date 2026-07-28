@@ -8,9 +8,11 @@ import { SharePostSheet } from '../comunidade/SharePostSheet';
 import { QuoteRepostSheet } from '../comunidade/QuoteRepostSheet';
 import { PostActionsMenu } from '../comunidade/PostActionsMenu';
 import { getAvatarColor } from '../../utils/avatar';
+import { UserAvatar } from '../shared/UserAvatar';
 import type { CommunityPost, PostComment } from '../../types';
 import type { ApiPost, PaginatedResult } from '../../lib/types';
 import { MentionText } from '../shared/MentionText';
+import { MentionInput } from '../shared/MentionInput';
 
 async function lookupAndOpen(username: string, onOpenProfile?: (id: string) => void) {
   if (!onOpenProfile) return;
@@ -54,11 +56,13 @@ export function PostDetailScreen({ post, onBack, onOpenProfile }: PostDetailScre
   const [showShareSheet, setShowShareSheet] = useState(false);
   const [showRepostSheet, setShowRepostSheet] = useState(false);
   const [viewingOriginalId, setViewingOriginalId] = useState<string | null>(null);
+  const [commentLikes, setCommentLikes] = useState<Record<string, number>>({});
+  const [likedComments, setLikedComments] = useState<Record<string, boolean>>({});
 
   const { data: commentsData } = useQuery<PaginatedResult<ApiComment>>({
     queryKey: ['comments', post.id],
     queryFn: () => apiFetch<PaginatedResult<ApiComment>>(`/posts/${post.id}/comments`),
-    initialData: { items: [], hasMore: false },
+    placeholderData: { items: [], hasMore: false },
   });
 
   const { data: originalApiPost } = useQuery({
@@ -100,6 +104,15 @@ export function PostDetailScreen({ post, onBack, onOpenProfile }: PostDetailScre
     mutationFn: (content: string) =>
       apiFetch(`/posts/${post.id}/comments`, { method: 'POST', body: JSON.stringify({ content }) }),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['comments', post.id] }),
+  });
+
+  const likeCommentMutation = useMutation({
+    mutationFn: (commentId: string) =>
+      apiFetch<{ id: string; likes: number }>(`/posts/${post.id}/comments/${commentId}/like`, { method: 'POST' }),
+    onSuccess: (data) => {
+      setCommentLikes((prev) => ({ ...prev, [data.id]: data.likes }));
+      setLikedComments((prev) => ({ ...prev, [data.id]: true }));
+    },
   });
 
   const badge = post.badge ? BADGE_CONFIG[post.badge] : null;
@@ -167,12 +180,12 @@ export function PostDetailScreen({ post, onBack, onOpenProfile }: PostDetailScre
               aria-label={`Ver perfil de ${post.author}`}
               className="flex items-center gap-2.5 text-left"
             >
-              <div
-                style={{ background: getAvatarColor(post.authorArchetypeKey) }}
-                className="w-10 h-10 rounded-full flex items-center justify-center text-white font-bold text-sm flex-shrink-0"
-              >
-                {post.author.charAt(0)}
-              </div>
+              <UserAvatar
+                name={post.author}
+                archetypeKey={post.authorArchetypeKey}
+                avatarUrl={post.authorAvatarUrl}
+                size={40}
+              />
               <div>
                 <div className="flex items-baseline gap-1.5">
                   <p className="text-sm font-semibold text-graphite">{post.author}</p>
@@ -262,21 +275,24 @@ export function PostDetailScreen({ post, onBack, onOpenProfile }: PostDetailScre
           )}
           {comments.map((c) => (
             <div key={c.id} className="flex items-start gap-2.5">
-              <div
-                style={{ background: getAvatarColor(c.authorArchetypeKey) }}
-                className="w-8 h-8 rounded-full flex items-center justify-center text-white font-bold text-xs flex-shrink-0"
-              >
-                {c.author.charAt(0)}
-              </div>
+              <UserAvatar
+                name={c.author}
+                archetypeKey={c.authorArchetypeKey}
+                size={32}
+              />
               <div className="flex-1 bg-white rounded-2xl px-3 py-2.5 shadow-sm">
                 <div className="flex items-baseline justify-between gap-2">
                   <p className="text-[11px] font-semibold text-graphite">{c.author}</p>
                   <span className="text-[10px] text-graphite-muted">{c.time}</span>
                 </div>
                 <MentionText text={c.content} className="text-xs text-graphite leading-relaxed mt-0.5 block" onMentionPress={(u) => lookupAndOpen(u, onOpenProfile)} />
-                <button className="flex items-center gap-1 mt-2 text-graphite-muted">
-                  <Heart size={10} />
-                  <span className="text-[10px]">{c.likes}</span>
+                <button
+                  onClick={() => { if (!likedComments[c.id]) likeCommentMutation.mutate(c.id); }}
+                  aria-label="Curtir comentário"
+                  className={`flex items-center gap-1 mt-2 transition-colors ${likedComments[c.id] ? 'text-sara-terracotta' : 'text-graphite-muted'}`}
+                >
+                  <Heart size={10} fill={likedComments[c.id] ? 'currentColor' : 'none'} />
+                  <span className="text-[10px]">{commentLikes[c.id] ?? c.likes}</span>
                 </button>
               </div>
             </div>
@@ -294,13 +310,13 @@ export function PostDetailScreen({ post, onBack, onOpenProfile }: PostDetailScre
             {motherName.charAt(0)}
           </div>
           <div className="flex-1 flex items-center gap-2 bg-white rounded-2xl border border-sara-linen px-3 py-2">
-            <input
-              type="text"
+            <MentionInput
               value={commentText}
-              onChange={(e) => setCommentText(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && handleComment()}
+              onChange={setCommentText}
+              onSubmit={handleComment}
               placeholder="Adicionar comentário..."
-              className="flex-1 bg-transparent text-sm text-graphite placeholder:text-sara-muted outline-none"
+              rows={1}
+              className="flex-1 bg-transparent text-sm text-graphite placeholder:text-sara-muted outline-none resize-none"
             />
             <button
               onClick={handleComment}

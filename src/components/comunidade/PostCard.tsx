@@ -8,7 +8,7 @@ import { SharePostSheet } from './SharePostSheet';
 import { QuoteRepostSheet } from './QuoteRepostSheet';
 import { MentionText } from '../shared/MentionText';
 import { PostActionsMenu } from './PostActionsMenu';
-import { getAvatarColor } from '../../utils/avatar';
+import { UserAvatar } from '../shared/UserAvatar';
 import type { CommunityPost } from '../../types';
 
 async function lookupAndOpen(username: string, onOpenUser: (id: string) => void) {
@@ -78,13 +78,13 @@ export function PostCard({ post, onOpen, onOpenProfile, onOpenUser, onOpenCommun
             aria-label={`Ver perfil de ${post.author}`}
             className="flex items-center gap-2.5 text-left"
           >
-            <div
-              data-testid="post-avatar"
-              aria-hidden="true"
-              style={{ background: getAvatarColor(post.authorArchetypeKey) }}
-              className="w-10 h-10 rounded-full flex items-center justify-center text-white text-sm font-bold flex-shrink-0"
-            >
-              {post.author.charAt(0)}
+            <div data-testid="post-avatar">
+              <UserAvatar
+                name={post.author}
+                archetypeKey={post.authorArchetypeKey}
+                avatarUrl={post.authorAvatarUrl}
+                size={40}
+              />
             </div>
             <div className="flex flex-col gap-0.5">
               <div className="flex items-baseline gap-1.5">
@@ -117,6 +117,11 @@ export function PostCard({ post, onOpen, onOpenProfile, onOpenUser, onOpenCommun
             </div>
           </button>
           <div className="flex items-center gap-2 flex-shrink-0">
+            {post.isSuggestion && (
+              <span className="text-[9px] font-semibold uppercase tracking-wide text-graphite-muted/60 px-2 py-0.5 bg-gray-100 rounded-full">
+                Sugestão
+              </span>
+            )}
             <span className="text-xs text-graphite-muted">{post.time}</span>
             <PostActionsMenu
               postId={post.id}
