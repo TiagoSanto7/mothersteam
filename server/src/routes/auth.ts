@@ -92,7 +92,7 @@ export default async function authRoutes(fastify: FastifyInstance) {
     reply
       .setCookie(REFRESH_COOKIE, refreshToken, COOKIE_OPTS)
       .status(201)
-      .send({ accessToken, user })
+      .send({ accessToken, refreshToken, user })
   })
 
   fastify.post('/login', async (request, reply) => {
@@ -115,7 +115,7 @@ export default async function authRoutes(fastify: FastifyInstance) {
 
     reply
       .setCookie(REFRESH_COOKIE, refreshToken, COOKIE_OPTS)
-      .send({ accessToken, user: safeUser })
+      .send({ accessToken, refreshToken, user: safeUser })
   })
 
   fastify.post('/logout', async (request, reply) => {
