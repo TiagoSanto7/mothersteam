@@ -14,12 +14,12 @@ export function LoginScreen() {
 
   const { mutate, isPending, isError, error } = useMutation({
     mutationFn: () =>
-      apiFetch<{ accessToken: string; user: ApiUser }>('/auth/login', {
+      apiFetch<{ accessToken: string; refreshToken: string; user: ApiUser }>('/auth/login', {
         method: 'POST',
         body: JSON.stringify({ email: email.trim(), password }),
       }),
-    onSuccess: ({ accessToken, user }) => {
-      setAuth(accessToken, user);
+    onSuccess: ({ accessToken, refreshToken, user }) => {
+      setAuth(accessToken, user, refreshToken);
     },
   });
 

@@ -53,7 +53,7 @@ export default function App() {
   const [openCommunityId,   setOpenCommunityId]   = useState<string | null>(null);
   const [pendingPostId,     setPendingPostId]     = useState<string | null>(null);
 
-  // Session restore: try refresh cookie on first load
+  // Session restore: try refresh on first load (cookie for web, body token for Capacitor)
   useEffect(() => {
     if (useAppStore.getState().isLoggedIn) {
       setRestoring(false);
@@ -61,7 +61,11 @@ export default function App() {
     }
     (async () => {
       try {
-        const { accessToken } = await apiFetch<{ accessToken: string }>('/auth/refresh', { method: 'POST' });
+        const storedRefreshToken = useAppStore.getState().refreshToken;
+        const { accessToken } = await apiFetch<{ accessToken: string }>('/auth/refresh', {
+          method: 'POST',
+          body: storedRefreshToken ? JSON.stringify({ refreshToken: storedRefreshToken }) : undefined,
+        });
         setAccessToken(accessToken);
         const user = await apiFetch<ApiUser>('/auth/me');
         useAppStore.getState().setAuth(accessToken, user);

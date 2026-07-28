@@ -34,8 +34,16 @@ export class ApiError extends Error {
 let refreshPromise: Promise<string | null> | null = null
 
 async function doRefresh(): Promise<string | null> {
+  const storedRefreshToken = useAppStore.getState().refreshToken
   try {
-    const res = await fetch(`${BASE}/auth/refresh`, { method: 'POST', credentials: 'include' })
+    const res = await fetch(`${BASE}/auth/refresh`, {
+      method: 'POST',
+      credentials: 'include',
+      ...(storedRefreshToken ? {
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ refreshToken: storedRefreshToken }),
+      } : {}),
+    })
     if (!res.ok) return null
     const { accessToken } = (await res.json()) as { accessToken: string }
     useAppStore.getState().setAccessToken(accessToken)

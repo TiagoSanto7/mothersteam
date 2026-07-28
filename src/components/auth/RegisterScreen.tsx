@@ -67,7 +67,7 @@ export function RegisterScreen({ onBack }: RegisterScreenProps) {
 
   const { mutate, isPending, isError, error } = useMutation({
     mutationFn: () =>
-      apiFetch<{ accessToken: string; user: ApiUser }>('/auth/register', {
+      apiFetch<{ accessToken: string; refreshToken: string; user: ApiUser }>('/auth/register', {
         method: 'POST',
         body: JSON.stringify({
           name: name.trim(),
@@ -83,8 +83,8 @@ export function RegisterScreen({ onBack }: RegisterScreenProps) {
           motherBirthDate: motherBirthDate || undefined,
         }),
       }),
-    onSuccess: ({ accessToken, user }) => {
-      setAuth(accessToken, user);
+    onSuccess: ({ accessToken, refreshToken, user }) => {
+      setAuth(accessToken, user, refreshToken);
     },
   });
 
