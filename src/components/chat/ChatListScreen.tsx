@@ -20,6 +20,7 @@ export function ChatListScreen({ onBack, onOpenProfile }: ChatListScreenProps) {
   const queryClient   = useQueryClient();
   const [selectedChat, setSelectedChat] = useState<Chat | null>(null);
   const [showNewChat, setShowNewChat] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
 
   const { data: apiChats = [] } = useQuery({
     queryKey: ['chats'],
@@ -34,6 +35,12 @@ export function ChatListScreen({ onBack, onOpenProfile }: ChatListScreenProps) {
   });
 
   const chats = apiChats.map((c) => apiChatToChat(c, currentUserId));
+  const filteredChats = searchQuery.trim()
+    ? chats.filter((c) =>
+        c.with.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (c.withUsername ?? '').toLowerCase().includes(searchQuery.toLowerCase())
+      )
+    : chats;
 
   const createChatMutation = useMutation({
     mutationFn: (userId: string) =>
@@ -74,7 +81,13 @@ export function ChatListScreen({ onBack, onOpenProfile }: ChatListScreenProps) {
       <div className="px-4 py-3 flex-shrink-0">
         <div className="flex items-center gap-2 bg-gray-100 rounded-xl px-3 py-2.5">
           <Search size={14} className="text-graphite-muted flex-shrink-0" />
-          <input type="text" placeholder="Buscar conversa..." className="flex-1 bg-transparent text-sm text-graphite placeholder:text-graphite-muted outline-none" readOnly />
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Buscar conversa..."
+            className="flex-1 bg-transparent text-sm text-graphite placeholder:text-graphite-muted outline-none"
+          />
         </div>
       </div>
 
@@ -91,7 +104,7 @@ export function ChatListScreen({ onBack, onOpenProfile }: ChatListScreenProps) {
           </div>
         ) : (
           <ul className="divide-y divide-gray-100">
-            {chats.map((chat) => (
+            {filteredChats.map((chat) => (
               <li key={chat.id}>
                 <button
                   onClick={() => setSelectedChat(chat)}

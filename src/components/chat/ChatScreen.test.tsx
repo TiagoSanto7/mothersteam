@@ -156,3 +156,29 @@ describe('ChatScreen — profile preview modal', () => {
     expect(screen.queryByText(/@/)).not.toBeInTheDocument();
   });
 });
+
+describe('ChatScreen — input bar UX', () => {
+  it('has data-testid="chat-input-bar"', () => {
+    render(<ChatScreen chat={PLAIN_CHAT} onBack={() => {}} />, { wrapper: makeWrapper('1', PLAIN_MESSAGES) });
+    expect(document.querySelector('[data-testid="chat-input-bar"]')).toBeInTheDocument();
+  });
+
+  it('send button has aria-label "Enviar mensagem"', () => {
+    render(<ChatScreen chat={PLAIN_CHAT} onBack={() => {}} />, { wrapper: makeWrapper('1', PLAIN_MESSAGES) });
+    expect(screen.getByRole('button', { name: /enviar mensagem/i })).toBeInTheDocument();
+  });
+
+  it('photo and mic buttons are visible when input is empty', () => {
+    render(<ChatScreen chat={PLAIN_CHAT} onBack={() => {}} />, { wrapper: makeWrapper('1', PLAIN_MESSAGES) });
+    expect(screen.getByRole('button', { name: /enviar foto/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /segurar para gravar/i })).toBeInTheDocument();
+  });
+
+  it('photo and mic buttons are hidden when user types text', () => {
+    render(<ChatScreen chat={PLAIN_CHAT} onBack={() => {}} />, { wrapper: makeWrapper('1', PLAIN_MESSAGES) });
+    const input = screen.getByPlaceholderText(/escreva uma mensagem/i);
+    fireEvent.change(input, { target: { value: 'olá' } });
+    expect(screen.queryByRole('button', { name: /enviar foto/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /segurar para gravar/i })).not.toBeInTheDocument();
+  });
+});

@@ -8,6 +8,7 @@ import { PostDetailScreen } from '../post/PostDetailScreen';
 import { apiPostToCommunityPost } from '../../lib/helpers';
 import { getAvatarColor } from '../../utils/avatar';
 import { ChatProfilePreviewModal } from './ChatProfilePreviewModal';
+import { ImageSourceSheet } from '../shared/ImageSourceSheet';
 import type { ApiMessage, ApiPost, PaginatedResult } from '../../lib/types';
 import type { Chat } from '../../types';
 
@@ -232,7 +233,10 @@ export function ChatScreen({ chat, onBack, onOpenProfile }: ChatScreenProps) {
 
   // Photo upload state
   const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
+  const [showImageSheet, setShowImageSheet] = useState(false);
+  const [photoPreview, setPhotoPreview] = useState<{ file: File; url: string } | null>(null);
   const photoInputRef = useRef<HTMLInputElement>(null);
+  const cameraInputRef = useRef<HTMLInputElement>(null);
 
   const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef  = useRef<HTMLInputElement>(null);
@@ -325,15 +329,25 @@ export function ChatScreen({ chat, onBack, onOpenProfile }: ChatScreenProps) {
     setActivePanel((prev) => (prev === panel ? null : panel));
   }
 
-  async function handlePhotoSelected(e: React.ChangeEvent<HTMLInputElement>) {
+  function handleFileSelected(file: File) {
+    const objectUrl = URL.createObjectURL(file);
+    setPhotoPreview({ file, url: objectUrl });
+  }
+
+  function handleFileInputChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
-    if (!e.target) return;
-    // reset so same file can be re-selected
-    (e.target as HTMLInputElement).value = '';
-    if (!file) return;
+    if (e.target) (e.target as HTMLInputElement).value = '';
+    if (file) handleFileSelected(file);
+  }
+
+  async function handlePhotoConfirm() {
+    if (!photoPreview) return;
     setIsUploadingPhoto(true);
+    const preview = photoPreview;
+    setPhotoPreview(null);
+    URL.revokeObjectURL(preview.url);
     try {
-      const resized = await resizeImage(file, 1200, 1200, 0.85);
+      const resized = await resizeImage(preview.file, 1200, 1200, 0.85);
       const url = await uploadImage(resized, accessToken);
       sendMutation.mutate({ imageUrl: url });
     } catch {
@@ -341,6 +355,11 @@ export function ChatScreen({ chat, onBack, onOpenProfile }: ChatScreenProps) {
     } finally {
       setIsUploadingPhoto(false);
     }
+  }
+
+  function handlePhotoCancelPreview() {
+    if (photoPreview) URL.revokeObjectURL(photoPreview.url);
+    setPhotoPreview(null);
   }
 
   // ---------------------------------------------------------------------------
@@ -534,6 +553,40 @@ export function ChatScreen({ chat, onBack, onOpenProfile }: ChatScreenProps) {
         <div ref={bottomRef} />
       </div>
 
+      {/* Image source sheet */}
+      {showImageSheet && (
+        <ImageSourceSheet
+          onCamera={() => { setShowImageSheet(false); cameraInputRef.current?.click(); }}
+          onGallery={() => { setShowImageSheet(false); photoInputRef.current?.click(); }}
+          onClose={() => setShowImageSheet(false)}
+        />
+      )}
+
+      {/* Photo preview overlay */}
+      {photoPreview && (
+        <div className="fixed inset-0 z-50 bg-black/80 flex flex-col items-center justify-center gap-4 p-6">
+          <img
+            src={photoPreview.url}
+            alt="Pré-visualização"
+            className="max-w-full max-h-[70vh] rounded-2xl object-contain"
+          />
+          <div className="flex gap-3 w-full max-w-xs">
+            <button
+              onClick={handlePhotoCancelPreview}
+              className="flex-1 py-3 rounded-2xl bg-white/20 text-white font-semibold text-sm"
+            >
+              Cancelar
+            </button>
+            <button
+              onClick={handlePhotoConfirm}
+              className="flex-1 py-3 rounded-2xl bg-sara-gold text-white font-semibold text-sm"
+            >
+              Enviar
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Profile preview modal */}
       {showProfilePreview && chat.withUserId && (
         <ChatProfilePreviewModal
@@ -568,7 +621,7 @@ export function ChatScreen({ chat, onBack, onOpenProfile }: ChatScreenProps) {
           )}
         </div>
 
-        <div className="flex items-center gap-2 bg-white rounded-2xl border border-sara-linen px-3 py-2">
+        <div data-testid="chat-input-bar" className="flex items-center gap-2 bg-white rounded-2xl border border-sara-linen px-3 py-2">
           {/* Emoji button */}
           <button
             onClick={() => togglePanel('emoji')}
@@ -593,42 +646,55 @@ export function ChatScreen({ chat, onBack, onOpenProfile }: ChatScreenProps) {
             className="flex-1 bg-transparent text-sm text-graphite placeholder:text-sara-muted outline-none focus:outline-none disabled:opacity-50"
           />
 
-          {/* Photo button */}
-          <input
-            ref={photoInputRef}
-            type="file"
-            accept="image/*"
-            className="hidden"
-            onChange={handlePhotoSelected}
-          />
-          <button
-            onClick={() => photoInputRef.current?.click()}
-            disabled={isUploadingPhoto || isUploadingAudio}
-            aria-label="Enviar foto"
-            className="w-7 h-7 flex items-center justify-center rounded-full transition-colors flex-shrink-0 text-sara-muted hover:text-graphite disabled:opacity-40"
-          >
-            <ImagePlus size={18} />
-          </button>
+          {/* Photo and mic — hidden while typing */}
+          {!text && (
+            <>
+              <input
+                ref={photoInputRef}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={handleFileInputChange}
+              />
+              <input
+                ref={cameraInputRef}
+                type="file"
+                accept="image/*"
+                capture="environment"
+                className="hidden"
+                onChange={handleFileInputChange}
+              />
+              <button
+                onClick={() => setShowImageSheet(true)}
+                disabled={isUploadingPhoto || isUploadingAudio}
+                aria-label="Enviar foto"
+                className="w-7 h-7 flex items-center justify-center rounded-full transition-colors flex-shrink-0 text-sara-muted hover:text-graphite disabled:opacity-40"
+              >
+                <ImagePlus size={18} />
+              </button>
 
-          {/* Microphone button — hold to record */}
-          <button
-            aria-label={isRecording ? 'Solte para enviar' : 'Segurar para gravar áudio'}
-            onPointerDown={handleMicPointerDown}
-            onPointerUp={handleMicPointerUp}
-            onPointerCancel={handleMicPointerCancel}
-            disabled={isUploadingAudio || isUploadingPhoto}
-            className={`w-7 h-7 flex items-center justify-center rounded-full transition-colors flex-shrink-0 select-none touch-none ${
-              isRecording
-                ? 'text-red-500 bg-red-50'
-                : 'text-sara-muted hover:text-graphite'
-            } disabled:opacity-40`}
-          >
-            {isRecording ? <Square size={14} /> : <Mic size={18} />}
-          </button>
+              {/* Microphone button — hold to record */}
+              <button
+                aria-label={isRecording ? 'Solte para enviar' : 'Segurar para gravar áudio'}
+                onPointerDown={handleMicPointerDown}
+                onPointerUp={handleMicPointerUp}
+                onPointerCancel={handleMicPointerCancel}
+                disabled={isUploadingAudio || isUploadingPhoto}
+                className={`w-7 h-7 flex items-center justify-center rounded-full transition-colors flex-shrink-0 select-none touch-none ${
+                  isRecording
+                    ? 'text-red-500 bg-red-50'
+                    : 'text-sara-muted hover:text-graphite'
+                } disabled:opacity-40`}
+              >
+                {isRecording ? <Square size={14} /> : <Mic size={18} />}
+              </button>
+            </>
+          )}
 
           {/* Send button */}
           <button
             onClick={handleSend}
+            aria-label="Enviar mensagem"
             disabled={!text.trim() || isUploadingAudio || isUploadingPhoto}
             className="w-8 h-8 rounded-full bg-sara-gold flex items-center justify-center disabled:opacity-40 transition-opacity active:scale-95 flex-shrink-0"
           >

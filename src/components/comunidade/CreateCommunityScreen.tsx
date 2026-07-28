@@ -4,6 +4,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiFetch, uploadImage } from '../../lib/api';
 import { resizeImage } from '../../lib/imageUtils';
 import { useAppStore } from '../../store/useAppStore';
+import { ImageSourceSheet } from '../shared/ImageSourceSheet';
 
 type Category = 'gestação' | 'pós-parto' | 'amamentação' | 'saúde mental';
 type ColorKey = 'gold' | 'terracotta' | 'warm' | 'linen' | 'cream';
@@ -68,7 +69,9 @@ export function CreateCommunityScreen({ onCreated, onBack }: CreateCommunityScre
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreviewUrl, setImagePreviewUrl] = useState<string | null>(null);
   const [uploadError, setUploadError] = useState<string | null>(null);
+  const [showImageSheet, setShowImageSheet] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const cameraInputRef = useRef<HTMLInputElement>(null);
   const queryClient = useQueryClient();
 
   // Revoke object URL on unmount
@@ -161,7 +164,7 @@ export function CreateCommunityScreen({ onCreated, onBack }: CreateCommunityScre
             {!imagePreviewUrl && (
               <button
                 type="button"
-                onClick={() => fileInputRef.current?.click()}
+                onClick={() => setShowImageSheet(true)}
                 className="absolute inset-0 flex flex-col items-center justify-center gap-1 text-graphite-muted hover:text-graphite transition-colors"
                 aria-label="Selecionar foto de capa"
               >
@@ -173,7 +176,7 @@ export function CreateCommunityScreen({ onCreated, onBack }: CreateCommunityScre
           {imagePreviewUrl && (
             <button
               type="button"
-              onClick={() => fileInputRef.current?.click()}
+              onClick={() => setShowImageSheet(true)}
               className="flex items-center gap-1.5 text-xs text-sara-gold font-medium mt-0.5"
             >
               <ImagePlus size={14} />
@@ -188,6 +191,21 @@ export function CreateCommunityScreen({ onCreated, onBack }: CreateCommunityScre
             onChange={handleFileChange}
             data-testid="cover-file-input"
           />
+          <input
+            ref={cameraInputRef}
+            type="file"
+            accept="image/*"
+            capture="environment"
+            className="hidden"
+            onChange={handleFileChange}
+          />
+          {showImageSheet && (
+            <ImageSourceSheet
+              onCamera={() => { setShowImageSheet(false); cameraInputRef.current?.click(); }}
+              onGallery={() => { setShowImageSheet(false); fileInputRef.current?.click(); }}
+              onClose={() => setShowImageSheet(false)}
+            />
+          )}
           {uploadError && (
             <p className="text-xs text-red-500">{uploadError}</p>
           )}

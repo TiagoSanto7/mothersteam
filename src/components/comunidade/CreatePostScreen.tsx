@@ -6,6 +6,7 @@ import { apiFetch, uploadImage } from '../../lib/api';
 import type { ApiPost } from '../../lib/types';
 import type { CommunityPost } from '../../types';
 import { MentionInput } from '../shared/MentionInput';
+import { ImageSourceSheet } from '../shared/ImageSourceSheet';
 
 type PostCategory = CommunityPost['category'];
 
@@ -29,7 +30,9 @@ export function CreatePostScreen({ onBack, autoOpenImage, initialCommunityId, in
   const [category, setCategory] = useState<PostCategory>('saúde mental');
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreviewUrl, setImagePreviewUrl] = useState<string | null>(null);
+  const [showImageSheet, setShowImageSheet] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const cameraInputRef = useRef<HTMLInputElement>(null);
   const queryClient = useQueryClient();
 
   useEffect(() => {
@@ -129,9 +132,25 @@ export function CreatePostScreen({ onBack, autoOpenImage, initialCommunityId, in
           onChange={handleFileChange}
           data-testid="file-input"
         />
+        <input
+          ref={cameraInputRef}
+          type="file"
+          accept="image/*"
+          capture="environment"
+          className="hidden"
+          onChange={handleFileChange}
+        />
+
+        {showImageSheet && (
+          <ImageSourceSheet
+            onCamera={() => { setShowImageSheet(false); cameraInputRef.current?.click(); }}
+            onGallery={() => { setShowImageSheet(false); fileInputRef.current?.click(); }}
+            onClose={() => setShowImageSheet(false)}
+          />
+        )}
 
         <button
-          onClick={() => fileInputRef.current?.click()}
+          onClick={() => setShowImageSheet(true)}
           aria-label="Adicionar foto"
           className="flex items-center gap-2 text-sm text-sara-gold font-medium"
         >

@@ -7,6 +7,7 @@ import { resizeImage } from '../../lib/imageUtils';
 import { patchUserProfileInCaches } from '../../lib/helpers';
 import type { ApiUser, ApiUserProfile } from '../../lib/types';
 import { getAvatarColor } from '../../utils/avatar';
+import { ImageSourceSheet } from '../shared/ImageSourceSheet';
 
 interface EditProfileScreenProps {
   onBack: () => void;
@@ -22,8 +23,10 @@ export function EditProfileScreen({ onBack }: EditProfileScreenProps) {
   const [bio, setBio] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
+  const [showImageSheet, setShowImageSheet] = useState(false);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const cameraInputRef = useRef<HTMLInputElement>(null);
 
   const { data: profile } = useQuery({
     queryKey: ['user', currentUserId],
@@ -128,7 +131,7 @@ export function EditProfileScreen({ onBack }: EditProfileScreenProps) {
               type="button"
               aria-label="Alterar foto de perfil"
               disabled={isUploading}
-              onClick={() => fileInputRef.current?.click()}
+              onClick={() => setShowImageSheet(true)}
               className="absolute inset-0 rounded-full bg-black/40 flex flex-col items-center justify-center gap-0.5 cursor-pointer disabled:cursor-wait"
             >
               {isUploading ? (
@@ -149,6 +152,21 @@ export function EditProfileScreen({ onBack }: EditProfileScreenProps) {
             className="hidden"
             onChange={handleFileChange}
           />
+          <input
+            ref={cameraInputRef}
+            type="file"
+            accept="image/*"
+            capture="environment"
+            className="hidden"
+            onChange={handleFileChange}
+          />
+          {showImageSheet && (
+            <ImageSourceSheet
+              onCamera={() => { setShowImageSheet(false); cameraInputRef.current?.click(); }}
+              onGallery={() => { setShowImageSheet(false); fileInputRef.current?.click(); }}
+              onClose={() => setShowImageSheet(false)}
+            />
+          )}
         </div>
 
         {/* Read-only username */}

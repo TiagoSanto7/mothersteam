@@ -1,5 +1,8 @@
 import { X } from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';
+import { apiFetch } from '../../lib/api';
 import { getAvatarColor } from '../../utils/avatar';
+import type { ApiUserProfile } from '../../lib/types';
 
 interface ChatProfilePreviewModalProps {
   name: string;
@@ -20,6 +23,12 @@ export function ChatProfilePreviewModal({
   onClose,
   onOpenProfile,
 }: ChatProfilePreviewModalProps) {
+  const { data: profile } = useQuery({
+    queryKey: ['user', userId],
+    queryFn: () => apiFetch<ApiUserProfile>(`/users/${userId}`),
+    enabled: !!userId,
+  });
+
   function handleVisitProfile() {
     onClose();
     onOpenProfile(userId);
@@ -63,6 +72,11 @@ export function ChatProfilePreviewModal({
           <p className="text-lg font-semibold text-graphite">{name}</p>
           {username && (
             <p className="text-sm text-sara-muted">@{username}</p>
+          )}
+          {profile?.bio && (
+            <p className="text-sm text-graphite-muted text-center leading-relaxed px-2">
+              {profile.bio}
+            </p>
           )}
           <p className="text-xs text-sara-muted mt-1">
             {messageCount} {messageCount === 1 ? 'mensagem' : 'mensagens'}
