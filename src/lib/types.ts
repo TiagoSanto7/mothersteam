@@ -95,7 +95,7 @@ export interface ApiCommunityMember {
 
 export interface ApiNotification {
   id: string
-  type: 'like' | 'follow' | 'comment'
+  type: 'like' | 'follow' | 'comment' | 'mention'
   text: string
   read: boolean
   recipientId: string

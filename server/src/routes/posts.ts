@@ -255,7 +255,7 @@ export default async function postsRoutes(fastify: FastifyInstance) {
         where: { postId: request.params.id },
         take: limit + 1,
         ...(request.query.cursor ? { cursor: { id: request.query.cursor }, skip: 1 } : {}),
-        include: { author: { select: { id: true, name: true, archetypeKey: true } } },
+        include: { author: { select: { id: true, name: true, archetypeKey: true, avatarUrl: true } } },
         orderBy: { createdAt: 'asc' },
       })
       const hasMore = comments.length > limit

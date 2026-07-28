@@ -33,7 +33,7 @@ const BADGE_CONFIG = {
 interface ApiComment {
   id: string;
   content: string;
-  author: { id: string; name: string; archetypeKey?: string | null };
+  author: { id: string; name: string; archetypeKey?: string | null; avatarUrl?: string | null };
   likes: number;
   createdAt: string;
 }
@@ -75,6 +75,7 @@ export function PostDetailScreen({ post, onBack, onOpenProfile }: PostDetailScre
     id: c.id,
     author: c.author.name,
     authorArchetypeKey: c.author.archetypeKey ?? null,
+    authorAvatarUrl: c.author.avatarUrl ?? null,
     content: c.content,
     time: '',
     likes: c.likes,
@@ -278,6 +279,7 @@ export function PostDetailScreen({ post, onBack, onOpenProfile }: PostDetailScre
               <UserAvatar
                 name={c.author}
                 archetypeKey={c.authorArchetypeKey}
+                avatarUrl={c.authorAvatarUrl}
                 size={32}
               />
               <div className="flex-1 bg-white rounded-2xl px-3 py-2.5 shadow-sm">
@@ -310,14 +312,16 @@ export function PostDetailScreen({ post, onBack, onOpenProfile }: PostDetailScre
             {motherName.charAt(0)}
           </div>
           <div className="flex-1 flex items-center gap-2 bg-white rounded-2xl border border-sara-linen px-3 py-2">
-            <MentionInput
-              value={commentText}
-              onChange={setCommentText}
-              onSubmit={handleComment}
-              placeholder="Adicionar comentário..."
-              rows={1}
-              className="flex-1 bg-transparent text-sm text-graphite placeholder:text-sara-muted outline-none resize-none"
-            />
+            <div className="flex-1 min-w-0">
+              <MentionInput
+                value={commentText}
+                onChange={setCommentText}
+                onSubmit={handleComment}
+                placeholder="Adicionar comentário..."
+                rows={1}
+                className="w-full bg-transparent text-sm text-graphite placeholder:text-sara-muted outline-none resize-none"
+              />
+            </div>
             <button
               onClick={handleComment}
               disabled={!commentText.trim()}

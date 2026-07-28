@@ -620,7 +620,7 @@ export function ChatScreen({ chat, onBack, onOpenProfile }: ChatScreenProps) {
           )}
         </div>
 
-        <div data-testid="chat-input-bar" className="flex items-center gap-2 bg-white rounded-2xl border border-sara-linen px-3 py-2">
+        <div data-testid="chat-input-bar" className="flex items-center gap-2 bg-white rounded-2xl border border-sara-linen px-3 py-2 overflow-hidden">
           {/* Emoji button */}
           <button
             onClick={() => togglePanel('emoji')}

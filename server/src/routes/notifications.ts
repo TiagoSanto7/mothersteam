@@ -10,21 +10,34 @@ export default async function notificationsRoutes(fastify: FastifyInstance) {
       take: 50,
     })
 
+    const allActorIds = [...new Set(notifications.filter((n) => n.actorId).map((n) => n.actorId!))]
     const followActorIds = notifications
       .filter((n) => n.type === 'follow' && n.actorId)
       .map((n) => n.actorId!)
 
-    const followingSet = new Set<string>()
-    if (followActorIds.length > 0) {
-      const follows = await fastify.prisma.follow.findMany({
-        where: { followerId: request.userId, followingId: { in: followActorIds } },
-        select: { followingId: true },
-      })
-      follows.forEach((f) => followingSet.add(f.followingId))
-    }
+    const [actorUsers, follows] = await Promise.all([
+      allActorIds.length > 0
+        ? fastify.prisma.user.findMany({
+            where: { id: { in: allActorIds } },
+            select: { id: true, avatarUrl: true },
+          })
+        : Promise.resolve([]),
+      followActorIds.length > 0
+        ? fastify.prisma.follow.findMany({
+            where: { followerId: request.userId, followingId: { in: followActorIds } },
+            select: { followingId: true },
+          })
+        : Promise.resolve([]),
+    ])
+
+    const actorAvatarMap: Record<string, string | null> = Object.fromEntries(
+      actorUsers.map((u) => [u.id, u.avatarUrl])
+    )
+    const followingSet = new Set(follows.map((f) => f.followingId))
 
     const enriched = notifications.map((n) => ({
       ...n,
+      actorAvatarUrl: n.actorId ? (actorAvatarMap[n.actorId] ?? null) : null,
       isFollowedByCurrentUser:
         n.type === 'follow' && n.actorId ? followingSet.has(n.actorId) : undefined,
     }))

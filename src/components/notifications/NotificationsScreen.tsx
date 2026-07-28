@@ -1,6 +1,7 @@
 import { useState, useRef } from 'react';
 import { usePullToRefresh } from '../../lib/usePullToRefresh';
-import { ChevronLeft, Heart, UserPlus, MessageCircle, UserCheck } from 'lucide-react';
+import { ChevronLeft, Heart, UserPlus, MessageCircle, UserCheck, AtSign } from 'lucide-react';
+import { UserAvatar } from '../shared/UserAvatar';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiFetch } from '../../lib/api';
 import { useAppStore } from '../../store/useAppStore';
@@ -19,9 +20,10 @@ interface NotificationsScreenProps {
 }
 
 const ICON: Record<ApiNotification['type'], React.ReactElement> = {
-  like:    <Heart size={16} className="text-sara-terracotta" />,
-  follow:  <UserPlus size={16} className="text-sara-gold" />,
-  comment: <MessageCircle size={16} className="text-sara-warm" />,
+  like:    <Heart size={14} className="text-sara-terracotta" fill="currentColor" />,
+  follow:  <UserPlus size={14} className="text-sara-gold" />,
+  comment: <MessageCircle size={14} className="text-sara-warm" />,
+  mention: <AtSign size={14} className="text-sara-gold" />,
 };
 
 export function NotificationsScreen({ onBack, onOpenPost, onOpenUser, onOpenCommunity }: NotificationsScreenProps) {
@@ -140,9 +142,25 @@ export function NotificationsScreen({ onBack, onOpenPost, onOpenUser, onOpenComm
                     onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') handleNotificationClick(n); }}
                     className={`w-full flex items-start gap-3 px-4 py-4 cursor-pointer ${!n.read ? 'bg-sara-linen' : 'bg-white'} hover:brightness-95 transition-all`}
                   >
-                    {/* Actor avatar */}
-                    <div className="w-9 h-9 rounded-full bg-sara-cream flex items-center justify-center flex-shrink-0">
-                      {ICON[n.type]}
+                    {/* Actor avatar with notification-type badge */}
+                    <div className="relative flex-shrink-0">
+                      {n.actorId && n.actorName ? (
+                        <UserAvatar
+                          name={n.actorName}
+                          archetypeKey={null}
+                          avatarUrl={n.actorAvatarUrl ?? null}
+                          size={36}
+                        />
+                      ) : (
+                        <div className="w-9 h-9 rounded-full bg-sara-cream flex items-center justify-center">
+                          {ICON[n.type]}
+                        </div>
+                      )}
+                      {n.actorId && n.actorName && (
+                        <div className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-white shadow-sm flex items-center justify-center">
+                          {ICON[n.type]}
+                        </div>
+                      )}
                     </div>
 
                     <div className="flex-1 min-w-0">

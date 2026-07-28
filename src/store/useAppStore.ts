@@ -138,9 +138,10 @@ export const useAppStore = create<AppState>()(
       // Auth actions
       setAccessToken: (token) => set({ accessToken: token }),
       setAuth: (token, user, refreshTok) =>
-        set({
+        set((s) => ({
           accessToken: token,
-          refreshToken: refreshTok ?? null,
+          // Preserve existing refreshToken if a new one is not provided (session restore path)
+          refreshToken: refreshTok !== undefined ? refreshTok : s.refreshToken,
           currentUserId: user.id,
           isLoggedIn: true,
           email: user.email,
@@ -148,7 +149,7 @@ export const useAppStore = create<AppState>()(
           babyName: user.babyName ?? '',
           phase: buildPhase(user),
           onboardingDone: user.onboardingDone,
-        }),
+        })),
       clearAuth: () =>
         set({ accessToken: null, refreshToken: null, currentUserId: null, isLoggedIn: false, email: '' }),
       refreshAccessToken: async () => {

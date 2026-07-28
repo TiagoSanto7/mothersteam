@@ -79,6 +79,7 @@ export interface PostComment {
   id: string;
   author: string;
   authorArchetypeKey?: string | null;
+  authorAvatarUrl?: string | null;
   content: string;
   time: string;
   likes: number;
