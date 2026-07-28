@@ -1,7 +1,8 @@
 import { useState, useRef, useEffect } from 'react';
 import { Plus } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useInfiniteQuery } from '@tanstack/react-query';
+import { useInfiniteQuery, useQueryClient } from '@tanstack/react-query';
+import { usePullToRefresh } from '../../lib/usePullToRefresh';
 import { useAppStore } from '../../store/useAppStore';
 import { apiFetch } from '../../lib/api';
 import { useIntersection } from '../../lib/useIntersection';
@@ -25,8 +26,13 @@ const CATEGORY_LABELS: Category[] = ['todos', 'gestação', 'pós-parto', 'amame
 export function ComunidadeScreen() {
   const isLoggedIn = useAppStore((s) => s.isLoggedIn);
 
+  const queryClient = useQueryClient();
   const sentinelRef = useRef<HTMLDivElement>(null);
+  const scrollRef = useRef<HTMLDivElement>(null);
   const isAtBottom = useIntersection(sentinelRef);
+  const { isPulling, pullY } = usePullToRefresh(scrollRef, async () => {
+    await queryClient.invalidateQueries({ queryKey: ['posts'] });
+  });
 
   const {
     data: postsPages,
@@ -116,7 +122,12 @@ export function ComunidadeScreen() {
 
   return (
     <>
-      <div className="flex flex-col gap-4 pb-6">
+      <div ref={scrollRef} className="flex flex-col gap-4 pb-6">
+        {isPulling && (
+          <div className="flex justify-center py-3" style={{ transform: `translateY(${pullY - 40}px)` }}>
+            <div className="w-6 h-6 rounded-full border-2 border-sara-gold border-t-transparent animate-spin" />
+          </div>
+        )}
         <div className="flex gap-1 px-4 border-b border-sara-linen">
           {(['para-voce', 'comunidades'] as TopTab[]).map((tab) => {
             const label = tab === 'para-voce' ? 'Para Você' : 'Comunidades';

@@ -259,6 +259,30 @@ describe('Melhoria 3 — share button', () => {
     delete (navigator as any).share
   })
 
+  it('shows share button in readOnly mode', () => {
+    render(
+      <SavedVersesScreen
+        open={true}
+        onClose={vi.fn()}
+        readOnlyVerses={['Mateus 11:28']}
+        readOnlyUserName="Maria"
+      />
+    )
+    expect(screen.getByLabelText('Compartilhar versículo')).toBeInTheDocument()
+  })
+
+  it('shows save button in readOnly mode', () => {
+    render(
+      <SavedVersesScreen
+        open={true}
+        onClose={vi.fn()}
+        readOnlyVerses={['Mateus 11:28']}
+        readOnlyUserName="Maria"
+      />
+    )
+    expect(screen.getByLabelText('Salvar versículo')).toBeInTheDocument()
+  })
+
   it('shareVerse returns "error" when both share and clipboard fail', async () => {
     delete (navigator as any).share
     Object.defineProperty(navigator, 'clipboard', {

@@ -15,8 +15,8 @@ interface Props {
  * Shares a verse via Web Share API when available, otherwise copies to clipboard.
  * Returns 'shared' | 'copied' | 'error'.
  */
-export async function shareVerse(verso: string, referencia: string): Promise<'shared' | 'copied' | 'error'> {
-  const text = `"${verso}" — ${referencia}`
+export async function shareVerse(verso: string, referencia: string, customText?: string): Promise<'shared' | 'copied' | 'error'> {
+  const text = customText ?? `"${verso}" — ${referencia}`
   if (typeof navigator !== 'undefined' && navigator.share) {
     try {
       await navigator.share({ text })
@@ -51,6 +51,7 @@ export async function shareVerse(verso: string, referencia: string): Promise<'sh
 export function SavedVersesScreen({ open, onClose, readOnlyVerses, readOnlyUserName }: Props) {
   const ownVerses = useAppStore(selectSavedVerses)
   const unsaveVerse = useAppStore((s) => s.unsaveVerse)
+  const saveVerse = useAppStore((s) => s.saveVerse)
   const prayersByVerse = useAppStore(selectPrayersByVerse)
   const savePrayer = useAppStore((s) => s.savePrayer)
 
@@ -191,7 +192,10 @@ export function SavedVersesScreen({ open, onClose, readOnlyVerses, readOnlyUserN
                           )}
                           <button
                             onClick={async () => {
-                              const result = await shareVerse(entry.verso, entry.referencia);
+                              const text = readOnlyUserName
+                                ? `"${entry.verso}" — ${entry.referencia}\n\nSalvo por ${readOnlyUserName} no Mother's Team`
+                                : `"${entry.verso}" — ${entry.referencia}`;
+                              const result = await shareVerse(entry.verso, entry.referencia, text);
                               const label = result === 'shared' ? '✓ Compartilhado' : result === 'copied' ? '✓ Copiado' : '✗ Erro';
                               setShareLabel((prev) => ({ ...prev, [ref]: label }));
                               setTimeout(() => setShareLabel((prev) => { const n = { ...prev }; delete n[ref]; return n; }), 2000);
@@ -201,6 +205,19 @@ export function SavedVersesScreen({ open, onClose, readOnlyVerses, readOnlyUserN
                           >
                             {shareLabel[ref] ?? '📤 Compartilhar'}
                           </button>
+                          {isReadOnly && (
+                            <button
+                              onClick={() => {
+                                saveVerse(ref);
+                                setShareLabel((prev) => ({ ...prev, [ref]: '✓ Salvo' }));
+                                setTimeout(() => setShareLabel((prev) => { const n = { ...prev }; delete n[ref]; return n; }), 2000);
+                              }}
+                              aria-label="Salvar versículo"
+                              className="text-[11px] text-sara-gold font-medium flex items-center gap-1"
+                            >
+                              {shareLabel[ref] === '✓ Salvo' ? '✓ Salvo' : '❤️ Salvar'}
+                            </button>
+                          )}
                         </div>
                         {!isReadOnly && (
                           <button

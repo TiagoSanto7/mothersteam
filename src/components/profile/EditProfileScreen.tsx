@@ -8,6 +8,7 @@ import { patchUserProfileInCaches } from '../../lib/helpers';
 import type { ApiUser, ApiUserProfile } from '../../lib/types';
 import { getAvatarColor } from '../../utils/avatar';
 import { ImageSourceSheet } from '../shared/ImageSourceSheet';
+import { ImageCropModal } from '../shared/ImageCropModal';
 
 interface EditProfileScreenProps {
   onBack: () => void;
@@ -24,6 +25,7 @@ export function EditProfileScreen({ onBack }: EditProfileScreenProps) {
   const [error, setError] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [showImageSheet, setShowImageSheet] = useState(false);
+  const [cropSrc, setCropSrc] = useState<string | null>(null);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
@@ -74,13 +76,22 @@ export function EditProfileScreen({ onBack }: EditProfileScreenProps) {
     mutate({ name, bio: bio.trim() || null });
   }
 
-  async function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
+  function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
+    const url = URL.createObjectURL(file);
+    setCropSrc(url);
+    if (e.target) e.target.value = '';
+  }
+
+  async function handleCropConfirm(blob: Blob) {
+    if (cropSrc) URL.revokeObjectURL(cropSrc);
+    setCropSrc(null);
     setError(null);
     setIsUploading(true);
     try {
-      const resized = await resizeImage(file, 800, 800, 0.85);
+      const file = new File([blob], 'avatar.jpg', { type: 'image/jpeg' });
+      const resized = await resizeImage(file, 400, 400, 0.9);
       const url = await uploadImage(resized, accessToken);
       await apiFetch<ApiUser>('/users/me', {
         method: 'PATCH',
@@ -94,8 +105,6 @@ export function EditProfileScreen({ onBack }: EditProfileScreenProps) {
       setError('Não foi possível enviar a foto. Tente novamente.');
     } finally {
       setIsUploading(false);
-      // Reset input so the same file can be selected again
-      if (fileInputRef.current) fileInputRef.current.value = '';
     }
   }
 
@@ -217,6 +226,14 @@ export function EditProfileScreen({ onBack }: EditProfileScreenProps) {
           {isPending ? 'Salvando…' : 'Salvar'}
         </button>
       </form>
+      {cropSrc && (
+        <ImageCropModal
+          imageSrc={cropSrc}
+          aspectRatio={1}
+          onConfirm={handleCropConfirm}
+          onCancel={() => { URL.revokeObjectURL(cropSrc!); setCropSrc(null); }}
+        />
+      )}
     </div>
   );
 }

@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
-import { ChevronLeft, Settings } from 'lucide-react';
+import { usePullToRefresh } from '../../lib/usePullToRefresh';
+import { ChevronLeft, Settings, Bell } from 'lucide-react';
 import { useQuery, useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAppStore, selectSavedVerses } from '../../store/useAppStore';
 import { ARCHETYPES } from '../../utils/onboardingScoring';
@@ -38,9 +39,15 @@ export function ProfileScreen({ onClose, userId, onOpenProfile, isTab = false }:
   const [followList, setFollowList] = useState<'followers' | 'following' | null>(null);
   const [showSavedVerses, setShowSavedVerses] = useState(false);
   const [showOtherVerses, setShowOtherVerses] = useState(false);
+  const [notifying, setNotifying] = useState(false);
 
   const sentinelRef = useRef<HTMLDivElement>(null);
+  const scrollRef = useRef<HTMLDivElement>(null);
   const isAtBottom = useIntersection(sentinelRef);
+  const { isPulling, pullY } = usePullToRefresh(scrollRef, async () => {
+    await queryClient.invalidateQueries({ queryKey: ['user', effectiveUserId] });
+    await queryClient.invalidateQueries({ queryKey: ['userPosts', effectiveUserId] });
+  });
 
   const { data: profile } = useQuery({
     queryKey: ['user', effectiveUserId],
@@ -272,6 +279,19 @@ export function ProfileScreen({ onClose, userId, onOpenProfile, isTab = false }:
               >
                 {profile.isFollowedByCurrentUser ? 'Seguindo' : 'Seguir'}
               </button>
+              {profile.isFollowedByCurrentUser && (
+                <button
+                  onClick={() => setNotifying((n) => !n)}
+                  aria-label={notifying ? 'Desativar notificações de publicações' : 'Ativar notificações de publicações'}
+                  className={`w-9 h-9 flex items-center justify-center rounded-full border transition-colors ${
+                    notifying
+                      ? 'border-sara-gold bg-sara-gold text-white'
+                      : 'border-sara-linen bg-white text-graphite-muted'
+                  }`}
+                >
+                  <Bell size={16} />
+                </button>
+              )}
             </div>
             {profile.versesPublic && otherVerses && otherVerses.length > 0 && (
               <button
@@ -293,7 +313,12 @@ export function ProfileScreen({ onClose, userId, onOpenProfile, isTab = false }:
       <div className="border-t border-gray-100 flex-shrink-0" />
 
       {/* Feed */}
-      <div className="flex-1 overflow-y-auto px-4 py-3 flex flex-col gap-3">
+      <div ref={scrollRef} className="flex-1 overflow-y-auto px-4 py-3 flex flex-col gap-3">
+        {isPulling && (
+          <div className="flex justify-center py-3" style={{ transform: `translateY(${pullY - 40}px)` }}>
+            <div className="w-6 h-6 rounded-full border-2 border-sara-gold border-t-transparent animate-spin" />
+          </div>
+        )}
         {posts.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full gap-2 py-12 text-graphite-muted">
             <p className="text-sm">Nenhuma publicação ainda</p>
