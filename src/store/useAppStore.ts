@@ -15,9 +15,10 @@ function derivarQ1(phase: PregnancyPhase): Q1Answer {
 }
 
 interface AppState {
-  // Auth — NOT persisted
+  // Auth — NOT persisted (except refreshToken)
   isLoggedIn: boolean;
   accessToken: string | null;
+  refreshToken: string | null;
   currentUserId: string | null;
   email: string;
   // Profile — persisted
@@ -41,8 +42,9 @@ interface AppState {
   pendingShareContent: string | null;
   // Auth actions
   setAccessToken: (token: string) => void;
-  setAuth: (token: string, user: ApiUser) => void;
+  setAuth: (token: string, user: ApiUser, refreshToken?: string) => void;
   clearAuth: () => void;
+  refreshAccessToken: () => Promise<void>;
   // Profile actions
   completeOnboarding: (answers: OnboardingAnswers) => void;
   applyReceptionData: (data: ReceptionData) => void;
@@ -112,9 +114,10 @@ export function migrateAppState(
 export const useAppStore = create<AppState>()(
   persist(
     (set, get) => ({
-      // Auth — memory only
+      // Auth — memory only (except refreshToken which is persisted)
       isLoggedIn: false,
       accessToken: null,
+      refreshToken: null,
       currentUserId: null,
       email: '',
       // Profile
@@ -134,9 +137,10 @@ export const useAppStore = create<AppState>()(
       pendingShareContent: null,
       // Auth actions
       setAccessToken: (token) => set({ accessToken: token }),
-      setAuth: (token, user) =>
+      setAuth: (token, user, refreshTok) =>
         set({
           accessToken: token,
+          refreshToken: refreshTok ?? null,
           currentUserId: user.id,
           isLoggedIn: true,
           email: user.email,
@@ -146,7 +150,20 @@ export const useAppStore = create<AppState>()(
           onboardingDone: user.onboardingDone,
         }),
       clearAuth: () =>
-        set({ accessToken: null, currentUserId: null, isLoggedIn: false, email: '' }),
+        set({ accessToken: null, refreshToken: null, currentUserId: null, isLoggedIn: false, email: '' }),
+      refreshAccessToken: async () => {
+        const { refreshToken } = get()
+        if (!refreshToken) return
+        try {
+          const data = await apiFetch<{ accessToken: string }>('/auth/refresh', {
+            method: 'POST',
+            body: JSON.stringify({ refreshToken }),
+          })
+          set({ accessToken: data.accessToken, isLoggedIn: true })
+        } catch {
+          get().clearAuth()
+        }
+      },
       // Profile actions
       completeOnboarding: (answers) => {
         const profile = computeProfile(answers);
@@ -254,6 +271,7 @@ export const useAppStore = create<AppState>()(
         lastFeedSide: state.lastFeedSide,
         versesByUser: state.versesByUser,
         prayersByUser: state.prayersByUser,
+        refreshToken: state.refreshToken,
       }),
     },
   ),
