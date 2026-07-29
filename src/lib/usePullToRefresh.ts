@@ -36,9 +36,12 @@ export function usePullToRefresh(
       if (pullYRef.current >= THRESHOLD && !isRefreshing.current) {
         isRefreshing.current = true
         setIsLoading(true)
-        await onRefresh()
-        setIsLoading(false)
-        isRefreshing.current = false
+        try {
+          await onRefresh()
+        } finally {
+          setIsLoading(false)
+          isRefreshing.current = false
+        }
       }
       setIsPulling(false)
       setPullY(0)
