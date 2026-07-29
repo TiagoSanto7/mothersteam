@@ -8,6 +8,7 @@ interface Message {
   id: string;
   role: 'user' | 'assistant';
   text: string;
+  isNew?: boolean;
 }
 
 type ConvStatus = 'idle' | 'connecting' | 'listening' | 'processing' | 'speaking' | 'error';
@@ -36,6 +37,28 @@ const STATUS_COLORS: Record<ConvStatus, string> = {
   speaking: 'text-sara-gold',
   error: 'text-red-500',
 };
+
+function AssistantMessage({ text, isNew }: { text: string; isNew?: boolean }) {
+  const sentences = text.split(/[.!?]+\s+/).filter(Boolean);
+  if (!isNew || sentences.length <= 1) {
+    return <span>{text}</span>;
+  }
+  return (
+    <>
+      {sentences.map((sentence, i) => (
+        <motion.span
+          key={i}
+          style={{ display: 'block' }}
+          initial={{ opacity: 0, y: 4 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: i * 0.15, duration: 0.3, ease: 'easeOut' }}
+        >
+          {sentence}{i < sentences.length - 1 ? '.' : ''}
+        </motion.span>
+      ))}
+    </>
+  );
+}
 
 interface MaeIAScreenProps {
   onBack?: () => void;
@@ -68,7 +91,7 @@ export function MaeIAScreen({ onBack }: MaeIAScreenProps = {}) {
   const addMessage = useCallback((role: 'user' | 'assistant', text: string) => {
     setMessages((prev) => [
       ...prev,
-      { id: `${Date.now()}-${Math.random()}`, role, text },
+      { id: `${Date.now()}-${Math.random()}`, role, text, isNew: true },
     ]);
   }, []);
 
@@ -183,7 +206,11 @@ export function MaeIAScreen({ onBack }: MaeIAScreenProps = {}) {
                   : `bg-white text-graphite shadow-sm rounded-bl-sm ${msg.id === '0' ? 'font-serif' : ''}`
               }`}
             >
-              {msg.text}
+              {msg.role === 'assistant' ? (
+                <AssistantMessage text={msg.text} isNew={msg.isNew} />
+              ) : (
+                msg.text
+              )}
             </div>
           </div>
         ))}
