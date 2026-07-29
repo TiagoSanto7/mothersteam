@@ -9,8 +9,6 @@ const PETAL_THRESHOLDS = [0, 12, 23, 35, 47, 58]
 const MAX_PULL = 70
 
 export function SaraPullIndicator({ pullY, isLoading }: SaraPullIndicatorProps) {
-  const progress = Math.min(pullY / MAX_PULL, 1)
-
   function petalScale(threshold: number) {
     const petalProgress = Math.min(pullY / MAX_PULL, 1)
     const petalThresholdNorm = threshold / MAX_PULL
@@ -49,7 +47,7 @@ export function SaraPullIndicator({ pullY, isLoading }: SaraPullIndicatorProps) 
             cy="24"
             r="7"
             fill="#C9A96E"
-            animate={{ scale: isLoading ? [1, 1.1, 1] : progress > 0.1 ? 1 : 0 }}
+            animate={{ scale: isLoading ? [1, 1.1, 1] : pullY / MAX_PULL > 0.1 ? 1 : 0 }}
             transition={isLoading ? { repeat: Infinity, duration: 1.2, ease: 'easeInOut' } : { duration: 0.2 }}
           />
         </svg>
