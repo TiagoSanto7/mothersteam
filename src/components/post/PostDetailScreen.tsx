@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { useState, useEffect } from 'react';
+import { motion, AnimatePresence, useAnimate } from 'framer-motion';
 import { ChevronLeft, Heart, MessageCircle, Share2, Repeat2, Send } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAppStore } from '../../store/useAppStore';
@@ -50,6 +50,11 @@ export function PostDetailScreen({ post, onBack, onOpenProfile }: PostDetailScre
   const motherProfile = useAppStore((s) => s.motherProfile);
   const currentUserId = useAppStore((s) => s.currentUserId);
   const queryClient = useQueryClient();
+  const [scope, animate] = useAnimate();
+
+  useEffect(() => {
+    animate(scope.current, { x: 0 }, { duration: 0.28, ease: [0.4, 0, 0.2, 1] });
+  }, []);
 
   const [liked, setLiked] = useState(post.likedByCurrentUser ?? false);
   const [bounceKey, setBounceKey] = useState(0);
@@ -132,6 +137,11 @@ export function PostDetailScreen({ post, onBack, onOpenProfile }: PostDetailScre
     );
   }
 
+  async function handleBack() {
+    await animate(scope.current, { x: '100%' }, { duration: 0.28, ease: [0.4, 0, 0.2, 1] });
+    onBack();
+  }
+
   function handleLike() {
     const next = !liked;
     setLiked(next);
@@ -154,11 +164,15 @@ export function PostDetailScreen({ post, onBack, onOpenProfile }: PostDetailScre
   }
 
   return (
-    <div className="flex flex-col w-full h-full sm:w-[390px] sm:h-[844px] bg-gradient-to-b from-[#F5EDE0] via-[#EAD8C8] to-[#D9C4AF] sm:rounded-[44px] sm:shadow-2xl overflow-hidden relative">
+    <motion.div
+      ref={scope}
+      initial={{ x: '100%' }}
+      className="flex flex-col w-full h-full sm:w-[390px] sm:h-[844px] bg-gradient-to-b from-[#F5EDE0] via-[#EAD8C8] to-[#D9C4AF] sm:rounded-[44px] sm:shadow-2xl overflow-hidden relative"
+    >
       <div className="flex flex-col flex-1 overflow-hidden">
       <div className="flex items-center justify-between gap-3 px-4 pt-6 pb-4 border-b border-sara-linen/60 flex-shrink-0">
         <div className="flex items-center gap-3">
-          <button onClick={onBack} aria-label="Voltar" className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-sara-linen">
+          <button onClick={handleBack} aria-label="Voltar" className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-sara-linen">
             <ChevronLeft size={20} className="text-graphite" />
           </button>
           <p className="text-sm font-semibold text-graphite">Publicação</p>
@@ -377,6 +391,6 @@ export function PostDetailScreen({ post, onBack, onOpenProfile }: PostDetailScre
           isPending={repostMutation.isPending}
         />
       )}
-    </div>
+    </motion.div>
   );
 }
