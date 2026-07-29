@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { MessageCircle, Heart, Repeat2, Share2 } from 'lucide-react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useAppStore } from '../../store/useAppStore';
 import { apiFetch, resolveMediaUrl } from '../../lib/api';
 import { patchPostLikeInAllCaches } from '../../lib/helpers';
@@ -42,6 +43,8 @@ export function PostCard({ post, onOpen, onOpenProfile, onOpenUser, onOpenCommun
   const [reposted, setReposted] = useState(false);
   const [showShare, setShowShare] = useState(false);
   const [showRepostSheet, setShowRepostSheet] = useState(false);
+  const [bounceKey, setBounceKey] = useState(0);
+  const [showParticle, setShowParticle] = useState(false);
   const badge = post.badge ? BADGE_CONFIG[post.badge] : null;
 
   const likeMutation = useMutation({
@@ -162,22 +165,46 @@ export function PostCard({ post, onOpen, onOpenProfile, onOpenUser, onOpenCommun
         )}
 
         <div className="flex items-center gap-4 pt-1">
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              const next = !liked;
-              setLiked(next);
-              likeMutation.mutate(next);
-            }}
-            aria-label={liked ? 'Descurtir' : 'Curtir'}
-            aria-pressed={liked}
-            className={`flex items-center gap-1.5 text-xs transition-colors ${
-              liked ? 'text-sara-terracotta' : 'text-graphite-muted'
-            }`}
-          >
-            <Heart size={14} fill={liked ? 'currentColor' : 'none'} strokeWidth={1.8} />
-            {post.likes}
-          </button>
+          <div className="relative inline-flex">
+            <motion.button
+              key={bounceKey}
+              onClick={(e) => {
+                e.stopPropagation();
+                const next = !liked;
+                setLiked(next);
+                likeMutation.mutate(next);
+                if (next) {
+                  setBounceKey((k) => k + 1);
+                  setShowParticle(true);
+                  setTimeout(() => setShowParticle(false), 700);
+                }
+              }}
+              aria-label={liked ? 'Descurtir' : 'Curtir'}
+              aria-pressed={liked}
+              animate={liked ? { scale: [1, 1.4, 0.9, 1.15, 1] } : { scale: [1, 0.85, 1] }}
+              transition={{ duration: liked ? 0.4 : 0.2, ease: 'easeOut' }}
+              className={`flex items-center gap-1.5 text-xs transition-colors ${
+                liked ? 'text-sara-terracotta' : 'text-graphite-muted'
+              }`}
+            >
+              <Heart size={14} fill={liked ? 'currentColor' : 'none'} strokeWidth={1.8} />
+              {post.likes}
+            </motion.button>
+
+            <AnimatePresence>
+              {showParticle && (
+                <motion.span
+                  initial={{ opacity: 0, y: 0, x: -4 }}
+                  animate={{ opacity: [0, 1, 1, 0], y: -20 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 0.6, ease: 'easeOut' }}
+                  className="absolute -top-1 left-3 text-[10px] font-bold text-sara-terracotta pointer-events-none"
+                >
+                  +1
+                </motion.span>
+              )}
+            </AnimatePresence>
+          </div>
           <button
             onClick={onOpen}
             aria-label={`Ver ${post.replies} respostas`}
