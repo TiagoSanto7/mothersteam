@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronLeft, Heart, MessageCircle, Share2, Repeat2, Send } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAppStore } from '../../store/useAppStore';
@@ -51,6 +52,8 @@ export function PostDetailScreen({ post, onBack, onOpenProfile }: PostDetailScre
   const queryClient = useQueryClient();
 
   const [liked, setLiked] = useState(post.likedByCurrentUser ?? false);
+  const [bounceKey, setBounceKey] = useState(0);
+  const [showParticle, setShowParticle] = useState(false);
   const [reposted, setReposted] = useState(false);
   const [commentText, setCommentText] = useState('');
   const [showShareSheet, setShowShareSheet] = useState(false);
@@ -132,6 +135,11 @@ export function PostDetailScreen({ post, onBack, onOpenProfile }: PostDetailScre
   function handleLike() {
     const next = !liked;
     setLiked(next);
+    if (next) {
+      setBounceKey((k) => k + 1);
+      setShowParticle(true);
+      setTimeout(() => setShowParticle(false), 700);
+    }
     likeMutation.mutate(next);
   }
 
@@ -241,13 +249,33 @@ export function PostDetailScreen({ post, onBack, onOpenProfile }: PostDetailScre
           )}
 
           <div className="flex items-center gap-6 pt-3 border-t border-sara-linen/60">
-            <button
-              onClick={handleLike}
-              className={`flex items-center gap-1.5 text-xs transition-colors ${liked ? 'text-sara-terracotta' : 'text-graphite-muted'}`}
-            >
-              <Heart size={16} fill={liked ? 'currentColor' : 'none'} strokeWidth={1.8} />
-              <span>{post.likes - (post.likedByCurrentUser ? 1 : 0) + (liked ? 1 : 0)}</span>
-            </button>
+            <div className="relative inline-flex">
+              <motion.button
+                key={bounceKey}
+                onClick={handleLike}
+                aria-label={liked ? 'Descurtir' : 'Curtir'}
+                aria-pressed={liked}
+                animate={liked ? { scale: [1, 1.4, 0.9, 1.15, 1] } : { scale: [1, 0.85, 1] }}
+                transition={{ duration: liked ? 0.4 : 0.2, ease: 'easeOut' }}
+                className={`flex items-center gap-1.5 text-xs transition-colors ${liked ? 'text-sara-terracotta' : 'text-graphite-muted'}`}
+              >
+                <Heart size={16} fill={liked ? 'currentColor' : 'none'} strokeWidth={1.8} />
+                <span>{post.likes - (post.likedByCurrentUser ? 1 : 0) + (liked ? 1 : 0)}</span>
+              </motion.button>
+              <AnimatePresence>
+                {showParticle && (
+                  <motion.span
+                    initial={{ opacity: 0, y: 0, x: -4 }}
+                    animate={{ opacity: [0, 1, 1, 0], y: -20 }}
+                    exit={{ opacity: 0 }}
+                    transition={{ duration: 0.6, ease: 'easeOut' }}
+                    className="absolute -top-1 left-3 text-[10px] font-bold text-sara-terracotta pointer-events-none"
+                  >
+                    +1
+                  </motion.span>
+                )}
+              </AnimatePresence>
+            </div>
             <button className="flex items-center gap-1.5 text-xs text-graphite-muted">
               <MessageCircle size={16} strokeWidth={1.8} />
               <span>{comments.length > 0 ? comments.length : post.replies}</span>
