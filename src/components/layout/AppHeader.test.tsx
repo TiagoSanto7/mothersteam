@@ -3,9 +3,9 @@ import { describe, expect, it, vi } from 'vitest';
 import { AppHeader } from './AppHeader';
 
 describe('AppHeader', () => {
-  it("renders Mother's Team logo text", () => {
+  it('renders the active tab label (default: Início)', () => {
     render(<AppHeader onOpenDrawer={() => {}} />);
-    expect(screen.getByText("Mother's Team")).toBeInTheDocument();
+    expect(screen.getByText('Início')).toBeInTheDocument();
   });
 
   it('renders hamburger button with correct aria-label', () => {
