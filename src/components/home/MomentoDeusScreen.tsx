@@ -26,10 +26,30 @@ export function MomentoDeusScreen({ open, onClose }: Props) {
     <AnimatePresence>
       {open && (
         <motion.div
-          initial={{ y: '100%' }}
-          animate={{ y: 0 }}
-          exit={{ y: '100%' }}
-          transition={{ duration: 0.35, ease: 'easeOut' }}
+          key="momento-backdrop"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.3, ease: 'easeOut' }}
+          style={{
+            position: 'fixed',
+            inset: 0,
+            zIndex: 40,
+            backdropFilter: 'blur(12px)',
+            background: 'rgba(245, 237, 224, 0.3)',
+          }}
+        />
+      )}
+    </AnimatePresence>
+
+    <AnimatePresence>
+      {open && (
+        <motion.div
+          key="momento-screen"
+          initial={{ opacity: 0, scale: 0.92 }}
+          animate={{ opacity: 1, scale: 1 }}
+          exit={{ opacity: 0, scale: 0.92 }}
+          transition={{ type: 'spring', stiffness: 120, damping: 20, mass: 1 }}
           className="fixed inset-0 z-50 flex flex-col"
           style={{ background: `linear-gradient(160deg, ${config.gradientFrom}, ${config.gradientTo})` }}
           role="dialog"
