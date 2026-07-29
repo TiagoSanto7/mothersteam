@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { Plus } from 'lucide-react';
+import { SaraPullIndicator } from '../shared/SaraPullIndicator';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useInfiniteQuery, useQueryClient } from '@tanstack/react-query';
 import { usePullToRefresh } from '../../lib/usePullToRefresh';
@@ -30,7 +31,7 @@ export function ComunidadeScreen() {
   const sentinelRef = useRef<HTMLDivElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const isAtBottom = useIntersection(sentinelRef);
-  const { isPulling, pullY } = usePullToRefresh(scrollRef, async () => {
+  const { isPulling, pullY, isLoading: isPullLoading } = usePullToRefresh(scrollRef, async () => {
     await queryClient.invalidateQueries({ queryKey: ['posts'] });
   });
 
@@ -123,10 +124,8 @@ export function ComunidadeScreen() {
   return (
     <>
       <div ref={scrollRef} className="flex flex-col gap-4 pb-6">
-        {isPulling && (
-          <div className="flex justify-center py-3" style={{ transform: `translateY(${pullY - 40}px)` }}>
-            <div className="w-6 h-6 rounded-full border-2 border-sara-gold border-t-transparent animate-spin" />
-          </div>
+        {(isPulling || isPullLoading) && (
+          <SaraPullIndicator pullY={pullY} isLoading={isPullLoading} />
         )}
         <div className="flex gap-1 px-4 border-b border-sara-linen">
           {(['para-voce', 'comunidades'] as TopTab[]).map((tab) => {

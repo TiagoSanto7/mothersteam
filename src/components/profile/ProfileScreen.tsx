@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { usePullToRefresh } from '../../lib/usePullToRefresh';
+import { SaraPullIndicator } from '../shared/SaraPullIndicator';
 import { ChevronLeft, Settings, Bell } from 'lucide-react';
 import { useQuery, useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAppStore, selectSavedVerses } from '../../store/useAppStore';
@@ -44,7 +45,7 @@ export function ProfileScreen({ onClose, userId, onOpenProfile, isTab = false }:
   const sentinelRef = useRef<HTMLDivElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const isAtBottom = useIntersection(sentinelRef);
-  const { isPulling, pullY } = usePullToRefresh(scrollRef, async () => {
+  const { isPulling, pullY, isLoading } = usePullToRefresh(scrollRef, async () => {
     await queryClient.invalidateQueries({ queryKey: ['user', effectiveUserId] });
     await queryClient.invalidateQueries({ queryKey: ['userPosts', effectiveUserId] });
   });
@@ -314,10 +315,8 @@ export function ProfileScreen({ onClose, userId, onOpenProfile, isTab = false }:
 
       {/* Feed */}
       <div ref={scrollRef} className="flex-1 overflow-y-auto px-4 py-3 flex flex-col gap-3">
-        {isPulling && (
-          <div className="flex justify-center py-3" style={{ transform: `translateY(${pullY - 40}px)` }}>
-            <div className="w-6 h-6 rounded-full border-2 border-sara-gold border-t-transparent animate-spin" />
-          </div>
+        {(isPulling || isLoading) && (
+          <SaraPullIndicator pullY={pullY} isLoading={isLoading} />
         )}
         {posts.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full gap-2 py-12 text-graphite-muted">

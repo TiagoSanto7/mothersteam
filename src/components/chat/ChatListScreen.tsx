@@ -1,5 +1,6 @@
 import { useState, useRef } from 'react';
 import { usePullToRefresh } from '../../lib/usePullToRefresh';
+import { SaraPullIndicator } from '../shared/SaraPullIndicator';
 import { ChevronLeft, Search, Edit, X } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiFetch } from '../../lib/api';
@@ -23,7 +24,7 @@ export function ChatListScreen({ onBack, onOpenProfile }: ChatListScreenProps) {
   const [showNewChat, setShowNewChat] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const scrollRef = useRef<HTMLDivElement>(null);
-  const { isPulling, pullY } = usePullToRefresh(scrollRef, async () => {
+  const { isPulling, pullY, isLoading } = usePullToRefresh(scrollRef, async () => {
     await queryClient.invalidateQueries({ queryKey: ['chats'] });
   });
 
@@ -97,10 +98,8 @@ export function ChatListScreen({ onBack, onOpenProfile }: ChatListScreenProps) {
       </div>
 
       <div ref={scrollRef} className="flex-1 overflow-y-auto">
-        {isPulling && (
-          <div className="flex justify-center py-3" style={{ transform: `translateY(${pullY - 40}px)` }}>
-            <div className="w-6 h-6 rounded-full border-2 border-sara-gold border-t-transparent animate-spin" />
-          </div>
+        {(isPulling || isLoading) && (
+          <SaraPullIndicator pullY={pullY} isLoading={isLoading} />
         )}
         {chats.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full gap-2 text-graphite-muted">
