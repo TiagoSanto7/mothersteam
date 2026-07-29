@@ -8,6 +8,7 @@ export function usePullToRefresh(
 ) {
   const [isPulling, setIsPulling] = useState(false)
   const [pullY, setPullY] = useState(0)
+  const [isLoading, setIsLoading] = useState(false)
   const startY = useRef(0)
   const pullYRef = useRef(0)
   const isRefreshing = useRef(false)
@@ -34,7 +35,9 @@ export function usePullToRefresh(
     async function onTouchEnd() {
       if (pullYRef.current >= THRESHOLD && !isRefreshing.current) {
         isRefreshing.current = true
+        setIsLoading(true)
         await onRefresh()
+        setIsLoading(false)
         isRefreshing.current = false
       }
       setIsPulling(false)
@@ -53,5 +56,5 @@ export function usePullToRefresh(
     }
   }, [containerRef, onRefresh])
 
-  return { isPulling, pullY }
+  return { isPulling, pullY, isLoading }
 }
