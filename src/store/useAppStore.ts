@@ -138,18 +138,32 @@ export const useAppStore = create<AppState>()(
       // Auth actions
       setAccessToken: (token) => set({ accessToken: token }),
       setAuth: (token, user, refreshTok) =>
-        set((s) => ({
-          accessToken: token,
-          // Preserve existing refreshToken if a new one is not provided (session restore path)
-          refreshToken: refreshTok !== undefined ? refreshTok : s.refreshToken,
-          currentUserId: user.id,
-          isLoggedIn: true,
-          email: user.email,
-          motherName: user.name,
-          babyName: user.babyName ?? '',
-          phase: buildPhase(user),
-          onboardingDone: user.onboardingDone,
-        })),
+        set((s) => {
+          // Consolidate __legacy__ verse bucket into this user's bucket on login.
+          // Removes the need for the selector to merge on every read (React #185
+          // trap: derived arrays in Zustand selectors return unstable references).
+          const legacy = s.versesByUser['__legacy__'];
+          let versesByUser = s.versesByUser;
+          if (legacy && legacy.length > 0) {
+            const existing = s.versesByUser[user.id] ?? [];
+            const merged = Array.from(new Set([...existing, ...legacy]));
+            const { ['__legacy__']: _drop, ...rest } = s.versesByUser;
+            versesByUser = { ...rest, [user.id]: merged };
+          }
+          return {
+            accessToken: token,
+            // Preserve existing refreshToken if a new one is not provided (session restore path)
+            refreshToken: refreshTok !== undefined ? refreshTok : s.refreshToken,
+            currentUserId: user.id,
+            isLoggedIn: true,
+            email: user.email,
+            motherName: user.name,
+            babyName: user.babyName ?? '',
+            phase: buildPhase(user),
+            onboardingDone: user.onboardingDone,
+            versesByUser,
+          };
+        }),
       clearAuth: () =>
         set({ accessToken: null, refreshToken: null, currentUserId: null, isLoggedIn: false, email: '' }),
       refreshAccessToken: async () => {
@@ -284,17 +298,12 @@ const EMPTY_PRAYERS: Record<string, string> = {};
 
 /**
  * Selector: returns the saved verse refs for the currently logged-in user.
- * Also merges in any verses stored in the __legacy__ bucket (pre-migration)
- * so that verses saved before the user logged in are not lost.
+ * Reference-stable — returns the same array until versesByUser[userId] changes.
+ * The __legacy__ bucket is consumed eagerly in setAuth, so this reader never
+ * has to merge derivatives at read time.
  */
-export const selectSavedVerses = (s: AppState): string[] => {
-  const userId = s.currentUserId ?? '__anon__'
-  const userVerses = s.versesByUser[userId] ?? EMPTY_VERSES
-  const legacyVerses = userId !== '__legacy__' ? (s.versesByUser['__legacy__'] ?? EMPTY_VERSES) : EMPTY_VERSES
-  if (legacyVerses.length === 0) return userVerses
-  // Merge legacy into user bucket on first read (deduplicated)
-  return Array.from(new Set([...userVerses, ...legacyVerses]))
-}
+export const selectSavedVerses = (s: AppState): string[] =>
+  s.versesByUser[s.currentUserId ?? '__anon__'] ?? EMPTY_VERSES
 
 /**
  * Selector: returns the prayer map (ref → text) for the current user.

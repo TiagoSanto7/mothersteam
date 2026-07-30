@@ -17,7 +17,8 @@ const TABS: TabConfig[] = [
 ];
 
 export function BottomTabBar() {
-  const { activeTab, setActiveTab } = useAppStore();
+  const activeTab = useAppStore((s) => s.activeTab);
+  const setActiveTab = useAppStore((s) => s.setActiveTab);
 
   return (
     <nav

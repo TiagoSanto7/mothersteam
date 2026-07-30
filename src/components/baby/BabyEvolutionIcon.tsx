@@ -9,7 +9,8 @@ const STAGE_LABELS = {
 } as const;
 
 export function BabyEvolutionIcon() {
-  const { phase, babyName } = useAppStore();
+  const phase = useAppStore((s) => s.phase);
+  const babyName = useAppStore((s) => s.babyName);
   const stage = getEvolutionStage(phase);
   const emoji = getEvolutionEmoji(phase);
 

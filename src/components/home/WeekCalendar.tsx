@@ -28,7 +28,8 @@ function formatSelectedDateLabel(iso: string): string {
 
 /** Rolling 7-day window ending today. `referenceDate` prop kept for backward compat. */
 export function WeekCalendar({ referenceDate: _referenceDate }: { referenceDate?: string }) {
-  const { selectedDate, setSelectedDate } = useAppStore();
+  const selectedDate = useAppStore((s) => s.selectedDate);
+  const setSelectedDate = useAppStore((s) => s.setSelectedDate);
   const dateInputRef = useRef<HTMLInputElement>(null);
   const days = getRollingWeek();
   const today = toISO(new Date());
