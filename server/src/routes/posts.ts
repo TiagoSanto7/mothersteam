@@ -355,11 +355,19 @@ export default async function postsRoutes(fastify: FastifyInstance) {
         where: { postId: request.params.id },
         take: limit + 1,
         ...(request.query.cursor ? { cursor: { id: request.query.cursor }, skip: 1 } : {}),
-        include: { author: { select: { id: true, name: true, archetypeKey: true, avatarUrl: true } } },
+        include: {
+          author: { select: { id: true, name: true, archetypeKey: true, avatarUrl: true } },
+          // Per-user like flag — same pattern used by posts.likes on the feed
+          likedBy: { where: { userId: request.userId }, select: { userId: true } },
+        },
         orderBy: { createdAt: 'asc' },
       })
       const hasMore = comments.length > limit
-      reply.send({ items: comments.slice(0, limit), hasMore })
+      const items = comments.slice(0, limit).map(({ likedBy, ...rest }) => ({
+        ...rest,
+        likedByCurrentUser: likedBy.length > 0,
+      }))
+      reply.send({ items, hasMore })
     }
   )
 
