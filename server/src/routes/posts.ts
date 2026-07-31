@@ -220,6 +220,69 @@ export default async function postsRoutes(fastify: FastifyInstance) {
     reply.send({ ok: true })
   })
 
+  fastify.post<{ Params: { id: string; commentId: string } }>(
+    '/:id/comments/:commentId/like',
+    async (request, reply) => {
+      // Verify comment exists and belongs to the given post; guards against
+      // clients constructing arbitrary commentIds against unrelated posts.
+      const comment = await fastify.prisma.comment.findFirst({
+        where: { id: request.params.commentId, postId: request.params.id },
+        select: { id: true, authorId: true, content: true },
+      })
+      if (!comment) return reply.status(404).send({ error: 'Comment not found' })
+
+      // Transaction: idempotent upsert + counter increment only when actually inserted
+      const inserted = await fastify.prisma.$transaction(async (tx) => {
+        const existing = await tx.commentLike.findUnique({
+          where: { userId_commentId: { userId: request.userId, commentId: comment.id } },
+        })
+        if (existing) return false
+        await tx.commentLike.create({
+          data: { userId: request.userId, commentId: comment.id },
+        })
+        await tx.comment.update({
+          where: { id: comment.id },
+          data: { likes: { increment: 1 } },
+        })
+        return true
+      })
+
+      // Read the up-to-date counter after the transaction
+      const updated = await fastify.prisma.comment.findUnique({
+        where: { id: comment.id },
+        select: { likes: true },
+      })
+
+      // Notify only on first like (not on retry) and not for self-likes
+      if (inserted && comment.authorId !== request.userId) {
+        const actor = await fastify.prisma.user.findUnique({
+          where: { id: request.userId },
+          select: { name: true },
+        })
+        const actorName = actor?.name ?? 'Alguém'
+        await fastify.prisma.notification.create({
+          data: {
+            type: 'like',
+            text: `${actorName} curtiu seu comentário.`,
+            recipientId: comment.authorId,
+            targetType: 'comment',
+            targetId: comment.id,
+            actorId: request.userId,
+            actorName,
+            postExcerpt: comment.content.slice(0, 200),
+          },
+        })
+        emitNotification(comment.authorId)
+      }
+
+      reply.status(201).send({
+        id: comment.id,
+        likes: updated?.likes ?? 0,
+        likedByCurrentUser: true,
+      })
+    }
+  )
+
   fastify.post<{ Params: { id: string } }>('/:id/repost', async (request, reply) => {
     const original = await fastify.prisma.post.findUnique({ where: { id: request.params.id } })
     if (!original) return reply.status(404).send({ error: 'Post not found' })
