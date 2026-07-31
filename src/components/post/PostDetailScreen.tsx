@@ -74,8 +74,35 @@ export function PostDetailScreen({ post, onBack, onOpenProfile }: PostDetailScre
     placeholderData: { items: [], hasMore: false },
   });
 
+  const likeCommentMutation = useMutation({
+    mutationFn: ({ commentId, isLiked }: { commentId: string; isLiked: boolean }) =>
+      apiFetch<{ id: string; likes: number; likedByCurrentUser: boolean }>(
+        `/posts/${post.id}/comments/${commentId}/like`,
+        { method: isLiked ? 'POST' : 'DELETE' },
+      ),
+    onMutate: async ({ commentId, isLiked }) => {
+      // Optimistic: flip flag + adjust counter immediately
+      const prevLiked = likedComments[commentId] ?? false
+      const prevCount = commentLikes[commentId] ?? 0
+      setLikedComments((prev) => ({ ...prev, [commentId]: isLiked }))
+      setCommentLikes((prev) => ({ ...prev, [commentId]: prevCount + (isLiked ? 1 : -1) }))
+      return { prevLiked, prevCount }
+    },
+    onError: (_err, { commentId }, ctx) => {
+      // Roll back to pre-mutation state
+      if (!ctx) return
+      setLikedComments((prev) => ({ ...prev, [commentId]: ctx.prevLiked }))
+      setCommentLikes((prev) => ({ ...prev, [commentId]: ctx.prevCount }))
+    },
+    onSuccess: (data) => {
+      // Reconcile with server truth
+      setCommentLikes((prev) => ({ ...prev, [data.id]: data.likes }))
+      setLikedComments((prev) => ({ ...prev, [data.id]: data.likedByCurrentUser }))
+    },
+  });
+
   useEffect(() => {
-    if (!commentsData?.items) return
+    if (!commentsData?.items || likeCommentMutation.isPending) return
     const nextLikes: Record<string, number> = {}
     const nextLiked: Record<string, boolean> = {}
     for (const c of commentsData.items) {
@@ -84,7 +111,7 @@ export function PostDetailScreen({ post, onBack, onOpenProfile }: PostDetailScre
     }
     setCommentLikes(nextLikes)
     setLikedComments(nextLiked)
-  }, [commentsData]);
+  }, [commentsData, likeCommentMutation.isPending]);
 
   const { data: originalApiPost } = useQuery({
     queryKey: ['posts', viewingOriginalId],
@@ -126,33 +153,6 @@ export function PostDetailScreen({ post, onBack, onOpenProfile }: PostDetailScre
     mutationFn: (content: string) =>
       apiFetch(`/posts/${post.id}/comments`, { method: 'POST', body: JSON.stringify({ content }) }),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['comments', post.id] }),
-  });
-
-  const likeCommentMutation = useMutation({
-    mutationFn: ({ commentId, isLiked }: { commentId: string; isLiked: boolean }) =>
-      apiFetch<{ id: string; likes: number; likedByCurrentUser: boolean }>(
-        `/posts/${post.id}/comments/${commentId}/like`,
-        { method: isLiked ? 'POST' : 'DELETE' },
-      ),
-    onMutate: async ({ commentId, isLiked }) => {
-      // Optimistic: flip flag + adjust counter immediately
-      const prevLiked = likedComments[commentId] ?? false
-      const prevCount = commentLikes[commentId] ?? 0
-      setLikedComments((prev) => ({ ...prev, [commentId]: isLiked }))
-      setCommentLikes((prev) => ({ ...prev, [commentId]: prevCount + (isLiked ? 1 : -1) }))
-      return { prevLiked, prevCount }
-    },
-    onError: (_err, { commentId }, ctx) => {
-      // Roll back to pre-mutation state
-      if (!ctx) return
-      setLikedComments((prev) => ({ ...prev, [commentId]: ctx.prevLiked }))
-      setCommentLikes((prev) => ({ ...prev, [commentId]: ctx.prevCount }))
-    },
-    onSuccess: (data) => {
-      // Reconcile with server truth
-      setCommentLikes((prev) => ({ ...prev, [data.id]: data.likes }))
-      setLikedComments((prev) => ({ ...prev, [data.id]: data.likedByCurrentUser }))
-    },
   });
 
   const badge = post.badge ? BADGE_CONFIG[post.badge] : null;
