@@ -56,7 +56,7 @@ describe('POST /posts/:id/comments/:commentId/like', () => {
       where: { recipientId: author.id, targetType: 'comment', targetId: comment.id },
     })
     expect(notif).not.toBeNull()
-    expect(notif?.text).toContain('Viewer')
+    expect(notif?.text).toBe('Viewer curtiu seu comentário.')
 
     await app.close()
     await cleanup({ authorId: author.id, viewerId: viewer.id, postId: post.id })
