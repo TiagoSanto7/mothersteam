@@ -67,6 +67,8 @@ export function PostDetailScreen({ post, onBack, onOpenProfile }: PostDetailScre
   const [viewingOriginalId, setViewingOriginalId] = useState<string | null>(null);
   const [commentLikes, setCommentLikes] = useState<Record<string, number>>({});
   const [likedComments, setLikedComments] = useState<Record<string, boolean>>({});
+  const [commentBounceKey, setCommentBounceKey] = useState<Record<string, number>>({});
+  const [commentParticle, setCommentParticle] = useState<Record<string, boolean>>({});
 
   const { data: commentsData } = useQuery<PaginatedResult<ApiComment>>({
     queryKey: ['comments', post.id],
@@ -361,14 +363,43 @@ export function PostDetailScreen({ post, onBack, onOpenProfile }: PostDetailScre
                   <span className="text-[10px] text-graphite-muted">{c.time}</span>
                 </div>
                 <MentionText text={c.content} className="text-xs text-graphite leading-relaxed mt-0.5 block" onMentionPress={(u) => lookupAndOpen(u, onOpenProfile)} />
-                <button
-                  onClick={() => likeCommentMutation.mutate({ commentId: c.id, isLiked: !likedComments[c.id] })}
-                  aria-label="Curtir comentário"
-                  className={`flex items-center gap-1 mt-2 transition-colors ${likedComments[c.id] ? 'text-sara-terracotta' : 'text-graphite-muted'}`}
-                >
-                  <Heart size={10} fill={likedComments[c.id] ? 'currentColor' : 'none'} />
-                  <span className="text-[10px]">{commentLikes[c.id] ?? c.likes}</span>
-                </button>
+                <div className="relative inline-flex">
+                  <motion.button
+                    key={commentBounceKey[c.id] ?? 0}
+                    onClick={() => {
+                      const next = !likedComments[c.id];
+                      likeCommentMutation.mutate({ commentId: c.id, isLiked: next });
+                      if (next) {
+                        setCommentBounceKey((prev) => ({ ...prev, [c.id]: (prev[c.id] ?? 0) + 1 }));
+                        setCommentParticle((prev) => ({ ...prev, [c.id]: true }));
+                        setTimeout(() => {
+                          setCommentParticle((prev) => ({ ...prev, [c.id]: false }));
+                        }, 700);
+                      }
+                    }}
+                    aria-label={likedComments[c.id] ? 'Descurtir comentário' : 'Curtir comentário'}
+                    aria-pressed={likedComments[c.id] ?? false}
+                    animate={likedComments[c.id] ? { scale: [1, 1.4, 0.9, 1.15, 1] } : { scale: [1, 0.85, 1] }}
+                    transition={{ duration: likedComments[c.id] ? 0.4 : 0.2, ease: 'easeOut' }}
+                    className={`flex items-center gap-1 mt-2 transition-colors ${likedComments[c.id] ? 'text-sara-terracotta' : 'text-graphite-muted'}`}
+                  >
+                    <Heart size={10} fill={likedComments[c.id] ? 'currentColor' : 'none'} />
+                    <span className="text-[10px]">{commentLikes[c.id] ?? c.likes}</span>
+                  </motion.button>
+                  <AnimatePresence>
+                    {commentParticle[c.id] && (
+                      <motion.span
+                        initial={{ opacity: 0, y: 0, x: -4 }}
+                        animate={{ opacity: [0, 1, 1, 0], y: -20 }}
+                        exit={{ opacity: 0 }}
+                        transition={{ duration: 0.6, ease: 'easeOut' }}
+                        className="absolute -top-1 left-3 text-[10px] font-bold text-sara-terracotta pointer-events-none"
+                      >
+                        +1
+                      </motion.span>
+                    )}
+                  </AnimatePresence>
+                </div>
               </div>
             </div>
           ))}
