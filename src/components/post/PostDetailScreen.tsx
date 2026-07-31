@@ -36,6 +36,7 @@ interface ApiComment {
   content: string;
   author: { id: string; name: string; archetypeKey?: string | null; avatarUrl?: string | null };
   likes: number;
+  likedByCurrentUser: boolean;
   createdAt: string;
 }
 
