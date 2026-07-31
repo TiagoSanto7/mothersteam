@@ -283,6 +283,43 @@ export default async function postsRoutes(fastify: FastifyInstance) {
     }
   )
 
+  fastify.delete<{ Params: { id: string; commentId: string } }>(
+    '/:id/comments/:commentId/like',
+    async (request, reply) => {
+      const comment = await fastify.prisma.comment.findFirst({
+        where: { id: request.params.commentId, postId: request.params.id },
+        select: { id: true },
+      })
+      if (!comment) return reply.status(404).send({ error: 'Comment not found' })
+
+      // Transaction: idempotent delete + counter decrement only when actually removed
+      await fastify.prisma.$transaction(async (tx) => {
+        const existing = await tx.commentLike.findUnique({
+          where: { userId_commentId: { userId: request.userId, commentId: comment.id } },
+        })
+        if (!existing) return
+        await tx.commentLike.delete({
+          where: { userId_commentId: { userId: request.userId, commentId: comment.id } },
+        })
+        // Guard against negative counters if a stray write got out of sync
+        await tx.comment.updateMany({
+          where: { id: comment.id, likes: { gt: 0 } },
+          data: { likes: { decrement: 1 } },
+        })
+      })
+
+      const updated = await fastify.prisma.comment.findUnique({
+        where: { id: comment.id },
+        select: { likes: true },
+      })
+      reply.send({
+        id: comment.id,
+        likes: updated?.likes ?? 0,
+        likedByCurrentUser: false,
+      })
+    }
+  )
+
   fastify.post<{ Params: { id: string } }>('/:id/repost', async (request, reply) => {
     const original = await fastify.prisma.post.findUnique({ where: { id: request.params.id } })
     if (!original) return reply.status(404).send({ error: 'Post not found' })
