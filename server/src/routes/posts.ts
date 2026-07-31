@@ -326,23 +326,6 @@ export default async function postsRoutes(fastify: FastifyInstance) {
     }
   )
 
-  fastify.post<{ Params: { id: string; commentId: string } }>(
-    '/:id/comments/:commentId/like',
-    async (request, reply) => {
-      const comment = await fastify.prisma.comment.findUnique({
-        where: { id: request.params.commentId, postId: request.params.id },
-      })
-      if (!comment) return reply.status(404).send({ error: 'Comment not found' })
-
-      const updated = await fastify.prisma.comment.update({
-        where: { id: request.params.commentId },
-        data: { likes: { increment: 1 } },
-        select: { id: true, likes: true },
-      })
-      reply.send(updated)
-    }
-  )
-
   fastify.post<{ Params: { id: string } }>('/:id/comments', async (request, reply) => {
     const body = commentSchema.safeParse(request.body)
     if (!body.success) return reply.status(400).send({ error: body.error.flatten() })
