@@ -74,6 +74,18 @@ export function PostDetailScreen({ post, onBack, onOpenProfile }: PostDetailScre
     placeholderData: { items: [], hasMore: false },
   });
 
+  useEffect(() => {
+    if (!commentsData?.items) return
+    const nextLikes: Record<string, number> = {}
+    const nextLiked: Record<string, boolean> = {}
+    for (const c of commentsData.items) {
+      nextLikes[c.id] = c.likes
+      nextLiked[c.id] = c.likedByCurrentUser
+    }
+    setCommentLikes(nextLikes)
+    setLikedComments(nextLiked)
+  }, [commentsData]);
+
   const { data: originalApiPost } = useQuery({
     queryKey: ['posts', viewingOriginalId],
     queryFn: () => apiFetch<ApiPost>(`/posts/${viewingOriginalId}`),
@@ -117,11 +129,29 @@ export function PostDetailScreen({ post, onBack, onOpenProfile }: PostDetailScre
   });
 
   const likeCommentMutation = useMutation({
-    mutationFn: (commentId: string) =>
-      apiFetch<{ id: string; likes: number }>(`/posts/${post.id}/comments/${commentId}/like`, { method: 'POST' }),
+    mutationFn: ({ commentId, isLiked }: { commentId: string; isLiked: boolean }) =>
+      apiFetch<{ id: string; likes: number; likedByCurrentUser: boolean }>(
+        `/posts/${post.id}/comments/${commentId}/like`,
+        { method: isLiked ? 'POST' : 'DELETE' },
+      ),
+    onMutate: async ({ commentId, isLiked }) => {
+      // Optimistic: flip flag + adjust counter immediately
+      const prevLiked = likedComments[commentId] ?? false
+      const prevCount = commentLikes[commentId] ?? 0
+      setLikedComments((prev) => ({ ...prev, [commentId]: isLiked }))
+      setCommentLikes((prev) => ({ ...prev, [commentId]: prevCount + (isLiked ? 1 : -1) }))
+      return { prevLiked, prevCount }
+    },
+    onError: (_err, { commentId }, ctx) => {
+      // Roll back to pre-mutation state
+      if (!ctx) return
+      setLikedComments((prev) => ({ ...prev, [commentId]: ctx.prevLiked }))
+      setCommentLikes((prev) => ({ ...prev, [commentId]: ctx.prevCount }))
+    },
     onSuccess: (data) => {
-      setCommentLikes((prev) => ({ ...prev, [data.id]: data.likes }));
-      setLikedComments((prev) => ({ ...prev, [data.id]: true }));
+      // Reconcile with server truth
+      setCommentLikes((prev) => ({ ...prev, [data.id]: data.likes }))
+      setLikedComments((prev) => ({ ...prev, [data.id]: data.likedByCurrentUser }))
     },
   });
 
@@ -332,7 +362,7 @@ export function PostDetailScreen({ post, onBack, onOpenProfile }: PostDetailScre
                 </div>
                 <MentionText text={c.content} className="text-xs text-graphite leading-relaxed mt-0.5 block" onMentionPress={(u) => lookupAndOpen(u, onOpenProfile)} />
                 <button
-                  onClick={() => { if (!likedComments[c.id]) likeCommentMutation.mutate(c.id); }}
+                  onClick={() => likeCommentMutation.mutate({ commentId: c.id, isLiked: !likedComments[c.id] })}
                   aria-label="Curtir comentário"
                   className={`flex items-center gap-1 mt-2 transition-colors ${likedComments[c.id] ? 'text-sara-terracotta' : 'text-graphite-muted'}`}
                 >
