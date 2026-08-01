@@ -69,6 +69,7 @@ export function PostDetailScreen({ post, onBack, onOpenProfile }: PostDetailScre
   const [likedComments, setLikedComments] = useState<Record<string, boolean>>({});
   const [commentBounceKey, setCommentBounceKey] = useState<Record<string, number>>({});
   const [commentParticle, setCommentParticle] = useState<Record<string, boolean>>({});
+  const [pendingCommentIds, setPendingCommentIds] = useState<Record<string, boolean>>({});
 
   const { data: commentsData } = useQuery<PaginatedResult<ApiComment>>({
     queryKey: ['comments', post.id],
@@ -83,7 +84,7 @@ export function PostDetailScreen({ post, onBack, onOpenProfile }: PostDetailScre
         { method: isLiked ? 'POST' : 'DELETE' },
       ),
     onMutate: async ({ commentId, isLiked }) => {
-      // Optimistic: flip flag + adjust counter immediately
+      setPendingCommentIds((prev) => ({ ...prev, [commentId]: true }))
       const prevLiked = likedComments[commentId] ?? false
       const prevCount = commentLikes[commentId] ?? 0
       setLikedComments((prev) => ({ ...prev, [commentId]: isLiked }))
@@ -91,29 +92,34 @@ export function PostDetailScreen({ post, onBack, onOpenProfile }: PostDetailScre
       return { prevLiked, prevCount }
     },
     onError: (_err, { commentId }, ctx) => {
-      // Roll back to pre-mutation state
       if (!ctx) return
       setLikedComments((prev) => ({ ...prev, [commentId]: ctx.prevLiked }))
       setCommentLikes((prev) => ({ ...prev, [commentId]: ctx.prevCount }))
     },
+    onSettled: (_data, _err, { commentId }) => {
+      setPendingCommentIds((prev) => {
+        const { [commentId]: _, ...rest } = prev
+        return rest
+      })
+    },
     onSuccess: (data) => {
-      // Reconcile with server truth
       setCommentLikes((prev) => ({ ...prev, [data.id]: data.likes }))
       setLikedComments((prev) => ({ ...prev, [data.id]: data.likedByCurrentUser }))
     },
   });
 
   useEffect(() => {
-    if (!commentsData?.items || likeCommentMutation.isPending) return
+    if (!commentsData?.items) return
     const nextLikes: Record<string, number> = {}
     const nextLiked: Record<string, boolean> = {}
     for (const c of commentsData.items) {
+      if (pendingCommentIds[c.id]) continue
       nextLikes[c.id] = c.likes
       nextLiked[c.id] = c.likedByCurrentUser
     }
-    setCommentLikes(nextLikes)
-    setLikedComments(nextLiked)
-  }, [commentsData, likeCommentMutation.isPending]);
+    setCommentLikes((prev) => ({ ...prev, ...nextLikes }))
+    setLikedComments((prev) => ({ ...prev, ...nextLiked }))
+  }, [commentsData, pendingCommentIds]);
 
   const { data: originalApiPost } = useQuery({
     queryKey: ['posts', viewingOriginalId],
@@ -379,6 +385,7 @@ export function PostDetailScreen({ post, onBack, onOpenProfile }: PostDetailScre
                     }}
                     aria-label={likedComments[c.id] ? 'Descurtir comentário' : 'Curtir comentário'}
                     aria-pressed={likedComments[c.id] ?? false}
+                    disabled={!!pendingCommentIds[c.id]}
                     animate={likedComments[c.id] ? { scale: [1, 1.4, 0.9, 1.15, 1] } : { scale: [1, 0.85, 1] }}
                     transition={{ duration: likedComments[c.id] ? 0.4 : 0.2, ease: 'easeOut' }}
                     className={`flex items-center gap-1 mt-2 transition-colors ${likedComments[c.id] ? 'text-sara-terracotta' : 'text-graphite-muted'}`}
