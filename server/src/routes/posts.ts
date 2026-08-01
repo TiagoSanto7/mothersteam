@@ -13,6 +13,18 @@ const commentSchema = z.object({
   content: z.string().min(1),
 })
 
+async function findCommentInPost(
+  prisma: FastifyInstance['prisma'],
+  commentId: string,
+  postId: string,
+  select: { id: true; authorId?: true; content?: true },
+) {
+  return prisma.comment.findFirst({
+    where: { id: commentId, postId },
+    select,
+  })
+}
+
 export default async function postsRoutes(fastify: FastifyInstance) {
   fastify.addHook('preHandler', fastify.authenticate)
 
@@ -225,32 +237,27 @@ export default async function postsRoutes(fastify: FastifyInstance) {
     async (request, reply) => {
       // Verify comment exists and belongs to the given post; guards against
       // clients constructing arbitrary commentIds against unrelated posts.
-      const comment = await fastify.prisma.comment.findFirst({
-        where: { id: request.params.commentId, postId: request.params.id },
-        select: { id: true, authorId: true, content: true },
-      })
+      const comment = await findCommentInPost(fastify.prisma, request.params.commentId, request.params.id, { id: true, authorId: true, content: true })
       if (!comment) return reply.status(404).send({ error: 'Comment not found' })
 
       // Transaction: idempotent upsert + counter increment only when actually inserted
-      const inserted = await fastify.prisma.$transaction(async (tx) => {
+      const { inserted, likes } = await fastify.prisma.$transaction(async (tx) => {
         const existing = await tx.commentLike.findUnique({
           where: { userId_commentId: { userId: request.userId, commentId: comment.id } },
         })
-        if (existing) return false
+        if (existing) {
+          const current = await tx.comment.findUnique({ where: { id: comment.id }, select: { likes: true } })
+          return { inserted: false, likes: current?.likes ?? 0 }
+        }
         await tx.commentLike.create({
           data: { userId: request.userId, commentId: comment.id },
         })
-        await tx.comment.update({
+        const updated = await tx.comment.update({
           where: { id: comment.id },
           data: { likes: { increment: 1 } },
+          select: { likes: true },
         })
-        return true
-      })
-
-      // Read the up-to-date counter after the transaction
-      const updated = await fastify.prisma.comment.findUnique({
-        where: { id: comment.id },
-        select: { likes: true },
+        return { inserted: true, likes: updated.likes }
       })
 
       // Notify only on first like (not on retry) and not for self-likes
@@ -277,7 +284,7 @@ export default async function postsRoutes(fastify: FastifyInstance) {
 
       reply.status(201).send({
         id: comment.id,
-        likes: updated?.likes ?? 0,
+        likes,
         likedByCurrentUser: true,
       })
     }
@@ -286,18 +293,18 @@ export default async function postsRoutes(fastify: FastifyInstance) {
   fastify.delete<{ Params: { id: string; commentId: string } }>(
     '/:id/comments/:commentId/like',
     async (request, reply) => {
-      const comment = await fastify.prisma.comment.findFirst({
-        where: { id: request.params.commentId, postId: request.params.id },
-        select: { id: true },
-      })
+      const comment = await findCommentInPost(fastify.prisma, request.params.commentId, request.params.id, { id: true })
       if (!comment) return reply.status(404).send({ error: 'Comment not found' })
 
       // Transaction: idempotent delete + counter decrement only when actually removed
-      await fastify.prisma.$transaction(async (tx) => {
+      const likes = await fastify.prisma.$transaction(async (tx) => {
         const existing = await tx.commentLike.findUnique({
           where: { userId_commentId: { userId: request.userId, commentId: comment.id } },
         })
-        if (!existing) return
+        if (!existing) {
+          const current = await tx.comment.findUnique({ where: { id: comment.id }, select: { likes: true } })
+          return current?.likes ?? 0
+        }
         await tx.commentLike.delete({
           where: { userId_commentId: { userId: request.userId, commentId: comment.id } },
         })
@@ -306,15 +313,13 @@ export default async function postsRoutes(fastify: FastifyInstance) {
           where: { id: comment.id, likes: { gt: 0 } },
           data: { likes: { decrement: 1 } },
         })
+        const updated = await tx.comment.findUnique({ where: { id: comment.id }, select: { likes: true } })
+        return updated?.likes ?? 0
       })
 
-      const updated = await fastify.prisma.comment.findUnique({
-        where: { id: comment.id },
-        select: { likes: true },
-      })
       reply.send({
         id: comment.id,
-        likes: updated?.likes ?? 0,
+        likes,
         likedByCurrentUser: false,
       })
     }
