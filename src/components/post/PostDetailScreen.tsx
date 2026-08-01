@@ -65,8 +65,7 @@ export function PostDetailScreen({ post, onBack, onOpenProfile }: PostDetailScre
   const [showShareSheet, setShowShareSheet] = useState(false);
   const [showRepostSheet, setShowRepostSheet] = useState(false);
   const [viewingOriginalId, setViewingOriginalId] = useState<string | null>(null);
-  const [commentLikes, setCommentLikes] = useState<Record<string, number>>({});
-  const [likedComments, setLikedComments] = useState<Record<string, boolean>>({});
+  const [commentLikeState, setCommentLikeState] = useState<Record<string, { likes: number; liked: boolean }>>({})
   const [commentBounceKey, setCommentBounceKey] = useState<Record<string, number>>({});
   const [commentParticle, setCommentParticle] = useState<Record<string, boolean>>({});
   const [pendingCommentIds, setPendingCommentIds] = useState<Record<string, boolean>>({});
@@ -85,16 +84,21 @@ export function PostDetailScreen({ post, onBack, onOpenProfile }: PostDetailScre
       ),
     onMutate: async ({ commentId, isLiked }) => {
       setPendingCommentIds((prev) => ({ ...prev, [commentId]: true }))
-      const prevLiked = likedComments[commentId] ?? false
-      const prevCount = commentLikes[commentId] ?? 0
-      setLikedComments((prev) => ({ ...prev, [commentId]: isLiked }))
-      setCommentLikes((prev) => ({ ...prev, [commentId]: prevCount + (isLiked ? 1 : -1) }))
+      const prev = commentLikeState[commentId]
+      const prevLiked = prev?.liked ?? false
+      const prevCount = prev?.likes ?? 0
+      setCommentLikeState((p) => ({
+        ...p,
+        [commentId]: { likes: prevCount + (isLiked ? 1 : -1), liked: isLiked },
+      }))
       return { prevLiked, prevCount }
     },
     onError: (_err, { commentId }, ctx) => {
       if (!ctx) return
-      setLikedComments((prev) => ({ ...prev, [commentId]: ctx.prevLiked }))
-      setCommentLikes((prev) => ({ ...prev, [commentId]: ctx.prevCount }))
+      setCommentLikeState((p) => ({
+        ...p,
+        [commentId]: { likes: ctx.prevCount, liked: ctx.prevLiked },
+      }))
     },
     onSettled: (_data, _err, { commentId }) => {
       setPendingCommentIds((prev) => {
@@ -103,22 +107,21 @@ export function PostDetailScreen({ post, onBack, onOpenProfile }: PostDetailScre
       })
     },
     onSuccess: (data) => {
-      setCommentLikes((prev) => ({ ...prev, [data.id]: data.likes }))
-      setLikedComments((prev) => ({ ...prev, [data.id]: data.likedByCurrentUser }))
+      setCommentLikeState((prev) => ({
+        ...prev,
+        [data.id]: { likes: data.likes, liked: data.likedByCurrentUser },
+      }))
     },
   });
 
   useEffect(() => {
     if (!commentsData?.items) return
-    const nextLikes: Record<string, number> = {}
-    const nextLiked: Record<string, boolean> = {}
+    const nextState: Record<string, { likes: number; liked: boolean }> = {}
     for (const c of commentsData.items) {
       if (pendingCommentIds[c.id]) continue
-      nextLikes[c.id] = c.likes
-      nextLiked[c.id] = c.likedByCurrentUser
+      nextState[c.id] = { likes: c.likes, liked: c.likedByCurrentUser }
     }
-    setCommentLikes((prev) => ({ ...prev, ...nextLikes }))
-    setLikedComments((prev) => ({ ...prev, ...nextLiked }))
+    setCommentLikeState((prev) => ({ ...prev, ...nextState }))
   }, [commentsData, pendingCommentIds]);
 
   const { data: originalApiPost } = useQuery({
@@ -355,7 +358,10 @@ export function PostDetailScreen({ post, onBack, onOpenProfile }: PostDetailScre
           {comments.length === 0 && (
             <p className="text-xs text-graphite-muted text-center py-6">Seja a primeira a comentar</p>
           )}
-          {comments.map((c) => (
+          {comments.map((c) => {
+            const isLiked = commentLikeState[c.id]?.liked ?? false;
+            const likeCount = commentLikeState[c.id]?.likes ?? c.likes;
+            return (
             <div key={c.id} className="flex items-start gap-2.5">
               <UserAvatar
                 name={c.author}
@@ -373,7 +379,7 @@ export function PostDetailScreen({ post, onBack, onOpenProfile }: PostDetailScre
                   <motion.button
                     key={commentBounceKey[c.id] ?? 0}
                     onClick={() => {
-                      const next = !likedComments[c.id];
+                      const next = !isLiked;
                       likeCommentMutation.mutate({ commentId: c.id, isLiked: next });
                       if (next) {
                         setCommentBounceKey((prev) => ({ ...prev, [c.id]: (prev[c.id] ?? 0) + 1 }));
@@ -383,15 +389,15 @@ export function PostDetailScreen({ post, onBack, onOpenProfile }: PostDetailScre
                         }, 700);
                       }
                     }}
-                    aria-label={likedComments[c.id] ? 'Descurtir comentário' : 'Curtir comentário'}
-                    aria-pressed={likedComments[c.id] ?? false}
+                    aria-label={isLiked ? 'Descurtir comentário' : 'Curtir comentário'}
+                    aria-pressed={isLiked}
                     disabled={!!pendingCommentIds[c.id]}
-                    animate={likedComments[c.id] ? { scale: [1, 1.4, 0.9, 1.15, 1] } : { scale: [1, 0.85, 1] }}
-                    transition={{ duration: likedComments[c.id] ? 0.4 : 0.2, ease: 'easeOut' }}
-                    className={`flex items-center gap-1 mt-2 transition-colors ${likedComments[c.id] ? 'text-sara-terracotta' : 'text-graphite-muted'}`}
+                    animate={isLiked ? { scale: [1, 1.4, 0.9, 1.15, 1] } : { scale: [1, 0.85, 1] }}
+                    transition={{ duration: isLiked ? 0.4 : 0.2, ease: 'easeOut' }}
+                    className={`flex items-center gap-1 mt-2 transition-colors ${isLiked ? 'text-sara-terracotta' : 'text-graphite-muted'}`}
                   >
-                    <Heart size={10} fill={likedComments[c.id] ? 'currentColor' : 'none'} />
-                    <span className="text-[10px]">{commentLikes[c.id] ?? c.likes}</span>
+                    <Heart size={10} fill={isLiked ? 'currentColor' : 'none'} />
+                    <span className="text-[10px]">{likeCount}</span>
                   </motion.button>
                   <AnimatePresence>
                     {commentParticle[c.id] && (
@@ -409,7 +415,8 @@ export function PostDetailScreen({ post, onBack, onOpenProfile }: PostDetailScre
                 </div>
               </div>
             </div>
-          ))}
+            );
+          })}
         </div>
       </div>
 
