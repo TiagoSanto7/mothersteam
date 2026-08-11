@@ -192,11 +192,7 @@ export default async function adminProductsRoutes(fastify: FastifyInstance) {
         continue
       }
 
-      const validPhases = [
-        'trimester1', 'trimester2', 'trimester3',
-        'postpartum_0_30', 'postpartum_31_180', 'postpartum_181_365',
-      ]
-      const invalidPhase = parsed.data.fases.find(p => !validPhases.includes(p))
+      const invalidPhase = parsed.data.fases.find(p => !(VALID_PHASES as readonly string[]).includes(p))
       if (invalidPhase) {
         errors.push({ row, field: 'fases', message: `fase inválida: "${invalidPhase}"` })
         continue
@@ -205,7 +201,7 @@ export default async function adminProductsRoutes(fastify: FastifyInstance) {
       toCreate.push({
         name: parsed.data.nome,
         description: parsed.data.descricao,
-        price: parsed.data.preco,
+        price: Math.round(parsed.data.preco * 100) / 100,
         affiliateUrl: parsed.data.url_afiliado ?? null,
         phases: parsed.data.fases,
         stock: parsed.data.estoque ?? null,
