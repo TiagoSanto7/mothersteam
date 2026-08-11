@@ -71,6 +71,7 @@ export function ProductsPage({ onNew, onEdit }: ProductsPageProps) {
   const [bulkResult, setBulkResult] = useState<{ created: number; errors: BulkError[] } | null>(null)
 
   const importInputRef = useRef<HTMLInputElement>(null);
+  const autoCloseTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   function downloadTemplate() {
     const header = 'nome,descricao,preco,categoria_slug,url_afiliado,fases,estoque,destaque'
@@ -95,17 +96,26 @@ export function ProductsPage({ onNew, onEdit }: ProductsPageProps) {
 
     let rows: ParsedRow[] = []
 
-    if (file.name.endsWith('.xlsx') || file.name.endsWith('.xls')) {
-      const buffer = await file.arrayBuffer()
-      const wb = XLSX.read(buffer, { type: 'array' })
-      const ws = wb.Sheets[wb.SheetNames[0]]
-      rows = XLSX.utils.sheet_to_json<ParsedRow>(ws, { defval: '' })
-    } else {
-      const text = await file.text()
-      // Skip lines starting with # (template comments)
-      const cleaned = text.split('\n').filter(l => !l.trimStart().startsWith('#')).join('\n')
-      const result = Papa.parse<ParsedRow>(cleaned, { header: true, skipEmptyLines: true })
-      rows = result.data
+    try {
+      if (file.name.endsWith('.xlsx')) {
+        const buffer = await file.arrayBuffer()
+        const wb = XLSX.read(buffer, { type: 'array' })
+        const ws = wb.Sheets[wb.SheetNames[0]]
+        rows = XLSX.utils.sheet_to_json<ParsedRow>(ws, { defval: '' })
+      } else {
+        const text = await file.text()
+        // Skip lines starting with # (template comments)
+        const cleaned = text.split('\n').filter(l => !l.trimStart().startsWith('#')).join('\n')
+        const result = Papa.parse<ParsedRow>(cleaned, { header: true, skipEmptyLines: true })
+        if (result.errors.length > 0 && result.data.length === 0) {
+          alert(`Erro ao ler CSV: ${result.errors[0].message}`)
+          return
+        }
+        rows = result.data
+      }
+    } catch {
+      alert('Não foi possível ler o arquivo.')
+      return
     }
 
     if (rows.length === 0) {
@@ -133,7 +143,7 @@ export function ProductsPage({ onNew, onEdit }: ProductsPageProps) {
         queryClient.invalidateQueries({ queryKey: ['admin-products'] })
       }
       if (result.errors.length === 0) {
-        setTimeout(() => { setImportPhase('idle'); setBulkResult(null) }, 2000)
+        autoCloseTimerRef.current = setTimeout(() => { setImportPhase('idle'); setBulkResult(null) }, 2000)
       }
     } catch {
       setBulkResult({ created: 0, errors: [{ row: 0, field: '', message: 'Erro de conexão. Tente novamente.' }] })
@@ -401,7 +411,7 @@ export function ProductsPage({ onNew, onEdit }: ProductsPageProps) {
               )}
             </div>
             <div className="flex gap-2 justify-end mt-4 pt-4 border-t border-gray-100">
-              {bulkResult.errors.length > 0 && (
+              {bulkResult.errors.some(e => e.row > 0) && (
                 <button
                   onClick={downloadErrorRows}
                   className="flex items-center gap-1.5 px-3 py-2 text-sm text-graphite border border-gray-200 rounded-xl hover:bg-gray-50"
@@ -410,7 +420,11 @@ export function ProductsPage({ onNew, onEdit }: ProductsPageProps) {
                 </button>
               )}
               <button
-                onClick={() => { setImportPhase('idle'); setBulkResult(null) }}
+                onClick={() => {
+                  if (autoCloseTimerRef.current) clearTimeout(autoCloseTimerRef.current)
+                  setImportPhase('idle')
+                  setBulkResult(null)
+                }}
                 className="px-4 py-2 text-sm font-semibold text-white bg-gray-900 rounded-xl hover:bg-gray-800"
               >
                 Fechar
