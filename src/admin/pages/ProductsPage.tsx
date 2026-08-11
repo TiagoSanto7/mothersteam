@@ -69,7 +69,7 @@ export function ProductsPage({ onNew, onEdit }: ProductsPageProps) {
     const slugComment = `# Slugs de categorias: ${categories.map(c => c.slug).join(' | ')}`
     const csv = [header, example, phaseComment, slugComment].join('\n')
 
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' })
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a')
     a.href = url
