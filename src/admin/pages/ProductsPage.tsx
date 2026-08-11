@@ -3,6 +3,12 @@ import { Plus, Pencil, Trash2, Star, Eye, EyeOff, Search, Download, Upload } fro
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiFetch } from '../../lib/api';
 import type { ApiAdminCategory, ApiAdminProductList } from '../../lib/types';
+import Papa from 'papaparse'
+import * as XLSX from 'xlsx'
+
+type ParsedRow = Record<string, string>
+type BulkError = { row: number; field: string; message: string }
+type ImportPhase = 'idle' | 'confirm' | 'loading' | 'result'
 
 const PHASE_LABELS: Record<string, string> = {
   trimester1: '1T',
@@ -60,6 +66,10 @@ export function ProductsPage({ onNew, onEdit }: ProductsPageProps) {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['admin-products'] }),
   });
 
+  const [importPhase, setImportPhase] = useState<ImportPhase>('idle')
+  const [parsedRows, setParsedRows] = useState<ParsedRow[]>([])
+  const [bulkResult, setBulkResult] = useState<{ created: number; errors: BulkError[] } | null>(null)
+
   const importInputRef = useRef<HTMLInputElement>(null);
 
   function downloadTemplate() {
@@ -78,8 +88,78 @@ export function ProductsPage({ onNew, onEdit }: ProductsPageProps) {
     URL.revokeObjectURL(url)
   }
 
-  function handleFileChange(_e: React.ChangeEvent<HTMLInputElement>) {
-    // implemented in Task 5
+  async function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!file) return
+    e.target.value = ''
+
+    let rows: ParsedRow[] = []
+
+    if (file.name.endsWith('.xlsx') || file.name.endsWith('.xls')) {
+      const buffer = await file.arrayBuffer()
+      const wb = XLSX.read(buffer, { type: 'array' })
+      const ws = wb.Sheets[wb.SheetNames[0]]
+      rows = XLSX.utils.sheet_to_json<ParsedRow>(ws, { defval: '' })
+    } else {
+      const text = await file.text()
+      // Skip lines starting with # (template comments)
+      const cleaned = text.split('\n').filter(l => !l.trimStart().startsWith('#')).join('\n')
+      const result = Papa.parse<ParsedRow>(cleaned, { header: true, skipEmptyLines: true })
+      rows = result.data
+    }
+
+    if (rows.length === 0) {
+      alert('Arquivo vazio ou sem linhas de dados.')
+      return
+    }
+
+    setParsedRows(rows)
+    setImportPhase('confirm')
+  }
+
+  async function handleConfirmImport() {
+    setImportPhase('loading')
+    try {
+      const result = await apiFetch<{ created: number; errors: BulkError[] }>(
+        '/admin/products/bulk',
+        {
+          method: 'POST',
+          body: JSON.stringify({ products: parsedRows }),
+        }
+      )
+      setBulkResult(result)
+      setImportPhase('result')
+      if (result.created > 0) {
+        queryClient.invalidateQueries({ queryKey: ['admin-products'] })
+      }
+      if (result.errors.length === 0) {
+        setTimeout(() => { setImportPhase('idle'); setBulkResult(null) }, 2000)
+      }
+    } catch {
+      setBulkResult({ created: 0, errors: [{ row: 0, field: '', message: 'Erro de conexão. Tente novamente.' }] })
+      setImportPhase('result')
+    }
+  }
+
+  function downloadErrorRows() {
+    if (!bulkResult || parsedRows.length === 0) return
+    const errorRowNumbers = new Set(bulkResult.errors.map(e => e.row - 2))
+    const errorRows = parsedRows.filter((_, i) => errorRowNumbers.has(i))
+    if (errorRows.length === 0) return
+
+    const header = Object.keys(errorRows[0]).join(',')
+    const lines = errorRows.map(r =>
+      Object.values(r).map(v => `"${String(v).replace(/"/g, '""')}"`).join(',')
+    )
+    const csv = [header, ...lines].join('\n')
+
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = 'erros_import.csv'
+    a.click()
+    URL.revokeObjectURL(url)
   }
 
   return (
@@ -252,6 +332,90 @@ export function ProductsPage({ onNew, onEdit }: ProductsPageProps) {
             >
               Próxima →
             </button>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de confirmação */}
+      {importPhase === 'confirm' && (
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-xl p-6 max-w-sm w-full">
+            <h2 className="text-base font-semibold text-graphite mb-2">Confirmar import</h2>
+            <p className="text-sm text-graphite-muted mb-5">
+              {parsedRows.length} {parsedRows.length === 1 ? 'linha encontrada' : 'linhas encontradas'}. Importar agora?
+            </p>
+            <div className="flex gap-2 justify-end">
+              <button
+                onClick={() => setImportPhase('idle')}
+                className="px-4 py-2 text-sm text-graphite border border-gray-200 rounded-xl hover:bg-gray-50"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={handleConfirmImport}
+                className="px-4 py-2 text-sm font-semibold text-white bg-sara-gold rounded-xl hover:bg-sara-gold/90"
+              >
+                Importar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Loading */}
+      {importPhase === 'loading' && (
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+          <div className="bg-white rounded-2xl shadow-xl p-6">
+            <p className="text-sm text-graphite-muted">Importando produtos...</p>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de resultado */}
+      {importPhase === 'result' && bulkResult && (
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-xl p-6 max-w-md w-full max-h-[80vh] flex flex-col">
+            <h2 className="text-base font-semibold text-graphite mb-4">Resultado do import</h2>
+            <div className="flex-1 overflow-y-auto space-y-3 text-sm">
+              {bulkResult.created > 0 && (
+                <p className="text-green-700 font-medium">
+                  ✅ {bulkResult.created} {bulkResult.created === 1 ? 'produto importado' : 'produtos importados'} com sucesso
+                </p>
+              )}
+              {bulkResult.errors.length > 0 && (
+                <div>
+                  <p className="text-amber-700 font-medium mb-2">⚠️ {bulkResult.errors.length} {bulkResult.errors.length === 1 ? 'erro' : 'erros'}:</p>
+                  <ul className="space-y-1">
+                    {bulkResult.errors.map((err, i) => (
+                      <li key={i} className="text-graphite-muted">
+                        {err.row > 0 ? <span className="font-medium text-graphite">Linha {err.row}</span> : null}
+                        {err.field ? <span> — <span className="font-medium">{err.field}</span>:</span> : null}
+                        {' '}{err.message}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+              {bulkResult.created === 0 && bulkResult.errors.length === 0 && (
+                <p className="text-graphite-muted">Nenhum produto foi importado.</p>
+              )}
+            </div>
+            <div className="flex gap-2 justify-end mt-4 pt-4 border-t border-gray-100">
+              {bulkResult.errors.length > 0 && (
+                <button
+                  onClick={downloadErrorRows}
+                  className="flex items-center gap-1.5 px-3 py-2 text-sm text-graphite border border-gray-200 rounded-xl hover:bg-gray-50"
+                >
+                  <Download size={13} /> Baixar linhas com erro
+                </button>
+              )}
+              <button
+                onClick={() => { setImportPhase('idle'); setBulkResult(null) }}
+                className="px-4 py-2 text-sm font-semibold text-white bg-gray-900 rounded-xl hover:bg-gray-800"
+              >
+                Fechar
+              </button>
+            </div>
           </div>
         </div>
       )}
