@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { Plus, Pencil, Trash2, Star, Eye, EyeOff, Search } from 'lucide-react';
+import { useState, useRef } from 'react';
+import { Plus, Pencil, Trash2, Star, Eye, EyeOff, Search, Download, Upload } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiFetch } from '../../lib/api';
 import type { ApiAdminCategory, ApiAdminProductList } from '../../lib/types';
@@ -60,16 +60,59 @@ export function ProductsPage({ onNew, onEdit }: ProductsPageProps) {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['admin-products'] }),
   });
 
+  const importInputRef = useRef<HTMLInputElement>(null);
+
+  function downloadTemplate() {
+    const header = 'nome,descricao,preco,categoria_slug,url_afiliado,fases,estoque,destaque'
+    const example = 'Mochila maternidade,Mochila com compartimentos térmicos,189.90,mochilas,https://amazon.com.br/example,trimester3,10,nao'
+    const phaseComment = '# Fases válidas: trimester1 | trimester2 | trimester3 | postpartum_0_30 | postpartum_31_180 | postpartum_181_365'
+    const slugComment = `# Slugs de categorias: ${categories.map(c => c.slug).join(' | ')}`
+    const csv = [header, example, phaseComment, slugComment].join('\n')
+
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = 'template_produtos.csv'
+    a.click()
+    URL.revokeObjectURL(url)
+  }
+
+  function handleFileChange(_e: React.ChangeEvent<HTMLInputElement>) {
+    // implemented in Task 5
+  }
+
   return (
     <div className="p-8 max-w-6xl">
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-xl font-bold text-graphite">Produtos</h1>
-        <button
-          onClick={onNew}
-          className="flex items-center gap-2 px-4 py-2 bg-sara-gold text-white text-sm font-semibold rounded-xl hover:bg-sara-gold/90 transition-colors"
-        >
-          <Plus size={16} /> Novo produto
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={downloadTemplate}
+            className="flex items-center gap-2 px-3 py-2 bg-white border border-gray-200 text-graphite text-sm font-medium rounded-xl hover:bg-gray-50 transition-colors"
+          >
+            <Download size={15} /> Template
+          </button>
+          <button
+            onClick={() => importInputRef.current?.click()}
+            className="flex items-center gap-2 px-3 py-2 bg-white border border-gray-200 text-graphite text-sm font-medium rounded-xl hover:bg-gray-50 transition-colors"
+          >
+            <Upload size={15} /> Importar
+          </button>
+          <input
+            ref={importInputRef}
+            type="file"
+            accept=".csv,.xlsx"
+            className="hidden"
+            onChange={handleFileChange}
+          />
+          <button
+            onClick={onNew}
+            className="flex items-center gap-2 px-4 py-2 bg-sara-gold text-white text-sm font-semibold rounded-xl hover:bg-sara-gold/90 transition-colors"
+          >
+            <Plus size={16} /> Novo produto
+          </button>
+        </div>
       </div>
 
       <div className="flex gap-3 mb-5 flex-wrap">
