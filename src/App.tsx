@@ -27,6 +27,7 @@ import { CommunityDetailScreen } from './components/comunidade/CommunityDetailSc
 import { PostDetailScreen } from './components/post/PostDetailScreen';
 import { SocialOnboardingScreen } from './components/onboarding/SocialOnboardingScreen'
 import { SavedVersesScreen } from './components/home/SavedVersesScreen'
+import { ReviewsScreen } from './components/shopping/ReviewsScreen'
 import { CreatePostScreen } from './components/comunidade/CreatePostScreen'
 import { useSSE } from './lib/useSSE';
 
@@ -54,9 +55,7 @@ export default function App() {
   const [openCommunityId,   setOpenCommunityId]   = useState<string | null>(null);
   const [pendingPostId,     setPendingPostId]     = useState<string | null>(null);
   const [openProduct,       setOpenProduct]       = useState<{ type: 'affiliate' | 'own'; id: string } | null>(null);
-  // openReviews will be consumed by ReviewsScreen overlay in Task #22
   const [openReviews,       setOpenReviews]       = useState<{ type: 'affiliate' | 'own'; id: string; name: string } | null>(null);
-  void openReviews;
 
   // Session restore: try refresh on first load (cookie for web, body token for Capacitor)
   useEffect(() => {
@@ -298,6 +297,19 @@ export default function App() {
               onOpenProduct={(type, id) => setOpenProduct({ type, id })}
               onOpenReviews={(type, id, name) => setOpenReviews({ type, id, name })}
               onOpenCart={() => setOpenProduct(null)}
+            />
+          </div>
+        </div>
+      )}
+
+      {openReviews && (
+        <div className="fixed inset-0 z-[55] sm:bg-black/40 sm:flex sm:items-center sm:justify-center">
+          <div className="w-full h-full sm:w-[390px] sm:h-[844px] bg-gradient-to-b from-[#F5EDE0] via-[#EAD8C8] to-[#D9C4AF] sm:rounded-[44px] sm:shadow-2xl overflow-hidden">
+            <ReviewsScreen
+              productType={openReviews.type}
+              productId={openReviews.id}
+              productName={openReviews.name}
+              onBack={() => setOpenReviews(null)}
             />
           </div>
         </div>
