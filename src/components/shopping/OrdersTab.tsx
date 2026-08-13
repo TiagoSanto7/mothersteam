@@ -16,6 +16,8 @@ const STATUS_LABEL: Record<string, string> = {
   CANCELLED: 'Cancelado',
 }
 
+const EMPTY_ORDERS: ApiOrder[] = []
+
 const STATUS_COLOR: Record<string, string> = {
   PENDING:   'bg-yellow-100 text-yellow-700',
   PAID:      'bg-blue-100 text-blue-700',
@@ -26,7 +28,7 @@ const STATUS_COLOR: Record<string, string> = {
 }
 
 export function OrdersTab({ onOpenOrder }: Props) {
-  const { data: orders = [], isLoading } = useQuery({
+  const { data: orders = EMPTY_ORDERS, isLoading } = useQuery({
     queryKey: ['orders'],
     queryFn: () => apiFetch<ApiOrder[]>('/orders'),
     staleTime: 30_000,

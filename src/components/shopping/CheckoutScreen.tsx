@@ -36,7 +36,7 @@ function AddressStep({
   useEffect(() => {
     const def = addresses.find((a) => a.isDefault)
     if (def && !selectedId) setSelectedId(def.id)
-  }, [addresses])
+  }, [addresses, selectedId])
 
   const createMutation = useMutation({
     mutationFn: () =>
@@ -243,17 +243,27 @@ function PaymentStep({
   })
 
   useEffect(() => {
-    if (window.MercadoPago) return
-    const script = document.createElement('script')
-    script.src = 'https://sdk.mercadopago.com/js/v2'
-    script.async = true
-    script.onload = () => {
+    if (window.MercadoPago) {
       sdkRef.current = new window.MercadoPago(
         import.meta.env.VITE_MERCADO_PAGO_PUBLIC_KEY ?? '',
         { locale: 'pt-BR' }
       )
+      return
+    }
+    const script = document.createElement('script')
+    script.src = 'https://sdk.mercadopago.com/js/v2'
+    script.async = true
+    let cancelled = false
+    script.onload = () => {
+      if (!cancelled) {
+        sdkRef.current = new window.MercadoPago(
+          import.meta.env.VITE_MERCADO_PAGO_PUBLIC_KEY ?? '',
+          { locale: 'pt-BR' }
+        )
+      }
     }
     document.body.appendChild(script)
+    return () => { cancelled = true }
   }, [])
 
   const orderMutation = useMutation({
@@ -435,6 +445,8 @@ function PixWaitingScreen({
   const [expired, setExpired] = useState(false)
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const onPaidRef = useRef(onPaid)
+  useEffect(() => { onPaidRef.current = onPaid })
 
   useEffect(() => {
     intervalRef.current = setInterval(async () => {
@@ -443,7 +455,7 @@ function PixWaitingScreen({
         if (order.status === 'PAID') {
           clearInterval(intervalRef.current!)
           clearTimeout(timeoutRef.current!)
-          onPaid()
+          onPaidRef.current()
         }
       } catch {}
     }, 3000)

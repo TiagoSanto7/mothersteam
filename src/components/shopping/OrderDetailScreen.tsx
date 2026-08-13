@@ -42,7 +42,16 @@ export function OrderDetailScreen({ orderId, onBack }: Props) {
     )
   }
 
-  if (!order) return null
+  if (!order) return (
+    <div className="flex flex-col h-full bg-gradient-to-b from-[#F5EDE0] via-[#EAD8C8] to-[#D9C4AF]">
+      <div className="flex items-center gap-3 px-4 pt-10 pb-4">
+        <button onClick={onBack} className="w-9 h-9 rounded-xl bg-white/70 flex items-center justify-center active:scale-95 transition-transform">
+          <ChevronLeft size={20} className="text-graphite" />
+        </button>
+      </div>
+      <p className="text-center text-sm text-graphite-muted mt-8">Pedido não encontrado.</p>
+    </div>
+  )
 
   const currentStatusIndex = STATUS_STEPS.indexOf(order.status as typeof STATUS_STEPS[number])
   const isCancelled = order.status === 'CANCELLED'
