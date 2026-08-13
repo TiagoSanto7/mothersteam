@@ -45,6 +45,13 @@ model User {
   likedComments      CommentLike[]
   createdCommunities Community[]       @relation("CommunityCreator")
 
+  fcmToken      String?
+  reviews       Review[]
+  wishlistItems WishlistItem[]
+  cartItems     CartItem[]
+  orders        Order[]
+  addresses     Address[]
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
@@ -224,9 +231,10 @@ model Category {
   icon      String    @default("🛍️")
   active    Boolean   @default(true)
   sortOrder Int       @default(0)
-  products  Product[]
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
+  products    Product[]
+  ownProducts OwnProduct[]
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
 }
 
 model Product {
@@ -242,9 +250,11 @@ model Product {
   active       Boolean        @default(true)
   categoryId   String
   category     Category       @relation(fields: [categoryId], references: [id])
-  clicks       ProductClick[]
-  createdAt    DateTime       @default(now())
-  updatedAt    DateTime       @updatedAt
+  clicks        ProductClick[]
+  reviews       Review[]
+  wishlistItems WishlistItem[]
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
 }
 
 model ProductClick {
@@ -256,4 +266,113 @@ model ProductClick {
 
   @@index([productId])
   @@index([clickedAt])
+}
+
+model OwnProduct {
+  id          String   @id @default(cuid())
+  name        String   @db.VarChar(200)
+  description String   @db.Text
+  price       Decimal  @db.Decimal(10, 2)
+  images      Json     @default("[]")
+  stock       Int      @default(0)
+  sku         String?  @db.VarChar(100)
+  featured    Boolean  @default(false)
+  active      Boolean  @default(true)
+  categoryId  String
+  category    Category @relation(fields: [categoryId], references: [id])
+  reviews     Review[]
+  wishlistItems WishlistItem[]
+  cartItems   CartItem[]
+  orderItems  OrderItem[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Review {
+  id               String      @id @default(cuid())
+  rating           Int
+  text             String?     @db.VarChar(500)
+  verifiedPurchase Boolean     @default(false)
+  userId           String
+  user             User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  productId        String?
+  product          Product?    @relation(fields: [productId], references: [id], onDelete: Cascade)
+  ownProductId     String?
+  ownProduct       OwnProduct? @relation(fields: [ownProductId], references: [id], onDelete: Cascade)
+  createdAt        DateTime    @default(now())
+  updatedAt        DateTime    @updatedAt
+
+  @@unique([userId, productId])
+  @@unique([userId, ownProductId])
+}
+
+model WishlistItem {
+  id           String      @id @default(cuid())
+  userId       String
+  user         User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  productId    String?
+  product      Product?    @relation(fields: [productId], references: [id], onDelete: Cascade)
+  ownProductId String?
+  ownProduct   OwnProduct? @relation(fields: [ownProductId], references: [id], onDelete: Cascade)
+  createdAt    DateTime    @default(now())
+
+  @@unique([userId, productId])
+  @@unique([userId, ownProductId])
+}
+
+model CartItem {
+  id           String     @id @default(cuid())
+  userId       String
+  user         User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  ownProductId String
+  ownProduct   OwnProduct @relation(fields: [ownProductId], references: [id], onDelete: Cascade)
+  quantity     Int        @default(1)
+  createdAt    DateTime   @default(now())
+
+  @@unique([userId, ownProductId])
+}
+
+model Order {
+  id                   String      @id @default(cuid())
+  userId               String
+  user                 User        @relation(fields: [userId], references: [id])
+  status               String      @default("PENDING")
+  total                Decimal     @db.Decimal(10, 2)
+  shippingFee          Decimal     @db.Decimal(10, 2)
+  mercadoPagoPaymentId String?
+  mercadoPagoPixQrCode String?     @db.VarChar(500)
+  mercadoPagoPixCode   String?     @db.Text
+  trackingCode         String?     @db.VarChar(100)
+  addressId            String
+  address              Address     @relation(fields: [addressId], references: [id])
+  items                OrderItem[]
+  createdAt            DateTime    @default(now())
+  updatedAt            DateTime    @updatedAt
+}
+
+model OrderItem {
+  id              String     @id @default(cuid())
+  orderId         String
+  order           Order      @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  ownProductId    String
+  ownProduct      OwnProduct @relation(fields: [ownProductId], references: [id])
+  quantity        Int
+  priceAtPurchase Decimal    @db.Decimal(10, 2)
+}
+
+model Address {
+  id            String   @id @default(cuid())
+  userId        String
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  recipientName String   @db.VarChar(100)
+  street        String   @db.VarChar(200)
+  number        String   @db.VarChar(20)
+  complement    String?  @db.VarChar(100)
+  neighborhood  String   @db.VarChar(100)
+  city          String   @db.VarChar(100)
+  state         String   @db.Char(2)
+  zipCode       String   @db.Char(8)
+  isDefault     Boolean  @default(false)
+  orders        Order[]
+  createdAt     DateTime @default(now())
 }
