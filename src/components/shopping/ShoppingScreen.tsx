@@ -4,10 +4,12 @@ import { useQuery } from '@tanstack/react-query';
 import { apiFetch } from '../../lib/api';
 import type { ApiAdminProduct, ApiAdminCategory, ApiCart } from '../../lib/types';
 import { FavoritesTab } from './FavoritesTab';
+import { OrdersTab } from './OrdersTab';
 
 interface ShoppingScreenProps {
   onOpenProduct: (type: 'affiliate' | 'own', id: string) => void
   onOpenCart: () => void
+  onOpenOrder: (orderId: string) => void
 }
 
 interface ProductListResult {
@@ -16,7 +18,7 @@ interface ProductListResult {
   nextCursor?: string;
 }
 
-export function ShoppingScreen({ onOpenProduct, onOpenCart }: ShoppingScreenProps) {
+export function ShoppingScreen({ onOpenProduct, onOpenCart, onOpenOrder }: ShoppingScreenProps) {
   const [activeTab, setActiveTab] = useState<'products' | 'favorites' | 'orders'>('products')
 
   const { data: cart } = useQuery({
@@ -64,7 +66,7 @@ export function ShoppingScreen({ onOpenProduct, onOpenCart }: ShoppingScreenProp
 
       {activeTab === 'products' && <ProductsTab onOpenProduct={onOpenProduct} />}
       {activeTab === 'favorites' && <FavoritesTab onOpenProduct={onOpenProduct} />}
-      {activeTab === 'orders' && <OrdersTabPlaceholder />}
+      {activeTab === 'orders' && <OrdersTab onOpenOrder={onOpenOrder} />}
     </div>
   )
 }
@@ -160,13 +162,6 @@ function ProductsTab({ onOpenProduct }: { onOpenProduct: (type: 'affiliate' | 'o
   );
 }
 
-function OrdersTabPlaceholder() {
-  return (
-    <div className="flex flex-col items-center justify-center py-16 gap-2 px-4">
-      <p className="text-graphite-muted text-sm">Histórico de pedidos em breve</p>
-    </div>
-  )
-}
 
 function ProductCard({ product: p, onClick, featured = false }: { product: ApiAdminProduct; onClick: () => void; featured?: boolean }) {
   if (featured) {

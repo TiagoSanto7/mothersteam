@@ -29,8 +29,12 @@ import { SocialOnboardingScreen } from './components/onboarding/SocialOnboarding
 import { SavedVersesScreen } from './components/home/SavedVersesScreen'
 import { ReviewsScreen } from './components/shopping/ReviewsScreen'
 import { CartScreen } from './components/shopping/CartScreen'
+import { CheckoutScreen } from './components/shopping/CheckoutScreen'
+import { OrderDetailScreen } from './components/shopping/OrderDetailScreen'
 import { CreatePostScreen } from './components/comunidade/CreatePostScreen'
 import { useSSE } from './lib/useSSE';
+import { PushNotifications } from '@capacitor/push-notifications'
+import { Capacitor } from '@capacitor/core'
 
 export default function App() {
   const isLoggedIn           = useAppStore((s) => s.isLoggedIn);
@@ -45,6 +49,32 @@ export default function App() {
 
   useSSE();
 
+  useEffect(() => {
+    if (!isLoggedIn || !Capacitor.isNativePlatform()) return
+
+    async function registerFcm() {
+      let permission = await PushNotifications.checkPermissions()
+      if (permission.receive === 'prompt') {
+        permission = await PushNotifications.requestPermissions()
+      }
+      if (permission.receive !== 'granted') return
+
+      await PushNotifications.register()
+
+      const listener = await PushNotifications.addListener('registration', async (token: { value: string }) => {
+        try {
+          await apiFetch('/users/fcm-token', {
+            method: 'PUT',
+            body: JSON.stringify({ token: token.value, platform: Capacitor.getPlatform() }),
+          })
+        } catch {}
+        listener.remove()
+      })
+    }
+
+    registerFcm().catch(() => {})
+  }, [isLoggedIn])
+
   const [restoring,         setRestoring]         = useState(true);
   const [drawerOpen,        setDrawerOpen]        = useState(false);
   const [showSettings,      setShowSettings]      = useState(false);
@@ -58,6 +88,8 @@ export default function App() {
   const [openProduct,       setOpenProduct]       = useState<{ type: 'affiliate' | 'own'; id: string } | null>(null);
   const [openReviews,       setOpenReviews]       = useState<{ type: 'affiliate' | 'own'; id: string; name: string } | null>(null);
   const [showCart,          setShowCart]          = useState(false);
+  const [showCheckout,      setShowCheckout]      = useState(false);
+  const [openOrderId,       setOpenOrderId]       = useState<string | null>(null);
 
   // Session restore: try refresh on first load (cookie for web, body token for Capacitor)
   useEffect(() => {
@@ -173,6 +205,7 @@ export default function App() {
       <ShoppingScreen
         onOpenProduct={(type, id) => setOpenProduct({ type, id })}
         onOpenCart={() => setShowCart(true)}
+        onOpenOrder={(orderId) => setOpenOrderId(orderId)}
       />
     ),
   };
@@ -328,8 +361,33 @@ export default function App() {
               onBack={() => setShowCart(false)}
               onCheckout={() => {
                 setShowCart(false)
-                // CheckoutScreen will be wired in Task #24
+                setShowCheckout(true)
               }}
+            />
+          </div>
+        </div>
+      )}
+
+      {showCheckout && (
+        <div className="fixed inset-0 z-50 sm:bg-black/40 sm:flex sm:items-center sm:justify-center">
+          <div className="w-full h-full sm:w-[390px] sm:h-[844px] bg-gradient-to-b from-[#F5EDE0] via-[#EAD8C8] to-[#D9C4AF] sm:rounded-[44px] sm:shadow-2xl overflow-hidden">
+            <CheckoutScreen
+              onBack={() => setShowCheckout(false)}
+              onOrderComplete={(orderId) => {
+                setShowCheckout(false)
+                setOpenOrderId(orderId)
+              }}
+            />
+          </div>
+        </div>
+      )}
+
+      {openOrderId && (
+        <div className="fixed inset-0 z-50 sm:bg-black/40 sm:flex sm:items-center sm:justify-center">
+          <div className="w-full h-full sm:w-[390px] sm:h-[844px] bg-gradient-to-b from-[#F5EDE0] via-[#EAD8C8] to-[#D9C4AF] sm:rounded-[44px] sm:shadow-2xl overflow-hidden">
+            <OrderDetailScreen
+              orderId={openOrderId}
+              onBack={() => setOpenOrderId(null)}
             />
           </div>
         </div>
