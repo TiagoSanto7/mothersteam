@@ -36,6 +36,7 @@ const USER_SELECT = {
   pregnancyStage: true, pregnancyWeek: true, babyAgeInDays: true,
   onboardingDone: true, profileKey: true, archetypeKey: true,
   motherBirthDate: true, babyBirthDate: true, expectedBirthDate: true,
+  role: true,
 } as const
 
 export default async function authRoutes(fastify: FastifyInstance) {

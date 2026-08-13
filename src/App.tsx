@@ -69,8 +69,9 @@ export default function App() {
         setAccessToken(accessToken);
         const user = await apiFetch<ApiUser>('/auth/me');
         useAppStore.getState().setAuth(accessToken, user);
-      } catch {
-        // no valid session — stay at login
+      } catch (err) {
+        // Visible in remote debugger; helps diagnose session-restore failures
+        console.warn('[session-restore] failed:', err);
       } finally {
         setRestoring(false);
       }

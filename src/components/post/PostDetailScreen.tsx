@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence, useAnimate } from 'framer-motion';
 import { ChevronLeft, Heart, MessageCircle, Share2, Repeat2, Send } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -69,6 +69,7 @@ export function PostDetailScreen({ post, onBack, onOpenProfile }: PostDetailScre
   const [commentBounceKey, setCommentBounceKey] = useState<Record<string, number>>({});
   const [commentParticle, setCommentParticle] = useState<Record<string, boolean>>({});
   const [pendingCommentIds, setPendingCommentIds] = useState<Record<string, boolean>>({});
+  const pendingCommentIdsRef = useRef<Record<string, boolean>>({});
 
   const { data: commentsData } = useQuery<PaginatedResult<ApiComment>>({
     queryKey: ['comments', post.id],
@@ -83,7 +84,11 @@ export function PostDetailScreen({ post, onBack, onOpenProfile }: PostDetailScre
         { method: isLiked ? 'POST' : 'DELETE' },
       ),
     onMutate: async ({ commentId, isLiked }) => {
-      setPendingCommentIds((prev) => ({ ...prev, [commentId]: true }))
+      setPendingCommentIds((prev) => {
+        const next = { ...prev, [commentId]: true }
+        pendingCommentIdsRef.current = next
+        return next
+      })
       const prev = commentLikeState[commentId]
       const prevLiked = prev?.liked ?? false
       const prevCount = prev?.likes ?? 0
@@ -103,6 +108,7 @@ export function PostDetailScreen({ post, onBack, onOpenProfile }: PostDetailScre
     onSettled: (_data, _err, { commentId }) => {
       setPendingCommentIds((prev) => {
         const { [commentId]: _, ...rest } = prev
+        pendingCommentIdsRef.current = rest
         return rest
       })
     },
@@ -118,11 +124,11 @@ export function PostDetailScreen({ post, onBack, onOpenProfile }: PostDetailScre
     if (!commentsData?.items) return
     const nextState: Record<string, { likes: number; liked: boolean }> = {}
     for (const c of commentsData.items) {
-      if (pendingCommentIds[c.id]) continue
+      if (pendingCommentIdsRef.current[c.id]) continue
       nextState[c.id] = { likes: c.likes, liked: c.likedByCurrentUser }
     }
     setCommentLikeState((prev) => ({ ...prev, ...nextState }))
-  }, [commentsData, pendingCommentIds]);
+  }, [commentsData]);
 
   const { data: originalApiPost } = useQuery({
     queryKey: ['posts', viewingOriginalId],
