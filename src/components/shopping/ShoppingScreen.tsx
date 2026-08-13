@@ -1,8 +1,12 @@
 import { useState } from 'react';
 import { ShoppingBag, ExternalLink, Star } from 'lucide-react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { apiFetch } from '../../lib/api';
 import type { ApiAdminProduct, ApiAdminCategory } from '../../lib/types';
+
+interface ShoppingScreenProps {
+  onOpenProduct: (type: 'affiliate' | 'own', id: string) => void
+}
 
 interface ProductListResult {
   items: ApiAdminProduct[];
@@ -10,9 +14,8 @@ interface ProductListResult {
   nextCursor?: string;
 }
 
-export function ShoppingScreen() {
+export function ShoppingScreen({ onOpenProduct }: ShoppingScreenProps) {
   const [selectedCategory, setSelectedCategory] = useState('');
-  const queryClient = useQueryClient();
 
   const { data: categories = [] } = useQuery({
     queryKey: ['shopping-categories'],
@@ -26,11 +29,6 @@ export function ShoppingScreen() {
     queryKey: ['shopping-products', selectedCategory],
     queryFn: () => apiFetch<ProductListResult>(`/products?${params}`),
     staleTime: 60_000,
-  });
-
-  const clickMutation = useMutation({
-    mutationFn: (productId: string) => apiFetch(`/products/${productId}/click`, { method: 'POST' }),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['shopping-products'] }),
   });
 
   const products = data?.items ?? [];
@@ -97,7 +95,7 @@ export function ShoppingScreen() {
           </p>
           <div className="flex flex-col gap-3">
             {featured.map((p) => (
-              <ProductCard key={p.id} product={p} onClick={() => clickMutation.mutate(p.id)} featured />
+              <ProductCard key={p.id} product={p} onClick={() => onOpenProduct('affiliate', p.id)} featured />
             ))}
           </div>
         </div>
@@ -107,7 +105,7 @@ export function ShoppingScreen() {
       {rest.length > 0 && (
         <div className="grid grid-cols-2 gap-3 px-4">
           {rest.map((p) => (
-            <ProductCard key={p.id} product={p} onClick={() => clickMutation.mutate(p.id)} />
+            <ProductCard key={p.id} product={p} onClick={() => onOpenProduct('affiliate', p.id)} />
           ))}
         </div>
       )}
@@ -116,11 +114,6 @@ export function ShoppingScreen() {
 }
 
 function ProductCard({ product: p, onClick, featured = false }: { product: ApiAdminProduct; onClick: () => void; featured?: boolean }) {
-  function handleBuy() {
-    onClick();
-    if (p.affiliateUrl) window.open(p.affiliateUrl, '_blank', 'noopener,noreferrer');
-  }
-
   if (featured) {
     return (
       <div className="bg-white rounded-3xl p-4 shadow-sm flex gap-3">
@@ -136,7 +129,7 @@ function ProductCard({ product: p, onClick, featured = false }: { product: ApiAd
           <p className="text-sm font-semibold text-graphite leading-tight">{p.name}</p>
           <p className="text-sm font-bold text-sara-gold">R$ {Number(p.price).toFixed(2)}</p>
           <button
-            onClick={handleBuy}
+            onClick={onClick}
             className="mt-auto flex items-center justify-center gap-1 w-full py-1.5 rounded-xl bg-sara-gold text-white text-xs font-semibold active:scale-95 transition-transform"
           >
             Ver produto <ExternalLink size={10} />
@@ -161,7 +154,7 @@ function ProductCard({ product: p, onClick, featured = false }: { product: ApiAd
       </div>
       <p className="text-sm font-bold text-sara-gold">R$ {Number(p.price).toFixed(2)}</p>
       <button
-        onClick={handleBuy}
+        onClick={onClick}
         className="w-full py-2 rounded-xl bg-sara-gold text-white text-xs font-semibold active:scale-95 transition-transform flex items-center justify-center gap-1"
       >
         Ver produto <ExternalLink size={10} />
