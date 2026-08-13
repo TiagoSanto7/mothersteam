@@ -210,3 +210,135 @@ export interface ApiAdminProductList {
   limit: number
   totalPages: number
 }
+
+// ── Shopping types ──────────────────────────────────────────
+
+export interface ApiCategory {
+  id: string
+  name: string
+  slug: string
+  icon: string
+}
+
+export interface ApiOwnProduct {
+  id: string
+  type: 'own'
+  name: string
+  description: string
+  price: string
+  images: string[]
+  stock: number
+  sku?: string | null
+  featured: boolean
+  active: boolean
+  categoryId: string
+  category: ApiCategory
+  createdAt: string
+  updatedAt: string
+}
+
+export interface ApiReview {
+  id: string
+  rating: number
+  text?: string | null
+  verifiedPurchase: boolean
+  userId: string
+  user: { id: string; name: string; avatarUrl?: string | null }
+  createdAt: string
+}
+
+export interface ApiReviewsSummary {
+  average: number
+  count: number
+  distribution: Record<string, number>
+}
+
+export interface ApiProductDetail {
+  id: string
+  type: 'affiliate'
+  name: string
+  description: string
+  price: string
+  affiliateUrl?: string | null
+  images: string[]
+  phases: string[]
+  stock?: number | null
+  featured: boolean
+  active: boolean
+  categoryId: string
+  category: ApiCategory
+  reviewsSummary: ApiReviewsSummary
+  reviews: ApiReview[]
+  inWishlist: boolean
+  related: Array<ApiProductDetail | ApiOwnProductDetail>
+  createdAt: string
+  updatedAt: string
+}
+
+export interface ApiOwnProductDetail extends ApiOwnProduct {
+  reviewsSummary: ApiReviewsSummary
+  reviews: ApiReview[]
+  inWishlist: boolean
+  related: ApiOwnProduct[]
+}
+
+export type AnyProductDetail = ApiProductDetail | ApiOwnProductDetail
+
+export interface ApiCartItem {
+  id: string
+  ownProductId: string
+  ownProduct: ApiOwnProduct
+  quantity: number
+  createdAt: string
+}
+
+export interface ApiCart {
+  items: ApiCartItem[]
+  subtotal: string
+  itemCount: number
+}
+
+export interface ApiWishlistEntry {
+  type: 'affiliate' | 'own'
+  product: ApiAdminProduct | ApiOwnProduct
+  savedAt: string
+}
+
+export interface ApiAddress {
+  id: string
+  recipientName: string
+  street: string
+  number: string
+  complement?: string | null
+  neighborhood: string
+  city: string
+  state: string
+  zipCode: string
+  isDefault: boolean
+  createdAt: string
+}
+
+export interface ApiOrderItem {
+  id: string
+  ownProductId: string
+  ownProduct: { id: string; name: string; images: string[]; price: string }
+  quantity: number
+  priceAtPurchase: string
+}
+
+export interface ApiOrder {
+  id: string
+  userId: string
+  status: 'PENDING' | 'PAID' | 'PREPARING' | 'SHIPPED' | 'DELIVERED' | 'CANCELLED'
+  total: string
+  shippingFee: string
+  mercadoPagoPaymentId?: string | null
+  mercadoPagoPixQrCode?: string | null
+  mercadoPagoPixCode?: string | null
+  trackingCode?: string | null
+  addressId: string
+  address: ApiAddress
+  items: ApiOrderItem[]
+  createdAt: string
+  updatedAt: string
+}
