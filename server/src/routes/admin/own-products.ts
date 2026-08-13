@@ -1,6 +1,19 @@
 // server/src/routes/admin/own-products.ts
 import type { FastifyInstance } from 'fastify'
+import { z } from 'zod'
 import { requireRole } from '../../plugins/requireRole'
+
+const ownProductSchema = z.object({
+  name: z.string().min(1).max(200),
+  description: z.string().max(2000),
+  price: z.number().positive(),
+  images: z.array(z.string().url()).max(10).optional(),
+  stock: z.number().int().min(0).optional(),
+  sku: z.string().max(100).optional().nullable(),
+  featured: z.boolean().optional(),
+  active: z.boolean().optional(),
+  categoryId: z.string(),
+})
 
 export default async function adminOwnProductsRoutes(fastify: FastifyInstance) {
   await fastify.register(requireRole('ADMIN', 'EDITOR'))
@@ -32,20 +45,11 @@ export default async function adminOwnProductsRoutes(fastify: FastifyInstance) {
   )
 
   // POST / — create own product
-  fastify.post<{
-    Body: {
-      name: string
-      description: string
-      price: number
-      images?: string[]
-      stock?: number
-      sku?: string
-      featured?: boolean
-      active?: boolean
-      categoryId: string
-    }
-  }>('/', async (request, reply) => {
-    const { name, description, price, images, stock, sku, featured, active, categoryId } = request.body
+  fastify.post('/', async (request, reply) => {
+    const body = ownProductSchema.safeParse(request.body)
+    if (!body.success) return reply.status(400).send({ error: body.error.flatten() })
+
+    const { name, description, price, images, stock, sku, featured, active, categoryId } = body.data
     const product = await fastify.prisma.ownProduct.create({
       data: {
         name,
@@ -64,35 +68,35 @@ export default async function adminOwnProductsRoutes(fastify: FastifyInstance) {
   })
 
   // PUT /:id — update own product
-  fastify.put<{
-    Params: { id: string }
-    Body: {
-      name?: string
-      description?: string
-      price?: number
-      images?: string[]
-      stock?: number
-      sku?: string
-      featured?: boolean
-      active?: boolean
-      categoryId?: string
+  fastify.put<{ Params: { id: string } }>('/:id', async (request, reply) => {
+    const body = ownProductSchema.partial().safeParse(request.body)
+    if (!body.success) return reply.status(400).send({ error: body.error.flatten() })
+
+    const { price, ...rest } = body.data
+    try {
+      const product = await fastify.prisma.ownProduct.update({
+        where: { id: request.params.id },
+        data: {
+          ...rest,
+          ...(price !== undefined ? { price: Math.round(price * 100) / 100 } : {}),
+        },
+        include: { category: { select: { id: true, name: true, slug: true } } },
+      })
+      reply.send(product)
+    } catch (err: any) {
+      if (err?.code === 'P2025') return reply.status(404).send({ error: 'Not found' })
+      throw err
     }
-  }>('/:id', async (request, reply) => {
-    const { price, ...rest } = request.body
-    const product = await fastify.prisma.ownProduct.update({
-      where: { id: request.params.id },
-      data: {
-        ...rest,
-        ...(price !== undefined ? { price: Math.round(price * 100) / 100 } : {}),
-      },
-      include: { category: { select: { id: true, name: true, slug: true } } },
-    })
-    reply.send(product)
   })
 
   // DELETE /:id — delete own product
   fastify.delete<{ Params: { id: string } }>('/:id', async (request, reply) => {
-    await fastify.prisma.ownProduct.delete({ where: { id: request.params.id } })
-    reply.status(204).send()
+    try {
+      await fastify.prisma.ownProduct.delete({ where: { id: request.params.id } })
+      reply.status(204).send()
+    } catch (err: any) {
+      if (err?.code === 'P2025') return reply.status(404).send({ error: 'Not found' })
+      throw err
+    }
   })
 }

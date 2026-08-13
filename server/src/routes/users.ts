@@ -316,7 +316,7 @@ export default async function usersRoutes(fastify: FastifyInstance) {
     '/fcm-token',
     async (request, reply) => {
       const { token } = request.body
-      if (!token) return reply.status(422).send({ error: 'token required' })
+      if (!token || typeof token !== 'string') return reply.status(422).send({ error: 'token required' })
       await fastify.prisma.user.update({
         where: { id: request.userId },
         data: { fcmToken: token },

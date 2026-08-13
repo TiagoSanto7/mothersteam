@@ -54,21 +54,26 @@ export default async function adminOrdersRoutes(fastify: FastifyInstance) {
         return reply.status(422).send({ error: `Invalid status. Valid: ${VALID_ORDER_STATUSES.join(', ')}` })
       }
 
-      const order = await fastify.prisma.order.update({
-        where: { id: request.params.id },
-        data: {
-          status,
-          ...(trackingCode ? { trackingCode } : {}),
-        },
-        include: { user: { select: { fcmToken: true } } },
-      })
+      try {
+        const order = await fastify.prisma.order.update({
+          where: { id: request.params.id },
+          data: {
+            status,
+            ...(trackingCode ? { trackingCode } : {}),
+          },
+          include: { user: { select: { fcmToken: true } } },
+        })
 
-      const msg = PUSH_MESSAGES[status]
-      if (msg && order.user.fcmToken) {
-        await sendPush(order.user.fcmToken, msg.title, msg.body)
+        const msg = PUSH_MESSAGES[status]
+        if (msg && order.user.fcmToken) {
+          await sendPush(order.user.fcmToken, msg.title, msg.body)
+        }
+
+        reply.send(order)
+      } catch (err: any) {
+        if (err?.code === 'P2025') return reply.status(404).send({ error: 'Order not found' })
+        throw err
       }
-
-      reply.send(order)
     }
   )
 }
