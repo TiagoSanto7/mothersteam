@@ -54,7 +54,9 @@ export default function App() {
   const [openCommunityId,   setOpenCommunityId]   = useState<string | null>(null);
   const [pendingPostId,     setPendingPostId]     = useState<string | null>(null);
   const [openProduct,       setOpenProduct]       = useState<{ type: 'affiliate' | 'own'; id: string } | null>(null);
+  // openReviews will be consumed by ReviewsScreen overlay in Task #22
   const [openReviews,       setOpenReviews]       = useState<{ type: 'affiliate' | 'own'; id: string; name: string } | null>(null);
+  void openReviews;
 
   // Session restore: try refresh on first load (cookie for web, body token for Capacitor)
   useEffect(() => {

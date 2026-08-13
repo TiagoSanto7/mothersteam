@@ -34,7 +34,7 @@ export function ProductDetailScreen({
     staleTime: 60_000,
   })
 
-  const wishlistMutation = useMutation({
+  const wishlistMutation = useMutation<{ inWishlist: boolean }, unknown, void, { prev?: AnyProductDetail }>({
     mutationFn: () =>
       apiFetch<{ inWishlist: boolean }>(
         productType === 'affiliate' ? `/products/${productId}/wishlist` : `/own-products/${productId}/wishlist`,
@@ -51,7 +51,7 @@ export function ProductDetailScreen({
       }
       return { prev }
     },
-    onError: (_err: unknown, _vars: unknown, ctx: { prev?: AnyProductDetail } | undefined) => {
+    onError: (_err, _vars, ctx) => {
       if (ctx?.prev) {
         queryClient.setQueryData(['product-detail', productType, productId], ctx.prev)
       }
