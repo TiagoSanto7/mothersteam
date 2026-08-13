@@ -15,6 +15,7 @@ import { JornadaScreen } from './components/jornada/JornadaScreen';
 import { MaeIAScreen } from './components/maeIA/MaeIAScreen';
 import { ComunidadeScreen } from './components/comunidade/ComunidadeScreen';
 import { ShoppingScreen } from './components/shopping/ShoppingScreen';
+import { ProductDetailScreen } from './components/shopping/ProductDetailScreen';
 import { LoginScreen } from './components/auth/LoginScreen';
 import { ReceptionFlow } from './components/reception/ReceptionFlow';
 import { ProfileScreen } from './components/profile/ProfileScreen';
@@ -52,6 +53,8 @@ export default function App() {
   const [profileUserId,     setProfileUserId]     = useState<string | null>(null);
   const [openCommunityId,   setOpenCommunityId]   = useState<string | null>(null);
   const [pendingPostId,     setPendingPostId]     = useState<string | null>(null);
+  const [openProduct,       setOpenProduct]       = useState<{ type: 'affiliate' | 'own'; id: string } | null>(null);
+  const [openReviews,       setOpenReviews]       = useState<{ type: 'affiliate' | 'own'; id: string; name: string } | null>(null);
 
   // Session restore: try refresh on first load (cookie for web, body token for Capacitor)
   useEffect(() => {
@@ -163,7 +166,11 @@ export default function App() {
         onOpenProfile={(id) => setProfileUserId(id)}
       />
     ),
-    shopping:   <ShoppingScreen />,
+    shopping: (
+      <ShoppingScreen
+        onOpenProduct={(type, id) => setOpenProduct({ type, id })}
+      />
+    ),
   };
 
   return (
@@ -273,6 +280,21 @@ export default function App() {
             <CreatePostScreen
               onBack={() => setPendingShareContent(null)}
               initialContent={pendingShareContent}
+            />
+          </div>
+        </div>
+      )}
+
+      {openProduct && (
+        <div className="fixed inset-0 z-50 sm:bg-black/40 sm:flex sm:items-center sm:justify-center">
+          <div className="w-full h-full sm:w-[390px] sm:h-[844px] bg-gradient-to-b from-[#F5EDE0] via-[#EAD8C8] to-[#D9C4AF] sm:rounded-[44px] sm:shadow-2xl overflow-hidden">
+            <ProductDetailScreen
+              productType={openProduct.type}
+              productId={openProduct.id}
+              onBack={() => setOpenProduct(null)}
+              onOpenProduct={(type, id) => setOpenProduct({ type, id })}
+              onOpenReviews={(type, id, name) => setOpenReviews({ type, id, name })}
+              onOpenCart={() => setOpenProduct(null)}
             />
           </div>
         </div>
