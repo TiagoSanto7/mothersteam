@@ -310,4 +310,18 @@ export default async function usersRoutes(fastify: FastifyInstance) {
     })
     reply.send(verses.map((v) => v.verseRef))
   })
+
+  // PUT /fcm-token — register FCM token for push notifications
+  fastify.put<{ Body: { token: string; platform?: 'android' | 'ios' } }>(
+    '/fcm-token',
+    async (request, reply) => {
+      const { token } = request.body
+      if (!token) return reply.status(422).send({ error: 'token required' })
+      await fastify.prisma.user.update({
+        where: { id: request.userId },
+        data: { fcmToken: token },
+      })
+      reply.status(204).send()
+    }
+  )
 }

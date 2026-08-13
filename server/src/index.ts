@@ -26,6 +26,13 @@ import adminAnalyticsRoutes from './routes/admin/analytics'
 import publicProductsRoutes from './routes/products-public'
 import saraRoutes from './routes/sara'
 import maeIARoutes from './routes/mae-ia'
+import ownProductsRoutes from './routes/own-products'
+import wishlistRoutes from './routes/wishlist'
+import cartRoutes from './routes/cart'
+import addressesRoutes from './routes/addresses'
+import ordersRoutes from './routes/orders'
+import adminOwnProductsRoutes from './routes/admin/own-products'
+import adminOrdersRoutes from './routes/admin/orders'
 
 const fastify = Fastify({ logger: true })
 
@@ -81,6 +88,13 @@ await fastify.register(adminProductsRoutes, { prefix: '/admin/products' })
 await fastify.register(adminCategoriesRoutes, { prefix: '/admin/categories' })
 await fastify.register(adminAnalyticsRoutes, { prefix: '/admin/analytics' })
 await fastify.register(publicProductsRoutes, { prefix: '/products' })
+await fastify.register(ownProductsRoutes, { prefix: '/own-products' })
+await fastify.register(wishlistRoutes, { prefix: '/wishlist' })
+await fastify.register(cartRoutes, { prefix: '/cart' })
+await fastify.register(addressesRoutes, { prefix: '/addresses' })
+await fastify.register(ordersRoutes, { prefix: '/orders' })
+await fastify.register(adminOwnProductsRoutes, { prefix: '/admin/own-products' })
+await fastify.register(adminOrdersRoutes, { prefix: '/admin/orders' })
 await fastify.register(saraRoutes, { prefix: '/sara' })
 await fastify.register(maeIARoutes, { prefix: '/mae-ia' })
 
