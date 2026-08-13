@@ -1,11 +1,13 @@
 import { useState } from 'react';
-import { ShoppingBag, ExternalLink, Star } from 'lucide-react';
+import { ShoppingBag, ExternalLink, Star, ShoppingCart } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { apiFetch } from '../../lib/api';
-import type { ApiAdminProduct, ApiAdminCategory } from '../../lib/types';
+import type { ApiAdminProduct, ApiAdminCategory, ApiCart } from '../../lib/types';
+import { FavoritesTab } from './FavoritesTab';
 
 interface ShoppingScreenProps {
   onOpenProduct: (type: 'affiliate' | 'own', id: string) => void
+  onOpenCart: () => void
 }
 
 interface ProductListResult {
@@ -14,7 +16,60 @@ interface ProductListResult {
   nextCursor?: string;
 }
 
-export function ShoppingScreen({ onOpenProduct }: ShoppingScreenProps) {
+export function ShoppingScreen({ onOpenProduct, onOpenCart }: ShoppingScreenProps) {
+  const [activeTab, setActiveTab] = useState<'products' | 'favorites' | 'orders'>('products')
+
+  const { data: cart } = useQuery({
+    queryKey: ['cart'],
+    queryFn: () => apiFetch<ApiCart>('/cart'),
+    staleTime: 60_000,
+  })
+  const cartCount = cart?.itemCount ?? 0
+
+  return (
+    <div className="flex flex-col gap-0 pb-0">
+      <div className="flex items-center justify-between px-4 pt-4 pb-2">
+        <div>
+          <h1 className="text-base font-semibold text-graphite">Shopping</h1>
+          <p className="text-xs text-graphite-muted">Produtos para você e seu bebê</p>
+        </div>
+        <button
+          onClick={onOpenCart}
+          className="relative w-9 h-9 rounded-xl bg-white/70 flex items-center justify-center active:scale-95 transition-transform"
+        >
+          <ShoppingCart size={20} className="text-graphite" strokeWidth={1.8} />
+          {cartCount > 0 && (
+            <span className="absolute -top-1 -right-1 w-4 h-4 bg-sara-terracotta text-white text-[9px] font-bold rounded-full flex items-center justify-center">
+              {cartCount > 9 ? '9+' : cartCount}
+            </span>
+          )}
+        </button>
+      </div>
+
+      <div className="flex border-b border-sara-linen/60 px-4 mb-0">
+        {(['products', 'favorites', 'orders'] as const).map((tab) => (
+          <button
+            key={tab}
+            onClick={() => setActiveTab(tab)}
+            className={`flex-1 py-2.5 text-xs font-semibold transition-colors border-b-2 -mb-px ${
+              activeTab === tab
+                ? 'text-sara-gold border-sara-gold'
+                : 'text-graphite-muted border-transparent'
+            }`}
+          >
+            {tab === 'products' ? 'Produtos' : tab === 'favorites' ? 'Favoritos' : 'Pedidos'}
+          </button>
+        ))}
+      </div>
+
+      {activeTab === 'products' && <ProductsTab onOpenProduct={onOpenProduct} />}
+      {activeTab === 'favorites' && <FavoritesTab onOpenProduct={onOpenProduct} />}
+      {activeTab === 'orders' && <OrdersTabPlaceholder />}
+    </div>
+  )
+}
+
+function ProductsTab({ onOpenProduct }: { onOpenProduct: (type: 'affiliate' | 'own', id: string) => void }) {
   const [selectedCategory, setSelectedCategory] = useState('');
 
   const { data: categories = [] } = useQuery({
@@ -38,10 +93,7 @@ export function ShoppingScreen({ onOpenProduct }: ShoppingScreenProps) {
   if (isLoading) {
     return (
       <div className="flex flex-col gap-4 pb-6">
-        <div className="px-4 pt-4">
-          <h1 className="text-base font-semibold text-graphite">Baby Team Store</h1>
-        </div>
-        <div className="grid grid-cols-2 gap-3 px-4">
+        <div className="grid grid-cols-2 gap-3 px-4 pt-4">
           {Array.from({ length: 4 }).map((_, i) => (
             <div key={i} className="bg-white rounded-3xl p-4 shadow-sm h-40 animate-pulse" />
           ))}
@@ -57,14 +109,9 @@ export function ShoppingScreen({ onOpenProduct }: ShoppingScreenProps) {
 
   return (
     <div className="flex flex-col gap-4 pb-6">
-      <div className="px-4 pt-4">
-        <h1 className="text-base font-semibold text-graphite">Baby Team Store</h1>
-        <p className="text-xs text-graphite-muted">Produtos selecionados para você e seu bebê</p>
-      </div>
-
       {/* Category filter */}
       {categories.length > 0 && (
-        <div className="flex gap-2 px-4 overflow-x-auto scrollbar-hide pb-1">
+        <div className="flex gap-2 px-4 pt-4 overflow-x-auto scrollbar-hide pb-1">
           <button
             onClick={() => setSelectedCategory('')}
             className={`flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
@@ -88,7 +135,6 @@ export function ShoppingScreen({ onOpenProduct }: ShoppingScreenProps) {
       )}
 
       {/* Featured products */}
-      {/* This tab shows affiliate products only — own-products tab will be added in Plan 4 */}
       {featured.length > 0 && (
         <div className="px-4">
           <p className="text-[11px] font-semibold text-graphite-muted uppercase tracking-wide mb-2 flex items-center gap-1">
@@ -112,6 +158,14 @@ export function ShoppingScreen({ onOpenProduct }: ShoppingScreenProps) {
       )}
     </div>
   );
+}
+
+function OrdersTabPlaceholder() {
+  return (
+    <div className="flex flex-col items-center justify-center py-16 gap-2 px-4">
+      <p className="text-graphite-muted text-sm">Histórico de pedidos em breve</p>
+    </div>
+  )
 }
 
 function ProductCard({ product: p, onClick, featured = false }: { product: ApiAdminProduct; onClick: () => void; featured?: boolean }) {
@@ -168,7 +222,6 @@ function StaticShoppingFallback() {
   return (
     <div className="flex flex-col gap-4 pb-6">
       <div className="px-4 pt-4">
-        <h1 className="text-base font-semibold text-graphite">Baby Team Store</h1>
         <p className="text-xs text-graphite-muted">Produtos selecionados para você e seu bebê</p>
       </div>
       <div className="mx-4 rounded-3xl bg-gradient-to-br from-sara-terracotta to-sara-gold p-5 text-white">
