@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { ChevronLeft, Heart, Star, ShoppingCart, ExternalLink, Package } from 'lucide-react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { apiFetch } from '../../lib/api'
-import type { AnyProductDetail } from '../../lib/types'
+import type { AnyProductDetail, ApiOwnProductDetail, ApiProductDetail } from '../../lib/types'
 
 interface Props {
   productType: 'affiliate' | 'own'
@@ -105,8 +105,8 @@ export function ProductDetailScreen({
 
   const images = product.images as string[]
   const isOwn = product.type === 'own'
-  const hasStock = isOwn ? (product as { stock: number }).stock > 0 : true
-  const phases = (product as { phases?: string[] }).phases
+  const hasStock = isOwn ? (product as ApiOwnProductDetail).stock > 0 : true
+  const phases = isOwn ? undefined : (product as ApiProductDetail).phases
 
   return (
     <div className="flex flex-col h-full bg-gradient-to-b from-[#F5EDE0] via-[#EAD8C8] to-[#D9C4AF] overflow-hidden">
@@ -313,7 +313,7 @@ export function ProductDetailScreen({
               {product.related.map((rel) => (
                 <button
                   key={rel.id}
-                  onClick={() => onOpenProduct(rel.type as 'affiliate' | 'own', rel.id)}
+                  onClick={() => onOpenProduct(rel.type, rel.id)}
                   className="flex-shrink-0 w-32 bg-white/70 rounded-2xl p-2 flex flex-col gap-1 active:scale-95 transition-transform"
                 >
                   {(rel.images as string[])[0] ? (

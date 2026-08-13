@@ -88,6 +88,7 @@ export function ShoppingScreen({ onOpenProduct }: ShoppingScreenProps) {
       )}
 
       {/* Featured products */}
+      {/* This tab shows affiliate products only — own-products tab will be added in Plan 4 */}
       {featured.length > 0 && (
         <div className="px-4">
           <p className="text-[11px] font-semibold text-graphite-muted uppercase tracking-wide mb-2 flex items-center gap-1">

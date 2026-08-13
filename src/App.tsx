@@ -291,6 +291,7 @@ export default function App() {
         <div className="fixed inset-0 z-50 sm:bg-black/40 sm:flex sm:items-center sm:justify-center">
           <div className="w-full h-full sm:w-[390px] sm:h-[844px] bg-gradient-to-b from-[#F5EDE0] via-[#EAD8C8] to-[#D9C4AF] sm:rounded-[44px] sm:shadow-2xl overflow-hidden">
             <ProductDetailScreen
+              key={openProduct.id}
               productType={openProduct.type}
               productId={openProduct.id}
               onBack={() => setOpenProduct(null)}
