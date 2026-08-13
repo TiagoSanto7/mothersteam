@@ -88,7 +88,7 @@ export function FavoritesTab({ onOpenProduct }: Props) {
         const images = product.images as string[]
 
         return (
-          <div key={product.id} className="bg-white rounded-3xl p-4 shadow-sm flex gap-3">
+          <div key={`${entry.type}-${product.id}`} className="bg-white rounded-3xl p-4 shadow-sm flex gap-3">
             <button onClick={() => onOpenProduct(entry.type, product.id)} className="flex-shrink-0">
               {images[0] ? (
                 <img

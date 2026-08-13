@@ -446,7 +446,7 @@ function PixWaitingScreen({
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const onPaidRef = useRef(onPaid)
-  useEffect(() => { onPaidRef.current = onPaid })
+  useEffect(() => { onPaidRef.current = onPaid }, [onPaid])
 
   useEffect(() => {
     intervalRef.current = setInterval(async () => {

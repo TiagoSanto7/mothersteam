@@ -9,7 +9,7 @@ interface Props {
   onCheckout: () => void
 }
 
-const EMPTY_ITEMS: never[] = []
+const EMPTY_ITEMS: ApiCart['items'] = []
 
 export function CartScreen({ onBack, onCheckout }: Props) {
   const queryClient = useQueryClient()
@@ -41,7 +41,7 @@ export function CartScreen({ onBack, onCheckout }: Props) {
         setShippingDays(estimatedDays)
       })
       .catch(() => {})
-  }, [defaultAddress?.id, cart?.items.length])
+  }, [defaultAddress?.id, cart?.subtotal])
 
   const updateMutation = useMutation({
     mutationFn: ({ itemId, quantity }: { itemId: string; quantity: number }) =>
