@@ -22,12 +22,15 @@ export function FavoritesTab({ onOpenProduct }: Props) {
     staleTime: 30_000,
   })
 
-  const removeMutation = useMutation({
-    mutationFn: ({ type, id }: { type: 'affiliate' | 'own'; id: string }) =>
+  type RemoveVars = { type: 'affiliate' | 'own'; id: string }
+  type RemoveCtx = { prev?: WishlistResponse }
+
+  const removeMutation = useMutation<unknown, unknown, RemoveVars, RemoveCtx>({
+    mutationFn: ({ type, id }: RemoveVars) =>
       apiFetch(type === 'affiliate' ? `/products/${id}/wishlist` : `/own-products/${id}/wishlist`, {
         method: 'POST',
       }),
-    onMutate: async ({ id }) => {
+    onMutate: async ({ id }: RemoveVars): Promise<RemoveCtx> => {
       await queryClient.cancelQueries({ queryKey: ['wishlist'] })
       const prev = queryClient.getQueryData<WishlistResponse>(['wishlist'])
       queryClient.setQueryData<WishlistResponse>(['wishlist'], (old) => ({
@@ -37,7 +40,7 @@ export function FavoritesTab({ onOpenProduct }: Props) {
       }))
       return { prev }
     },
-    onError: (_err: unknown, _vars: unknown, ctx: { prev?: WishlistResponse } | undefined) => {
+    onError: (_err: unknown, _vars: RemoveVars, ctx: RemoveCtx | undefined) => {
       if (ctx?.prev) queryClient.setQueryData(['wishlist'], ctx.prev)
     },
     onSuccess: () => {

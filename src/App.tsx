@@ -58,7 +58,6 @@ export default function App() {
   const [openProduct,       setOpenProduct]       = useState<{ type: 'affiliate' | 'own'; id: string } | null>(null);
   const [openReviews,       setOpenReviews]       = useState<{ type: 'affiliate' | 'own'; id: string; name: string } | null>(null);
   const [showCart,          setShowCart]          = useState(false);
-  const [showCheckout,      setShowCheckout]      = useState(false);
 
   // Session restore: try refresh on first load (cookie for web, body token for Capacitor)
   useEffect(() => {
@@ -329,7 +328,7 @@ export default function App() {
               onBack={() => setShowCart(false)}
               onCheckout={() => {
                 setShowCart(false)
-                setShowCheckout(true)
+                // CheckoutScreen will be wired in Task #24
               }}
             />
           </div>
