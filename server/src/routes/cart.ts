@@ -99,6 +99,7 @@ export default async function cartRoutes(fastify: FastifyInstance) {
         await fastify.prisma.cartItem.delete({ where: { id: item.id } })
       } else {
         const safeQty = Math.min(quantity, item.ownProduct.stock)
+        if (safeQty < 1) return reply.status(422).send({ error: 'Out of stock' })
         await fastify.prisma.cartItem.update({ where: { id: item.id }, data: { quantity: safeQty } })
       }
       reply.send(await buildCartResponse(fastify, request.userId))

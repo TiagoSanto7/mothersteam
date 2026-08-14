@@ -130,22 +130,25 @@ export default async function ordersRoutes(fastify: FastifyInstance) {
       })
 
       const paid = mpResult.status === 'approved'
-      await fastify.prisma.order.update({
-        where: { id: order.id },
-        data: {
-          mercadoPagoPaymentId: String(mpResult.id),
-          status: paid ? 'PAID' : 'CANCELLED',
-        },
-      })
-
       if (paid) {
-        for (const item of cartItems) {
-          await fastify.prisma.ownProduct.update({
-            where: { id: item.ownProductId },
-            data: { stock: { decrement: item.quantity } },
-          })
-        }
-        await fastify.prisma.cartItem.deleteMany({ where: { userId: request.userId } })
+        await fastify.prisma.$transaction([
+          fastify.prisma.order.update({
+            where: { id: order.id },
+            data: { mercadoPagoPaymentId: String(mpResult.id), status: 'PAID' },
+          }),
+          ...cartItems.map((item) =>
+            fastify.prisma.ownProduct.updateMany({
+              where: { id: item.ownProductId, stock: { gte: item.quantity } },
+              data: { stock: { decrement: item.quantity } },
+            })
+          ),
+          fastify.prisma.cartItem.deleteMany({ where: { userId: request.userId } }),
+        ])
+      } else {
+        await fastify.prisma.order.update({
+          where: { id: order.id },
+          data: { mercadoPagoPaymentId: String(mpResult.id), status: 'CANCELLED' },
+        })
       }
 
       return reply.status(201).send({
@@ -171,7 +174,7 @@ export default async function ordersRoutes(fastify: FastifyInstance) {
       include: {
         items: {
           take: 2,
-          include: { ownProduct: { select: { id: true, name: true, images: true } } },
+          include: { ownProduct: { select: { id: true, name: true, images: true, price: true } } },
         },
       },
     })
@@ -236,20 +239,20 @@ export default async function ordersRoutes(fastify: FastifyInstance) {
     }
 
     if (newStatus) {
-      await fastify.prisma.order.update({
-        where: { id: order.id },
-        data: { status: newStatus },
-      })
-
       if (newStatus === 'PAID') {
         const items = await fastify.prisma.orderItem.findMany({ where: { orderId: order.id } })
-        for (const item of items) {
-          await fastify.prisma.ownProduct.update({
-            where: { id: item.ownProductId },
-            data: { stock: { decrement: item.quantity } },
-          })
-        }
-        await fastify.prisma.cartItem.deleteMany({ where: { userId: order.userId } })
+        await fastify.prisma.$transaction([
+          fastify.prisma.order.update({ where: { id: order.id }, data: { status: 'PAID' } }),
+          ...items.map((item) =>
+            fastify.prisma.ownProduct.updateMany({
+              where: { id: item.ownProductId, stock: { gte: item.quantity } },
+              data: { stock: { decrement: item.quantity } },
+            })
+          ),
+          fastify.prisma.cartItem.deleteMany({ where: { userId: order.userId } }),
+        ])
+      } else {
+        await fastify.prisma.order.update({ where: { id: order.id }, data: { status: newStatus } })
       }
 
       const msg = PUSH_MESSAGES[newStatus]

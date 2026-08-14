@@ -22,7 +22,7 @@ export default async function ownProductsRoutes(fastify: FastifyInstance) {
     })
     const hasMore = rows.length > limit
     const items = rows.slice(0, limit).map((p) => ({ ...p, type: 'own' as const }))
-    const nextCursor = items.length > 0 ? items[items.length - 1].id : undefined
+    const nextCursor = hasMore ? items[items.length - 1].id : undefined
     reply.send({ items, hasMore, nextCursor })
   })
 

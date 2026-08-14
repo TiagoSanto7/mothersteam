@@ -67,8 +67,8 @@ export default function App() {
             method: 'PUT',
             body: JSON.stringify({ token: token.value, platform: Capacitor.getPlatform() }),
           })
+          listener.remove()
         } catch {}
-        listener.remove()
       })
     }
 
