@@ -28,10 +28,11 @@ export function ProductDetailScreen({
 
   const endpoint = productType === 'affiliate' ? `/products/${productId}` : `/own-products/${productId}`
 
-  const { data: product, isLoading } = useQuery({
+  const { data: product, isLoading, isError, refetch } = useQuery({
     queryKey: ['product-detail', productType, productId],
     queryFn: () => apiFetch<AnyProductDetail>(endpoint),
     staleTime: 60_000,
+    retry: 1,
   })
 
   const wishlistMutation = useMutation<{ inWishlist: boolean }, unknown, void, { prev?: AnyProductDetail }>({
@@ -89,6 +90,17 @@ export function ProductDetailScreen({
           <div className="h-4 w-3/4 rounded bg-white/50" />
           <div className="h-6 w-1/2 rounded bg-white/50" />
         </div>
+      </div>
+    )
+  }
+
+  if (isError) {
+    return (
+      <div className="flex flex-col h-full bg-gradient-to-b from-[#F5EDE0] via-[#EAD8C8] to-[#D9C4AF] items-center justify-center gap-3 px-6">
+        <Package size={40} className="text-graphite-muted" />
+        <p className="text-graphite-muted text-sm text-center">Não foi possível carregar o produto. Verifique sua conexão.</p>
+        <button onClick={() => refetch()} className="px-4 py-2 rounded-xl bg-sara-gold text-white text-sm font-semibold active:scale-95 transition-transform">Tentar novamente</button>
+        <button onClick={onBack} className="text-graphite-muted text-sm">Voltar</button>
       </div>
     )
   }
