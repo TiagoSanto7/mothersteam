@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { ShoppingBag, ExternalLink, Star, ShoppingCart } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { apiFetch } from '../../lib/api';
-import type { ApiAdminProduct, ApiAdminCategory, ApiCart } from '../../lib/types';
+import type { ApiAdminProduct, ApiAdminCategory, ApiOwnProduct, ApiCart } from '../../lib/types';
 import { FavoritesTab } from './FavoritesTab';
 import { OrdersTab } from './OrdersTab';
 
@@ -12,10 +12,26 @@ interface ShoppingScreenProps {
   onOpenOrder: (orderId: string) => void
 }
 
-interface ProductListResult {
-  items: ApiAdminProduct[];
-  hasMore: boolean;
-  nextCursor?: string;
+interface AffiliateListResult {
+  items: ApiAdminProduct[]
+  hasMore: boolean
+  nextCursor?: string
+}
+
+interface OwnListResult {
+  items: ApiOwnProduct[]
+  hasMore: boolean
+  nextCursor?: string
+}
+
+interface DisplayProduct {
+  id: string
+  name: string
+  price: string
+  images: string[]
+  featured: boolean
+  category: { id: string; name: string; slug: string; icon?: string }
+  _type: 'affiliate' | 'own'
 }
 
 export function ShoppingScreen({ onOpenProduct, onOpenCart, onOpenOrder }: ShoppingScreenProps) {
@@ -80,15 +96,50 @@ function ProductsTab({ onOpenProduct }: { onOpenProduct: (type: 'affiliate' | 'o
     staleTime: 5 * 60_000,
   });
 
-  const params = new URLSearchParams({ limit: '20', ...(selectedCategory ? { categoryId: selectedCategory } : {}) });
+  const affiliateParams = new URLSearchParams({ limit: '20', ...(selectedCategory ? { categoryId: selectedCategory } : {}) });
+  const ownParams = new URLSearchParams({ limit: '20', ...(selectedCategory ? { categoryId: selectedCategory } : {}) });
 
-  const { data, isLoading } = useQuery({
-    queryKey: ['shopping-products', selectedCategory],
-    queryFn: () => apiFetch<ProductListResult>(`/products?${params}`),
+  const { data: affiliateData, isLoading: affiliateLoading } = useQuery({
+    queryKey: ['shopping-products-affiliate', selectedCategory],
+    queryFn: () => apiFetch<AffiliateListResult>(`/products?${affiliateParams}`),
     staleTime: 60_000,
   });
 
-  const products = data?.items ?? [];
+  const { data: ownData, isLoading: ownLoading } = useQuery({
+    queryKey: ['shopping-products-own', selectedCategory],
+    queryFn: () => apiFetch<OwnListResult>(`/own-products?${ownParams}`),
+    staleTime: 60_000,
+  });
+
+  const isLoading = affiliateLoading || ownLoading;
+
+  const affiliateProducts: DisplayProduct[] = (affiliateData?.items ?? []).map((p) => ({
+    id: p.id,
+    name: p.name,
+    price: p.price,
+    images: p.images,
+    featured: p.featured,
+    category: p.category,
+    _type: 'affiliate' as const,
+  }));
+
+  const ownProducts: DisplayProduct[] = (ownData?.items ?? []).map((p) => ({
+    id: p.id,
+    name: p.name,
+    price: p.price,
+    images: p.images,
+    featured: p.featured,
+    category: p.category,
+    _type: 'own' as const,
+  }));
+
+  const products: DisplayProduct[] = [
+    ...ownProducts.filter((p) => p.featured),
+    ...affiliateProducts.filter((p) => p.featured),
+    ...ownProducts.filter((p) => !p.featured),
+    ...affiliateProducts.filter((p) => !p.featured),
+  ];
+
   const featured = products.filter((p) => p.featured);
   const rest = products.filter((p) => !p.featured);
 
@@ -104,8 +155,7 @@ function ProductsTab({ onOpenProduct }: { onOpenProduct: (type: 'affiliate' | 'o
     );
   }
 
-  // Fallback to static if no products in DB yet
-  if (products.length === 0 && !isLoading) {
+  if (products.length === 0) {
     return <StaticShoppingFallback />;
   }
 
@@ -144,7 +194,7 @@ function ProductsTab({ onOpenProduct }: { onOpenProduct: (type: 'affiliate' | 'o
           </p>
           <div className="flex flex-col gap-3">
             {featured.map((p) => (
-              <ProductCard key={p.id} product={p} onClick={() => onOpenProduct('affiliate', p.id)} featured />
+              <ProductCard key={`${p._type}-${p.id}`} product={p} onClick={() => onOpenProduct(p._type, p.id)} featured />
             ))}
           </div>
         </div>
@@ -154,7 +204,7 @@ function ProductsTab({ onOpenProduct }: { onOpenProduct: (type: 'affiliate' | 'o
       {rest.length > 0 && (
         <div className="grid grid-cols-2 gap-3 px-4">
           {rest.map((p) => (
-            <ProductCard key={p.id} product={p} onClick={() => onOpenProduct('affiliate', p.id)} />
+            <ProductCard key={`${p._type}-${p.id}`} product={p} onClick={() => onOpenProduct(p._type, p.id)} />
           ))}
         </div>
       )}
@@ -163,7 +213,7 @@ function ProductsTab({ onOpenProduct }: { onOpenProduct: (type: 'affiliate' | 'o
 }
 
 
-function ProductCard({ product: p, onClick, featured = false }: { product: ApiAdminProduct; onClick: () => void; featured?: boolean }) {
+function ProductCard({ product: p, onClick, featured = false }: { product: DisplayProduct; onClick: () => void; featured?: boolean }) {
   if (featured) {
     return (
       <div className="bg-white rounded-3xl p-4 shadow-sm flex gap-3">

@@ -35,7 +35,7 @@ export default async function publicProductsRoutes(fastify: FastifyInstance) {
     })
     const hasMore = rows.length > limit
     const items = rows.slice(0, limit)
-    const nextCursor = items.length > 0 ? items[items.length - 1].id : undefined
+    const nextCursor = hasMore ? items[items.length - 1].id : undefined
     reply.send({ items, hasMore, nextCursor })
   })
 
@@ -102,7 +102,7 @@ export default async function publicProductsRoutes(fastify: FastifyInstance) {
       },
       reviews,
       inWishlist: !!inWishlistRow,
-      related,
+      related: related.map((r) => ({ ...r, type: 'affiliate' as const })),
     })
   })
 
