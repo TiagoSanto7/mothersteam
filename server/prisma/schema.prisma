@@ -45,15 +45,32 @@ model User {
   likedComments      CommentLike[]
   createdCommunities Community[]       @relation("CommunityCreator")
 
-  fcmToken      String?
-  reviews       Review[]
-  wishlistItems WishlistItem[]
-  cartItems     CartItem[]
-  orders        Order[]
-  addresses     Address[]
+  fcmToken              String?
+  mpCustomerId          String?
+  passwordResetToken    String?   @unique @db.VarChar(128)
+  passwordResetExpires  DateTime?
+  termsAcceptedAt       DateTime?
+  reviews        Review[]
+  wishlistItems  WishlistItem[]
+  cartItems      CartItem[]
+  orders         Order[]
+  addresses      Address[]
+  refreshTokens  RefreshToken[]
+  paymentMethods PaymentMethod[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+model RefreshToken {
+  id        String   @id @default(cuid())
+  token     String   @unique @db.VarChar(512)
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([userId])
 }
 
 model Follow {
@@ -340,7 +357,7 @@ model Order {
   total                Decimal     @db.Decimal(10, 2)
   shippingFee          Decimal     @db.Decimal(10, 2)
   mercadoPagoPaymentId String?
-  mercadoPagoPixQrCode String?     @db.VarChar(500)
+  mercadoPagoPixQrCode String?     @db.Text
   mercadoPagoPixCode   String?     @db.Text
   trackingCode         String?     @db.VarChar(100)
   addressId            String
@@ -348,6 +365,9 @@ model Order {
   items                OrderItem[]
   createdAt            DateTime    @default(now())
   updatedAt            DateTime    @updatedAt
+
+  @@index([userId])
+  @@index([mercadoPagoPaymentId])
 }
 
 model OrderItem {
@@ -358,6 +378,22 @@ model OrderItem {
   ownProduct      OwnProduct @relation(fields: [ownProductId], references: [id])
   quantity        Int
   priceAtPurchase Decimal    @db.Decimal(10, 2)
+}
+
+model PaymentMethod {
+  id              String   @id @default(cuid())
+  userId          String
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  mpCustomerId    String
+  mpCardId        String   @unique
+  brand           String   @db.VarChar(30)
+  lastFour        String   @db.Char(4)
+  holderName      String   @db.VarChar(100)
+  expirationMonth Int
+  expirationYear  Int
+  createdAt       DateTime @default(now())
+
+  @@index([userId])
 }
 
 model Address {

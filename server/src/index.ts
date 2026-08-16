@@ -8,6 +8,7 @@ import staticPlugin from '@fastify/static'
 import { join } from 'path'
 import { prismaPlugin } from './plugins/prisma'
 import { authPlugin } from './plugins/auth'
+import { emailPlugin } from './plugins/email'
 import authRoutes from './routes/auth'
 import usersRoutes from './routes/users'
 import communitiesRoutes from './routes/communities'
@@ -33,6 +34,7 @@ import addressesRoutes from './routes/addresses'
 import ordersRoutes from './routes/orders'
 import adminOwnProductsRoutes from './routes/admin/own-products'
 import adminOrdersRoutes from './routes/admin/orders'
+import paymentMethodsRoutes from './routes/payment-methods'
 
 const fastify = Fastify({ logger: true })
 
@@ -71,6 +73,7 @@ await fastify.register(staticPlugin, {
 })
 await fastify.register(prismaPlugin)
 await fastify.register(authPlugin)
+await fastify.register(emailPlugin)
 
 await fastify.register(authRoutes, { prefix: '/auth' })
 await fastify.register(usersRoutes, { prefix: '/users' })
@@ -94,6 +97,7 @@ await fastify.register(cartRoutes, { prefix: '/cart' })
 await fastify.register(addressesRoutes, { prefix: '/addresses' })
 await fastify.register(ordersRoutes, { prefix: '/orders' })
 await fastify.register(adminOwnProductsRoutes, { prefix: '/admin/own-products' })
+await fastify.register(paymentMethodsRoutes, { prefix: '/payment-methods' })
 await fastify.register(adminOrdersRoutes, { prefix: '/admin/orders' })
 await fastify.register(saraRoutes, { prefix: '/sara' })
 await fastify.register(maeIARoutes, { prefix: '/mae-ia' })

@@ -59,6 +59,15 @@ const PUSH_MESSAGES: Record<string, { title: string; body: string }> = {
   DELIVERED: { title: 'Pedido entregue ✅', body: 'Seu pedido foi entregue. Aproveite!' },
 }
 
+function buildOrderConfirmationEmail(name: string, orderId: string, total: number): string {
+  return `<p>Olá, ${name}! 🎉</p>
+<p>Seu pedido <strong>#MT-${orderId.slice(-6).toUpperCase()}</strong> foi confirmado com sucesso.</p>
+<p>Total: <strong>R$ ${total.toFixed(2)}</strong></p>
+<p>Acompanhe o status do seu pedido no app Mothers Team em <em>Perfil → Meus Pedidos</em>.</p>
+<p>Obrigada por comprar com a gente! 💛</p>
+<p>— Mothers Team</p>`
+}
+
 const SHIPPING_FEES: Record<string, number> = {
   SP: 15.9, RJ: 18.9, MG: 18.9, ES: 21.9, PR: 18.9, SC: 21.9, RS: 21.9,
   DF: 23.9, GO: 23.9, MT: 25.9, MS: 25.9, BA: 25.9, PE: 27.9, CE: 27.9,
@@ -200,6 +209,11 @@ export default async function ordersRoutes(fastify: FastifyInstance) {
         if (saveCard && cardToken) {
           await saveCardForUser(fastify, request.userId, user.email, cardToken)
         }
+        fastify.sendEmail(
+          user.email,
+          `Pedido confirmado #MT-${order.id.slice(-6).toUpperCase()} — Mothers Team`,
+          buildOrderConfirmationEmail(user.name, order.id, total)
+        ).catch(() => {})
       } else if (!inProcess) {
         // Only cancel on explicit rejection — in_process/pending waits for webhook
         await fastify.prisma.order.update({
@@ -290,7 +304,7 @@ export default async function ordersRoutes(fastify: FastifyInstance) {
 
     const order = await fastify.prisma.order.findFirst({
       where: { mercadoPagoPaymentId: paymentId },
-      include: { user: { select: { fcmToken: true } } },
+      include: { user: { select: { fcmToken: true, email: true, name: true } } },
     })
     if (!order) return reply.status(200).send({ ok: true })
 
@@ -329,6 +343,13 @@ export default async function ordersRoutes(fastify: FastifyInstance) {
       const msg = PUSH_MESSAGES[newStatus]
       if (msg && order.user.fcmToken) {
         await sendPush(order.user.fcmToken, msg.title, msg.body)
+      }
+      if (newStatus === 'PAID') {
+        fastify.sendEmail(
+          order.user.email,
+          `Pedido confirmado #MT-${order.id.slice(-6).toUpperCase()} — Mothers Team`,
+          buildOrderConfirmationEmail(order.user.name, order.id, Number(order.total))
+        ).catch(() => {})
       }
     }
 

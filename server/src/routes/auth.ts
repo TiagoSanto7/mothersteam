@@ -1,5 +1,6 @@
 import type { FastifyInstance } from 'fastify'
 import bcrypt from 'bcrypt'
+import crypto from 'crypto'
 import { z } from 'zod'
 import { signAccessToken, signRefreshToken, verifyRefreshToken } from '../utils/tokens'
 
@@ -24,6 +25,7 @@ const registerSchema = z.object({
   motherBirthDate: z.string().optional(),
   babyBirthDate: z.string().optional(),
   expectedBirthDate: z.string().optional(),
+  acceptedTerms: z.boolean().optional(),
 })
 
 const loginSchema = z.object({
@@ -40,7 +42,9 @@ const USER_SELECT = {
 } as const
 
 export default async function authRoutes(fastify: FastifyInstance) {
-  fastify.get<{ Querystring: { username: string } }>('/check-username', async (request, reply) => {
+  fastify.get<{ Querystring: { username: string } }>('/check-username', {
+    config: { rateLimit: { max: 30, timeWindow: '1 minute' } },
+  }, async (request, reply) => {
     const { username } = request.query
     if (!username || !/^[a-z0-9_]{3,30}$/.test(username)) {
       return reply.status(400).send({ available: false, error: 'Invalid username format' })
@@ -83,12 +87,16 @@ export default async function authRoutes(fastify: FastifyInstance) {
         motherBirthDate: parseDate(body.data.motherBirthDate),
         babyBirthDate: parseDate(body.data.babyBirthDate),
         expectedBirthDate: parseDate(body.data.expectedBirthDate),
+        termsAcceptedAt: body.data.acceptedTerms ? new Date() : undefined,
       },
       select: USER_SELECT,
     })
 
     const accessToken = signAccessToken(user.id)
     const refreshToken = signRefreshToken(user.id)
+    await fastify.prisma.refreshToken.create({
+      data: { token: refreshToken, userId: user.id, expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000) },
+    })
 
     reply
       .setCookie(REFRESH_COOKIE, refreshToken, COOKIE_OPTS)
@@ -96,7 +104,9 @@ export default async function authRoutes(fastify: FastifyInstance) {
       .send({ accessToken, refreshToken, user })
   })
 
-  fastify.post('/login', async (request, reply) => {
+  fastify.post('/login', {
+    config: { rateLimit: { max: 10, timeWindow: '1 minute' } },
+  }, async (request, reply) => {
     const body = loginSchema.safeParse(request.body)
     if (!body.success) return reply.status(400).send({ error: body.error.flatten() })
 
@@ -111,6 +121,9 @@ export default async function authRoutes(fastify: FastifyInstance) {
 
     const accessToken = signAccessToken(user.id)
     const refreshToken = signRefreshToken(user.id)
+    await fastify.prisma.refreshToken.create({
+      data: { token: refreshToken, userId: user.id, expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000) },
+    })
 
     const { passwordHash: _, ...safeUser } = user
 
@@ -120,6 +133,12 @@ export default async function authRoutes(fastify: FastifyInstance) {
   })
 
   fastify.post('/logout', async (request, reply) => {
+    const cookieToken = request.cookies[REFRESH_COOKIE]
+    const bodyToken = (request.body as { refreshToken?: string } | null)?.refreshToken
+    const token = cookieToken ?? bodyToken
+    if (token) {
+      await fastify.prisma.refreshToken.deleteMany({ where: { token } })
+    }
     reply.clearCookie(REFRESH_COOKIE, { path: '/' }).send({ ok: true })
   })
 
@@ -132,8 +151,26 @@ export default async function authRoutes(fastify: FastifyInstance) {
 
     try {
       const { userId } = verifyRefreshToken(token)
+
+      const stored = await fastify.prisma.refreshToken.findUnique({ where: { token } })
+      if (!stored || stored.expiresAt < new Date()) {
+        await fastify.prisma.refreshToken.deleteMany({ where: { token } })
+        return reply.status(401).send({ error: 'Invalid refresh token' })
+      }
+
+      // Rotation: delete old, issue new
+      const newRefreshToken = signRefreshToken(userId)
+      await fastify.prisma.$transaction([
+        fastify.prisma.refreshToken.delete({ where: { token } }),
+        fastify.prisma.refreshToken.create({
+          data: { token: newRefreshToken, userId, expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000) },
+        }),
+      ])
+
       const accessToken = signAccessToken(userId)
-      reply.send({ accessToken })
+      reply
+        .setCookie(REFRESH_COOKIE, newRefreshToken, COOKIE_OPTS)
+        .send({ accessToken, refreshToken: newRefreshToken })
     } catch {
       reply.status(401).send({ error: 'Invalid refresh token' })
     }
@@ -146,5 +183,64 @@ export default async function authRoutes(fastify: FastifyInstance) {
     })
     if (!user) return reply.status(404).send({ error: 'User not found' })
     reply.send(user)
+  })
+
+  fastify.post('/forgot-password', {
+    config: { rateLimit: { max: 5, timeWindow: '10 minutes' } },
+  }, async (request, reply) => {
+    const body = z.object({ email: z.string().email() }).safeParse(request.body)
+    if (!body.success) return reply.status(400).send({ error: 'Invalid email' })
+
+    const user = await fastify.prisma.user.findUnique({ where: { email: body.data.email } })
+    // Always 200 — don't leak whether the email exists
+    if (!user) return reply.send({ ok: true })
+
+    const token = crypto.randomBytes(32).toString('hex')
+    const expires = new Date(Date.now() + 60 * 60 * 1000) // 1 hour
+
+    await fastify.prisma.user.update({
+      where: { id: user.id },
+      data: { passwordResetToken: token, passwordResetExpires: expires },
+    })
+
+    const frontendUrl = process.env.FRONTEND_URL?.split(',')[0]?.trim() ?? 'https://mothersteam.com'
+    const resetUrl = `${frontendUrl}/reset-password?token=${token}`
+
+    await fastify.sendEmail(
+      user.email,
+      'Redefinição de senha — Mothers Team',
+      `<p>Olá, ${user.name}!</p>
+<p>Recebemos uma solicitação para redefinir sua senha.</p>
+<p><a href="${resetUrl}" style="background:#C4956A;color:#fff;padding:10px 20px;border-radius:8px;text-decoration:none;display:inline-block">Redefinir senha</a></p>
+<p>O link expira em 1 hora. Se você não solicitou, ignore este e-mail.</p>
+<p>— Mothers Team</p>`
+    )
+
+    reply.send({ ok: true })
+  })
+
+  fastify.post('/reset-password', async (request, reply) => {
+    const body = z.object({
+      token: z.string().min(1),
+      password: z.string().min(8),
+    }).safeParse(request.body)
+    if (!body.success) return reply.status(400).send({ error: body.error.flatten() })
+
+    const user = await fastify.prisma.user.findUnique({
+      where: { passwordResetToken: body.data.token },
+      select: { id: true, passwordResetExpires: true },
+    })
+
+    if (!user || !user.passwordResetExpires || user.passwordResetExpires < new Date()) {
+      return reply.status(400).send({ error: 'Token inválido ou expirado' })
+    }
+
+    const passwordHash = await bcrypt.hash(body.data.password, 12)
+    await fastify.prisma.user.update({
+      where: { id: user.id },
+      data: { passwordHash, passwordResetToken: null, passwordResetExpires: null },
+    })
+
+    reply.send({ ok: true })
   })
 }

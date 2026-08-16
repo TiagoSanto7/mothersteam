@@ -1,6 +1,7 @@
 import type { FastifyInstance } from 'fastify'
 import { z } from 'zod'
 import { emitNotification } from '../sse'
+import { sendPush } from '../plugins/fcm'
 
 const createSchema = z.object({
   content: z.string().min(1),
@@ -137,7 +138,7 @@ export default async function postsRoutes(fastify: FastifyInstance) {
     if (handles.length > 0) {
       fastify.prisma.user.findMany({
         where: { username: { in: handles }, id: { not: request.userId } },
-        select: { id: true },
+        select: { id: true, fcmToken: true },
       }).then(async (mentioned) => {
         if (mentioned.length === 0) return
         const actor = await fastify.prisma.user.findUnique({ where: { id: request.userId }, select: { name: true } })
@@ -156,6 +157,9 @@ export default async function postsRoutes(fastify: FastifyInstance) {
             },
           })
           emitNotification(u.id)
+          if (u.fcmToken) {
+            sendPush(u.fcmToken, 'Você foi mencionada 📣', `${actorName} citou você em uma publicação.`).catch(() => {})
+          }
         }
       }).catch(() => {})
     }
@@ -220,6 +224,11 @@ export default async function postsRoutes(fastify: FastifyInstance) {
         },
       })
       emitNotification(post.authorId)
+
+      const recipient = await fastify.prisma.user.findUnique({ where: { id: post.authorId }, select: { fcmToken: true } })
+      if (recipient?.fcmToken) {
+        sendPush(recipient.fcmToken, 'Nova curtida 💛', `${actorName} curtiu sua publicação.`).catch(() => {})
+      }
     }
 
     reply.status(201).send({ ok: true })
@@ -280,6 +289,11 @@ export default async function postsRoutes(fastify: FastifyInstance) {
           },
         })
         emitNotification(comment.authorId)
+
+        const commentRecipient = await fastify.prisma.user.findUnique({ where: { id: comment.authorId }, select: { fcmToken: true } })
+        if (commentRecipient?.fcmToken) {
+          sendPush(commentRecipient.fcmToken, 'Nova curtida 💛', `${actorName} curtiu seu comentário.`).catch(() => {})
+        }
       }
 
       reply.status(201).send({
@@ -411,6 +425,11 @@ export default async function postsRoutes(fastify: FastifyInstance) {
         },
       })
       emitNotification(post.authorId)
+
+      const postRecipient = await fastify.prisma.user.findUnique({ where: { id: post.authorId }, select: { fcmToken: true } })
+      if (postRecipient?.fcmToken) {
+        sendPush(postRecipient.fcmToken, 'Novo comentário 💬', `${actorName} comentou na sua publicação.`).catch(() => {})
+      }
     }
 
     // Notify @mentioned users in the comment (fire-and-forget)

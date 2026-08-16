@@ -22,6 +22,7 @@ export function RegisterScreen({ onBack }: RegisterScreenProps) {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
 
+  const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [pregnancyStage, setPregnancyStage] = useState<'pregnant' | 'postpartum'>('pregnant');
   const [pregnancyWeek, setPregnancyWeek] = useState('');
   const [babyAgeInDays, setBabyAgeInDays] = useState('');
@@ -61,9 +62,11 @@ export function RegisterScreen({ onBack }: RegisterScreenProps) {
   const maxExpected = new Date(Date.now() + 42 * 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
 
   const step2Valid =
-    pregnancyStage === 'pregnant'
-      ? expectedBirthDate !== '' || (pregnancyWeek !== '' && Number(pregnancyWeek) >= 1 && Number(pregnancyWeek) <= 42)
-      : babyBirthDate !== '' || (babyAgeInDays !== '' && Number(babyAgeInDays) >= 0);
+    acceptedTerms && (
+      pregnancyStage === 'pregnant'
+        ? expectedBirthDate !== '' || (pregnancyWeek !== '' && Number(pregnancyWeek) >= 1 && Number(pregnancyWeek) <= 42)
+        : babyBirthDate !== '' || (babyAgeInDays !== '' && Number(babyAgeInDays) >= 0)
+    );
 
   const { mutate, isPending, isError, error } = useMutation({
     mutationFn: () =>
@@ -81,6 +84,7 @@ export function RegisterScreen({ onBack }: RegisterScreenProps) {
           expectedBirthDate: pregnancyStage === 'pregnant' && expectedBirthDate ? expectedBirthDate : undefined,
           babyBirthDate: pregnancyStage === 'postpartum' && babyBirthDate ? babyBirthDate : undefined,
           motherBirthDate: motherBirthDate || undefined,
+          acceptedTerms: true,
         }),
       }),
     onSuccess: ({ accessToken, refreshToken, user }) => {
@@ -333,6 +337,27 @@ export function RegisterScreen({ onBack }: RegisterScreenProps) {
                 className="w-full px-4 py-3 rounded-2xl bg-white border border-sara-linen text-sm text-graphite placeholder:text-sara-muted focus:outline-none focus:border-sara-gold"
               />
             </div>
+
+            <label className="flex items-start gap-2 cursor-pointer">
+              <div className="mt-0.5 flex-shrink-0">
+                <input
+                  type="checkbox"
+                  checked={acceptedTerms}
+                  onChange={(e) => setAcceptedTerms(e.target.checked)}
+                  className="sr-only"
+                />
+                <div className={`w-4 h-4 rounded border-2 flex items-center justify-center transition-colors ${acceptedTerms ? 'bg-sara-gold border-sara-gold' : 'border-gray-300 bg-white'}`}>
+                  {acceptedTerms && <Check size={10} className="text-white" strokeWidth={3} />}
+                </div>
+              </div>
+              <p className="text-xs text-graphite-muted leading-relaxed">
+                Li e aceito os{' '}
+                <a href="/termos.html" target="_blank" className="text-sara-gold underline underline-offset-2">Termos de Uso</a>
+                {' '}e a{' '}
+                <a href="/privacidade.html" target="_blank" className="text-sara-gold underline underline-offset-2">Política de Privacidade</a>
+                {' '}(LGPD)
+              </p>
+            </label>
 
             {errorMsg && (
               <p role="alert" className="text-xs text-sara-terracotta text-center">{errorMsg}</p>

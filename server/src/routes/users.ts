@@ -1,6 +1,7 @@
 import type { FastifyInstance } from 'fastify'
 import { z } from 'zod'
 import { emitNotification } from '../sse'
+import { sendPush } from '../plugins/fcm'
 
 const updateMeSchema = z.object({
   name: z.string().min(1).max(80).optional(),
@@ -114,10 +115,10 @@ export default async function usersRoutes(fastify: FastifyInstance) {
         data: { followerId: request.userId, followingId: request.params.id },
       })
 
-      const actor = await fastify.prisma.user.findUnique({
-        where: { id: request.userId },
-        select: { name: true },
-      })
+      const [actor, recipient] = await Promise.all([
+        fastify.prisma.user.findUnique({ where: { id: request.userId }, select: { name: true } }),
+        fastify.prisma.user.findUnique({ where: { id: request.params.id }, select: { fcmToken: true } }),
+      ])
       const actorName = actor?.name ?? 'Alguém'
 
       await fastify.prisma.notification.create({
@@ -132,6 +133,10 @@ export default async function usersRoutes(fastify: FastifyInstance) {
         },
       })
       emitNotification(request.params.id)
+
+      if (recipient?.fcmToken) {
+        sendPush(recipient.fcmToken, 'Nova seguidora 💛', `${actorName} começou a te seguir.`).catch(() => {})
+      }
     }
 
     reply.status(201).send({ ok: true })

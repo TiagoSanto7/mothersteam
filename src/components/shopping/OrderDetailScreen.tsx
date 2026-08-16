@@ -114,10 +114,20 @@ export function OrderDetailScreen({ orderId, onBack }: Props) {
 
           {order.trackingCode && (
             <div className="mt-3 pt-3 border-t border-sara-linen/60">
-              <div className="flex items-center gap-2">
-                <Truck size={14} className="text-sara-gold" />
-                <span className="text-xs text-graphite-muted">Rastreio: </span>
+              <div className="flex items-center gap-2 flex-wrap">
+                <Truck size={14} className="text-sara-gold flex-shrink-0" />
+                <span className="text-xs text-graphite-muted">Rastreio:</span>
                 <span className="text-xs font-mono font-semibold text-graphite">{order.trackingCode}</span>
+                {/^[A-Z]{2}\d{9}[A-Z]{2}$/i.test(order.trackingCode) && (
+                  <a
+                    href={`https://rastreamento.correios.com.br/app/index.php?objeto=${order.trackingCode}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-[10px] text-sara-gold font-semibold underline underline-offset-2"
+                  >
+                    Rastrear nos Correios →
+                  </a>
+                )}
               </div>
             </div>
           )}

@@ -1,9 +1,9 @@
 import { useState } from 'react';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { ChevronLeft, ChevronRight, CreditCard, Trash2, Loader2 } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAppStore } from '../../store/useAppStore';
 import { apiFetch } from '../../lib/api';
-import type { ApiUserProfile } from '../../lib/types';
+import type { ApiUserProfile, ApiPaymentMethod } from '../../lib/types';
 import { AdminPanel } from '../admin/AdminPanel';
 
 interface SettingsScreenProps {
@@ -14,7 +14,7 @@ interface SettingsScreenProps {
 export function SettingsScreen({ onBack, onClose }: SettingsScreenProps) {
   const motherName = useAppStore((s) => s.motherName);
   const email = useAppStore((s) => s.email);
-  const clearAuth = useAppStore((s) => s.clearAuth);
+  const logout = useAppStore((s) => s.logout);
   const currentUserId = useAppStore((s) => s.currentUserId);
 
   const [notifLikes, setNotifLikes] = useState(true);
@@ -29,6 +29,17 @@ export function SettingsScreen({ onBack, onClose }: SettingsScreenProps) {
     enabled: !!currentUserId,
   });
 
+  const { data: paymentMethods = [] } = useQuery({
+    queryKey: ['payment-methods'],
+    queryFn: () => apiFetch<ApiPaymentMethod[]>('/payment-methods'),
+    staleTime: 60_000,
+  });
+
+  const deleteCardMutation = useMutation({
+    mutationFn: (id: string) => apiFetch(`/payment-methods/${id}`, { method: 'DELETE' }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['payment-methods'] }),
+  });
+
   const versesMutation = useMutation({
     mutationFn: (versesPublic: boolean) =>
       apiFetch('/users/me', { method: 'PATCH', body: JSON.stringify({ versesPublic }) }),
@@ -40,8 +51,7 @@ export function SettingsScreen({ onBack, onClose }: SettingsScreenProps) {
   });
 
   function handleLogout() {
-    apiFetch('/auth/logout', { method: 'POST' }).catch(() => {});
-    clearAuth();
+    logout();
     onClose();
   }
 
@@ -139,6 +149,46 @@ export function SettingsScreen({ onBack, onClose }: SettingsScreenProps) {
                 <span className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${(profile?.versesPublic ?? false) ? 'translate-x-[18px]' : ''}`} />
               </button>
             </div>
+          </div>
+        </section>
+
+        <section>
+          <p className="text-[10px] font-semibold text-graphite-muted uppercase tracking-wide mb-2 px-1">Pagamentos</p>
+          <div className="bg-white rounded-2xl overflow-hidden divide-y divide-gray-100">
+            {paymentMethods.length === 0 ? (
+              <div className="px-4 py-3 flex items-center gap-2 text-graphite-muted">
+                <CreditCard size={14} />
+                <p className="text-sm">Nenhum cartão salvo</p>
+              </div>
+            ) : (
+              paymentMethods.map((card) => (
+                <div key={card.id} className="flex items-center justify-between px-4 py-3">
+                  <div className="flex items-center gap-2">
+                    <CreditCard size={14} className="text-graphite-muted flex-shrink-0" />
+                    <div>
+                      <p className="text-sm font-medium text-graphite capitalize">
+                        {card.brand} •••• {card.lastFour}
+                      </p>
+                      <p className="text-[11px] text-graphite-muted">
+                        {card.expirationMonth.toString().padStart(2, '0')}/{card.expirationYear}
+                      </p>
+                    </div>
+                  </div>
+                  <button
+                    aria-label="Remover cartão"
+                    disabled={deleteCardMutation.isPending}
+                    onClick={() => deleteCardMutation.mutate(card.id)}
+                    className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-red-50 active:scale-95 transition-all"
+                  >
+                    {deleteCardMutation.isPending ? (
+                      <Loader2 size={14} className="animate-spin text-graphite-muted" />
+                    ) : (
+                      <Trash2 size={14} className="text-red-400" />
+                    )}
+                  </button>
+                </div>
+              ))
+            )}
           </div>
         </section>
 
