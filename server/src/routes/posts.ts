@@ -413,6 +413,33 @@ export default async function postsRoutes(fastify: FastifyInstance) {
       emitNotification(post.authorId)
     }
 
+    // Notify @mentioned users in the comment (fire-and-forget)
+    const commentHandles = [...body.data.content.matchAll(/@([a-z0-9_]+)/gi)].map((m) => m[1].toLowerCase())
+    if (commentHandles.length > 0) {
+      const excludeIds = [request.userId, ...(post ? [post.authorId] : [])]
+      fastify.prisma.user.findMany({
+        where: { username: { in: commentHandles }, id: { notIn: excludeIds } },
+        select: { id: true },
+      }).then(async (mentionedUsers) => {
+        if (mentionedUsers.length === 0) return
+        const actorName = actor?.name ?? 'Alguém'
+        for (const u of mentionedUsers) {
+          await fastify.prisma.notification.create({
+            data: {
+              type: 'mention',
+              text: `${actorName} citou você em um comentário.`,
+              recipientId: u.id,
+              targetType: 'post',
+              targetId: request.params.id,
+              actorId: request.userId,
+              actorName,
+              postExcerpt: body.data.content.slice(0, 200),
+            },
+          })
+        }
+      }).catch(() => {})
+    }
+
     reply.status(201).send(comment)
   })
 }

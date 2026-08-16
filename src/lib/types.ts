@@ -326,6 +326,24 @@ export interface ApiOrderItem {
   priceAtPurchase: string
 }
 
+export interface ApiInstallmentOption {
+  installments: number
+  rate: number
+  installmentAmount: number
+  totalAmount: number
+  label: string
+}
+
+export interface ApiPaymentMethod {
+  id: string
+  mpCardId: string
+  brand: string
+  lastFour: string
+  holderName: string
+  expirationMonth: number
+  expirationYear: number
+}
+
 export interface ApiOrder {
   id: string
   userId: string

@@ -2,14 +2,15 @@ import { useState, useEffect, useRef } from 'react'
 import { ChevronLeft, Plus, MapPin, CreditCard, QrCode, CheckCircle, Loader2 } from 'lucide-react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { apiFetch } from '../../lib/api'
-import type { ApiAddress, ApiCart, ApiOrder } from '../../lib/types'
+import { parsePaymentError } from '../../lib/errors'
+import type { ApiAddress, ApiCart, ApiOrder, ApiPaymentMethod, ApiInstallmentOption } from '../../lib/types'
 
 interface Props {
   onBack: () => void
   onOrderComplete: (orderId: string) => void
 }
 
-type Step = 'address' | 'payment' | 'confirmation'
+type Step = 'address' | 'payment' | 'confirmation' | 'pending'
 
 // ── Etapa 1 — Endereço ──────────────────────────────────────
 
@@ -218,6 +219,26 @@ declare global {
   interface Window { MercadoPago: any }
 }
 
+export function detectPaymentMethodId(cardNumber: string): string {
+  const n = cardNumber.replace(/\D/g, '')
+  // Elo (must come before generic 5xxx / 4xxx checks)
+  if (/^(4011|4312|4389|4514|4576|4826|4929|5041|5066|5067|5090|5096|6277|6362|6363|6516|6550|6555|6556)/.test(n)) return 'elo'
+  // Hipercard
+  if (/^(606282|637095|637568|60889)/.test(n)) return 'hipercard'
+  // Amex
+  if (/^3[47]/.test(n)) return 'amex'
+  // Visa
+  if (/^4/.test(n)) return 'visa'
+  // Mastercard (51-55, all 5xxx used in BR test cards like 5031/5480, and 2221-2720)
+  if (/^5[0-9]/.test(n) || /^2[2-7]/.test(n)) return 'master'
+  return 'master'
+}
+
+const BRAND_LABEL: Record<string, string> = {
+  visa: 'Visa', master: 'Mastercard', elo: 'Elo',
+  amex: 'Amex', hipercard: 'Hipercard',
+}
+
 function PaymentStep({
   addressId,
   onSuccess,
@@ -229,9 +250,13 @@ function PaymentStep({
 }) {
   const queryClient = useQueryClient()
   const [method, setMethod] = useState<'pix' | 'credit_card'>('pix')
+  // null = not chosen yet; 'new' = new card form; string = saved card id
+  const [savedCardId, setSavedCardId] = useState<string | 'new' | null>(null)
+  const [saveCard, setSaveCard] = useState(false)
+  const [cvvForSaved, setCvvForSaved] = useState('')
   const [cardForm, setCardForm] = useState({
-    number: '', expiry: '', cvv: '', name: '',
-    installments: 1, paymentMethodId: '',
+    number: '', expiry: '', cvv: '', name: '', cpf: '',
+    installments: 1,
   })
   const [error, setError] = useState('')
   const sdkRef = useRef<any>(null)
@@ -241,6 +266,34 @@ function PaymentStep({
     queryFn: () => apiFetch<ApiCart>('/cart'),
     staleTime: 30_000,
   })
+
+  const { data: savedCards = [] } = useQuery({
+    queryKey: ['payment-methods'],
+    queryFn: () => apiFetch<ApiPaymentMethod[]>('/payment-methods'),
+    staleTime: 300_000,
+  })
+
+  const detectedBrand = cardForm.number.replace(/\D/g, '').length >= 6
+    ? detectPaymentMethodId(cardForm.number)
+    : null
+
+  const { data: installmentOptions, isFetching: installmentsFetching } = useQuery({
+    queryKey: ['installments', detectedBrand, cart?.subtotal],
+    queryFn: () =>
+      apiFetch<ApiInstallmentOption[]>(
+        `/orders/installments?paymentMethodId=${detectedBrand}&amount=${cart?.subtotal ?? '0'}`
+      ),
+    enabled: !!detectedBrand && savedCardId === 'new' && Number(cart?.subtotal ?? 0) > 0,
+    staleTime: 60_000,
+    placeholderData: [],
+  })
+
+  // Auto-select first saved card when switching to credit_card
+  useEffect(() => {
+    if (method === 'credit_card' && savedCardId === null) {
+      setSavedCardId(savedCards.length > 0 ? savedCards[0].id : 'new')
+    }
+  }, [method, savedCards, savedCardId])
 
   useEffect(() => {
     if (window.MercadoPago) {
@@ -275,39 +328,80 @@ function PaymentStep({
         })
       }
 
-      if (!sdkRef.current) throw new Error('SDK not ready')
-      const { token, payment_method_id } = await sdkRef.current.createCardToken({
-        cardNumber: cardForm.number.replace(/\s/g, ''),
-        cardExpirationMonth: cardForm.expiry.split('/')[0],
-        cardExpirationYear: `20${cardForm.expiry.split('/')[1]}`,
-        securityCode: cardForm.cvv,
-        cardholderName: cardForm.name,
-      })
+      if (!sdkRef.current) throw new Error('SDK não carregado. Tente novamente.')
+
+      let cardToken: string
+      let paymentMethodId: string
+
+      const usingSaved = savedCardId && savedCardId !== 'new'
+      if (usingSaved) {
+        const card = savedCards.find((c) => c.id === savedCardId)
+        if (!card) throw new Error('Cartão não encontrado.')
+        const tokenResult = await sdkRef.current.createCardToken({
+          cardId: card.mpCardId,
+          securityCode: cvvForSaved,
+        })
+        if (!tokenResult?.id) throw new Error('Falha ao validar o cartão salvo.')
+        cardToken = tokenResult.id
+        paymentMethodId = card.brand
+      } else {
+        const expiryParts = cardForm.expiry.split('/')
+        if (expiryParts.length !== 2 || expiryParts[1].length !== 2) {
+          throw new Error('Data de validade incompleta.')
+        }
+        paymentMethodId = detectPaymentMethodId(cardForm.number)
+        const tokenResult = await sdkRef.current.createCardToken({
+          cardNumber: cardForm.number.replace(/\s/g, ''),
+          cardExpirationMonth: expiryParts[0],
+          cardExpirationYear: `20${expiryParts[1]}`,
+          securityCode: cardForm.cvv,
+          cardholderName: cardForm.name,
+          identificationType: 'CPF',
+          identificationNumber: cardForm.cpf.replace(/\D/g, ''),
+        })
+        if (!tokenResult?.id) throw new Error('Falha ao tokenizar cartão. Verifique os dados e tente novamente.')
+        cardToken = tokenResult.id
+      }
 
       return apiFetch<{ orderId: string; status: string; statusDetail?: string }>('/orders', {
         method: 'POST',
         body: JSON.stringify({
           addressId,
           paymentMethod: 'credit_card',
-          cardToken: token,
-          paymentMethodId: payment_method_id ?? cardForm.paymentMethodId,
-          installments: cardForm.installments,
+          cardToken,
+          paymentMethodId,
+          installments: usingSaved ? 1 : cardForm.installments,
+          saveCard: !usingSaved && saveCard,
         }),
       })
     },
     onSuccess: (result) => {
       queryClient.invalidateQueries({ queryKey: ['cart'] })
       queryClient.invalidateQueries({ queryKey: ['orders'] })
+      if (saveCard && savedCardId === 'new') {
+        queryClient.invalidateQueries({ queryKey: ['payment-methods'] })
+      }
       onSuccess(result)
     },
-    onError: (err: any) => {
-      setError(err?.message ?? 'Erro ao processar pagamento. Tente novamente.')
+    onError: (err: unknown) => {
+      setError(parsePaymentError(err))
     },
   })
 
   const subtotal = Number(cart?.subtotal ?? 0)
   const inputClass =
     'w-full px-3 py-2.5 rounded-xl bg-white/70 text-sm text-graphite outline-none border border-transparent focus:border-sara-gold/40 placeholder:text-graphite-muted/50'
+
+  const creditCardDisabled = orderMutation.isPending || (() => {
+    if (savedCardId && savedCardId !== 'new') return !cvvForSaved
+    return (
+      cardForm.number.replace(/\D/g, '').length < 16 ||
+      cardForm.expiry.length < 5 ||
+      !cardForm.cvv ||
+      !cardForm.name ||
+      cardForm.cpf.replace(/\D/g, '').length < 11
+    )
+  })()
 
   return (
     <div className="flex flex-col gap-4 pb-4">
@@ -347,59 +441,144 @@ function PaymentStep({
 
       {method === 'credit_card' && (
         <div className="flex flex-col gap-3">
-          <input
-            className={inputClass}
-            placeholder="Número do cartão"
-            maxLength={19}
-            value={cardForm.number}
-            onChange={(e) => {
-              const v = e.target.value.replace(/\D/g, '').slice(0, 16)
-              const formatted = v.replace(/(\d{4})/g, '$1 ').trim()
-              setCardForm((f) => ({ ...f, number: formatted }))
-            }}
-          />
-          <div className="flex gap-2">
-            <input
-              className={inputClass}
-              placeholder="MM/AA"
-              maxLength={5}
-              value={cardForm.expiry}
-              onChange={(e) => {
-                const v = e.target.value.replace(/\D/g, '').slice(0, 4)
-                const formatted = v.length > 2 ? `${v.slice(0, 2)}/${v.slice(2)}` : v
-                setCardForm((f) => ({ ...f, expiry: formatted }))
-              }}
-            />
-            <input
-              className={inputClass}
-              placeholder="CVV"
-              maxLength={4}
-              value={cardForm.cvv}
-              onChange={(e) =>
-                setCardForm((f) => ({ ...f, cvv: e.target.value.replace(/\D/g, '').slice(0, 4) }))
-              }
-            />
-          </div>
-          <input
-            className={inputClass}
-            placeholder="Nome no cartão"
-            value={cardForm.name}
-            onChange={(e) => setCardForm((f) => ({ ...f, name: e.target.value.toUpperCase() }))}
-          />
-          <div className="flex items-center gap-2">
-            <label className="text-xs text-graphite-muted flex-shrink-0">Parcelar em:</label>
-            <select
-              className={`${inputClass} flex-1`}
-              value={cardForm.installments}
-              onChange={(e) => setCardForm((f) => ({ ...f, installments: Number(e.target.value) }))}
-            >
-              {[1, 2, 3, 6, 12].map((n) => (
-                <option key={n} value={n}>
-                  {n}x R$ {(subtotal / n).toFixed(2)} {n === 1 ? '(sem juros)' : ''}
-                </option>
+          {savedCards.length > 0 && (
+            <>
+              <p className="text-xs font-semibold text-graphite-muted uppercase tracking-wide">Cartões salvos</p>
+              {savedCards.map((card) => (
+                <button
+                  key={card.id}
+                  onClick={() => { setSavedCardId(card.id); setCvvForSaved('') }}
+                  className={`w-full text-left p-3 rounded-2xl border-2 transition-colors flex items-center gap-3 ${
+                    savedCardId === card.id
+                      ? 'border-sara-gold bg-sara-gold/5'
+                      : 'border-sara-linen/60 bg-white/50'
+                  }`}
+                >
+                  <CreditCard size={16} className="text-sara-gold flex-shrink-0" />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-semibold text-graphite">
+                      {BRAND_LABEL[card.brand] ?? card.brand} •••• {card.lastFour}
+                    </p>
+                    <p className="text-xs text-graphite-muted">{card.holderName} · {card.expirationMonth.toString().padStart(2, '0')}/{card.expirationYear}</p>
+                  </div>
+                </button>
               ))}
-            </select>
-          </div>
+
+              {savedCardId && savedCardId !== 'new' && (
+                <input
+                  className={inputClass}
+                  placeholder="CVV"
+                  maxLength={4}
+                  value={cvvForSaved}
+                  onChange={(e) => setCvvForSaved(e.target.value.replace(/\D/g, '').slice(0, 4))}
+                />
+              )}
+
+              <button
+                onClick={() => { setSavedCardId('new'); setSaveCard(false) }}
+                className={`w-full py-2.5 rounded-2xl border-2 text-sm font-medium transition-colors flex items-center justify-center gap-2 ${
+                  savedCardId === 'new'
+                    ? 'border-sara-gold bg-sara-gold/5 text-sara-gold'
+                    : 'border-dashed border-sara-linen/60 text-graphite-muted'
+                }`}
+              >
+                <Plus size={14} /> Usar outro cartão
+              </button>
+            </>
+          )}
+
+          {savedCardId === 'new' && (
+            <>
+              <input
+                className={inputClass}
+                placeholder="Número do cartão"
+                maxLength={19}
+                value={cardForm.number}
+                onChange={(e) => {
+                  const v = e.target.value.replace(/\D/g, '').slice(0, 16)
+                  const formatted = v.replace(/(\d{4})/g, '$1 ').trim()
+                  setCardForm((f) => ({ ...f, number: formatted }))
+                }}
+              />
+              <div className="flex gap-2">
+                <input
+                  className={inputClass}
+                  placeholder="MM/AA"
+                  maxLength={5}
+                  value={cardForm.expiry}
+                  onChange={(e) => {
+                    const v = e.target.value.replace(/\D/g, '').slice(0, 4)
+                    const formatted = v.length > 2 ? `${v.slice(0, 2)}/${v.slice(2)}` : v
+                    setCardForm((f) => ({ ...f, expiry: formatted }))
+                  }}
+                />
+                <input
+                  className={inputClass}
+                  placeholder="CVV"
+                  maxLength={4}
+                  value={cardForm.cvv}
+                  onChange={(e) =>
+                    setCardForm((f) => ({ ...f, cvv: e.target.value.replace(/\D/g, '').slice(0, 4) }))
+                  }
+                />
+              </div>
+              <input
+                className={inputClass}
+                placeholder="Nome no cartão"
+                value={cardForm.name}
+                onChange={(e) => setCardForm((f) => ({ ...f, name: e.target.value.toUpperCase() }))}
+              />
+              <input
+                className={inputClass}
+                placeholder="CPF do titular (apenas números)"
+                maxLength={14}
+                value={cardForm.cpf}
+                onChange={(e) => {
+                  const v = e.target.value.replace(/\D/g, '').slice(0, 11)
+                  const fmt = v.length > 9
+                    ? `${v.slice(0,3)}.${v.slice(3,6)}.${v.slice(6,9)}-${v.slice(9)}`
+                    : v.length > 6
+                    ? `${v.slice(0,3)}.${v.slice(3,6)}.${v.slice(6)}`
+                    : v.length > 3
+                    ? `${v.slice(0,3)}.${v.slice(3)}`
+                    : v
+                  setCardForm((f) => ({ ...f, cpf: fmt }))
+                }}
+              />
+              <div className="flex items-center gap-2">
+                <label className="text-xs text-graphite-muted flex-shrink-0">Parcelar em:</label>
+                {installmentsFetching ? (
+                  <div className={`${inputClass} flex-1 flex items-center gap-2 text-graphite-muted`}>
+                    <Loader2 size={12} className="animate-spin" /> Calculando...
+                  </div>
+                ) : (
+                  <select
+                    className={`${inputClass} flex-1`}
+                    value={cardForm.installments}
+                    onChange={(e) => setCardForm((f) => ({ ...f, installments: Number(e.target.value) }))}
+                  >
+                    {(installmentOptions && installmentOptions.length > 0
+                      ? installmentOptions
+                      : [{ installments: 1, rate: 0, installmentAmount: subtotal, totalAmount: subtotal, label: `1x R$ ${subtotal.toFixed(2)} sem juros` }]
+                    ).map((opt) => (
+                      <option key={opt.installments} value={opt.installments}>
+                        {opt.label}
+                      </option>
+                    ))}
+                  </select>
+                )}
+              </div>
+              <label className="flex items-center gap-2 text-xs text-graphite-muted">
+                <input
+                  type="checkbox"
+                  checked={saveCard}
+                  onChange={(e) => setSaveCard(e.target.checked)}
+                  className="accent-sara-gold"
+                />
+                Salvar cartão para próximas compras
+              </label>
+            </>
+          )}
         </div>
       )}
 
@@ -416,7 +595,7 @@ function PaymentStep({
         </button>
         <button
           onClick={() => orderMutation.mutate()}
-          disabled={orderMutation.isPending}
+          disabled={method === 'credit_card' ? creditCardDisabled : orderMutation.isPending}
           className="flex-1 py-3.5 rounded-2xl bg-sara-gold text-white font-bold text-sm active:scale-95 transition-transform disabled:opacity-60 shadow-lg"
         >
           {orderMutation.isPending ? 'Processando...' : 'Confirmar pedido'}
@@ -443,21 +622,31 @@ function PixWaitingScreen({
 }) {
   const [copied, setCopied] = useState(false)
   const [expired, setExpired] = useState(false)
+  const [pollError, setPollError] = useState<string | null>(null)
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const onPaidRef = useRef(onPaid)
+  const errorCountRef = useRef(0)
   useEffect(() => { onPaidRef.current = onPaid }, [onPaid])
 
   useEffect(() => {
     intervalRef.current = setInterval(async () => {
       try {
         const order = await apiFetch<ApiOrder>(`/orders/${orderId}`)
+        errorCountRef.current = 0
         if (order.status === 'PAID') {
           clearInterval(intervalRef.current!)
           clearTimeout(timeoutRef.current!)
           onPaidRef.current()
         }
-      } catch {}
+      } catch {
+        errorCountRef.current++
+        if (errorCountRef.current >= 3) {
+          clearInterval(intervalRef.current!)
+          clearTimeout(timeoutRef.current!)
+          setPollError('Não conseguimos verificar o pagamento. Verifique seu pedido em "Meus Pedidos".')
+        }
+      }
     }, 3000)
 
     timeoutRef.current = setTimeout(() => {
@@ -478,6 +667,21 @@ function PixWaitingScreen({
       setCopied(true)
       setTimeout(() => setCopied(false), 2000)
     } catch {}
+  }
+
+  if (pollError) {
+    return (
+      <div className="flex flex-col items-center gap-4 py-8 text-center">
+        <p className="text-sara-terracotta font-semibold text-sm">Erro ao verificar pagamento</p>
+        <p className="text-xs text-graphite-muted">{pollError}</p>
+        <button
+          onClick={onCancel}
+          className="px-6 py-2.5 rounded-xl bg-white/70 text-graphite text-sm font-medium"
+        >
+          Ver meus pedidos
+        </button>
+      </div>
+    )
   }
 
   if (expired) {
@@ -597,6 +801,7 @@ export function CheckoutScreen({ onBack, onOrderComplete }: Props) {
   const [addressId, setAddressId] = useState<string | null>(null)
   const [pixData, setPixData] = useState<{ orderId: string; qrCode?: string; code?: string } | null>(null)
   const [confirmedOrderId, setConfirmedOrderId] = useState<string | null>(null)
+  const [pendingOrderId, setPendingOrderId] = useState<string | null>(null)
 
   const STEPS: Step[] = ['address', 'payment', 'confirmation']
   const stepIndex = STEPS.indexOf(step)
@@ -605,6 +810,7 @@ export function CheckoutScreen({ onBack, onOrderComplete }: Props) {
     address: 'Endereço',
     payment: 'Pagamento',
     confirmation: 'Confirmação',
+    pending: 'Em análise',
   }
 
   return (
@@ -656,7 +862,14 @@ export function CheckoutScreen({ onBack, onOrderComplete }: Props) {
             onSuccess={(result) => {
               if (result.pixQrCode || result.pixCode) {
                 setPixData({ orderId: result.orderId, qrCode: result.pixQrCode, code: result.pixCode })
+              } else if (result.status === 'approved') {
+                setConfirmedOrderId(result.orderId)
+                setStep('confirmation')
+              } else if (result.status === 'in_process' || result.status === 'pending') {
+                setPendingOrderId(result.orderId)
+                setStep('pending')
               } else {
+                // rejected / cancelled — error already shown via onError on the mutation
                 setConfirmedOrderId(result.orderId)
                 setStep('confirmation')
               }
@@ -687,6 +900,37 @@ export function CheckoutScreen({ onBack, onOrderComplete }: Props) {
             onViewOrder={() => onOrderComplete(confirmedOrderId)}
             onContinue={onBack}
           />
+        )}
+
+        {step === 'pending' && pendingOrderId && (
+          <div className="flex flex-col items-center gap-5 py-8 text-center">
+            <div className="w-16 h-16 rounded-full bg-sara-gold/10 flex items-center justify-center">
+              <Loader2 size={32} className="text-sara-gold animate-spin" />
+            </div>
+            <div>
+              <p className="text-lg font-bold text-graphite">Pagamento em análise</p>
+              <p className="text-xs text-graphite-muted mt-1">
+                #{pendingOrderId.slice(-8).toUpperCase()}
+              </p>
+            </div>
+            <p className="text-sm text-graphite-muted px-4">
+              Seu pagamento está sendo analisado pela operadora. Você receberá uma notificação assim que for aprovado.
+            </p>
+            <div className="flex flex-col gap-2 w-full mt-2">
+              <button
+                onClick={() => onOrderComplete(pendingOrderId)}
+                className="w-full py-3.5 rounded-2xl bg-sara-gold text-white font-bold text-sm active:scale-95 transition-transform"
+              >
+                Acompanhar pedido
+              </button>
+              <button
+                onClick={onBack}
+                className="w-full py-3 rounded-2xl bg-white/70 text-graphite text-sm font-medium active:scale-95 transition-transform"
+              >
+                Voltar à loja
+              </button>
+            </div>
+          </div>
         )}
       </div>
     </div>
