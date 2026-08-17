@@ -1,4 +1,4 @@
-package com.santoti.mothersteam;
+package br.com.mothersteam;
 
 import com.getcapacitor.BridgeActivity;
 

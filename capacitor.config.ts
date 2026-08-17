@@ -1,7 +1,7 @@
 import type { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
-  appId: 'com.santoti.mothersteam',
+  appId: 'br.com.mothersteam',
   appName: "Mother's Team",
   webDir: 'dist',
   server: {
