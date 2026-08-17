@@ -1,5 +1,10 @@
 import type { FastifyInstance } from 'fastify'
 
+const VALID_PHASES = new Set([
+  'trimester1', 'trimester2', 'trimester3',
+  'postpartum_0_30', 'postpartum_31_180', 'postpartum_181_365',
+])
+
 export default async function publicProductsRoutes(fastify: FastifyInstance) {
   fastify.addHook('preHandler', fastify.authenticate)
 
@@ -20,6 +25,9 @@ export default async function publicProductsRoutes(fastify: FastifyInstance) {
     Querystring: { categoryId?: string; phase?: string; featured?: string; limit?: string; cursor?: string }
   }>('/', async (request, reply) => {
     const limit = Math.min(Number(request.query.limit ?? 20), 50)
+    if (request.query.phase && !VALID_PHASES.has(request.query.phase)) {
+      return reply.status(400).send({ error: 'Invalid phase' })
+    }
     const where = {
       active: true,
       ...(request.query.categoryId ? { categoryId: request.query.categoryId } : {}),
@@ -114,6 +122,7 @@ export default async function publicProductsRoutes(fastify: FastifyInstance) {
     })
     if (!product) return reply.status(404).send({ error: 'Not found' })
     if (!product.affiliateUrl) return reply.status(422).send({ error: 'No affiliate URL' })
+    if (!product.affiliateUrl.startsWith('https://')) return reply.status(422).send({ error: 'No affiliate link' })
 
     await fastify.prisma.productClick.create({
       data: { productId: product.id, userId: request.userId },

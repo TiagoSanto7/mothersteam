@@ -1,7 +1,6 @@
 import { X, User, Settings, LogOut, BookOpen, ShoppingBag } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAppStore } from '../../store/useAppStore';
-import { apiFetch } from '../../lib/api';
 import { getAvatarColor } from '../../utils/avatar';
 
 interface SideDrawerProps {
@@ -14,7 +13,7 @@ interface SideDrawerProps {
 export function SideDrawer({ isOpen, onClose, onOpenSettings, onOpenSavedVerses }: SideDrawerProps) {
   const motherName    = useAppStore((s) => s.motherName);
   const motherProfile = useAppStore((s) => s.motherProfile);
-  const clearAuth     = useAppStore((s) => s.clearAuth);
+  const logout        = useAppStore((s) => s.logout);
   const setActiveTab = useAppStore((s) => s.setActiveTab);
 
   const initial = (motherName || 'M').charAt(0).toUpperCase();
@@ -26,8 +25,7 @@ export function SideDrawer({ isOpen, onClose, onOpenSettings, onOpenSavedVerses 
 
   function handleLogout() {
     onClose();
-    apiFetch('/auth/logout', { method: 'POST' }).catch(() => {/* ignore */});
-    clearAuth();
+    logout();
   }
 
   return (

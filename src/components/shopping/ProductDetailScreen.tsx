@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { ChevronLeft, Heart, Star, ShoppingCart, ExternalLink, Package } from 'lucide-react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { apiFetch } from '../../lib/api'
+import { parseApiError } from '../../lib/errors'
 import type { AnyProductDetail, ApiOwnProductDetail, ApiProductDetail } from '../../lib/types'
 
 interface Props {
@@ -62,19 +63,29 @@ export function ProductDetailScreen({
     },
   })
 
+  const [cartError, setCartError] = useState('')
+  const [affiliateError, setAffiliateError] = useState('')
   const cartMutation = useMutation({
     mutationFn: () =>
       apiFetch('/cart', { method: 'POST', body: JSON.stringify({ ownProductId: productId, quantity: 1 }) }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['cart'] })
       setAddedToCart(true)
+      setCartError('')
       setTimeout(() => setAddedToCart(false), 3000)
+    },
+    onError: (err: unknown) => {
+      setCartError(parseApiError(err, 'Não foi possível adicionar ao carrinho.'))
     },
   })
 
   const affiliateMutation = useMutation({
     mutationFn: () => apiFetch<{ url: string }>(`/products/${productId}/go`),
     onSuccess: ({ url }: { url: string }) => window.open(url, '_blank', 'noopener,noreferrer'),
+    onError: () => {
+      setAffiliateError('Não foi possível abrir o produto. Tente novamente.')
+      setTimeout(() => setAffiliateError(''), 3000)
+    },
   })
 
   if (isLoading) {
@@ -351,13 +362,18 @@ export function ProductDetailScreen({
       {/* Footer CTA */}
       <div className="absolute bottom-0 left-0 right-0 px-4 pb-8 pt-3 bg-gradient-to-t from-[#D9C4AF] to-transparent flex-shrink-0">
         {!isOwn && (
-          <button
-            onClick={() => affiliateMutation.mutate()}
-            disabled={affiliateMutation.isPending}
-            className="w-full py-3.5 rounded-2xl bg-sara-gold text-white font-semibold text-sm flex items-center justify-center gap-2 active:scale-95 transition-transform shadow-lg"
-          >
-            Ver no site <ExternalLink size={14} />
-          </button>
+          <div className="flex flex-col gap-2">
+            {affiliateError && (
+              <p className="text-xs text-sara-terracotta bg-sara-terracotta/10 rounded-xl px-3 py-2">{affiliateError}</p>
+            )}
+            <button
+              onClick={() => affiliateMutation.mutate()}
+              disabled={affiliateMutation.isPending}
+              className="w-full py-3.5 rounded-2xl bg-sara-gold text-white font-semibold text-sm flex items-center justify-center gap-2 active:scale-95 transition-transform shadow-lg"
+            >
+              Ver no site <ExternalLink size={14} />
+            </button>
+          </div>
         )}
         {isOwn && hasStock && (
           <div className="flex flex-col gap-2">
@@ -368,6 +384,9 @@ export function ProductDetailScreen({
                   Ver carrinho
                 </button>
               </div>
+            )}
+            {cartError && (
+              <p className="text-xs text-sara-terracotta bg-sara-terracotta/10 rounded-xl px-3 py-2">{cartError}</p>
             )}
             <button
               onClick={() => cartMutation.mutate()}

@@ -33,7 +33,7 @@ export function LeftSidebar({
   const setActiveTab  = useAppStore((s) => s.setActiveTab);
   const motherName    = useAppStore((s) => s.motherName);
   const motherProfile = useAppStore((s) => s.motherProfile);
-  const clearAuth     = useAppStore((s) => s.clearAuth);
+  const logout        = useAppStore((s) => s.logout);
   const isLoggedIn    = useAppStore((s) => s.isLoggedIn);
 
   const { data: cartData } = useQuery({
@@ -45,8 +45,7 @@ export function LeftSidebar({
   const cartCount = cartData?.itemCount ?? 0
 
   function handleLogout() {
-    apiFetch('/auth/logout', { method: 'POST' }).catch(() => {});
-    clearAuth();
+    logout();
   }
 
   const navBtnClass = (isActive: boolean) =>

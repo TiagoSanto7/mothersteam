@@ -15,6 +15,7 @@ export function CartScreen({ onBack, onCheckout }: Props) {
   const queryClient = useQueryClient()
   const [shippingFee, setShippingFee] = useState<string | null>(null)
   const [shippingDays, setShippingDays] = useState<number | null>(null)
+  const [mutationError, setMutationError] = useState('')
 
   const { data: cart, isLoading } = useQuery({
     queryKey: ['cart'],
@@ -52,12 +53,20 @@ export function CartScreen({ onBack, onCheckout }: Props) {
     onSuccess: (newCart) => {
       queryClient.setQueryData(['cart'], newCart)
     },
+    onError: () => {
+      setMutationError('Erro ao atualizar o carrinho. Tente novamente.')
+      setTimeout(() => setMutationError(''), 3000)
+    },
   })
 
   const removeMutation = useMutation({
     mutationFn: (itemId: string) => apiFetch<ApiCart>(`/cart/${itemId}`, { method: 'DELETE' }),
     onSuccess: (newCart) => {
       queryClient.setQueryData(['cart'], newCart)
+    },
+    onError: () => {
+      setMutationError('Erro ao remover o item. Tente novamente.')
+      setTimeout(() => setMutationError(''), 3000)
     },
   })
 
@@ -112,6 +121,9 @@ export function CartScreen({ onBack, onCheckout }: Props) {
       ) : (
         <>
           <div className="flex-1 overflow-y-auto px-4 pb-2">
+            {mutationError && (
+              <p className="text-xs text-sara-terracotta bg-sara-terracotta/10 rounded-xl px-3 py-2 mb-3">{mutationError}</p>
+            )}
             <div className="flex flex-col gap-3">
               {items.map((item) => {
                 const images = item.ownProduct.images as string[]

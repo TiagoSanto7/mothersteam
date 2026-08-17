@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { Heart, ShoppingBag, ExternalLink, ShoppingCart } from 'lucide-react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { apiFetch } from '../../lib/api'
@@ -15,6 +16,7 @@ const EMPTY_ITEMS: ApiWishlistEntry[] = []
 
 export function FavoritesTab({ onOpenProduct }: Props) {
   const queryClient = useQueryClient()
+  const [cartAddError, setCartAddError] = useState('')
 
   const { data, isLoading } = useQuery({
     queryKey: ['wishlist'],
@@ -53,6 +55,10 @@ export function FavoritesTab({ onOpenProduct }: Props) {
     mutationFn: (ownProductId: string) =>
       apiFetch('/cart', { method: 'POST', body: JSON.stringify({ ownProductId, quantity: 1 }) }),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['cart'] }),
+    onError: () => {
+      setCartAddError('Erro ao adicionar ao carrinho. Tente novamente.')
+      setTimeout(() => setCartAddError(''), 3000)
+    },
   })
 
   if (isLoading) {
@@ -81,6 +87,9 @@ export function FavoritesTab({ onOpenProduct }: Props) {
 
   return (
     <div className="flex flex-col gap-3 px-4 pt-4 pb-6">
+      {cartAddError && (
+        <p className="text-xs text-sara-terracotta bg-sara-terracotta/10 rounded-xl px-3 py-2">{cartAddError}</p>
+      )}
       {items.map((entry) => {
         const product = entry.product as ApiAdminProduct | ApiOwnProduct
         const isOwn = entry.type === 'own'

@@ -1,6 +1,5 @@
 import { LayoutDashboard, Package, Tag, LogOut, ChevronRight } from 'lucide-react';
 import { useAppStore } from '../../store/useAppStore';
-import { apiFetch } from '../../lib/api';
 import type { AdminRoute } from '../AdminApp';
 
 interface AdminSidebarProps {
@@ -16,12 +15,11 @@ const NAV = [
 ];
 
 export function AdminSidebar({ activeRoute, onNavigate, role }: AdminSidebarProps) {
-  const clearAuth = useAppStore((s) => s.clearAuth);
+  const logout = useAppStore((s) => s.logout);
   const motherName = useAppStore((s) => s.motherName);
 
   function handleLogout() {
-    apiFetch('/auth/logout', { method: 'POST' }).catch(() => {});
-    clearAuth();
+    logout();
     window.location.href = '/';
   }
 

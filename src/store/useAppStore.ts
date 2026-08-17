@@ -44,6 +44,7 @@ interface AppState {
   setAccessToken: (token: string) => void;
   setAuth: (token: string, user: ApiUser, refreshToken?: string) => void;
   clearAuth: () => void;
+  logout: () => void;
   refreshAccessToken: () => Promise<void>;
   // Profile actions
   completeOnboarding: (answers: OnboardingAnswers) => void;
@@ -164,8 +165,15 @@ export const useAppStore = create<AppState>()(
             versesByUser,
           };
         }),
-      clearAuth: () =>
-        set({ accessToken: null, refreshToken: null, currentUserId: null, isLoggedIn: false, email: '' }),
+      clearAuth: () => {
+        set({ accessToken: null, refreshToken: null, currentUserId: null, isLoggedIn: false, email: '' })
+        import('../lib/queryClient').then(({ queryClient }) => queryClient.clear())
+      },
+      logout: () => {
+        const { refreshToken } = get()
+        apiFetch('/auth/logout', { method: 'POST', body: JSON.stringify({ refreshToken }) }).catch(() => {})
+        get().clearAuth()
+      },
       refreshAccessToken: async () => {
         const { refreshToken } = get()
         if (!refreshToken) return
