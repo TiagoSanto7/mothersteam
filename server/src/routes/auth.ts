@@ -4,6 +4,10 @@ import crypto from 'crypto'
 import { z } from 'zod'
 import { signAccessToken, signRefreshToken, verifyRefreshToken } from '../utils/tokens'
 
+function escapeHtml(s: string): string {
+  return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')
+}
+
 const REFRESH_COOKIE = 'refresh_token'
 const COOKIE_OPTS = {
   httpOnly: true,
@@ -195,6 +199,11 @@ export default async function authRoutes(fastify: FastifyInstance) {
     // Always 200 — don't leak whether the email exists
     if (!user) return reply.send({ ok: true })
 
+    // Anti-bombing: skip if a valid token was issued within the last 5 minutes
+    if (user.passwordResetExpires && user.passwordResetExpires > new Date(Date.now() + 55 * 60 * 1000)) {
+      return reply.send({ ok: true })
+    }
+
     const token = crypto.randomBytes(32).toString('hex')
     const expires = new Date(Date.now() + 60 * 60 * 1000) // 1 hour
 
@@ -209,7 +218,7 @@ export default async function authRoutes(fastify: FastifyInstance) {
     await fastify.sendEmail(
       user.email,
       'Redefinição de senha — Mothers Team',
-      `<p>Olá, ${user.name}!</p>
+      `<p>Olá, ${escapeHtml(user.name)}!</p>
 <p>Recebemos uma solicitação para redefinir sua senha.</p>
 <p><a href="${resetUrl}" style="background:#C4956A;color:#fff;padding:10px 20px;border-radius:8px;text-decoration:none;display:inline-block">Redefinir senha</a></p>
 <p>O link expira em 1 hora. Se você não solicitou, ignore este e-mail.</p>
@@ -226,6 +235,7 @@ export default async function authRoutes(fastify: FastifyInstance) {
     }).safeParse(request.body)
     if (!body.success) return reply.status(400).send({ error: body.error.flatten() })
 
+    // Validate expiry before hashing (cheap check first)
     const user = await fastify.prisma.user.findUnique({
       where: { passwordResetToken: body.data.token },
       select: { id: true, passwordResetExpires: true },
@@ -236,10 +246,19 @@ export default async function authRoutes(fastify: FastifyInstance) {
     }
 
     const passwordHash = await bcrypt.hash(body.data.password, 12)
-    await fastify.prisma.user.update({
-      where: { id: user.id },
+
+    // Atomic: include token in where clause so concurrent requests can't both succeed (TOCTOU fix)
+    const { count } = await fastify.prisma.user.updateMany({
+      where: { id: user.id, passwordResetToken: body.data.token },
       data: { passwordHash, passwordResetToken: null, passwordResetExpires: null },
     })
+
+    if (count === 0) {
+      return reply.status(400).send({ error: 'Token inválido ou expirado' })
+    }
+
+    // Invalidate all existing sessions after password change
+    await fastify.prisma.refreshToken.deleteMany({ where: { userId: user.id } })
 
     reply.send({ ok: true })
   })

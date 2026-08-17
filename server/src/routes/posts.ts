@@ -438,7 +438,7 @@ export default async function postsRoutes(fastify: FastifyInstance) {
       const excludeIds = [request.userId, ...(post ? [post.authorId] : [])]
       fastify.prisma.user.findMany({
         where: { username: { in: commentHandles }, id: { notIn: excludeIds } },
-        select: { id: true },
+        select: { id: true, fcmToken: true },
       }).then(async (mentionedUsers) => {
         if (mentionedUsers.length === 0) return
         const actorName = actor?.name ?? 'Alguém'
@@ -455,6 +455,10 @@ export default async function postsRoutes(fastify: FastifyInstance) {
               postExcerpt: body.data.content.slice(0, 200),
             },
           })
+          emitNotification(u.id)
+          if (u.fcmToken) {
+            sendPush(u.fcmToken, 'Você foi mencionada 📣', `${actorName} citou você em um comentário.`).catch(() => {})
+          }
         }
       }).catch(() => {})
     }

@@ -20,6 +20,7 @@ export function SettingsScreen({ onBack, onClose }: SettingsScreenProps) {
   const [notifLikes, setNotifLikes] = useState(true);
   const [notifPosts, setNotifPosts] = useState(false);
   const [showAdmin, setShowAdmin] = useState(false);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   const queryClient = useQueryClient();
 
@@ -37,6 +38,8 @@ export function SettingsScreen({ onBack, onClose }: SettingsScreenProps) {
 
   const deleteCardMutation = useMutation({
     mutationFn: (id: string) => apiFetch(`/payment-methods/${id}`, { method: 'DELETE' }),
+    onMutate: (id) => { setDeletingId(id); },
+    onSettled: () => { setDeletingId(null); },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['payment-methods'] }),
   });
 
@@ -176,11 +179,11 @@ export function SettingsScreen({ onBack, onClose }: SettingsScreenProps) {
                   </div>
                   <button
                     aria-label="Remover cartão"
-                    disabled={deleteCardMutation.isPending}
+                    disabled={deletingId === card.id}
                     onClick={() => deleteCardMutation.mutate(card.id)}
                     className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-red-50 active:scale-95 transition-all"
                   >
-                    {deleteCardMutation.isPending ? (
+                    {deletingId === card.id ? (
                       <Loader2 size={14} className="animate-spin text-graphite-muted" />
                     ) : (
                       <Trash2 size={14} className="text-red-400" />
