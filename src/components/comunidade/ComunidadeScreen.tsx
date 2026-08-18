@@ -105,6 +105,7 @@ export function ComunidadeScreen() {
         userId={profileUserId}
         onClose={() => setProfileUserId(null)}
         onOpenProfile={(id) => setProfileUserId(id)}
+        onMessage={(uid) => { setProfileUserId(null); useAppStore.getState().openChatWith(uid); }}
       />
     );
   }

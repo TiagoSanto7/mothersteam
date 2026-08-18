@@ -164,6 +164,8 @@ export function apiCommunityToCommunity(c: ApiCommunity): Community {
     category: c.category,
     memberCount: c._count.members,
     colorKey: c.colorKey,
+    imageUrl: c.imageUrl ?? null,
+    avatarUrl: c.avatarUrl ?? null,
   }
 }
 

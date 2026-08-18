@@ -1,4 +1,5 @@
 import { Users } from 'lucide-react';
+import { resolveMediaUrl } from '../../lib/api';
 import type { Community, CommunityColorKey } from '../../types';
 
 interface CommunityCardProps {
@@ -19,13 +20,26 @@ const COLOR_CONFIG: Record<CommunityColorKey, { avatarBg: string; avatarText: st
 export function CommunityCard({ community, isFollowing, onToggle, onOpen }: CommunityCardProps) {
   const { avatarBg, avatarText } = COLOR_CONFIG[community.colorKey];
 
+  const resolvedAvatar = community.avatarUrl ? resolveMediaUrl(community.avatarUrl) : null;
+
   const inner = (
     <>
-      <div className={`w-11 h-11 rounded-2xl flex items-center justify-center flex-shrink-0 ${avatarBg}`}>
-        <span className={`text-lg font-serif font-semibold ${avatarText}`}>
-          {community.name.charAt(0)}
-        </span>
-      </div>
+      {resolvedAvatar ? (
+        <div className="w-11 h-11 rounded-2xl overflow-hidden flex-shrink-0 bg-sara-linen">
+          <img
+            src={resolvedAvatar}
+            alt={community.name}
+            className="w-full h-full object-cover"
+            onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+          />
+        </div>
+      ) : (
+        <div className={`w-11 h-11 rounded-2xl flex items-center justify-center flex-shrink-0 ${avatarBg}`}>
+          <span className={`text-lg font-serif font-semibold ${avatarText}`}>
+            {community.name.charAt(0)}
+          </span>
+        </div>
+      )}
 
       <div className="flex-1 min-w-0">
         <h3 className="text-sm font-semibold font-serif text-graphite leading-snug">

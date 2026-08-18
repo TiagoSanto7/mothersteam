@@ -20,6 +20,7 @@ export function BottomTabBar() {
   const activeTab = useAppStore((s) => s.activeTab);
   const setActiveTab = useAppStore((s) => s.setActiveTab);
   const bumpTabRefresh = useAppStore((s) => s.bumpTabRefresh);
+  const closeAllOverlays = useAppStore((s) => s.closeAllOverlays);
 
   return (
     <nav
@@ -32,7 +33,12 @@ export function BottomTabBar() {
           <button
             key={id}
             data-testid={`tab-${id}`}
-            onClick={() => { if (isActive) bumpTabRefresh(); else setActiveTab(id); }}
+            onClick={() => {
+              closeAllOverlays();
+              if (isActive) bumpTabRefresh();
+              else setActiveTab(id);
+              bumpTabRefresh(); // always refresh even when switching tab, so lists scroll to top
+            }}
             aria-pressed={isActive}
             aria-label={label}
             className={`flex flex-col items-center gap-0.5 flex-1 py-1 rounded-xl transition-colors ${

@@ -40,7 +40,9 @@ interface AppState {
   prayersByUser: Record<string, Record<string, string>>;
   // UI — NOT persisted
   pendingShareContent: string | null;
+  pendingChatUserId: string | null;
   tabRefreshTick: number;
+  closeOverlaysTick: number;
   // Auth actions
   setAccessToken: (token: string) => void;
   setAuth: (token: string, user: ApiUser, refreshToken?: string) => void;
@@ -61,8 +63,11 @@ interface AppState {
   saveVerse: (ref: string) => void;
   unsaveVerse: (ref: string) => void;
   setPendingShareContent: (content: string | null) => void;
+  openChatWith: (userId: string) => void;
+  clearPendingChat: () => void;
   savePrayer: (ref: string, text: string) => void;
   bumpTabRefresh: () => void;
+  closeAllOverlays: () => void;
 }
 
 const safeLocalStorage = {
@@ -138,7 +143,9 @@ export const useAppStore = create<AppState>()(
       versesByUser: {},
       prayersByUser: {},
       pendingShareContent: null,
+      pendingChatUserId: null,
       tabRefreshTick: 0,
+      closeOverlaysTick: 0,
       // Auth actions
       setAccessToken: (token) => set({ accessToken: token }),
       setAuth: (token, user, refreshTok) =>
@@ -221,6 +228,7 @@ export const useAppStore = create<AppState>()(
       // UI actions
       setActiveTab: (tab) => set({ activeTab: tab }),
       bumpTabRefresh: () => set((s) => ({ tabRefreshTick: s.tabRefreshTick + 1 })),
+      closeAllOverlays: () => set((s) => ({ closeOverlaysTick: s.closeOverlaysTick + 1 })),
       setSelectedDate: (date) => set({ selectedDate: date }),
       toggleFeedSide: () =>
         set((s) => ({ lastFeedSide: s.lastFeedSide === 'left' ? 'right' : 'left' })),
@@ -270,6 +278,8 @@ export const useAppStore = create<AppState>()(
           return { versesByUser: { ...s.versesByUser, [uid]: current.filter((r) => r !== ref) } };
         }),
       setPendingShareContent: (content) => set({ pendingShareContent: content }),
+      openChatWith: (userId) => set({ pendingChatUserId: userId }),
+      clearPendingChat: () => set({ pendingChatUserId: null }),
       savePrayer: (ref, text) =>
         set((s) => {
           const uid = s.currentUserId ?? '__anon__';

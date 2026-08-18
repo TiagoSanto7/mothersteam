@@ -281,7 +281,7 @@ export function ProfileScreen({ onClose, userId, onOpenProfile, onMessage, isTab
           </>
         ) : (
           <div className="flex flex-col gap-2 mt-3">
-            <div className="flex gap-2">
+            <div className="flex gap-2 items-stretch">
               <button
                 onClick={() => followMutation.mutate(!profile.isFollowedByCurrentUser)}
                 className={`flex-1 py-2 rounded-xl text-xs font-semibold active:scale-95 transition-transform ${
@@ -296,16 +296,17 @@ export function ProfileScreen({ onClose, userId, onOpenProfile, onMessage, isTab
                 <button
                   onClick={() => onMessage(effectiveUserId)}
                   aria-label="Enviar mensagem"
-                  className="w-9 h-9 flex items-center justify-center rounded-full border border-sara-linen bg-white text-graphite-muted active:scale-95 transition-transform"
+                  className="flex-1 py-2 rounded-xl border border-sara-linen bg-white text-graphite text-xs font-semibold flex items-center justify-center gap-1.5 active:scale-95 transition-transform"
                 >
-                  <MessageCircle size={16} />
+                  <MessageCircle size={14} strokeWidth={2} />
+                  Mensagem
                 </button>
               )}
               {profile.isFollowedByCurrentUser && (
                 <button
                   onClick={() => setNotifying((n) => !n)}
                   aria-label={notifying ? 'Desativar notificações de publicações' : 'Ativar notificações de publicações'}
-                  className={`w-9 h-9 flex items-center justify-center rounded-full border transition-colors ${
+                  className={`w-9 flex items-center justify-center rounded-xl border transition-colors flex-shrink-0 ${
                     notifying
                       ? 'border-sara-gold bg-sara-gold text-white'
                       : 'border-sara-linen bg-white text-graphite-muted'

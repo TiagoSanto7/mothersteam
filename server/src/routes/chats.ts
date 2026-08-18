@@ -20,7 +20,10 @@ export default async function chatsRoutes(fastify: FastifyInstance) {
 
   fastify.get('/', async (request, reply) => {
     const chats = await fastify.prisma.chat.findMany({
-      where: { participants: { some: { userId: request.userId } } },
+      where: {
+        participants: { some: { userId: request.userId } },
+        messages: { some: {} }, // Only include chats that have at least one message
+      },
       include: {
         participants: { include: { user: { select: { id: true, name: true, username: true, archetypeKey: true, avatarUrl: true } } } },
         messages: { orderBy: { createdAt: 'desc' }, take: 1 },
@@ -105,7 +108,7 @@ export default async function chatsRoutes(fastify: FastifyInstance) {
         audioUrl: body.data.audioUrl,
         imageUrl: body.data.imageUrl,
       } as Parameters<typeof fastify.prisma.message.create>[0]['data'],
-      include: { sender: { select: { id: true, name: true, archetypeKey: true } } },
+      include: { sender: { select: { id: true, name: true, archetypeKey: true, avatarUrl: true } } },
     })
 
     // Notify all OTHER participants via SSE

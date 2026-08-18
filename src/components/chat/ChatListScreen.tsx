@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { usePullToRefresh } from '../../lib/usePullToRefresh';
 import { SaraPullIndicator } from '../shared/SaraPullIndicator';
-import { ChevronLeft, Search, Edit, X } from 'lucide-react';
+import { ChevronLeft, Search, Edit, X, Trash2, Check, BellOff } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiFetch } from '../../lib/api';
 import { useAppStore } from '../../store/useAppStore';
@@ -24,8 +24,10 @@ export function ChatListScreen({ onBack, onOpenProfile, initialChatUserId }: Cha
   const [selectedChat, setSelectedChat] = useState<Chat | null>(null);
   const [showNewChat, setShowNewChat] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const [deleteTarget, setDeleteTarget] = useState<Chat | null>(null);
+  const [chatMenu, setChatMenu] = useState<Chat | null>(null);
+  const [confirmDelete, setConfirmDelete] = useState<Chat | null>(null);
   const longPressTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const swipeStartX = useRef<number | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const { isPulling, pullY, isLoading } = usePullToRefresh(scrollRef, async () => {
     await queryClient.invalidateQueries({ queryKey: ['chats'] });
@@ -68,12 +70,25 @@ export function ChatListScreen({ onBack, onOpenProfile, initialChatUserId }: Cha
       apiFetch(`/chats/${chatId}`, { method: 'DELETE' }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['chats'] });
-      setDeleteTarget(null);
+      setConfirmDelete(null);
+      setChatMenu(null);
+    },
+  });
+
+  const markReadMutation = useMutation({
+    mutationFn: (chatId: string) =>
+      apiFetch(`/chats/${chatId}/read`, { method: 'POST' }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['chats'] });
+      setChatMenu(null);
     },
   });
 
   function handleChatLongPressStart(chat: Chat) {
-    longPressTimerRef.current = setTimeout(() => setDeleteTarget(chat), 500);
+    longPressTimerRef.current = setTimeout(() => {
+      setChatMenu(chat);
+      if (typeof navigator !== 'undefined' && navigator.vibrate) navigator.vibrate(20);
+    }, 450);
   }
 
   function handleChatLongPressEnd() {
@@ -81,6 +96,17 @@ export function ChatListScreen({ onBack, onOpenProfile, initialChatUserId }: Cha
       clearTimeout(longPressTimerRef.current);
       longPressTimerRef.current = null;
     }
+  }
+
+  function handleListSwipeStart(e: React.PointerEvent) {
+    swipeStartX.current = e.clientX;
+  }
+
+  function handleListSwipeEnd(e: React.PointerEvent) {
+    if (swipeStartX.current === null) return;
+    const dx = e.clientX - swipeStartX.current;
+    swipeStartX.current = null;
+    if (dx > 80) onBack();
   }
 
   useEffect(() => {
@@ -130,7 +156,13 @@ export function ChatListScreen({ onBack, onOpenProfile, initialChatUserId }: Cha
         </div>
       </div>
 
-      <div ref={scrollRef} className="flex-1 overflow-y-auto">
+      <div
+        ref={scrollRef}
+        className="flex-1 overflow-y-auto"
+        onPointerDown={handleListSwipeStart}
+        onPointerUp={handleListSwipeEnd}
+        onPointerCancel={() => { swipeStartX.current = null; }}
+      >
         {(isPulling || isLoading) && (
           <SaraPullIndicator pullY={pullY} isLoading={isLoading} />
         )}
@@ -180,27 +212,72 @@ export function ChatListScreen({ onBack, onOpenProfile, initialChatUserId }: Cha
         )}
       </div>
 
-      {deleteTarget && (
+      {chatMenu && !confirmDelete && (
         <div
-          className="absolute inset-0 z-30 flex flex-col justify-end bg-black/30"
-          onClick={() => setDeleteTarget(null)}
+          className="absolute inset-0 z-30 flex flex-col justify-end bg-black/50 backdrop-blur-sm animate-in fade-in duration-200"
+          onClick={() => setChatMenu(null)}
+        >
+          <div
+            className="bg-white rounded-t-3xl pb-safe shadow-2xl animate-in slide-in-from-bottom duration-200"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="w-10 h-1 bg-gray-200 rounded-full mx-auto mt-3 mb-2" />
+            <p className="text-center text-[11px] font-semibold text-graphite-muted uppercase tracking-wide mb-2">
+              {chatMenu.with}
+            </p>
+            {chatMenu.unread > 0 && (
+              <button
+                onClick={() => markReadMutation.mutate(chatMenu.id)}
+                disabled={markReadMutation.isPending}
+                className="w-full flex items-center gap-3 px-5 py-3.5 hover:bg-gray-50 text-graphite text-sm font-medium"
+              >
+                <Check size={18} className="text-graphite-muted" />
+                Marcar como lida
+              </button>
+            )}
+            <button
+              onClick={() => setChatMenu(null)}
+              className="w-full flex items-center gap-3 px-5 py-3.5 hover:bg-gray-50 text-graphite text-sm font-medium opacity-60"
+              disabled
+              title="Em breve"
+            >
+              <BellOff size={18} className="text-graphite-muted" />
+              Silenciar
+              <span className="ml-auto text-[10px] text-graphite-muted">em breve</span>
+            </button>
+            <button
+              onClick={() => setConfirmDelete(chatMenu)}
+              className="w-full flex items-center gap-3 px-5 py-3.5 hover:bg-red-50 text-red-500 text-sm font-medium"
+            >
+              <Trash2 size={18} />
+              Apagar conversa
+            </button>
+            <div className="h-4" />
+          </div>
+        </div>
+      )}
+
+      {confirmDelete && (
+        <div
+          className="absolute inset-0 z-40 flex flex-col justify-end bg-black/50 backdrop-blur-sm"
+          onClick={() => setConfirmDelete(null)}
         >
           <div
             className="bg-white rounded-t-3xl p-5 flex flex-col gap-2 shadow-xl"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="w-10 h-1 bg-gray-200 rounded-full mx-auto mb-1" />
-            <p className="text-sm font-semibold text-graphite">Apagar conversa com {deleteTarget.with}?</p>
+            <p className="text-sm font-semibold text-graphite">Apagar conversa com {confirmDelete.with}?</p>
             <p className="text-xs text-graphite-muted mb-2">A conversa não aparecerá mais para você.</p>
             <button
-              onClick={() => deleteChatMutation.mutate(deleteTarget.id)}
+              onClick={() => deleteChatMutation.mutate(confirmDelete.id)}
               disabled={deleteChatMutation.isPending}
               className="w-full py-3 rounded-2xl bg-red-500 text-white text-sm font-semibold active:scale-95 transition-transform disabled:opacity-60"
             >
               Apagar
             </button>
             <button
-              onClick={() => setDeleteTarget(null)}
+              onClick={() => { setConfirmDelete(null); setChatMenu(null); }}
               className="w-full py-3 rounded-2xl bg-sara-linen text-graphite text-sm font-medium"
             >
               Cancelar

@@ -78,7 +78,12 @@ export function LeftSidebar({
             key={id}
             title={label}
             aria-label={label}
-            onClick={() => { if (activeTab === id) bumpTabRefresh(); else setActiveTab(id); }}
+            onClick={() => {
+              useAppStore.getState().closeAllOverlays();
+              if (activeTab === id) bumpTabRefresh();
+              else setActiveTab(id);
+              bumpTabRefresh();
+            }}
             className={navBtnClass(activeTab === id)}
           >
             <Icon size={20} strokeWidth={1.8} className="flex-shrink-0" />

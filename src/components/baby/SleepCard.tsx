@@ -1,30 +1,37 @@
-import { Moon, Plus } from 'lucide-react';
+import { Moon, Plus, Minus } from 'lucide-react';
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiFetch } from '../../lib/api';
 import { useAppStore } from '../../store/useAppStore';
 import type { ApiBabyEntry } from '../../lib/types';
 
-const DURATION_OPTIONS: { minutes: number; label: string }[] = [
-  { minutes: 30,  label: '30min' },
-  { minutes: 60,  label: '1h'    },
-  { minutes: 90,  label: '1h30'  },
-  { minutes: 120, label: '2h'    },
-  { minutes: 150, label: '2h30'  },
-  { minutes: 180, label: '3h'    },
-];
-
-const PERIOD_OPTIONS: { key: string; label: string; emoji: string }[] = [
-  { key: 'manhã',  label: 'Manhã', emoji: '🌅' },
-  { key: 'tarde',  label: 'Tarde', emoji: '☀️' },
-  { key: 'noite',  label: 'Noite', emoji: '🌙' },
+const PERIOD_OPTIONS: { key: string; emoji: string; aria: string }[] = [
+  { key: 'manhã', emoji: '🌅', aria: 'Manhã' },
+  { key: 'tarde', emoji: '☀️', aria: 'Tarde' },
+  { key: 'noite', emoji: '🌙', aria: 'Noite' },
 ];
 
 export function SleepCard() {
   const isLoggedIn  = useAppStore((s) => s.isLoggedIn);
   const queryClient = useQueryClient();
-  const [minutes, setMinutes] = useState(60);
-  const [period, setPeriod]   = useState('noite');
+
+  // Duration as hours + minutes (30-min steps, max 12h)
+  const [hoursInput, setHoursInput]   = useState(1);
+  const [minutesInput, setMinutesInput] = useState(0);
+  const [period, setPeriod] = useState('noite');
+
+  const totalMinutes = hoursInput * 60 + minutesInput;
+
+  function inc() {
+    if (totalMinutes >= 12 * 60) return;
+    if (minutesInput === 0) { setMinutesInput(30); }
+    else { setMinutesInput(0); setHoursInput((h) => h + 1); }
+  }
+  function dec() {
+    if (totalMinutes <= 30) return;
+    if (minutesInput === 30) { setMinutesInput(0); }
+    else { setMinutesInput(30); setHoursInput((h) => Math.max(0, h - 1)); }
+  }
 
   const { data: entries = [] } = useQuery({
     queryKey: ['baby'],
@@ -32,75 +39,86 @@ export function SleepCard() {
     enabled: isLoggedIn,
   });
 
-  const totalMinutes = entries
+  const totalToday = entries
     .filter((e) => e.type === 'sleep')
     .reduce((acc, e) => {
       const match = e.detail.match(/(\d+)\s*min/);
       return acc + (match ? parseInt(match[1], 10) : 0);
     }, 0);
 
-  const hours = Math.floor(totalMinutes / 60);
-  const mins  = totalMinutes % 60;
-  const totalLabel = hours > 0 ? `${hours}h ${mins > 0 ? `${mins}m` : ''}` : `${mins}m`;
+  const todayHours = Math.floor(totalToday / 60);
+  const todayMins  = totalToday % 60;
+  const todayLabel = todayHours > 0
+    ? `${todayHours}h${todayMins > 0 ? ` ${todayMins}m` : ''}`
+    : `${todayMins}m`;
 
   const { mutate: addSleep, isPending } = useMutation({
     mutationFn: () => {
       const now = new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
       return apiFetch<ApiBabyEntry>('/baby', {
         method: 'POST',
-        body: JSON.stringify({ time: now, type: 'sleep', detail: `Dormiu por ${minutes} min — ${period}` }),
+        body: JSON.stringify({ time: now, type: 'sleep', detail: `Dormiu por ${totalMinutes} min — ${period}` }),
       });
     },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['baby'] }),
   });
 
+  const durationLabel = hoursInput > 0
+    ? `${hoursInput}h${minutesInput > 0 ? `${minutesInput}` : ''}`
+    : `${minutesInput}m`;
+
   return (
-    <div className="bg-white rounded-3xl p-4 shadow-sm flex flex-col gap-3">
-      <div className="flex items-center gap-2">
-        <Moon size={18} className="text-sara-gold" strokeWidth={1.8} />
-        <span className="text-sm font-semibold text-graphite">Sono</span>
+    <div className="bg-white rounded-3xl p-4 shadow-sm flex flex-col gap-3 min-w-0">
+      <div className="flex items-center gap-1.5 min-w-0">
+        <Moon size={16} className="text-sara-gold flex-shrink-0" strokeWidth={1.8} />
+        <span className="text-sm font-semibold text-graphite truncate">Sono</span>
       </div>
 
       <div className="flex items-baseline gap-1">
-        <span className="text-4xl font-bold text-graphite tabular-nums">
-          {totalMinutes === 0 ? '0m' : totalLabel.trim()}
+        <span className="text-3xl font-bold text-graphite tabular-nums leading-none">
+          {totalToday === 0 ? '0m' : todayLabel}
         </span>
-        <span className="text-xs text-graphite-muted">hoje</span>
+        <span className="text-[10px] text-graphite-muted">hoje</span>
       </div>
 
-      {/* Duration selector */}
-      <div className="flex gap-1.5 flex-wrap">
-        {DURATION_OPTIONS.map((opt) => (
-          <button
-            key={opt.minutes}
-            onClick={() => setMinutes(opt.minutes)}
-            aria-pressed={minutes === opt.minutes}
-            className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-colors ${
-              minutes === opt.minutes
-                ? 'bg-sara-gold text-white'
-                : 'bg-sara-linen text-graphite-muted hover:text-graphite'
-            }`}
-          >
-            {opt.label}
-          </button>
-        ))}
+      {/* Duration stepper: [−] 1h30 [+] */}
+      <div className="flex items-center justify-between bg-sara-linen/60 rounded-2xl p-1">
+        <button
+          onClick={dec}
+          aria-label="Diminuir duração"
+          disabled={totalMinutes <= 30}
+          className="w-8 h-8 flex items-center justify-center rounded-xl bg-white text-sara-gold disabled:opacity-30 active:scale-90 transition-transform"
+        >
+          <Minus size={14} strokeWidth={2.5} />
+        </button>
+        <span className="text-sm font-bold text-graphite tabular-nums">
+          {durationLabel}
+        </span>
+        <button
+          onClick={inc}
+          aria-label="Aumentar duração"
+          disabled={totalMinutes >= 12 * 60}
+          className="w-8 h-8 flex items-center justify-center rounded-xl bg-white text-sara-gold disabled:opacity-30 active:scale-90 transition-transform"
+        >
+          <Plus size={14} strokeWidth={2.5} />
+        </button>
       </div>
 
-      {/* Period selector */}
-      <div className="flex gap-2">
+      {/* Period selector — emoji only, super compact */}
+      <div className="flex gap-1">
         {PERIOD_OPTIONS.map((opt) => (
           <button
             key={opt.key}
             onClick={() => setPeriod(opt.key)}
             aria-pressed={period === opt.key}
-            className={`flex-1 py-2 rounded-2xl text-xs font-semibold transition-colors flex items-center justify-center gap-1 ${
+            aria-label={opt.aria}
+            className={`flex-1 h-9 rounded-xl text-base transition-colors flex items-center justify-center ${
               period === opt.key
-                ? 'bg-sara-gold text-white'
-                : 'bg-sara-linen text-graphite-muted hover:text-graphite'
+                ? 'bg-sara-gold/15 ring-2 ring-sara-gold'
+                : 'bg-sara-linen/60'
             }`}
           >
             <span>{opt.emoji}</span>
-            {opt.label}
           </button>
         ))}
       </div>
@@ -109,10 +127,10 @@ export function SleepCard() {
         onClick={() => addSleep()}
         disabled={isPending}
         aria-label="Registrar soneca"
-        className="w-full py-2.5 rounded-2xl bg-sara-linen text-sara-gold text-sm font-semibold flex items-center justify-center gap-1.5 active:scale-[0.98] transition-transform disabled:opacity-60"
+        className="w-full py-2 rounded-2xl bg-sara-linen text-sara-gold text-xs font-semibold flex items-center justify-center gap-1 active:scale-[0.98] transition-transform disabled:opacity-60"
       >
-        <Plus size={16} strokeWidth={2.5} />
-        {isPending ? 'Registrando...' : 'Registrar soneca'}
+        <Plus size={14} strokeWidth={2.5} />
+        {isPending ? 'Registrando...' : 'Registrar'}
       </button>
     </div>
   );

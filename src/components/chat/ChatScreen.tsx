@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
-import { ChevronLeft, Send, ImagePlus, Mic, Square, Play, Pause, Copy, Trash2 } from 'lucide-react';
+import { ChevronLeft, Send, ImagePlus, Mic, Square, Play, Pause, Copy, Trash2, MessageCircle, X } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiFetch, resolveMediaUrl, uploadImage } from '../../lib/api';
 import { resizeImage } from '../../lib/imageUtils';
@@ -132,19 +132,25 @@ export function ChatScreen({ chat, onBack, onOpenProfile }: ChatScreenProps) {
   const [viewingPostId, setViewingPostId] = useState<string | null>(null);
   const [showProfilePreview, setShowProfilePreview] = useState(false);
   const [visibleTimestampId, setVisibleTimestampId] = useState<string | null>(null);
-  const [messageMenu, setMessageMenu] = useState<{ messageId: string; isMe: boolean; content: string } | null>(null);
+  const [messageMenu, setMessageMenu] = useState<{ messageId: string; isMe: boolean; content: string; senderName: string } | null>(null);
+  const [replyingTo, setReplyingTo] = useState<{ id: string; senderName: string; excerpt: string } | null>(null);
+  const [swipedMessageId, setSwipedMessageId] = useState<string | null>(null);
   const swipeStartX = useRef<number | null>(null);
+  const swipeStartY = useRef<number | null>(null);
+  const swipeStartMessageId = useRef<string | null>(null);
   const longPressTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const longPressStartPos = useRef<{ x: number; y: number } | null>(null);
 
   // Audio recording state
-  const [isRecording, setIsRecording] = useState(false);
+  const [micState, setMicState] = useState<'idle' | 'preparing' | 'recording'>('idle');
   const [recordingSecs, setRecordingSecs] = useState(0);
   const [isUploadingAudio, setIsUploadingAudio] = useState(false);
+  const [audioError, setAudioError] = useState<string | null>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef   = useRef<Blob[]>([]);
   const recordingTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const streamRef        = useRef<MediaStream | null>(null);
+  const releasedBeforeReadyRef = useRef(false);
 
   // Photo upload state
   const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
@@ -224,10 +230,18 @@ export function ChatScreen({ chat, onBack, onOpenProfile }: ChatScreenProps) {
     }
   }
 
+  function dismissAudioError() {
+    setAudioError(null);
+  }
+
   function handleSend() {
     if (!text.trim()) return;
-    sendMutation.mutate({ content: text.trim() });
+    const content = replyingTo
+      ? `↪ ${replyingTo.senderName}: "${replyingTo.excerpt}"\n${text.trim()}`
+      : text.trim();
+    sendMutation.mutate({ content });
     setText('');
+    setReplyingTo(null);
   }
 
   function handleFileSelected(file: File) {
@@ -268,9 +282,34 @@ export function ChatScreen({ chat, onBack, onOpenProfile }: ChatScreenProps) {
   // ---------------------------------------------------------------------------
 
   const startRecording = useCallback(async () => {
-    if (isRecording || isUploadingAudio) return;
+    if (micState !== 'idle' || isUploadingAudio) return;
+
+    // Guardrails: browser support
+    if (typeof navigator === 'undefined' || !navigator.mediaDevices?.getUserMedia) {
+      setAudioError('Seu navegador não suporta gravação de áudio.');
+      setMicState('idle');
+      return;
+    }
+    if (typeof MediaRecorder === 'undefined') {
+      setAudioError('Gravação de áudio não suportada neste dispositivo.');
+      setMicState('idle');
+      return;
+    }
+
+    releasedBeforeReadyRef.current = false;
+    setMicState('preparing');
+    setAudioError(null);
+
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+
+      // User released the mic before the permission prompt resolved — abort silently
+      if (releasedBeforeReadyRef.current) {
+        stream.getTracks().forEach((t) => t.stop());
+        setMicState('idle');
+        return;
+      }
+
       streamRef.current = stream;
 
       // Pick a supported mime type
@@ -278,6 +317,8 @@ export function ChatScreen({ chat, onBack, onOpenProfile }: ChatScreenProps) {
         ? 'audio/webm;codecs=opus'
         : MediaRecorder.isTypeSupported('audio/webm')
         ? 'audio/webm'
+        : MediaRecorder.isTypeSupported('audio/mp4')
+        ? 'audio/mp4'
         : MediaRecorder.isTypeSupported('audio/ogg')
         ? 'audio/ogg'
         : '';
@@ -293,35 +334,47 @@ export function ChatScreen({ chat, onBack, onOpenProfile }: ChatScreenProps) {
       };
 
       recorder.start(100); // collect chunks every 100ms
-      setIsRecording(true);
+      setMicState('recording');
       setRecordingSecs(0);
 
       recordingTimerRef.current = setInterval(() => {
         setRecordingSecs((s) => s + 1);
       }, 1000);
-    } catch {
-      // Permission denied or not supported — silently ignore
+    } catch (err) {
+      stopRecordingCleanup();
+      setMicState('idle');
+      const name = (err as { name?: string })?.name ?? '';
+      if (name === 'NotAllowedError' || name === 'PermissionDeniedError') {
+        setAudioError('Permita o acesso ao microfone nas configurações do app.');
+      } else if (name === 'NotFoundError' || name === 'DevicesNotFoundError') {
+        setAudioError('Nenhum microfone encontrado neste dispositivo.');
+      } else {
+        setAudioError('Não foi possível iniciar a gravação. Tente novamente.');
+      }
     }
-  }, [isRecording, isUploadingAudio]);
+  }, [micState, isUploadingAudio]);
 
   const stopRecording = useCallback(() => {
     const recorder = mediaRecorderRef.current;
     if (!recorder || recorder.state === 'inactive') {
       stopRecordingCleanup();
-      setIsRecording(false);
+      setMicState('idle');
       return;
     }
 
+    // Too short — treat as cancel, don't send
+    const durationSecs = recordingSecs;
+
     recorder.onstop = async () => {
       stopRecordingCleanup();
-      setIsRecording(false);
+      setMicState('idle');
 
       const chunks = audioChunksRef.current;
-      if (chunks.length === 0) return;
+      audioChunksRef.current = [];
+      if (chunks.length === 0 || durationSecs < 1) return;
 
       const mimeType = recorder.mimeType || 'audio/webm';
       const blob = new Blob(chunks, { type: mimeType });
-      audioChunksRef.current = [];
 
       // Upload
       setIsUploadingAudio(true);
@@ -331,7 +384,7 @@ export function ChatScreen({ chat, onBack, onOpenProfile }: ChatScreenProps) {
         const url = await uploadImage(file, accessToken);
         sendMutation.mutate({ audioUrl: url });
       } catch {
-        // Upload failed — silently discard
+        setAudioError('Falha ao enviar o áudio. Tente novamente.');
       } finally {
         setIsUploadingAudio(false);
       }
@@ -339,46 +392,88 @@ export function ChatScreen({ chat, onBack, onOpenProfile }: ChatScreenProps) {
 
     recorder.stop();
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [accessToken, sendMutation]);
+  }, [accessToken, sendMutation, recordingSecs]);
 
   function handleMicPointerDown(e: React.PointerEvent<HTMLButtonElement>) {
     e.preventDefault(); // prevent focus/blur side effects
     (e.currentTarget as HTMLButtonElement).setPointerCapture(e.pointerId);
+    setAudioError(null);
     startRecording();
   }
 
   function handleMicPointerUp() {
-    if (isRecording) {
+    if (micState === 'preparing') {
+      // User released before mic was ready — flag so startRecording aborts
+      releasedBeforeReadyRef.current = true;
+      return;
+    }
+    if (micState === 'recording') {
       stopRecording();
     }
   }
 
   function handleMicPointerCancel() {
-    if (isRecording) {
+    if (micState === 'preparing') {
+      releasedBeforeReadyRef.current = true;
+      return;
+    }
+    if (micState === 'recording') {
       stopRecording();
     }
   }
 
   function handleMessagePressStart(e: React.PointerEvent, msg: ApiMessage) {
     longPressStartPos.current = { x: e.clientX, y: e.clientY };
+    swipeStartX.current = e.clientX;
+    swipeStartY.current = e.clientY;
+    swipeStartMessageId.current = msg.id;
     longPressTimerRef.current = setTimeout(() => {
-      setMessageMenu({ messageId: msg.id, isMe: msg.senderId === currentUserId, content: msg.content });
-    }, 500);
+      const senderName = msg.senderId === currentUserId ? 'Você' : (msg.sender?.name ?? 'Contato');
+      setMessageMenu({ messageId: msg.id, isMe: msg.senderId === currentUserId, content: msg.content, senderName });
+      // vibrate for feedback on native
+      if (typeof navigator !== 'undefined' && navigator.vibrate) navigator.vibrate(20);
+    }, 450);
   }
 
-  function handleMessagePressEnd() {
+  function handleMessagePressEnd(e?: React.PointerEvent, msg?: ApiMessage) {
     if (longPressTimerRef.current) {
       clearTimeout(longPressTimerRef.current);
       longPressTimerRef.current = null;
     }
+    // Complete swipe-to-reply gesture if user swiped RTL far enough
+    if (e && msg && swipeStartX.current !== null && !messageMenu) {
+      const dx = e.clientX - swipeStartX.current;
+      if (dx < -60) {
+        setReplyingTo({
+          id: msg.id,
+          senderName: msg.senderId === currentUserId ? 'você' : (msg.sender?.name ?? 'Contato'),
+          excerpt: msg.content?.slice(0, 80) ?? (msg.audioUrl ? 'Áudio' : msg.imageUrl ? 'Foto' : ''),
+        });
+        if (typeof navigator !== 'undefined' && navigator.vibrate) navigator.vibrate(15);
+      }
+    }
+    setSwipedMessageId(null);
     longPressStartPos.current = null;
+    swipeStartX.current = null;
+    swipeStartY.current = null;
+    swipeStartMessageId.current = null;
   }
 
-  function handleMessagePressMove(e: React.PointerEvent) {
+  function handleMessagePressMove(e: React.PointerEvent, msg: ApiMessage) {
     if (!longPressStartPos.current) return;
-    const dx = Math.abs(e.clientX - longPressStartPos.current.x);
-    const dy = Math.abs(e.clientY - longPressStartPos.current.y);
-    if (dx > 10 || dy > 10) handleMessagePressEnd();
+    const dx = e.clientX - longPressStartPos.current.x;
+    const dy = e.clientY - longPressStartPos.current.y;
+    // Cancel long press when moving beyond threshold
+    if (Math.abs(dx) > 10 || Math.abs(dy) > 10) {
+      if (longPressTimerRef.current) {
+        clearTimeout(longPressTimerRef.current);
+        longPressTimerRef.current = null;
+      }
+    }
+    // Live swipe-to-reply visual feedback for horizontal swipes
+    if (Math.abs(dx) > Math.abs(dy) && dx < -20 && !messageMenu) {
+      setSwipedMessageId(msg.id);
+    }
   }
 
   function handleSwipeStart(e: React.PointerEvent) {
@@ -433,15 +528,17 @@ export function ChatScreen({ chat, onBack, onOpenProfile }: ChatScreenProps) {
         {messages.map((msg) => {
           const isMe = msg.senderId === currentUserId;
           const showTs = visibleTimestampId === msg.id;
+          const isBeingSwiped = swipedMessageId === msg.id;
           return (
             <div
               key={msg.id}
-              className={`flex flex-col ${isMe ? 'items-end' : 'items-start'}`}
+              className={`flex flex-col ${isMe ? 'items-end' : 'items-start'} transition-transform duration-150`}
+              style={isBeingSwiped ? { transform: 'translateX(-40px)' } : undefined}
               onClick={() => setVisibleTimestampId((id) => id === msg.id ? null : msg.id)}
               onPointerDown={(e) => handleMessagePressStart(e, msg)}
-              onPointerUp={handleMessagePressEnd}
-              onPointerCancel={handleMessagePressEnd}
-              onPointerMove={handleMessagePressMove}
+              onPointerUp={(e) => handleMessagePressEnd(e, msg)}
+              onPointerCancel={() => handleMessagePressEnd()}
+              onPointerMove={(e) => handleMessagePressMove(e, msg)}
             >
               <div className={`flex ${isMe ? 'justify-end' : 'justify-start'} w-full`}>
               {!isMe && (
@@ -551,14 +648,32 @@ export function ChatScreen({ chat, onBack, onOpenProfile }: ChatScreenProps) {
       {/* Long press message menu */}
       {messageMenu && (
         <div
-          className="absolute inset-0 z-40 flex flex-col justify-end bg-black/20"
+          className="absolute inset-0 z-40 flex flex-col justify-end bg-black/50 backdrop-blur-sm animate-in fade-in duration-200"
           onClick={() => setMessageMenu(null)}
         >
           <div
-            className="bg-white rounded-t-3xl pb-safe shadow-xl"
+            className="bg-white rounded-t-3xl pb-safe shadow-2xl animate-in slide-in-from-bottom duration-200"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="w-10 h-1 bg-gray-200 rounded-full mx-auto mt-3 mb-2" />
+            <div className="w-10 h-1 bg-gray-200 rounded-full mx-auto mt-3 mb-3" />
+            <button
+              onClick={() => {
+                const msg = messages.find((m) => m.id === messageMenu.messageId);
+                if (msg) {
+                  setReplyingTo({
+                    id: msg.id,
+                    senderName: msg.senderId === currentUserId ? 'você' : (msg.sender?.name ?? 'Contato'),
+                    excerpt: msg.content?.slice(0, 80) ?? (msg.audioUrl ? 'Áudio' : msg.imageUrl ? 'Foto' : ''),
+                  });
+                }
+                setMessageMenu(null);
+                setTimeout(() => inputRef.current?.focus(), 50);
+              }}
+              className="w-full flex items-center gap-3 px-5 py-3.5 hover:bg-gray-50 text-graphite text-sm font-medium"
+            >
+              <MessageCircle size={18} className="text-graphite-muted" />
+              Responder
+            </button>
             {messageMenu.content && (
               <button
                 onClick={() => {
@@ -580,10 +695,10 @@ export function ChatScreen({ chat, onBack, onOpenProfile }: ChatScreenProps) {
                 className="w-full flex items-center gap-3 px-5 py-3.5 hover:bg-red-50 text-red-500 text-sm font-medium"
               >
                 <Trash2 size={18} />
-                Apagar mensagem
+                Apagar para mim
               </button>
             )}
-            <div className="h-6" />
+            <div className="h-4" />
           </div>
         </div>
       )}
@@ -613,11 +728,53 @@ export function ChatScreen({ chat, onBack, onOpenProfile }: ChatScreenProps) {
           </div>
         )}
 
+        {/* Reply preview */}
+        {replyingTo && (
+          <div className="mb-2 bg-white rounded-2xl px-3 py-2 border-l-4 border-sara-gold flex items-start justify-between gap-2">
+            <div className="flex-1 min-w-0">
+              <p className="text-[10px] font-semibold text-sara-gold uppercase tracking-wide">
+                Respondendo a {replyingTo.senderName}
+              </p>
+              <p className="text-xs text-graphite-muted truncate">{replyingTo.excerpt}</p>
+            </div>
+            <button
+              onClick={() => setReplyingTo(null)}
+              aria-label="Cancelar resposta"
+              className="w-5 h-5 flex items-center justify-center rounded-full text-graphite-muted hover:bg-gray-100 flex-shrink-0"
+            >
+              <X size={14} />
+            </button>
+          </div>
+        )}
+
+        {/* Audio error banner */}
+        {audioError && (
+          <div className="relative">
+            <div className="absolute bottom-full mb-2 left-0 right-0 bg-white rounded-2xl shadow-lg border border-red-200 px-4 py-3 z-50 flex items-center justify-between gap-3">
+              <span className="text-xs text-red-500 font-medium flex-1">{audioError}</span>
+              <button
+                onClick={dismissAudioError}
+                aria-label="Fechar aviso"
+                className="text-red-400 hover:text-red-600 flex-shrink-0"
+              >
+                ×
+              </button>
+            </div>
+          </div>
+        )}
+
         <div data-testid="chat-input-bar" className={`flex items-center gap-2 rounded-2xl border px-3 py-2 overflow-hidden transition-colors ${
-          isRecording ? 'bg-red-50 border-red-200' : 'bg-white border-sara-linen'
+          micState === 'recording' ? 'bg-red-50 border-red-200'
+          : micState === 'preparing' ? 'bg-sara-linen border-sara-gold/40'
+          : 'bg-white border-sara-linen'
         }`}>
-          {/* Recording waveform / text input */}
-          {isRecording ? (
+          {/* Preparing (waiting for mic permission / stream ready) */}
+          {micState === 'preparing' ? (
+            <div className="flex-1 flex items-center gap-2">
+              <div className="w-3 h-3 rounded-full border-2 border-sara-gold border-t-transparent animate-spin flex-shrink-0" />
+              <span className="text-xs text-graphite font-medium">Preparando microfone...</span>
+            </div>
+          ) : micState === 'recording' ? (
             <div className="flex-1 flex items-center gap-2">
               <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse flex-shrink-0" />
               <div className="flex gap-0.5 items-center">
@@ -673,18 +830,24 @@ export function ChatScreen({ chat, onBack, onOpenProfile }: ChatScreenProps) {
 
               {/* Microphone button — hold to record */}
               <button
-                aria-label={isRecording ? 'Solte para enviar' : 'Segurar para gravar áudio'}
+                aria-label={
+                  micState === 'recording' ? 'Solte para enviar'
+                  : micState === 'preparing' ? 'Preparando microfone'
+                  : 'Segurar para gravar áudio'
+                }
                 onPointerDown={handleMicPointerDown}
                 onPointerUp={handleMicPointerUp}
                 onPointerCancel={handleMicPointerCancel}
                 disabled={isUploadingAudio || isUploadingPhoto}
-                className={`w-7 h-7 flex items-center justify-center rounded-full transition-colors flex-shrink-0 select-none touch-none ${
-                  isRecording
-                    ? 'text-red-500 bg-red-50'
+                className={`w-8 h-8 flex items-center justify-center rounded-full transition-all flex-shrink-0 select-none touch-none ${
+                  micState === 'recording'
+                    ? 'text-white bg-red-500 scale-110'
+                    : micState === 'preparing'
+                    ? 'text-sara-gold bg-sara-gold/10 scale-105'
                     : 'text-sara-muted hover:text-graphite'
                 } disabled:opacity-40`}
               >
-                {isRecording ? <Square size={14} /> : <Mic size={18} />}
+                {micState === 'recording' ? <Square size={14} fill="currentColor" /> : <Mic size={18} />}
               </button>
             </>
           )}

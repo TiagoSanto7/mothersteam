@@ -46,6 +46,9 @@ export default function App() {
   const completeSocialOnboarding = useAppStore((s) => s.completeSocialOnboarding);
   const pendingShareContent = useAppStore((s) => s.pendingShareContent)
   const setPendingShareContent = useAppStore((s) => s.setPendingShareContent)
+  const pendingChatUserId = useAppStore((s) => s.pendingChatUserId)
+  const clearPendingChat = useAppStore((s) => s.clearPendingChat)
+  const closeOverlaysTick = useAppStore((s) => s.closeOverlaysTick)
 
   useSSE();
 
@@ -83,6 +86,34 @@ export default function App() {
   const [showCart,          setShowCart]          = useState(false);
   const [showCheckout,      setShowCheckout]      = useState(false);
   const [openOrderId,       setOpenOrderId]       = useState<string | null>(null);
+
+  // Bridge: any child can call useAppStore().openChatWith(userId) — App opens chat overlay
+  useEffect(() => {
+    if (!pendingChatUserId) return;
+    setChatTargetUserId(pendingChatUserId);
+    setShowChat(true);
+    clearPendingChat();
+  }, [pendingChatUserId, clearPendingChat]);
+
+  // When the navbar dispatches closeAllOverlays, close every full-screen overlay
+  useEffect(() => {
+    if (closeOverlaysTick === 0) return;
+    setDrawerOpen(false);
+    setShowSettings(false);
+    setShowSavedVerses(false);
+    setShowNotifications(false);
+    setShowChat(false);
+    setShowSearch(false);
+    setProfileUserId(null);
+    setOpenCommunityId(null);
+    setPendingPostId(null);
+    setChatTargetUserId(null);
+    setOpenProduct(null);
+    setOpenReviews(null);
+    setShowCart(false);
+    setShowCheckout(false);
+    setOpenOrderId(null);
+  }, [closeOverlaysTick]);
 
   // Session restore: try refresh on first load (cookie for web, body token for Capacitor)
   useEffect(() => {

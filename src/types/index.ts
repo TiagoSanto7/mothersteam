@@ -130,4 +130,6 @@ export interface Community {
   category: CommunityPost['category'];
   memberCount: number;
   colorKey: CommunityColorKey;
+  imageUrl?: string | null;   // banner/cover image
+  avatarUrl?: string | null;  // circular profile picture
 }
