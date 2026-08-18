@@ -40,7 +40,9 @@ export function ChatListScreen({ onBack, onOpenProfile }: ChatListScreenProps) {
     enabled: isLoggedIn && showNewChat && !!currentUserId,
   });
 
-  const chats = apiChats.map((c) => apiChatToChat(c, currentUserId));
+  const chats = apiChats
+    .filter((c) => c.messages.length > 0)
+    .map((c) => apiChatToChat(c, currentUserId));
   const filteredChats = searchQuery.trim()
     ? chats.filter((c) =>
         c.with.toLowerCase().includes(searchQuery.toLowerCase()) ||

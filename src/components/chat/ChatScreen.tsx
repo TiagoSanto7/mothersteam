@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
-import { ChevronLeft, Send, Smile, ImagePlus, Mic, Square, Play, Pause } from 'lucide-react';
+import { ChevronLeft, Send, ImagePlus, Mic, Square, Play, Pause } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiFetch, resolveMediaUrl, uploadImage } from '../../lib/api';
 import { resizeImage } from '../../lib/imageUtils';
@@ -11,72 +11,6 @@ import { ChatProfilePreviewModal } from './ChatProfilePreviewModal';
 import { ImageSourceSheet } from '../shared/ImageSourceSheet';
 import type { ApiMessage, ApiPost, PaginatedResult } from '../../lib/types';
 import type { Chat } from '../../types';
-
-// ---------------------------------------------------------------------------
-// Emoji picker — hardcoded grid, no external dependency
-// ---------------------------------------------------------------------------
-const EMOJI_CATEGORIES: { label: string; emojis: string[] }[] = [
-  {
-    label: 'Amor',
-    emojis: ['❤️', '🥰', '😍', '💕', '💖', '💗', '💓', '🤍', '💛', '🧡'],
-  },
-  {
-    label: 'Expressões',
-    emojis: ['😊', '😂', '🥹', '😭', '😅', '🤣', '😇', '🥺', '😢', '😌'],
-  },
-  {
-    label: 'Maternidade',
-    emojis: ['🤱', '👶', '🍼', '🌸', '🌺', '💪', '🙏', '✨', '🌙', '🌈'],
-  },
-];
-
-interface EmojiPickerProps {
-  onSelect: (emoji: string) => void;
-  onClose: () => void;
-}
-
-function EmojiPicker({ onSelect, onClose }: EmojiPickerProps) {
-  const ref = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    function handlePointerDown(e: PointerEvent) {
-      if (ref.current && !ref.current.contains(e.target as Node)) {
-        onClose();
-      }
-    }
-    document.addEventListener('pointerdown', handlePointerDown);
-    return () => document.removeEventListener('pointerdown', handlePointerDown);
-  }, [onClose]);
-
-  return (
-    <div
-      ref={ref}
-      role="dialog"
-      aria-label="Seletor de emoji"
-      className="absolute bottom-full mb-2 left-0 right-0 bg-white rounded-2xl shadow-lg border border-sara-linen p-3 z-50"
-    >
-      {EMOJI_CATEGORIES.map((cat) => (
-        <div key={cat.label} className="mb-2">
-          <p className="text-[10px] font-semibold uppercase tracking-wide text-sara-muted mb-1 px-1">
-            {cat.label}
-          </p>
-          <div className="flex flex-wrap gap-1">
-            {cat.emojis.map((emoji) => (
-              <button
-                key={emoji}
-                onClick={() => onSelect(emoji)}
-                className="text-xl p-1 rounded-lg hover:bg-sara-linen active:scale-90 transition-transform"
-                aria-label={emoji}
-              >
-                {emoji}
-              </button>
-            ))}
-          </div>
-        </div>
-      ))}
-    </div>
-  );
-}
 
 // ---------------------------------------------------------------------------
 // Recording indicator shown above the input while mic is held
@@ -209,8 +143,6 @@ interface ChatScreenProps {
   onOpenProfile?: (userId: string) => void;
 }
 
-type ActivePanel = 'emoji' | null;
-
 export function ChatScreen({ chat, onBack, onOpenProfile }: ChatScreenProps) {
   const currentUserId = useAppStore((s) => s.currentUserId);
   const accessToken   = useAppStore((s) => s.accessToken);
@@ -218,7 +150,6 @@ export function ChatScreen({ chat, onBack, onOpenProfile }: ChatScreenProps) {
   const queryClient   = useQueryClient();
 
   const [text, setText] = useState('');
-  const [activePanel, setActivePanel] = useState<ActivePanel>(null);
   const [viewingPostId, setViewingPostId] = useState<string | null>(null);
   const [showProfilePreview, setShowProfilePreview] = useState(false);
 
@@ -304,29 +235,6 @@ export function ChatScreen({ chat, onBack, onOpenProfile }: ChatScreenProps) {
     if (!text.trim()) return;
     sendMutation.mutate({ content: text.trim() });
     setText('');
-    setActivePanel(null);
-  }
-
-  function handleEmojiSelect(emoji: string) {
-    const input = inputRef.current;
-    if (input) {
-      const start = input.selectionStart ?? text.length;
-      const end   = input.selectionEnd   ?? text.length;
-      const next  = text.slice(0, start) + emoji + text.slice(end);
-      setText(next);
-      // Restore cursor after the inserted emoji
-      requestAnimationFrame(() => {
-        input.focus();
-        input.setSelectionRange(start + emoji.length, start + emoji.length);
-      });
-    } else {
-      setText((t) => t + emoji);
-    }
-    setActivePanel(null);
-  }
-
-  function togglePanel(panel: ActivePanel) {
-    setActivePanel((prev) => (prev === panel ? null : panel));
   }
 
   function handleFileSelected(file: File) {
@@ -394,7 +302,6 @@ export function ChatScreen({ chat, onBack, onOpenProfile }: ChatScreenProps) {
       recorder.start(100); // collect chunks every 100ms
       setIsRecording(true);
       setRecordingSecs(0);
-      setActivePanel(null);
 
       recordingTimerRef.current = setInterval(() => {
         setRecordingSecs((s) => s + 1);
@@ -601,14 +508,8 @@ export function ChatScreen({ chat, onBack, onOpenProfile }: ChatScreenProps) {
 
       {/* Input area */}
       <div className="px-4 py-3 border-t border-sara-linen/60 flex-shrink-0 bg-sara-linen/80 backdrop-blur-sm">
-        {/* Panels (emoji picker / tooltips / recording indicator) rendered above the input row */}
+        {/* Panels (recording indicator / upload status) rendered above the input row */}
         <div className="relative">
-          {activePanel === 'emoji' && (
-            <EmojiPicker
-              onSelect={handleEmojiSelect}
-              onClose={() => setActivePanel(null)}
-            />
-          )}
           {isUploadingPhoto && (
             <div className="absolute bottom-full mb-2 left-0 right-0 bg-white rounded-2xl shadow-lg border border-sara-linen px-4 py-3 z-50 flex items-center gap-3">
               <div className="w-4 h-4 rounded-full border-2 border-sara-gold border-t-transparent animate-spin flex-shrink-0" />
@@ -621,17 +522,6 @@ export function ChatScreen({ chat, onBack, onOpenProfile }: ChatScreenProps) {
         </div>
 
         <div data-testid="chat-input-bar" className="flex items-center gap-2 bg-white rounded-2xl border border-sara-linen px-3 py-2 overflow-hidden">
-          {/* Emoji button */}
-          <button
-            onClick={() => togglePanel('emoji')}
-            aria-label="Emojis"
-            className={`w-7 h-7 flex items-center justify-center rounded-full transition-colors flex-shrink-0 ${
-              activePanel === 'emoji' ? 'text-sara-gold' : 'text-sara-muted hover:text-graphite'
-            }`}
-          >
-            <Smile size={18} />
-          </button>
-
           {/* Text input */}
           <input
             ref={inputRef}
@@ -639,7 +529,6 @@ export function ChatScreen({ chat, onBack, onOpenProfile }: ChatScreenProps) {
             value={text}
             onChange={(e) => setText(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && handleSend()}
-            onFocus={() => setActivePanel(null)}
             placeholder={isUploadingAudio ? 'Enviando áudio...' : isUploadingPhoto ? 'Enviando foto...' : 'Escreva uma mensagem...'}
             disabled={isUploadingAudio || isUploadingPhoto}
             className="flex-1 bg-transparent text-sm text-graphite placeholder:text-sara-muted outline-none focus:outline-none disabled:opacity-50"

@@ -58,10 +58,10 @@ export function BreastfeedingCard() {
       <button
         onClick={() => { setError(null); registerFeed(); }}
         disabled={isPending}
-        aria-label="Registrar mamada"
+        aria-label="Registrar amamentação"
         className="w-full py-2.5 rounded-2xl bg-sara-linen text-sara-gold text-sm font-semibold active:scale-[0.98] transition-transform disabled:opacity-60"
       >
-        {isPending ? 'Registrando...' : 'Registrar mamada'}
+        {isPending ? 'Registrando...' : 'Registrar amamentação'}
       </button>
 
       {error && (

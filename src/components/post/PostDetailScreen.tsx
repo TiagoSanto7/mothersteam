@@ -380,44 +380,46 @@ export function PostDetailScreen({ post, onBack, onOpenProfile }: PostDetailScre
                   <p className="text-[11px] font-semibold text-graphite">{c.author}</p>
                   <span className="text-[10px] text-graphite-muted">{c.time}</span>
                 </div>
-                <MentionText text={c.content} className="text-xs text-graphite leading-relaxed mt-0.5 block" onMentionPress={(u) => lookupAndOpen(u, onOpenProfile)} />
-                <div className="relative inline-flex">
-                  <motion.button
-                    key={commentBounceKey[c.id] ?? 0}
-                    onClick={() => {
-                      const next = !isLiked;
-                      likeCommentMutation.mutate({ commentId: c.id, isLiked: next });
-                      if (next) {
-                        setCommentBounceKey((prev) => ({ ...prev, [c.id]: (prev[c.id] ?? 0) + 1 }));
-                        setCommentParticle((prev) => ({ ...prev, [c.id]: true }));
-                        setTimeout(() => {
-                          setCommentParticle((prev) => ({ ...prev, [c.id]: false }));
-                        }, 700);
-                      }
-                    }}
-                    aria-label={isLiked ? 'Descurtir comentário' : 'Curtir comentário'}
-                    aria-pressed={isLiked}
-                    disabled={!!pendingCommentIds[c.id]}
-                    animate={isLiked ? { scale: [1, 1.4, 0.9, 1.15, 1] } : { scale: [1, 0.85, 1] }}
-                    transition={{ duration: isLiked ? 0.4 : 0.2, ease: 'easeOut' }}
-                    className={`flex items-center gap-1 mt-2 transition-colors ${isLiked ? 'text-sara-terracotta' : 'text-graphite-muted'}`}
-                  >
-                    <Heart size={10} fill={isLiked ? 'currentColor' : 'none'} />
-                    <span className="text-[10px]">{likeCount}</span>
-                  </motion.button>
-                  <AnimatePresence>
-                    {commentParticle[c.id] && (
-                      <motion.span
-                        initial={{ opacity: 0, y: 0, x: -4 }}
-                        animate={{ opacity: [0, 1, 1, 0], y: -20 }}
-                        exit={{ opacity: 0 }}
-                        transition={{ duration: 0.6, ease: 'easeOut' }}
-                        className="absolute -top-1 left-3 text-[10px] font-bold text-sara-terracotta pointer-events-none"
-                      >
-                        +1
-                      </motion.span>
-                    )}
-                  </AnimatePresence>
+                <div className="flex items-end gap-2 mt-0.5">
+                  <MentionText text={c.content} className="text-xs text-graphite leading-relaxed flex-1 block" onMentionPress={(u) => lookupAndOpen(u, onOpenProfile)} />
+                  <div className="relative inline-flex flex-shrink-0">
+                    <motion.button
+                      key={commentBounceKey[c.id] ?? 0}
+                      onClick={() => {
+                        const next = !isLiked;
+                        likeCommentMutation.mutate({ commentId: c.id, isLiked: next });
+                        if (next) {
+                          setCommentBounceKey((prev) => ({ ...prev, [c.id]: (prev[c.id] ?? 0) + 1 }));
+                          setCommentParticle((prev) => ({ ...prev, [c.id]: true }));
+                          setTimeout(() => {
+                            setCommentParticle((prev) => ({ ...prev, [c.id]: false }));
+                          }, 700);
+                        }
+                      }}
+                      aria-label={isLiked ? 'Descurtir comentário' : 'Curtir comentário'}
+                      aria-pressed={isLiked}
+                      disabled={!!pendingCommentIds[c.id]}
+                      animate={isLiked ? { scale: [1, 1.4, 0.9, 1.15, 1] } : { scale: [1, 0.85, 1] }}
+                      transition={{ duration: isLiked ? 0.4 : 0.2, ease: 'easeOut' }}
+                      className={`flex items-center gap-1 transition-colors ${isLiked ? 'text-sara-terracotta' : 'text-graphite-muted'}`}
+                    >
+                      <Heart size={10} fill={isLiked ? 'currentColor' : 'none'} />
+                      <span className="text-[10px]">{likeCount}</span>
+                    </motion.button>
+                    <AnimatePresence>
+                      {commentParticle[c.id] && (
+                        <motion.span
+                          initial={{ opacity: 0, y: 0, x: -4 }}
+                          animate={{ opacity: [0, 1, 1, 0], y: -20 }}
+                          exit={{ opacity: 0 }}
+                          transition={{ duration: 0.6, ease: 'easeOut' }}
+                          className="absolute -top-1 left-3 text-[10px] font-bold text-sara-terracotta pointer-events-none"
+                        >
+                          +1
+                        </motion.span>
+                      )}
+                    </AnimatePresence>
+                  </div>
                 </div>
               </div>
             </div>
