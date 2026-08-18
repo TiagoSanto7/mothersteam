@@ -29,8 +29,9 @@ export function LeftSidebar({
   onOpenChat,
   onOpenSettings,
 }: LeftSidebarProps) {
-  const activeTab     = useAppStore((s) => s.activeTab);
-  const setActiveTab  = useAppStore((s) => s.setActiveTab);
+  const activeTab       = useAppStore((s) => s.activeTab);
+  const setActiveTab    = useAppStore((s) => s.setActiveTab);
+  const bumpTabRefresh  = useAppStore((s) => s.bumpTabRefresh);
   const motherName    = useAppStore((s) => s.motherName);
   const motherProfile = useAppStore((s) => s.motherProfile);
   const logout        = useAppStore((s) => s.logout);
@@ -77,7 +78,7 @@ export function LeftSidebar({
             key={id}
             title={label}
             aria-label={label}
-            onClick={() => setActiveTab(id)}
+            onClick={() => { if (activeTab === id) bumpTabRefresh(); else setActiveTab(id); }}
             className={navBtnClass(activeTab === id)}
           >
             <Icon size={20} strokeWidth={1.8} className="flex-shrink-0" />

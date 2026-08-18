@@ -40,6 +40,7 @@ interface AppState {
   prayersByUser: Record<string, Record<string, string>>;
   // UI — NOT persisted
   pendingShareContent: string | null;
+  tabRefreshTick: number;
   // Auth actions
   setAccessToken: (token: string) => void;
   setAuth: (token: string, user: ApiUser, refreshToken?: string) => void;
@@ -61,6 +62,7 @@ interface AppState {
   unsaveVerse: (ref: string) => void;
   setPendingShareContent: (content: string | null) => void;
   savePrayer: (ref: string, text: string) => void;
+  bumpTabRefresh: () => void;
 }
 
 const safeLocalStorage = {
@@ -136,6 +138,7 @@ export const useAppStore = create<AppState>()(
       versesByUser: {},
       prayersByUser: {},
       pendingShareContent: null,
+      tabRefreshTick: 0,
       // Auth actions
       setAccessToken: (token) => set({ accessToken: token }),
       setAuth: (token, user, refreshTok) =>
@@ -217,6 +220,7 @@ export const useAppStore = create<AppState>()(
       completeSocialOnboarding: () => set({ socialOnboardingDone: true }),
       // UI actions
       setActiveTab: (tab) => set({ activeTab: tab }),
+      bumpTabRefresh: () => set((s) => ({ tabRefreshTick: s.tabRefreshTick + 1 })),
       setSelectedDate: (date) => set({ selectedDate: date }),
       toggleFeedSide: () =>
         set((s) => ({ lastFeedSide: s.lastFeedSide === 'left' ? 'right' : 'left' })),

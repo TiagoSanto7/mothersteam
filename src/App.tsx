@@ -77,6 +77,7 @@ export default function App() {
   const [profileUserId,     setProfileUserId]     = useState<string | null>(null);
   const [openCommunityId,   setOpenCommunityId]   = useState<string | null>(null);
   const [pendingPostId,     setPendingPostId]     = useState<string | null>(null);
+  const [chatTargetUserId,  setChatTargetUserId]  = useState<string | null>(null);
   const [openProduct,       setOpenProduct]       = useState<{ type: 'affiliate' | 'own'; id: string } | null>(null);
   const [openReviews,       setOpenReviews]       = useState<{ type: 'affiliate' | 'own'; id: string; name: string } | null>(null);
   const [showCart,          setShowCart]          = useState(false);
@@ -251,7 +252,11 @@ export default function App() {
 
       {showChat && (
         <div className="fixed inset-0 z-50 sm:bg-black/40 sm:flex sm:items-center sm:justify-center">
-          <ChatListScreen onBack={() => setShowChat(false)} onOpenProfile={(id) => { setShowChat(false); setProfileUserId(id); }} />
+          <ChatListScreen
+            onBack={() => { setShowChat(false); setChatTargetUserId(null); }}
+            onOpenProfile={(id) => { setShowChat(false); setChatTargetUserId(null); setProfileUserId(id); }}
+            initialChatUserId={chatTargetUserId ?? undefined}
+          />
         </div>
       )}
 
@@ -272,6 +277,7 @@ export default function App() {
             userId={profileUserId}
             onClose={() => setProfileUserId(null)}
             onOpenProfile={(id) => setProfileUserId(id)}
+            onMessage={(uid) => { setProfileUserId(null); setChatTargetUserId(uid); setShowChat(true); }}
           />
         </div>
       )}

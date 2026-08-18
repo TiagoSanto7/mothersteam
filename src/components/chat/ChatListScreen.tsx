@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { usePullToRefresh } from '../../lib/usePullToRefresh';
 import { SaraPullIndicator } from '../shared/SaraPullIndicator';
 import { ChevronLeft, Search, Edit, X } from 'lucide-react';
@@ -14,9 +14,10 @@ import type { Chat } from '../../types';
 interface ChatListScreenProps {
   onBack: () => void;
   onOpenProfile?: (userId: string) => void;
+  initialChatUserId?: string;
 }
 
-export function ChatListScreen({ onBack, onOpenProfile }: ChatListScreenProps) {
+export function ChatListScreen({ onBack, onOpenProfile, initialChatUserId }: ChatListScreenProps) {
   const isLoggedIn    = useAppStore((s) => s.isLoggedIn);
   const currentUserId = useAppStore((s) => s.currentUserId) ?? '';
   const queryClient   = useQueryClient();
@@ -59,6 +60,14 @@ export function ChatListScreen({ onBack, onOpenProfile }: ChatListScreenProps) {
       setSelectedChat(apiChatToChat(newChat, currentUserId));
     },
   });
+
+  useEffect(() => {
+    if (initialChatUserId && isLoggedIn) {
+      createChatMutation.mutate(initialChatUserId);
+    }
+  // Run once on mount when initialChatUserId is provided
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   if (selectedChat) {
     return (
@@ -124,6 +133,7 @@ export function ChatListScreen({ onBack, onOpenProfile }: ChatListScreenProps) {
                   <UserAvatar
                     name={chat.with}
                     archetypeKey={chat.withArchetypeKey}
+                    avatarUrl={chat.withAvatarUrl}
                     size={48}
                   />
                   <div className="flex-1 min-w-0">

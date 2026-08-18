@@ -13,27 +13,6 @@ import type { ApiMessage, ApiPost, PaginatedResult } from '../../lib/types';
 import type { Chat } from '../../types';
 
 // ---------------------------------------------------------------------------
-// Recording indicator shown above the input while mic is held
-// ---------------------------------------------------------------------------
-interface RecordingIndicatorProps {
-  durationSecs: number;
-}
-
-function RecordingIndicator({ durationSecs }: RecordingIndicatorProps) {
-  const mins = Math.floor(durationSecs / 60);
-  const secs = durationSecs % 60;
-  const formatted = `${mins}:${String(secs).padStart(2, '0')}`;
-  return (
-    <div className="absolute bottom-full mb-2 left-0 right-0 bg-white rounded-2xl shadow-lg border border-red-200 px-4 py-3 z-50 flex items-center gap-3">
-      <span className="w-3 h-3 rounded-full bg-red-500 animate-pulse flex-shrink-0" />
-      <span className="text-sm font-medium text-graphite flex-1">Gravando...</span>
-      <span className="text-sm tabular-nums text-red-500 font-semibold">{formatted}</span>
-      <span className="text-xs text-sara-muted">Solte para enviar</span>
-    </div>
-  );
-}
-
-// ---------------------------------------------------------------------------
 // Audio message player component
 // ---------------------------------------------------------------------------
 interface AudioPlayerProps {
@@ -152,6 +131,8 @@ export function ChatScreen({ chat, onBack, onOpenProfile }: ChatScreenProps) {
   const [text, setText] = useState('');
   const [viewingPostId, setViewingPostId] = useState<string | null>(null);
   const [showProfilePreview, setShowProfilePreview] = useState(false);
+  const [visibleTimestampId, setVisibleTimestampId] = useState<string | null>(null);
+  const swipeStartX = useRef<number | null>(null);
 
   // Audio recording state
   const [isRecording, setIsRecording] = useState(false);
@@ -366,6 +347,17 @@ export function ChatScreen({ chat, onBack, onOpenProfile }: ChatScreenProps) {
     }
   }
 
+  function handleSwipeStart(e: React.PointerEvent) {
+    swipeStartX.current = e.clientX;
+  }
+
+  function handleSwipeEnd(e: React.PointerEvent) {
+    if (swipeStartX.current === null) return;
+    const deltaX = e.clientX - swipeStartX.current;
+    swipeStartX.current = null;
+    if (deltaX > 80) onBack();
+  }
+
   // ---------------------------------------------------------------------------
 
   if (viewingApiPost) {
@@ -387,6 +379,7 @@ export function ChatScreen({ chat, onBack, onOpenProfile }: ChatScreenProps) {
           <UserAvatar
             name={chat.with}
             archetypeKey={chat.withArchetypeKey}
+            avatarUrl={chat.withAvatarUrl}
             size={32}
           />
           <div className="flex-1 min-w-0">
@@ -396,18 +389,35 @@ export function ChatScreen({ chat, onBack, onOpenProfile }: ChatScreenProps) {
       </div>
 
       {/* Messages */}
-      <div className="flex-1 overflow-y-auto px-4 py-4 flex flex-col gap-3">
+      <div
+        className="flex-1 overflow-y-auto px-4 py-4 flex flex-col gap-3"
+        onPointerDown={handleSwipeStart}
+        onPointerUp={handleSwipeEnd}
+        onPointerCancel={() => { swipeStartX.current = null; }}
+      >
         {messages.map((msg) => {
           const isMe = msg.senderId === currentUserId;
+          const showTs = visibleTimestampId === msg.id;
           return (
-            <div key={msg.id} className={`flex ${isMe ? 'justify-end' : 'justify-start'}`}>
+            <div
+              key={msg.id}
+              className={`flex flex-col ${isMe ? 'items-end' : 'items-start'}`}
+              onClick={() => setVisibleTimestampId((id) => id === msg.id ? null : msg.id)}
+            >
+              <div className={`flex ${isMe ? 'justify-end' : 'justify-start'} w-full`}>
               {!isMe && (
-                <UserAvatar
-                  name={msg.sender.name}
-                  archetypeKey={msg.sender.archetypeKey ?? null}
-                  size={28}
-                  className="mr-2 mt-1"
-                />
+                <button
+                  onClick={(e) => { e.stopPropagation(); setShowProfilePreview(true); }}
+                  className="flex-shrink-0 mr-2 mt-1 rounded-full"
+                  aria-label={`Ver perfil de ${msg.sender.name}`}
+                >
+                  <UserAvatar
+                    name={msg.sender.name}
+                    archetypeKey={msg.sender.archetypeKey ?? null}
+                    avatarUrl={msg.sender.avatarUrl}
+                    size={28}
+                  />
+                </button>
               )}
               <div className={`${msg.imageUrl ? 'max-w-[85%]' : 'max-w-[72%]'} rounded-2xl overflow-hidden ${
                 isMe
@@ -453,6 +463,12 @@ export function ChatScreen({ chat, onBack, onOpenProfile }: ChatScreenProps) {
                   </div>
                 )}
               </div>
+              </div>
+              {showTs && (
+                <span className="text-[9px] text-graphite-muted mt-0.5 px-1">
+                  {new Date(msg.createdAt).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+                </span>
+              )}
             </div>
           );
         })}
@@ -508,21 +524,35 @@ export function ChatScreen({ chat, onBack, onOpenProfile }: ChatScreenProps) {
 
       {/* Input area */}
       <div className="px-4 py-3 border-t border-sara-linen/60 flex-shrink-0 bg-sara-linen/80 backdrop-blur-sm">
-        {/* Panels (recording indicator / upload status) rendered above the input row */}
-        <div className="relative">
-          {isUploadingPhoto && (
+        {/* Upload status banner rendered above the input row */}
+        {isUploadingPhoto && (
+          <div className="relative">
             <div className="absolute bottom-full mb-2 left-0 right-0 bg-white rounded-2xl shadow-lg border border-sara-linen px-4 py-3 z-50 flex items-center gap-3">
               <div className="w-4 h-4 rounded-full border-2 border-sara-gold border-t-transparent animate-spin flex-shrink-0" />
               <span className="text-sm text-graphite">Enviando foto...</span>
             </div>
-          )}
-          {isRecording && (
-            <RecordingIndicator durationSecs={recordingSecs} />
-          )}
-        </div>
+          </div>
+        )}
 
-        <div data-testid="chat-input-bar" className="flex items-center gap-2 bg-white rounded-2xl border border-sara-linen px-3 py-2 overflow-hidden">
-          {/* Text input */}
+        <div data-testid="chat-input-bar" className={`flex items-center gap-2 rounded-2xl border px-3 py-2 overflow-hidden transition-colors ${
+          isRecording ? 'bg-red-50 border-red-200' : 'bg-white border-sara-linen'
+        }`}>
+          {/* Recording waveform / text input */}
+          {isRecording ? (
+            <div className="flex-1 flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse flex-shrink-0" />
+              <div className="flex gap-0.5 items-center">
+                {[3, 5, 4, 6, 3, 5, 4].map((h, i) => (
+                  <span
+                    key={i}
+                    className="w-0.5 bg-red-400 rounded-full animate-pulse"
+                    style={{ height: `${h * 3}px`, animationDelay: `${i * 100}ms` }}
+                  />
+                ))}
+              </div>
+              <span className="text-xs text-red-500 font-medium tabular-nums">{recordingSecs}s — Solte para enviar</span>
+            </div>
+          ) : (
           <input
             ref={inputRef}
             type="text"
@@ -533,6 +563,7 @@ export function ChatScreen({ chat, onBack, onOpenProfile }: ChatScreenProps) {
             disabled={isUploadingAudio || isUploadingPhoto}
             className="flex-1 bg-transparent text-sm text-graphite placeholder:text-sara-muted outline-none focus:outline-none disabled:opacity-50"
           />
+          )}
 
           {/* Photo and mic — hidden while typing */}
           {!text && (

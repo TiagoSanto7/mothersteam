@@ -6,7 +6,8 @@ const createSchema = z.object({
   description: z.string().min(1),
   category: z.enum(['gestação', 'pós-parto', 'amamentação', 'saúde mental']),
   colorKey: z.enum(['gold', 'terracotta', 'warm', 'linen', 'cream']),
-  imageUrl: z.string().url().optional().or(z.literal('')).transform((v) => v || undefined),
+  imageUrl:  z.string().url().optional().or(z.literal('')).transform((v) => v || undefined),
+  avatarUrl: z.string().url().optional().or(z.literal('')).transform((v) => v || undefined),
   isPrivate: z.boolean().optional().default(false),
   isOpen: z.boolean().optional().default(true),
 })

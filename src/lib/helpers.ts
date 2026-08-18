@@ -176,6 +176,7 @@ export function apiChatToChat(c: ApiChat, currentUserId: string): Chat {
     withUserId: other?.user.id ?? null,
     withUsername: other?.user.username ?? null,
     withArchetypeKey: other?.user.archetypeKey ?? null,
+    withAvatarUrl: other?.user.avatarUrl ?? null,
     lastMessage: lastMsg?.content ?? '',
     time: lastMsg ? relativeTime(lastMsg.createdAt) : relativeTime(c.createdAt),
     unread: lastMsg && lastMsg.senderId !== currentUserId && !lastMsg.read ? 1 : 0,

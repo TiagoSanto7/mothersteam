@@ -19,6 +19,7 @@ const TABS: TabConfig[] = [
 export function BottomTabBar() {
   const activeTab = useAppStore((s) => s.activeTab);
   const setActiveTab = useAppStore((s) => s.setActiveTab);
+  const bumpTabRefresh = useAppStore((s) => s.bumpTabRefresh);
 
   return (
     <nav
@@ -31,7 +32,7 @@ export function BottomTabBar() {
           <button
             key={id}
             data-testid={`tab-${id}`}
-            onClick={() => setActiveTab(id)}
+            onClick={() => { if (isActive) bumpTabRefresh(); else setActiveTab(id); }}
             aria-pressed={isActive}
             aria-label={label}
             className={`flex flex-col items-center gap-0.5 flex-1 py-1 rounded-xl transition-colors ${

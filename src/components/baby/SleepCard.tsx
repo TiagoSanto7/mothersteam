@@ -5,10 +5,26 @@ import { apiFetch } from '../../lib/api';
 import { useAppStore } from '../../store/useAppStore';
 import type { ApiBabyEntry } from '../../lib/types';
 
+const DURATION_OPTIONS: { minutes: number; label: string }[] = [
+  { minutes: 30,  label: '30min' },
+  { minutes: 60,  label: '1h'    },
+  { minutes: 90,  label: '1h30'  },
+  { minutes: 120, label: '2h'    },
+  { minutes: 150, label: '2h30'  },
+  { minutes: 180, label: '3h'    },
+];
+
+const PERIOD_OPTIONS: { key: string; label: string; emoji: string }[] = [
+  { key: 'manhã',  label: 'Manhã', emoji: '🌅' },
+  { key: 'tarde',  label: 'Tarde', emoji: '☀️' },
+  { key: 'noite',  label: 'Noite', emoji: '🌙' },
+];
+
 export function SleepCard() {
   const isLoggedIn  = useAppStore((s) => s.isLoggedIn);
   const queryClient = useQueryClient();
-  const [minutes, setMinutes] = useState(45);
+  const [minutes, setMinutes] = useState(60);
+  const [period, setPeriod]   = useState('noite');
 
   const { data: entries = [] } = useQuery({
     queryKey: ['baby'],
@@ -27,12 +43,12 @@ export function SleepCard() {
   const mins  = totalMinutes % 60;
   const totalLabel = hours > 0 ? `${hours}h ${mins > 0 ? `${mins}m` : ''}` : `${mins}m`;
 
-  const { mutate: addSleep } = useMutation({
+  const { mutate: addSleep, isPending } = useMutation({
     mutationFn: () => {
       const now = new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
       return apiFetch<ApiBabyEntry>('/baby', {
         method: 'POST',
-        body: JSON.stringify({ time: now, type: 'sleep', detail: `Dormiu por ${minutes} min` }),
+        body: JSON.stringify({ time: now, type: 'sleep', detail: `Dormiu por ${minutes} min — ${period}` }),
       });
     },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['baby'] }),
@@ -52,27 +68,51 @@ export function SleepCard() {
         <span className="text-xs text-graphite-muted">hoje</span>
       </div>
 
-      <div className="flex items-center gap-2">
-        <input
-          type="range"
-          min={5}
-          max={180}
-          step={5}
-          value={minutes}
-          onChange={(e) => setMinutes(Number(e.target.value))}
-          className="flex-1 accent-sara-gold"
-          aria-label="Duração da soneca em minutos"
-        />
-        <span className="text-xs text-graphite-muted w-10 text-right">{minutes}m</span>
+      {/* Duration selector */}
+      <div className="flex gap-1.5 flex-wrap">
+        {DURATION_OPTIONS.map((opt) => (
+          <button
+            key={opt.minutes}
+            onClick={() => setMinutes(opt.minutes)}
+            aria-pressed={minutes === opt.minutes}
+            className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-colors ${
+              minutes === opt.minutes
+                ? 'bg-sara-gold text-white'
+                : 'bg-sara-linen text-graphite-muted hover:text-graphite'
+            }`}
+          >
+            {opt.label}
+          </button>
+        ))}
+      </div>
+
+      {/* Period selector */}
+      <div className="flex gap-2">
+        {PERIOD_OPTIONS.map((opt) => (
+          <button
+            key={opt.key}
+            onClick={() => setPeriod(opt.key)}
+            aria-pressed={period === opt.key}
+            className={`flex-1 py-2 rounded-2xl text-xs font-semibold transition-colors flex items-center justify-center gap-1 ${
+              period === opt.key
+                ? 'bg-sara-gold text-white'
+                : 'bg-sara-linen text-graphite-muted hover:text-graphite'
+            }`}
+          >
+            <span>{opt.emoji}</span>
+            {opt.label}
+          </button>
+        ))}
       </div>
 
       <button
         onClick={() => addSleep()}
+        disabled={isPending}
         aria-label="Registrar soneca"
-        className="w-full py-2.5 rounded-2xl bg-sara-linen text-sara-gold text-sm font-semibold flex items-center justify-center gap-1.5 active:scale-[0.98] transition-transform"
+        className="w-full py-2.5 rounded-2xl bg-sara-linen text-sara-gold text-sm font-semibold flex items-center justify-center gap-1.5 active:scale-[0.98] transition-transform disabled:opacity-60"
       >
         <Plus size={16} strokeWidth={2.5} />
-        Registrar soneca
+        {isPending ? 'Registrando...' : 'Registrar soneca'}
       </button>
     </div>
   );

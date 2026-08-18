@@ -71,6 +71,7 @@ export interface ApiCommunity {
   category: 'gestação' | 'pós-parto' | 'amamentação' | 'saúde mental'
   colorKey: 'gold' | 'terracotta' | 'warm' | 'linen' | 'cream'
   imageUrl?: string | null
+  avatarUrl?: string | null
   creatorId: string
   isPrivate: boolean
   isOpen: boolean
@@ -114,7 +115,7 @@ export interface ApiMessage {
   content: string
   chatId: string
   senderId: string
-  sender: { id: string; name: string; archetypeKey?: string | null }
+  sender: { id: string; name: string; archetypeKey?: string | null; avatarUrl?: string | null }
   sharedPostId?: string | null
   sharedPostAuthor?: string | null
   sharedPostExcerpt?: string | null
@@ -126,7 +127,7 @@ export interface ApiMessage {
 
 export interface ApiChat {
   id: string
-  participants: Array<{ userId: string; chatId: string; user: { id: string; name: string; username?: string | null; archetypeKey?: string | null } }>
+  participants: Array<{ userId: string; chatId: string; user: { id: string; name: string; username?: string | null; archetypeKey?: string | null; avatarUrl?: string | null } }>
   messages: ApiMessage[]
   createdAt: string
 }

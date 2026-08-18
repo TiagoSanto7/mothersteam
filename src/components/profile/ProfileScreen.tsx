@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { usePullToRefresh } from '../../lib/usePullToRefresh';
 import { SaraPullIndicator } from '../shared/SaraPullIndicator';
-import { ChevronLeft, Settings, Bell } from 'lucide-react';
+import { ChevronLeft, Settings, Bell, MessageCircle } from 'lucide-react';
 import { useQuery, useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAppStore, selectSavedVerses } from '../../store/useAppStore';
 import { ARCHETYPES } from '../../utils/onboardingScoring';
@@ -19,16 +19,18 @@ import type { CommunityPost } from '../../types';
 import { SavedVersesScreen } from '../home/SavedVersesScreen';
 
 interface ProfileScreenProps {
-  onClose?: () => void;                   // optional now
-  userId?: string;                        // NEW — when omitted, falls back to currentUserId (backward-compat with old callers)
-  onOpenProfile?: (id: string) => void;   // NEW
-  isTab?: boolean;                        // NEW — when true, hides back button
+  onClose?: () => void;
+  userId?: string;
+  onOpenProfile?: (id: string) => void;
+  onMessage?: (userId: string) => void;
+  isTab?: boolean;
 }
 
-export function ProfileScreen({ onClose, userId, onOpenProfile, isTab = false }: ProfileScreenProps) {
-  const currentUserId = useAppStore((s) => s.currentUserId);
-  const savedVerses = useAppStore(selectSavedVerses);
-  const isLoggedIn = useAppStore((s) => s.isLoggedIn);
+export function ProfileScreen({ onClose, userId, onOpenProfile, onMessage, isTab = false }: ProfileScreenProps) {
+  const currentUserId  = useAppStore((s) => s.currentUserId);
+  const savedVerses    = useAppStore(selectSavedVerses);
+  const isLoggedIn     = useAppStore((s) => s.isLoggedIn);
+  const tabRefreshTick = useAppStore((s) => s.tabRefreshTick);
 
   const effectiveUserId = userId ?? currentUserId ?? '';
 
@@ -82,6 +84,16 @@ export function ProfileScreen({ onClose, userId, onOpenProfile, isTab = false }:
   useEffect(() => {
     if (isAtBottom && hasNextPage && !isFetchingNextPage) fetchNextPage();
   }, [isAtBottom, hasNextPage, isFetchingNextPage, fetchNextPage]);
+
+  useEffect(() => {
+    if (tabRefreshTick === 0 || !isTab) return;
+    const { activeTab } = useAppStore.getState();
+    if (activeTab !== 'perfil') return;
+    scrollRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
+    queryClient.invalidateQueries({ queryKey: ['user', effectiveUserId] });
+    queryClient.invalidateQueries({ queryKey: ['userPosts', effectiveUserId] });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tabRefreshTick]);
 
   const followMutation = useMutation({
     mutationFn: (isFollowing: boolean) =>
@@ -280,6 +292,15 @@ export function ProfileScreen({ onClose, userId, onOpenProfile, isTab = false }:
               >
                 {profile.isFollowedByCurrentUser ? 'Seguindo' : 'Seguir'}
               </button>
+              {onMessage && (
+                <button
+                  onClick={() => onMessage(effectiveUserId)}
+                  aria-label="Enviar mensagem"
+                  className="w-9 h-9 flex items-center justify-center rounded-full border border-sara-linen bg-white text-graphite-muted active:scale-95 transition-transform"
+                >
+                  <MessageCircle size={16} />
+                </button>
+              )}
               {profile.isFollowedByCurrentUser && (
                 <button
                   onClick={() => setNotifying((n) => !n)}

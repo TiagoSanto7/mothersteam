@@ -102,6 +102,7 @@ model Community {
   category    String
   colorKey    String
   imageUrl    String?
+  avatarUrl   String?
   isPrivate   Boolean           @default(false) // true = posts only visible to members
   isOpen      Boolean           @default(true)  // false = closed community (admin adds members only)
   creatorId   String

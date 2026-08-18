@@ -25,7 +25,8 @@ type Category = 'todos' | CommunityPost['category'];
 const CATEGORY_LABELS: Category[] = ['todos', 'gestação', 'pós-parto', 'amamentação', 'saúde mental'];
 
 export function ComunidadeScreen() {
-  const isLoggedIn = useAppStore((s) => s.isLoggedIn);
+  const isLoggedIn       = useAppStore((s) => s.isLoggedIn);
+  const tabRefreshTick   = useAppStore((s) => s.tabRefreshTick);
 
   const queryClient = useQueryClient();
   const sentinelRef = useRef<HTMLDivElement>(null);
@@ -59,6 +60,15 @@ export function ComunidadeScreen() {
       fetchNextPage();
     }
   }, [isAtBottom, hasNextPage, isFetchingNextPage, fetchNextPage]);
+
+  useEffect(() => {
+    if (tabRefreshTick === 0) return;
+    const { activeTab } = useAppStore.getState();
+    if (activeTab !== 'comunidade') return;
+    scrollRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
+    queryClient.invalidateQueries({ queryKey: ['posts'] });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tabRefreshTick]);
 
   const [topTab, setTopTab] = useState<TopTab>('para-voce');
   const [activeCategory, setActiveCategory] = useState<Category>('todos');

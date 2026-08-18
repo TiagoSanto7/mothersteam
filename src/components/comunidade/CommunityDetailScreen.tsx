@@ -1,7 +1,9 @@
 import { useState, useRef, useEffect } from 'react';
-import { ChevronLeft, Pencil, Lock, EyeOff, UserCheck, X } from 'lucide-react';
+import { ChevronLeft, Pencil, Lock, EyeOff, UserCheck, X, Camera } from 'lucide-react';
 import { useQuery, useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { apiFetch, resolveMediaUrl } from '../../lib/api';
+import { apiFetch, resolveMediaUrl, uploadImage } from '../../lib/api';
+import { resizeImage } from '../../lib/imageUtils';
+import { useAppStore } from '../../store/useAppStore';
 import type { ApiCommunityDetail, ApiCommunityMember, ApiPost } from '../../lib/types';
 import { apiPostToCommunityPost } from '../../lib/helpers';
 import { useIntersection } from '../../lib/useIntersection';
@@ -158,11 +160,16 @@ function CommunityMembersModal({
 const MEMBERS_PREVIEW_COUNT = 3;
 
 export function CommunityDetailScreen({ communityId, onBack, onOpenProfile }: CommunityDetailScreenProps) {
+  const accessToken = useAppStore((s) => s.accessToken);
   const queryClient = useQueryClient();
   const [selectedPost, setSelectedPost] = useState<CommunityPost | null>(null);
   const [showCreate, setShowCreate] = useState(false);
   const [showAllMembers, setShowAllMembers] = useState(false);
   const [followedMap, setFollowedMap] = useState<MemberFollowedMap>({});
+  const [uploadingCover, setUploadingCover] = useState(false);
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
+  const coverInputRef  = useRef<HTMLInputElement>(null);
+  const avatarInputRef = useRef<HTMLInputElement>(null);
 
   const sentinelRef = useRef<HTMLDivElement>(null);
   const isAtBottom = useIntersection(sentinelRef);
@@ -225,6 +232,38 @@ export function CommunityDetailScreen({ communityId, onBack, onOpenProfile }: Co
     },
   });
 
+  const updateCommunityMutation = useMutation({
+    mutationFn: (data: { imageUrl?: string; avatarUrl?: string }) =>
+      apiFetch<ApiCommunityDetail>(`/communities/${communityId}`, { method: 'PATCH', body: JSON.stringify(data) }),
+    onSuccess: (updated) => {
+      queryClient.setQueryData(['community', communityId], updated);
+    },
+  });
+
+  async function handleCoverUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (e.target) (e.target as HTMLInputElement).value = '';
+    if (!file) return;
+    setUploadingCover(true);
+    try {
+      const resized = await resizeImage(file, 1200, 400, 0.85);
+      const url = await uploadImage(resized, accessToken);
+      updateCommunityMutation.mutate({ imageUrl: url });
+    } catch { /* silently discard */ } finally { setUploadingCover(false); }
+  }
+
+  async function handleAvatarUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (e.target) (e.target as HTMLInputElement).value = '';
+    if (!file) return;
+    setUploadingAvatar(true);
+    try {
+      const resized = await resizeImage(file, 400, 400, 0.85);
+      const url = await uploadImage(resized, accessToken);
+      updateCommunityMutation.mutate({ avatarUrl: url });
+    } catch { /* silently discard */ } finally { setUploadingAvatar(false); }
+  }
+
   function handleFollow(memberId: string) {
     if (!followedMap[memberId]) {
       followMutation.mutate(memberId);
@@ -260,6 +299,7 @@ export function CommunityDetailScreen({ communityId, onBack, onOpenProfile }: Co
   const posts = postsPages?.pages.flatMap((p) => p.items.map(apiPostToCommunityPost)) ?? [];
   const previewMembers = members ? members.slice(0, MEMBERS_PREVIEW_COUNT) : [];
   const hasMoreMembers = members ? members.length > MEMBERS_PREVIEW_COUNT : false;
+  const isAdmin = community.role === 'owner' || community.role === 'admin';
 
   return (
     <div className="relative flex flex-col w-full h-full sm:w-[390px] sm:h-[844px] bg-gradient-to-b from-[#F5EDE0] via-[#EAD8C8] to-[#D9C4AF] sm:rounded-[44px] sm:shadow-2xl overflow-hidden">
@@ -271,18 +311,50 @@ export function CommunityDetailScreen({ communityId, onBack, onOpenProfile }: Co
         <div className="w-8" />
       </div>
 
+      {/* Hidden file inputs for admins */}
+      {isAdmin && (
+        <>
+          <input ref={coverInputRef}  type="file" accept="image/*" className="hidden" onChange={handleCoverUpload} />
+          <input ref={avatarInputRef} type="file" accept="image/*" className="hidden" onChange={handleAvatarUpload} />
+        </>
+      )}
+
       <div className="relative flex-shrink-0">
         {community.imageUrl ? (
           <img
-            src={resolveMediaUrl(community.imageUrl)}
+            src={resolveMediaUrl(community.imageUrl)!}
             alt={`Capa de ${community.name}`}
             className="w-full h-24 object-cover"
           />
         ) : (
           <div className={`h-24 ${COLOR_MAP[community.colorKey] ?? 'bg-sara-gold'}`} />
         )}
-        <div className={`absolute left-4 -bottom-6 w-12 h-12 rounded-full border-4 border-white ${COLOR_MAP[community.colorKey] ?? 'bg-sara-gold'} flex items-center justify-center shadow-sm`}>
-          <span className="text-white text-base font-bold">{community.name.charAt(0).toUpperCase()}</span>
+        {isAdmin && (
+          <button
+            onClick={() => coverInputRef.current?.click()}
+            disabled={uploadingCover}
+            aria-label="Trocar foto de capa"
+            className="absolute bottom-2 right-2 w-7 h-7 bg-black/50 text-white rounded-full flex items-center justify-center active:scale-95 transition-transform disabled:opacity-60"
+          >
+            {uploadingCover ? <div className="w-3 h-3 rounded-full border border-white border-t-transparent animate-spin" /> : <Camera size={13} />}
+          </button>
+        )}
+        <div className={`absolute left-4 -bottom-6 w-12 h-12 rounded-full border-4 border-white ${COLOR_MAP[community.colorKey] ?? 'bg-sara-gold'} overflow-hidden shadow-sm flex items-center justify-center`}>
+          {community.avatarUrl ? (
+            <img src={resolveMediaUrl(community.avatarUrl)!} alt={community.name} className="w-full h-full object-cover" />
+          ) : (
+            <span className="text-white text-base font-bold">{community.name.charAt(0).toUpperCase()}</span>
+          )}
+          {isAdmin && (
+            <button
+              onClick={() => avatarInputRef.current?.click()}
+              disabled={uploadingAvatar}
+              aria-label="Trocar foto da comunidade"
+              className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 hover:opacity-100 active:opacity-100 transition-opacity rounded-full"
+            >
+              {uploadingAvatar ? <div className="w-3 h-3 rounded-full border border-white border-t-transparent animate-spin" /> : <Camera size={13} className="text-white" />}
+            </button>
+          )}
         </div>
       </div>
 
