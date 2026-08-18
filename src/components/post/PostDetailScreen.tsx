@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence, useAnimate } from 'framer-motion';
-import { ChevronLeft, Heart, MessageCircle, Share2, Repeat2, Send } from 'lucide-react';
+import { ChevronLeft, Heart, MessageCircle, Share2, Repeat2, Send, X } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAppStore } from '../../store/useAppStore';
 import { apiFetch, resolveMediaUrl } from '../../lib/api';
@@ -10,10 +10,19 @@ import { QuoteRepostSheet } from '../comunidade/QuoteRepostSheet';
 import { PostActionsMenu } from '../comunidade/PostActionsMenu';
 import { getAvatarColor } from '../../utils/avatar';
 import { UserAvatar } from '../shared/UserAvatar';
-import type { CommunityPost, PostComment } from '../../types';
+import type { CommunityPost } from '../../types';
 import type { ApiPost, PaginatedResult } from '../../lib/types';
 import { MentionText } from '../shared/MentionText';
 import { MentionInput } from '../shared/MentionInput';
+
+function relativeTime(iso: string): string {
+  const mins = Math.floor((Date.now() - new Date(iso).getTime()) / 60_000);
+  if (mins < 1) return 'agora';
+  if (mins < 60) return `há ${mins}min`;
+  const h = Math.floor(mins / 60);
+  if (h < 24) return `há ${h}h`;
+  return `há ${Math.floor(h / 24)}d`;
+}
 
 async function lookupAndOpen(username: string, onOpenProfile?: (id: string) => void) {
   if (!onOpenProfile) return;
@@ -31,13 +40,17 @@ const BADGE_CONFIG = {
   profissional: { label: 'Profissional de Saúde', color: 'bg-sara-cream text-sara-warm' },
 } as const;
 
-interface ApiComment {
+interface ApiReply {
   id: string;
   content: string;
   author: { id: string; name: string; archetypeKey?: string | null; avatarUrl?: string | null };
   likes: number;
   likedByCurrentUser: boolean;
   createdAt: string;
+}
+
+interface ApiComment extends ApiReply {
+  replies: ApiReply[];
 }
 
 interface PostDetailScreenProps {
@@ -70,6 +83,7 @@ export function PostDetailScreen({ post, onBack, onOpenProfile }: PostDetailScre
   const [commentParticle, setCommentParticle] = useState<Record<string, boolean>>({});
   const [pendingCommentIds, setPendingCommentIds] = useState<Record<string, boolean>>({});
   const pendingCommentIdsRef = useRef<Record<string, boolean>>({});
+  const [replyingTo, setReplyingTo] = useState<{ id: string; authorName: string } | null>(null);
 
   const { data: commentsData } = useQuery<PaginatedResult<ApiComment>>({
     queryKey: ['comments', post.id],
@@ -124,8 +138,14 @@ export function PostDetailScreen({ post, onBack, onOpenProfile }: PostDetailScre
     if (!commentsData?.items) return
     const nextState: Record<string, { likes: number; liked: boolean }> = {}
     for (const c of commentsData.items) {
-      if (pendingCommentIdsRef.current[c.id]) continue
-      nextState[c.id] = { likes: c.likes, liked: c.likedByCurrentUser }
+      if (!pendingCommentIdsRef.current[c.id]) {
+        nextState[c.id] = { likes: c.likes, liked: c.likedByCurrentUser }
+      }
+      for (const r of c.replies ?? []) {
+        if (!pendingCommentIdsRef.current[r.id]) {
+          nextState[r.id] = { likes: r.likes, liked: r.likedByCurrentUser }
+        }
+      }
     }
     setCommentLikeState((prev) => ({ ...prev, ...nextState }))
   }, [commentsData]);
@@ -135,16 +155,6 @@ export function PostDetailScreen({ post, onBack, onOpenProfile }: PostDetailScre
     queryFn: () => apiFetch<ApiPost>(`/posts/${viewingOriginalId}`),
     enabled: !!viewingOriginalId,
   });
-
-  const comments: PostComment[] = (commentsData?.items ?? []).map((c) => ({
-    id: c.id,
-    author: c.author.name,
-    authorArchetypeKey: c.author.archetypeKey ?? null,
-    authorAvatarUrl: c.author.avatarUrl ?? null,
-    content: c.content,
-    time: '',
-    likes: c.likes,
-  }));
 
   const likeMutation = useMutation({
     mutationFn: (isLiked: boolean) =>
@@ -167,8 +177,11 @@ export function PostDetailScreen({ post, onBack, onOpenProfile }: PostDetailScre
   });
 
   const commentMutation = useMutation({
-    mutationFn: (content: string) =>
-      apiFetch(`/posts/${post.id}/comments`, { method: 'POST', body: JSON.stringify({ content }) }),
+    mutationFn: ({ content, parentId }: { content: string; parentId?: string }) =>
+      apiFetch(`/posts/${post.id}/comments`, {
+        method: 'POST',
+        body: JSON.stringify({ content, ...(parentId ? { parentId } : {}) }),
+      }),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['comments', post.id] }),
   });
 
@@ -207,8 +220,9 @@ export function PostDetailScreen({ post, onBack, onOpenProfile }: PostDetailScre
 
   function handleComment() {
     if (!commentText.trim()) return;
-    commentMutation.mutate(commentText.trim());
+    commentMutation.mutate({ content: commentText.trim(), parentId: replyingTo?.id });
     setCommentText('');
+    setReplyingTo(null);
   }
 
   return (
@@ -340,7 +354,7 @@ export function PostDetailScreen({ post, onBack, onOpenProfile }: PostDetailScre
             </div>
             <button className="flex items-center gap-1.5 text-xs text-graphite-muted">
               <MessageCircle size={16} strokeWidth={1.8} />
-              <span>{comments.length > 0 ? comments.length : post.replies}</span>
+              <span>{(commentsData?.items ?? []).length > 0 ? (commentsData?.items ?? []).length : post.replies}</span>
             </button>
             <button
               onClick={handleRepost}
@@ -361,67 +375,140 @@ export function PostDetailScreen({ post, onBack, onOpenProfile }: PostDetailScre
 
         {/* Comments */}
         <div className="px-4 py-4 flex flex-col gap-3">
-          {comments.length === 0 && (
+          {(commentsData?.items ?? []).length === 0 && (
             <p className="text-xs text-graphite-muted text-center py-6">Seja a primeira a comentar</p>
           )}
-          {comments.map((c) => {
+          {(commentsData?.items ?? []).map((c) => {
             const isLiked = commentLikeState[c.id]?.liked ?? false;
             const likeCount = commentLikeState[c.id]?.likes ?? c.likes;
             return (
-            <div key={c.id} className="flex items-start gap-2.5">
-              <UserAvatar
-                name={c.author}
-                archetypeKey={c.authorArchetypeKey}
-                avatarUrl={c.authorAvatarUrl}
-                size={32}
-              />
-              <div className="flex-1 bg-white rounded-2xl px-3 py-2.5 shadow-sm">
-                <div className="flex items-baseline justify-between gap-2">
-                  <p className="text-[11px] font-semibold text-graphite">{c.author}</p>
-                  <span className="text-[10px] text-graphite-muted">{c.time}</span>
-                </div>
-                <div className="flex items-end gap-2 mt-0.5">
-                  <MentionText text={c.content} className="text-xs text-graphite leading-relaxed flex-1 block" onMentionPress={(u) => lookupAndOpen(u, onOpenProfile)} />
-                  <div className="relative inline-flex flex-shrink-0">
-                    <motion.button
-                      key={commentBounceKey[c.id] ?? 0}
-                      onClick={() => {
-                        const next = !isLiked;
-                        likeCommentMutation.mutate({ commentId: c.id, isLiked: next });
-                        if (next) {
-                          setCommentBounceKey((prev) => ({ ...prev, [c.id]: (prev[c.id] ?? 0) + 1 }));
-                          setCommentParticle((prev) => ({ ...prev, [c.id]: true }));
-                          setTimeout(() => {
-                            setCommentParticle((prev) => ({ ...prev, [c.id]: false }));
-                          }, 700);
-                        }
-                      }}
-                      aria-label={isLiked ? 'Descurtir comentário' : 'Curtir comentário'}
-                      aria-pressed={isLiked}
-                      disabled={!!pendingCommentIds[c.id]}
-                      animate={isLiked ? { scale: [1, 1.4, 0.9, 1.15, 1] } : { scale: [1, 0.85, 1] }}
-                      transition={{ duration: isLiked ? 0.4 : 0.2, ease: 'easeOut' }}
-                      className={`flex items-center gap-1 transition-colors ${isLiked ? 'text-sara-terracotta' : 'text-graphite-muted'}`}
-                    >
-                      <Heart size={10} fill={isLiked ? 'currentColor' : 'none'} />
-                      <span className="text-[10px]">{likeCount}</span>
-                    </motion.button>
-                    <AnimatePresence>
-                      {commentParticle[c.id] && (
-                        <motion.span
-                          initial={{ opacity: 0, y: 0, x: -4 }}
-                          animate={{ opacity: [0, 1, 1, 0], y: -20 }}
-                          exit={{ opacity: 0 }}
-                          transition={{ duration: 0.6, ease: 'easeOut' }}
-                          className="absolute -top-1 left-3 text-[10px] font-bold text-sara-terracotta pointer-events-none"
-                        >
-                          +1
-                        </motion.span>
-                      )}
-                    </AnimatePresence>
+            <div key={c.id} className="flex flex-col gap-1">
+              <div className="flex items-start gap-2.5">
+                <UserAvatar
+                  name={c.author.name}
+                  archetypeKey={c.author.archetypeKey ?? null}
+                  avatarUrl={c.author.avatarUrl}
+                  size={32}
+                />
+                <div className="flex-1 bg-white rounded-2xl px-3 py-2.5 shadow-sm">
+                  <div className="flex items-baseline justify-between gap-2">
+                    <p className="text-[11px] font-semibold text-graphite">{c.author.name}</p>
+                    <span className="text-[10px] text-graphite-muted">{relativeTime(c.createdAt)}</span>
+                  </div>
+                  <div className="flex items-end gap-2 mt-0.5">
+                    <MentionText text={c.content} className="text-xs text-graphite leading-relaxed flex-1 block" onMentionPress={(u) => lookupAndOpen(u, onOpenProfile)} />
+                    <div className="relative inline-flex flex-shrink-0">
+                      <motion.button
+                        key={commentBounceKey[c.id] ?? 0}
+                        onClick={() => {
+                          const next = !isLiked;
+                          likeCommentMutation.mutate({ commentId: c.id, isLiked: next });
+                          if (next) {
+                            setCommentBounceKey((prev) => ({ ...prev, [c.id]: (prev[c.id] ?? 0) + 1 }));
+                            setCommentParticle((prev) => ({ ...prev, [c.id]: true }));
+                            setTimeout(() => {
+                              setCommentParticle((prev) => ({ ...prev, [c.id]: false }));
+                            }, 700);
+                          }
+                        }}
+                        aria-label={isLiked ? 'Descurtir comentário' : 'Curtir comentário'}
+                        aria-pressed={isLiked}
+                        disabled={!!pendingCommentIds[c.id]}
+                        animate={isLiked ? { scale: [1, 1.4, 0.9, 1.15, 1] } : { scale: [1, 0.85, 1] }}
+                        transition={{ duration: isLiked ? 0.4 : 0.2, ease: 'easeOut' }}
+                        className={`flex items-center gap-1 transition-colors ${isLiked ? 'text-sara-terracotta' : 'text-graphite-muted'}`}
+                      >
+                        <Heart size={10} fill={isLiked ? 'currentColor' : 'none'} />
+                        <span className="text-[10px]">{likeCount}</span>
+                      </motion.button>
+                      <AnimatePresence>
+                        {commentParticle[c.id] && (
+                          <motion.span
+                            initial={{ opacity: 0, y: 0, x: -4 }}
+                            animate={{ opacity: [0, 1, 1, 0], y: -20 }}
+                            exit={{ opacity: 0 }}
+                            transition={{ duration: 0.6, ease: 'easeOut' }}
+                            className="absolute -top-1 left-3 text-[10px] font-bold text-sara-terracotta pointer-events-none"
+                          >
+                            +1
+                          </motion.span>
+                        )}
+                      </AnimatePresence>
+                    </div>
                   </div>
                 </div>
               </div>
+              {/* Reply button */}
+              <button
+                onClick={() => setReplyingTo({ id: c.id, authorName: c.author.name })}
+                className="ml-10 text-[10px] text-graphite-muted hover:text-sara-gold transition-colors w-fit"
+              >
+                Responder
+              </button>
+              {/* Nested replies */}
+              {c.replies && c.replies.length > 0 && (
+                <div className="ml-10 flex flex-col gap-2 mt-1">
+                  {c.replies.map((r) => {
+                    const rIsLiked = commentLikeState[r.id]?.liked ?? false;
+                    const rLikeCount = commentLikeState[r.id]?.likes ?? r.likes;
+                    return (
+                      <div key={r.id} className="flex items-start gap-2">
+                        <UserAvatar
+                          name={r.author.name}
+                          archetypeKey={r.author.archetypeKey ?? null}
+                          avatarUrl={r.author.avatarUrl}
+                          size={24}
+                        />
+                        <div className="flex-1 bg-white/80 rounded-2xl px-3 py-2 shadow-sm">
+                          <div className="flex items-baseline justify-between gap-2">
+                            <p className="text-[10px] font-semibold text-graphite">{r.author.name}</p>
+                            <span className="text-[9px] text-graphite-muted">{relativeTime(r.createdAt)}</span>
+                          </div>
+                          <div className="flex items-end gap-2 mt-0.5">
+                            <MentionText text={r.content} className="text-[11px] text-graphite leading-relaxed flex-1 block" onMentionPress={(u) => lookupAndOpen(u, onOpenProfile)} />
+                            <div className="relative inline-flex flex-shrink-0">
+                              <motion.button
+                                key={commentBounceKey[r.id] ?? 0}
+                                onClick={() => {
+                                  const next = !rIsLiked;
+                                  likeCommentMutation.mutate({ commentId: r.id, isLiked: next });
+                                  if (next) {
+                                    setCommentBounceKey((prev) => ({ ...prev, [r.id]: (prev[r.id] ?? 0) + 1 }));
+                                    setCommentParticle((prev) => ({ ...prev, [r.id]: true }));
+                                    setTimeout(() => setCommentParticle((prev) => ({ ...prev, [r.id]: false })), 700);
+                                  }
+                                }}
+                                aria-label={rIsLiked ? 'Descurtir' : 'Curtir'}
+                                aria-pressed={rIsLiked}
+                                disabled={!!pendingCommentIds[r.id]}
+                                animate={rIsLiked ? { scale: [1, 1.4, 0.9, 1.15, 1] } : { scale: [1, 0.85, 1] }}
+                                transition={{ duration: rIsLiked ? 0.4 : 0.2, ease: 'easeOut' }}
+                                className={`flex items-center gap-1 transition-colors ${rIsLiked ? 'text-sara-terracotta' : 'text-graphite-muted'}`}
+                              >
+                                <Heart size={9} fill={rIsLiked ? 'currentColor' : 'none'} />
+                                <span className="text-[9px]">{rLikeCount}</span>
+                              </motion.button>
+                              <AnimatePresence>
+                                {commentParticle[r.id] && (
+                                  <motion.span
+                                    initial={{ opacity: 0, y: 0, x: -4 }}
+                                    animate={{ opacity: [0, 1, 1, 0], y: -20 }}
+                                    exit={{ opacity: 0 }}
+                                    transition={{ duration: 0.6, ease: 'easeOut' }}
+                                    className="absolute -top-1 left-3 text-[10px] font-bold text-sara-terracotta pointer-events-none"
+                                  >
+                                    +1
+                                  </motion.span>
+                                )}
+                              </AnimatePresence>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
             </div>
             );
           })}
@@ -430,6 +517,16 @@ export function PostDetailScreen({ post, onBack, onOpenProfile }: PostDetailScre
 
       {/* Comment input */}
       <div className="px-4 py-3 border-t border-sara-linen/60 flex-shrink-0 bg-sara-linen/80 backdrop-blur-sm">
+        {replyingTo && (
+          <div className="flex items-center justify-between mb-2 px-1">
+            <p className="text-[11px] text-graphite-muted">
+              Respondendo a <span className="font-semibold text-graphite">{replyingTo.authorName}</span>
+            </p>
+            <button onClick={() => setReplyingTo(null)} aria-label="Cancelar resposta">
+              <X size={14} className="text-graphite-muted" />
+            </button>
+          </div>
+        )}
         <div className="flex items-center gap-2">
           <div
             style={{ background: getAvatarColor(motherProfile?.archetypeKey ?? null) }}
@@ -443,7 +540,7 @@ export function PostDetailScreen({ post, onBack, onOpenProfile }: PostDetailScre
                 value={commentText}
                 onChange={setCommentText}
                 onSubmit={handleComment}
-                placeholder="Adicionar comentário..."
+                placeholder={replyingTo ? `Responder a ${replyingTo.authorName}...` : 'Adicionar comentário...'}
                 rows={1}
                 className="w-full bg-transparent text-sm text-graphite placeholder:text-sara-muted outline-none resize-none"
               />

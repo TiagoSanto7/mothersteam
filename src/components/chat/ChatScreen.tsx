@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
-import { ChevronLeft, Send, ImagePlus, Mic, Square, Play, Pause } from 'lucide-react';
+import { ChevronLeft, Send, ImagePlus, Mic, Square, Play, Pause, Copy, Trash2 } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiFetch, resolveMediaUrl, uploadImage } from '../../lib/api';
 import { resizeImage } from '../../lib/imageUtils';
@@ -132,7 +132,10 @@ export function ChatScreen({ chat, onBack, onOpenProfile }: ChatScreenProps) {
   const [viewingPostId, setViewingPostId] = useState<string | null>(null);
   const [showProfilePreview, setShowProfilePreview] = useState(false);
   const [visibleTimestampId, setVisibleTimestampId] = useState<string | null>(null);
+  const [messageMenu, setMessageMenu] = useState<{ messageId: string; isMe: boolean; content: string } | null>(null);
   const swipeStartX = useRef<number | null>(null);
+  const longPressTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const longPressStartPos = useRef<{ x: number; y: number } | null>(null);
 
   // Audio recording state
   const [isRecording, setIsRecording] = useState(false);
@@ -173,6 +176,15 @@ export function ChatScreen({ chat, onBack, onOpenProfile }: ChatScreenProps) {
         method: 'POST',
         body: JSON.stringify(payload),
       }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['messages', chat.id] });
+      queryClient.invalidateQueries({ queryKey: ['chats'] });
+    },
+  });
+
+  const deleteMessageMutation = useMutation({
+    mutationFn: (messageId: string) =>
+      apiFetch(`/chats/${chat.id}/messages/${messageId}`, { method: 'DELETE' }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['messages', chat.id] });
       queryClient.invalidateQueries({ queryKey: ['chats'] });
@@ -347,12 +359,35 @@ export function ChatScreen({ chat, onBack, onOpenProfile }: ChatScreenProps) {
     }
   }
 
+  function handleMessagePressStart(e: React.PointerEvent, msg: ApiMessage) {
+    longPressStartPos.current = { x: e.clientX, y: e.clientY };
+    longPressTimerRef.current = setTimeout(() => {
+      setMessageMenu({ messageId: msg.id, isMe: msg.senderId === currentUserId, content: msg.content });
+    }, 500);
+  }
+
+  function handleMessagePressEnd() {
+    if (longPressTimerRef.current) {
+      clearTimeout(longPressTimerRef.current);
+      longPressTimerRef.current = null;
+    }
+    longPressStartPos.current = null;
+  }
+
+  function handleMessagePressMove(e: React.PointerEvent) {
+    if (!longPressStartPos.current) return;
+    const dx = Math.abs(e.clientX - longPressStartPos.current.x);
+    const dy = Math.abs(e.clientY - longPressStartPos.current.y);
+    if (dx > 10 || dy > 10) handleMessagePressEnd();
+  }
+
   function handleSwipeStart(e: React.PointerEvent) {
     swipeStartX.current = e.clientX;
   }
 
   function handleSwipeEnd(e: React.PointerEvent) {
     if (swipeStartX.current === null) return;
+    if (messageMenu !== null) { swipeStartX.current = null; return; }
     const deltaX = e.clientX - swipeStartX.current;
     swipeStartX.current = null;
     if (deltaX > 80) onBack();
@@ -365,7 +400,7 @@ export function ChatScreen({ chat, onBack, onOpenProfile }: ChatScreenProps) {
   }
 
   return (
-    <div className="flex flex-col w-full h-full bg-gradient-to-b from-[#F5EDE0] via-[#EAD8C8] to-[#D9C4AF] overflow-hidden">
+    <div className="flex flex-col w-full h-full bg-gradient-to-b from-[#F5EDE0] via-[#EAD8C8] to-[#D9C4AF] overflow-hidden relative">
       {/* Header */}
       <div className="flex items-center gap-3 px-4 pt-6 pb-4 border-b border-sara-linen/60 flex-shrink-0">
         <button onClick={onBack} className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-sara-linen">
@@ -403,6 +438,10 @@ export function ChatScreen({ chat, onBack, onOpenProfile }: ChatScreenProps) {
               key={msg.id}
               className={`flex flex-col ${isMe ? 'items-end' : 'items-start'}`}
               onClick={() => setVisibleTimestampId((id) => id === msg.id ? null : msg.id)}
+              onPointerDown={(e) => handleMessagePressStart(e, msg)}
+              onPointerUp={handleMessagePressEnd}
+              onPointerCancel={handleMessagePressEnd}
+              onPointerMove={handleMessagePressMove}
             >
               <div className={`flex ${isMe ? 'justify-end' : 'justify-start'} w-full`}>
               {!isMe && (
@@ -505,6 +544,46 @@ export function ChatScreen({ chat, onBack, onOpenProfile }: ChatScreenProps) {
             >
               Enviar
             </button>
+          </div>
+        </div>
+      )}
+
+      {/* Long press message menu */}
+      {messageMenu && (
+        <div
+          className="absolute inset-0 z-40 flex flex-col justify-end bg-black/20"
+          onClick={() => setMessageMenu(null)}
+        >
+          <div
+            className="bg-white rounded-t-3xl pb-safe shadow-xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="w-10 h-1 bg-gray-200 rounded-full mx-auto mt-3 mb-2" />
+            {messageMenu.content && (
+              <button
+                onClick={() => {
+                  navigator.clipboard?.writeText(messageMenu.content).catch(() => {});
+                  setMessageMenu(null);
+                }}
+                className="w-full flex items-center gap-3 px-5 py-3.5 hover:bg-gray-50 text-graphite text-sm font-medium"
+              >
+                <Copy size={18} className="text-graphite-muted" />
+                Copiar texto
+              </button>
+            )}
+            {messageMenu.isMe && (
+              <button
+                onClick={() => {
+                  deleteMessageMutation.mutate(messageMenu.messageId);
+                  setMessageMenu(null);
+                }}
+                className="w-full flex items-center gap-3 px-5 py-3.5 hover:bg-red-50 text-red-500 text-sm font-medium"
+              >
+                <Trash2 size={18} />
+                Apagar mensagem
+              </button>
+            )}
+            <div className="h-6" />
           </div>
         </div>
       )}

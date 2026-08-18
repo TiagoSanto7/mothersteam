@@ -24,6 +24,8 @@ export function ChatListScreen({ onBack, onOpenProfile, initialChatUserId }: Cha
   const [selectedChat, setSelectedChat] = useState<Chat | null>(null);
   const [showNewChat, setShowNewChat] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [deleteTarget, setDeleteTarget] = useState<Chat | null>(null);
+  const longPressTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const { isPulling, pullY, isLoading } = usePullToRefresh(scrollRef, async () => {
     await queryClient.invalidateQueries({ queryKey: ['chats'] });
@@ -60,6 +62,26 @@ export function ChatListScreen({ onBack, onOpenProfile, initialChatUserId }: Cha
       setSelectedChat(apiChatToChat(newChat, currentUserId));
     },
   });
+
+  const deleteChatMutation = useMutation({
+    mutationFn: (chatId: string) =>
+      apiFetch(`/chats/${chatId}`, { method: 'DELETE' }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['chats'] });
+      setDeleteTarget(null);
+    },
+  });
+
+  function handleChatLongPressStart(chat: Chat) {
+    longPressTimerRef.current = setTimeout(() => setDeleteTarget(chat), 500);
+  }
+
+  function handleChatLongPressEnd() {
+    if (longPressTimerRef.current) {
+      clearTimeout(longPressTimerRef.current);
+      longPressTimerRef.current = null;
+    }
+  }
 
   useEffect(() => {
     if (initialChatUserId && isLoggedIn) {
@@ -128,6 +150,9 @@ export function ChatListScreen({ onBack, onOpenProfile, initialChatUserId }: Cha
               <li key={chat.id}>
                 <button
                   onClick={() => setSelectedChat(chat)}
+                  onPointerDown={() => handleChatLongPressStart(chat)}
+                  onPointerUp={handleChatLongPressEnd}
+                  onPointerCancel={handleChatLongPressEnd}
                   className="w-full flex items-center gap-3 px-4 py-3.5 active:bg-sara-linen transition-colors text-left"
                 >
                   <UserAvatar
@@ -154,6 +179,35 @@ export function ChatListScreen({ onBack, onOpenProfile, initialChatUserId }: Cha
           </ul>
         )}
       </div>
+
+      {deleteTarget && (
+        <div
+          className="absolute inset-0 z-30 flex flex-col justify-end bg-black/30"
+          onClick={() => setDeleteTarget(null)}
+        >
+          <div
+            className="bg-white rounded-t-3xl p-5 flex flex-col gap-2 shadow-xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="w-10 h-1 bg-gray-200 rounded-full mx-auto mb-1" />
+            <p className="text-sm font-semibold text-graphite">Apagar conversa com {deleteTarget.with}?</p>
+            <p className="text-xs text-graphite-muted mb-2">A conversa não aparecerá mais para você.</p>
+            <button
+              onClick={() => deleteChatMutation.mutate(deleteTarget.id)}
+              disabled={deleteChatMutation.isPending}
+              className="w-full py-3 rounded-2xl bg-red-500 text-white text-sm font-semibold active:scale-95 transition-transform disabled:opacity-60"
+            >
+              Apagar
+            </button>
+            <button
+              onClick={() => setDeleteTarget(null)}
+              className="w-full py-3 rounded-2xl bg-sara-linen text-graphite text-sm font-medium"
+            >
+              Cancelar
+            </button>
+          </div>
+        </div>
+      )}
 
       {showNewChat && (
         <div className="absolute inset-0 z-20 flex flex-col bg-white/95 backdrop-blur-sm">

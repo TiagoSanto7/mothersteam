@@ -1,5 +1,6 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { Plus } from 'lucide-react';
+import { useQueryClient } from '@tanstack/react-query';
 import { useAppStore } from '../../store/useAppStore';
 import { BabyScreen } from '../baby/BabyScreen';
 import { WeekCalendar } from '../home/WeekCalendar';
@@ -23,10 +24,23 @@ export function JornadaScreen() {
   const [addModalOpen, setAddModalOpen] = useState(false);
   const [babyDevOpen, setBabyDevOpen]   = useState(false);
   const selectedDate                    = useAppStore((s) => s.selectedDate);
+  const tabRefreshTick                  = useAppStore((s) => s.tabRefreshTick);
+  const queryClient                     = useQueryClient();
+  const scrollRef                       = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (tabRefreshTick === 0) return;
+    const { activeTab } = useAppStore.getState();
+    if (activeTab !== 'jornada') return;
+    scrollRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
+    queryClient.invalidateQueries({ queryKey: ['routine'] });
+    queryClient.invalidateQueries({ queryKey: ['baby'] });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tabRefreshTick]);
 
   return (
     <>
-      <div className="flex flex-col pb-28">
+      <div ref={scrollRef} className="flex flex-col pb-28 h-full overflow-y-auto">
         {/* Segmented control */}
         <div className="flex gap-1 mx-4 mt-4 mb-3 bg-white/60 rounded-2xl p-1">
           {SEGMENTS.map(({ id, label }) => (

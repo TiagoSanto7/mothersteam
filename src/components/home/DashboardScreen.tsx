@@ -1,6 +1,6 @@
 // src/components/home/DashboardScreen.tsx
-import { useMemo, useState } from 'react'
-import { useQuery } from '@tanstack/react-query'
+import { useMemo, useState, useRef, useEffect } from 'react'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useAppStore } from '../../store/useAppStore'
 import { apiFetch } from '../../lib/api'
 import { getMensagemParaFase } from '../../data/mensagemDeDeus'
@@ -42,12 +42,25 @@ export function relativeTimeFeed(iso: string): string {
 }
 
 export function DashboardScreen() {
-  const motherName    = useAppStore((s) => s.motherName)
-  const motherProfile = useAppStore((s) => s.motherProfile)
-  const phase         = useAppStore((s) => s.phase)
-  const isLoggedIn    = useAppStore((s) => s.isLoggedIn)
-  const setActiveTab  = useAppStore((s) => s.setActiveTab)
+  const motherName     = useAppStore((s) => s.motherName)
+  const motherProfile  = useAppStore((s) => s.motherProfile)
+  const phase          = useAppStore((s) => s.phase)
+  const isLoggedIn     = useAppStore((s) => s.isLoggedIn)
+  const setActiveTab   = useAppStore((s) => s.setActiveTab)
+  const tabRefreshTick = useAppStore((s) => s.tabRefreshTick)
+  const queryClient    = useQueryClient()
+  const scrollRef      = useRef<HTMLDivElement>(null)
   const [sheetOpen, setSheetOpen] = useState(false)
+
+  useEffect(() => {
+    if (tabRefreshTick === 0) return;
+    const { activeTab } = useAppStore.getState();
+    if (activeTab !== 'hoje') return;
+    scrollRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
+    queryClient.invalidateQueries({ queryKey: ['routine'] });
+    queryClient.invalidateQueries({ queryKey: ['baby'] });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tabRefreshTick]);
   const [babyDevOpen, setBabyDevOpen] = useState(false)
   const [momentoDeusOpen, setMomentoDeusOpen] = useState(false)
   const [showMaeIA, setShowMaeIA] = useState(false)
@@ -108,7 +121,7 @@ export function DashboardScreen() {
 
   return (
     <>
-      <div className="flex flex-col gap-3 pb-6 overflow-y-auto">
+      <div ref={scrollRef} className="flex flex-col gap-3 pb-6 h-full overflow-y-auto">
         {/* Header */}
         <div className="flex items-start justify-between px-4 pt-5">
           <div>

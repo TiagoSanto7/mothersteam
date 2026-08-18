@@ -12,6 +12,7 @@ const createSchema = z.object({
 
 const commentSchema = z.object({
   content: z.string().min(1),
+  parentId: z.string().optional(),
 })
 
 async function findCommentInPost(
@@ -371,20 +372,30 @@ export default async function postsRoutes(fastify: FastifyInstance) {
     async (request, reply) => {
       const limit = Math.min(Number(request.query.limit ?? 20), 50)
       const comments = await fastify.prisma.comment.findMany({
-        where: { postId: request.params.id },
+        where: { postId: request.params.id, parentId: null },
         take: limit + 1,
         ...(request.query.cursor ? { cursor: { id: request.query.cursor }, skip: 1 } : {}),
         include: {
           author: { select: { id: true, name: true, archetypeKey: true, avatarUrl: true } },
-          // Per-user like flag — same pattern used by posts.likes on the feed
           likedBy: { where: { userId: request.userId }, select: { userId: true } },
+          replies: {
+            include: {
+              author: { select: { id: true, name: true, archetypeKey: true, avatarUrl: true } },
+              likedBy: { where: { userId: request.userId }, select: { userId: true } },
+            },
+            orderBy: { createdAt: 'asc' },
+          },
         },
         orderBy: { createdAt: 'asc' },
       })
       const hasMore = comments.length > limit
-      const items = comments.slice(0, limit).map(({ likedBy, ...rest }) => ({
+      const items = comments.slice(0, limit).map(({ likedBy, replies, ...rest }) => ({
         ...rest,
         likedByCurrentUser: likedBy.length > 0,
+        replies: replies.map(({ likedBy: rLikedBy, ...r }) => ({
+          ...r,
+          likedByCurrentUser: rLikedBy.length > 0,
+        })),
       }))
       reply.send({ items, hasMore })
     }
@@ -395,7 +406,12 @@ export default async function postsRoutes(fastify: FastifyInstance) {
     if (!body.success) return reply.status(400).send({ error: body.error.flatten() })
 
     const comment = await fastify.prisma.comment.create({
-      data: { content: body.data.content, authorId: request.userId, postId: request.params.id },
+      data: {
+        content: body.data.content,
+        authorId: request.userId,
+        postId: request.params.id,
+        ...(body.data.parentId ? { parentId: body.data.parentId } : {}),
+      },
       include: { author: { select: { id: true, name: true, archetypeKey: true } } },
     })
 

@@ -124,6 +124,32 @@ export default async function chatsRoutes(fastify: FastifyInstance) {
     reply.status(201).send(message)
   })
 
+  fastify.delete<{ Params: { id: string } }>('/:id', async (request, reply) => {
+    const isMember = await fastify.prisma.chatParticipant.findUnique({
+      where: { userId_chatId: { userId: request.userId, chatId: request.params.id } },
+    })
+    if (!isMember) return reply.status(403).send({ error: 'Forbidden' })
+
+    await fastify.prisma.chatParticipant.delete({
+      where: { userId_chatId: { userId: request.userId, chatId: request.params.id } },
+    })
+    reply.send({ ok: true })
+  })
+
+  fastify.delete<{ Params: { id: string; messageId: string } }>(
+    '/:id/messages/:messageId',
+    async (request, reply) => {
+      const message = await fastify.prisma.message.findFirst({
+        where: { id: request.params.messageId, chatId: request.params.id },
+      })
+      if (!message) return reply.status(404).send({ error: 'Message not found' })
+      if (message.senderId !== request.userId) return reply.status(403).send({ error: 'Forbidden' })
+
+      await fastify.prisma.message.delete({ where: { id: request.params.messageId } })
+      reply.send({ ok: true })
+    }
+  )
+
   fastify.post<{ Params: { id: string } }>('/:id/read', async (request, reply) => {
     const isMember = await fastify.prisma.chatParticipant.findUnique({
       where: { userId_chatId: { userId: request.userId, chatId: request.params.id } },
