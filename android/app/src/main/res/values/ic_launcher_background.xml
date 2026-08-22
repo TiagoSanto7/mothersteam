@@ -1,4 +1,4 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="ic_launcher_background">#FFFFFF</color>
+    <!-- Background do adaptive icon movido para @drawable/ic_launcher_background (gradient rose→pink) -->
 </resources>

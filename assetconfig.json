@@ -1,0 +1,10 @@
+{
+  "icon": {
+    "path": "resources/icon.png",
+    "backgroundColor": "#db958b"
+  },
+  "splash": {
+    "path": "resources/splash.png",
+    "backgroundColor": "#db958b"
+  }
+}
