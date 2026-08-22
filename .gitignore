@@ -4,6 +4,9 @@ PROJECT-README-INTERNAL.md
 # Assets grandes (brandbook PDF — 803MB, manter local)
 BRANDBOOK/
 
+# Materiais de identidade Mother's Team (LAYOUT APP.pdf ~170MB + logos), manter local
+docs/materials/
+
 # Logs
 logs
 *.log
@@ -32,6 +35,10 @@ dist-ssr
 
 # Visual brainstorming sessions (superpowers plugin)
 .superpowers/
+
+# Temporários de brainstorm (renders de PDF, screenshots de teste)
+.tmp-materials/
+.playwright-mcp/
 
 # Server
 server/.env
