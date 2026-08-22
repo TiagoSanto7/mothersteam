@@ -94,20 +94,15 @@ describe('ChatListScreen — lastMessage preview', () => {
     expect(screen.getByText('Olá, tudo bem?')).toBeInTheDocument();
   });
 
-  it('shows no preview text when there are no messages in the chat', () => {
+  it('hides chats that have no messages yet', () => {
+    // Behavior updated: chats without any messages are filtered out of the list
+    // (both by the backend GET /chats endpoint and by the frontend as a safety net).
+    // This test asserts that Ana does NOT appear when her chat has no messages.
     const apiChats = [makeApiChat({ messages: [] })];
 
     render(<ChatListScreen onBack={() => {}} />, { wrapper: makeWrapper(apiChats) });
 
-    // Ana's name should appear, but no message text
-    expect(screen.getByText('Ana')).toBeInTheDocument();
-    // The lastMessage element should be empty (render p tag with empty string)
-    const listItem = screen.getByText('Ana').closest('li');
-    expect(listItem).toBeInTheDocument();
-    // The paragraph for lastMessage should have empty content
-    const paragraphs = listItem!.querySelectorAll('p');
-    const lastMsgParagraph = paragraphs[paragraphs.length - 1];
-    expect(lastMsgParagraph.textContent).toBe('');
+    expect(screen.queryByText('Ana')).not.toBeInTheDocument();
   });
 
   it('does not show the unread badge after a message is marked as read', () => {

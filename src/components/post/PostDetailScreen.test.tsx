@@ -92,11 +92,12 @@ describe('PostDetailScreen', () => {
     expect(screen.queryByAltText('Imagem do post')).not.toBeInTheDocument();
   });
 
-  it('calls onBack when back button is clicked', () => {
+  it('calls onBack when back button is clicked', async () => {
     const onBack = vi.fn();
     render(<PostDetailScreen post={POST_WITH_IMAGE} onBack={onBack} />, { wrapper: makeWrapper() });
     fireEvent.click(screen.getByRole('button', { name: /voltar/i }));
-    expect(onBack).toHaveBeenCalledOnce();
+    // handleBack is async (awaits the exit animation) — wait for onBack to fire
+    await waitFor(() => expect(onBack).toHaveBeenCalledOnce());
   });
 
   it('opens share sheet when Enviar is clicked', () => {

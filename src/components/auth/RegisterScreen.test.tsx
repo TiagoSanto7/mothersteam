@@ -75,6 +75,7 @@ describe('RegisterScreen', () => {
     fireEvent.change(screen.getByLabelText(/senha/i), { target: { value: '12345678' } });
     fireEvent.click(screen.getByRole('button', { name: /continuar/i }));
     fireEvent.change(screen.getByLabelText(/semana da gravidez/i), { target: { value: '28' } });
+    fireEvent.click(screen.getByLabelText(/li e aceito os termos/i));
     fireEvent.click(screen.getByRole('button', { name: /criar conta/i }));
     await waitFor(() => {
       expect(mockApiFetch).toHaveBeenCalledWith('/auth/register', expect.objectContaining({ method: 'POST' }));
@@ -91,6 +92,7 @@ describe('RegisterScreen', () => {
     fireEvent.change(screen.getByLabelText(/senha/i), { target: { value: '12345678' } });
     fireEvent.click(screen.getByRole('button', { name: /continuar/i }));
     fireEvent.change(screen.getByLabelText(/semana da gravidez/i), { target: { value: '28' } });
+    fireEvent.click(screen.getByLabelText(/li e aceito os termos/i));
     fireEvent.click(screen.getByRole('button', { name: /criar conta/i }));
     await waitFor(() => {
       expect(screen.getByRole('alert')).toHaveTextContent(/e-mail já está cadastrado/i);

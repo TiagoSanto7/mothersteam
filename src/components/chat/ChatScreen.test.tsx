@@ -94,7 +94,8 @@ describe('ChatScreen — profile preview modal', () => {
       <ChatScreen chat={PLAIN_CHAT} onBack={() => {}} onOpenProfile={() => {}} />,
       { wrapper: makeWrapper('1', PLAIN_MESSAGES) },
     );
-    fireEvent.click(screen.getByRole('button', { name: /ver perfil de Ana/i }));
+    // The header button + message avatar buttons all share the "Ver perfil de Ana" aria-label; the header is first
+    fireEvent.click(screen.getAllByRole('button', { name: /ver perfil de Ana/i })[0]);
     expect(screen.getByRole('dialog', { name: /preview de perfil/i })).toBeInTheDocument();
   });
 
@@ -103,7 +104,8 @@ describe('ChatScreen — profile preview modal', () => {
       <ChatScreen chat={PLAIN_CHAT} onBack={() => {}} onOpenProfile={() => {}} />,
       { wrapper: makeWrapper('1', PLAIN_MESSAGES) },
     );
-    fireEvent.click(screen.getByRole('button', { name: /ver perfil de Ana/i }));
+    // The header button + message avatar buttons all share the "Ver perfil de Ana" aria-label; the header is first
+    fireEvent.click(screen.getAllByRole('button', { name: /ver perfil de Ana/i })[0]);
     expect(screen.getAllByText('Ana').length).toBeGreaterThan(0);
   });
 
@@ -112,7 +114,8 @@ describe('ChatScreen — profile preview modal', () => {
       <ChatScreen chat={PLAIN_CHAT} onBack={() => {}} onOpenProfile={() => {}} />,
       { wrapper: makeWrapper('1', PLAIN_MESSAGES) },
     );
-    fireEvent.click(screen.getByRole('button', { name: /ver perfil de Ana/i }));
+    // The header button + message avatar buttons all share the "Ver perfil de Ana" aria-label; the header is first
+    fireEvent.click(screen.getAllByRole('button', { name: /ver perfil de Ana/i })[0]);
     expect(screen.getByText('@ana_mae')).toBeInTheDocument();
   });
 
@@ -121,7 +124,8 @@ describe('ChatScreen — profile preview modal', () => {
       <ChatScreen chat={PLAIN_CHAT} onBack={() => {}} onOpenProfile={() => {}} />,
       { wrapper: makeWrapper('1', PLAIN_MESSAGES) },
     );
-    fireEvent.click(screen.getByRole('button', { name: /ver perfil de Ana/i }));
+    // The header button + message avatar buttons all share the "Ver perfil de Ana" aria-label; the header is first
+    fireEvent.click(screen.getAllByRole('button', { name: /ver perfil de Ana/i })[0]);
     expect(screen.getByText(/2 mensagens/i)).toBeInTheDocument();
   });
 
@@ -131,7 +135,8 @@ describe('ChatScreen — profile preview modal', () => {
       <ChatScreen chat={PLAIN_CHAT} onBack={() => {}} onOpenProfile={onOpenProfile} />,
       { wrapper: makeWrapper('1', PLAIN_MESSAGES) },
     );
-    fireEvent.click(screen.getByRole('button', { name: /ver perfil de Ana/i }));
+    // The header button + message avatar buttons all share the "Ver perfil de Ana" aria-label; the header is first
+    fireEvent.click(screen.getAllByRole('button', { name: /ver perfil de Ana/i })[0]);
     fireEvent.click(screen.getByRole('button', { name: /visitar perfil/i }));
     expect(onOpenProfile).toHaveBeenCalledWith('other');
   });
@@ -141,7 +146,8 @@ describe('ChatScreen — profile preview modal', () => {
       <ChatScreen chat={PLAIN_CHAT} onBack={() => {}} onOpenProfile={() => {}} />,
       { wrapper: makeWrapper('1', PLAIN_MESSAGES) },
     );
-    fireEvent.click(screen.getByRole('button', { name: /ver perfil de Ana/i }));
+    // The header button + message avatar buttons all share the "Ver perfil de Ana" aria-label; the header is first
+    fireEvent.click(screen.getAllByRole('button', { name: /ver perfil de Ana/i })[0]);
     expect(screen.getByRole('dialog', { name: /preview de perfil/i })).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: /fechar/i }));
     expect(screen.queryByRole('dialog', { name: /preview de perfil/i })).not.toBeInTheDocument();
