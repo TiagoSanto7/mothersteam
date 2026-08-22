@@ -22,4 +22,13 @@
   .font-serif {
     font-family: 'Playfair Display', Georgia, serif;
   }
+  .bg-mt-gradient {
+    background: linear-gradient(135deg, #db958b 0%, #f6bdd8 100%);
+  }
+  .bg-mt-gradient-soft {
+    background: linear-gradient(135deg, #fadfec 0%, #f6bdd8 60%, #db958b 100%);
+  }
+  .bg-mt-gradient-pastel {
+    background: linear-gradient(135deg, #fadfec 0%, #e8e5f0 50%, #d9e8f2 100%);
+  }
 }
