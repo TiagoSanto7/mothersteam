@@ -77,7 +77,7 @@ export function CommunityCard({ community, isFollowing, onToggle, onOpen }: Comm
         type="button"
         onClick={onOpen}
         aria-label={`Ver comunidade ${community.name}`}
-        className="w-full text-left bg-white/95 backdrop-blur-sm rounded-mt shadow-mt p-4 flex items-start gap-3 shadow-sm"
+        className="w-full text-left bg-white/95 backdrop-blur-sm rounded-mt shadow-mt p-4 flex items-start gap-3"
       >
         {inner}
       </button>
@@ -85,7 +85,7 @@ export function CommunityCard({ community, isFollowing, onToggle, onOpen }: Comm
   }
 
   return (
-    <div className="bg-white/95 backdrop-blur-sm rounded-mt shadow-mt p-4 flex items-start gap-3 shadow-sm">
+    <div className="bg-white/95 backdrop-blur-sm rounded-mt shadow-mt p-4 flex items-start gap-3">
       {inner}
     </div>
   );

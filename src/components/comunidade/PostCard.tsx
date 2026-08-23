@@ -221,7 +221,7 @@ export function PostCard({ post, onOpen, onOpenProfile, onOpenUser, onOpenCommun
             aria-label={reposted ? 'Republicado' : 'Republicar'}
             aria-pressed={reposted}
             className={`flex items-center gap-1.5 text-xs transition-colors ${
-              reposted ? 'text-mt-muted' : 'text-mt-muted'
+              reposted ? 'text-mt-rose-dark' : 'text-mt-muted'
             }`}
           >
             <Repeat2 size={14} strokeWidth={1.8} />

@@ -1,10 +1,13 @@
-import type { InputHTMLAttributes } from 'react'
+import { forwardRef, type InputHTMLAttributes } from 'react'
 
 interface MtInputProps extends InputHTMLAttributes<HTMLInputElement> {
   label?: string
 }
 
-export function MtInput({ label, id, className = '', ...rest }: MtInputProps) {
+export const MtInput = forwardRef<HTMLInputElement, MtInputProps>(function MtInput(
+  { label, id, className = '', ...rest },
+  ref,
+) {
   return (
     <div className="w-full">
       {label && (
@@ -13,10 +16,11 @@ export function MtInput({ label, id, className = '', ...rest }: MtInputProps) {
         </label>
       )}
       <input
+        ref={ref}
         id={id}
         className={`w-full rounded-mt-pill bg-mt-cream border-0 py-3 px-5 text-mt-charcoal placeholder-mt-muted focus:outline-none focus:ring-2 focus:ring-mt-rose ${className}`}
         {...rest}
       />
     </div>
   )
-}
+})

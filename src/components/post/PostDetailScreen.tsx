@@ -358,7 +358,7 @@ export function PostDetailScreen({ post, onBack, onOpenProfile }: PostDetailScre
             </button>
             <button
               onClick={handleRepost}
-              className={`flex items-center gap-1.5 text-xs transition-colors ${reposted ? 'text-mt-muted' : 'text-mt-muted'}`}
+              className={`flex items-center gap-1.5 text-xs transition-colors ${reposted ? 'text-mt-rose-dark' : 'text-mt-muted'}`}
             >
               <Repeat2 size={16} strokeWidth={1.8} />
               <span>{reposted ? 'Republicado' : 'Republicar'}</span>

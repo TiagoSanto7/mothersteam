@@ -38,6 +38,7 @@ export function MobileShell({
   const setActiveTab = useAppStore((s) => s.setActiveTab);
   const quickActionsOpen = useAppStore((s) => s.quickActionsOpen);
   const closeQuickActions = useAppStore((s) => s.closeQuickActions);
+  const requestQuickAction = useAppStore((s) => s.requestQuickAction);
   const prevTabRef = useRef<string>(activeTab);
 
   const currentIndex = TABS.indexOf(activeTab);
@@ -80,9 +81,9 @@ export function MobileShell({
           open={quickActionsOpen}
           onClose={closeQuickActions}
           onMaeIA={() => setActiveTab('maeIA')}
-          onNewPost={() => setActiveTab('comunidade')}
-          onAddRoutine={() => setActiveTab('hoje')}
-          onRegisterBaby={() => setActiveTab('hoje')}
+          onNewPost={() => { requestQuickAction('newPost'); setActiveTab('comunidade'); }}
+          onAddRoutine={() => { requestQuickAction('addRoutine'); setActiveTab('hoje'); }}
+          onRegisterBaby={() => { requestQuickAction('registerBaby'); setActiveTab('hoje'); }}
         />
       </div>
     </div>

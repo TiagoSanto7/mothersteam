@@ -47,8 +47,8 @@ export function LoginScreen() {
   }
 
   return (
-    <MtScreen variant="gradient">
-      <div className="min-h-screen w-full flex items-center justify-center px-6 py-6">
+    <MtScreen variant="gradient" className="flex items-center justify-center px-6 py-6">
+      <div className="w-full flex justify-center">
         <div className="w-full max-w-[380px]">
           <MtCard.Feature className="flex flex-col items-center gap-4 py-5">
             {/* Brand block — a marca é o herói.

@@ -14,6 +14,7 @@ import { BabyDevScreen } from './BabyDevScreen'
 import { MomentoDeusCard } from './MomentoDeusCard'
 import { MomentoDeusScreen } from './MomentoDeusScreen'
 import { MaeIAScreen } from '../maeIA/MaeIAScreen'
+import { AddRoutineModal } from './AddRoutineModal'
 import { MtCard } from '../mt/MtCard'
 import { Mark } from '../brand/Mark'
 
@@ -50,6 +51,8 @@ export function DashboardScreen() {
   const isLoggedIn     = useAppStore((s) => s.isLoggedIn)
   const setActiveTab   = useAppStore((s) => s.setActiveTab)
   const tabRefreshTick = useAppStore((s) => s.tabRefreshTick)
+  const pendingQuickAction = useAppStore((s) => s.pendingQuickAction)
+  const consumeQuickAction = useAppStore((s) => s.consumeQuickAction)
   const queryClient    = useQueryClient()
   const scrollRef      = useRef<HTMLDivElement>(null)
   const [sheetOpen, setSheetOpen] = useState(false)
@@ -66,6 +69,18 @@ export function DashboardScreen() {
   const [babyDevOpen, setBabyDevOpen] = useState(false)
   const [momentoDeusOpen, setMomentoDeusOpen] = useState(false)
   const [showMaeIA, setShowMaeIA] = useState(false)
+  const [addRoutineOpen, setAddRoutineOpen] = useState(false)
+
+  // Bridge from MtQuickActionSheet: M-CTA fires either "Adicionar rotina" or "Registrar amamentação/sono/fralda".
+  useEffect(() => {
+    if (pendingQuickAction === 'addRoutine') {
+      setAddRoutineOpen(true);
+      consumeQuickAction();
+    } else if (pendingQuickAction === 'registerBaby') {
+      setSheetOpen(true);
+      consumeQuickAction();
+    }
+  }, [pendingQuickAction, consumeQuickAction]);
 
   const selectedDate = useAppStore((s) => s.selectedDate)
 
@@ -228,6 +243,12 @@ export function DashboardScreen() {
       <QuickRegisterSheet open={sheetOpen} onClose={() => setSheetOpen(false)} />
       <BabyDevScreen open={babyDevOpen} onClose={() => setBabyDevOpen(false)} />
       <MomentoDeusScreen open={momentoDeusOpen} onClose={() => setMomentoDeusOpen(false)} />
+      {addRoutineOpen && (
+        <AddRoutineModal
+          defaultDate={selectedDate}
+          onClose={() => setAddRoutineOpen(false)}
+        />
+      )}
     </>
   )
 }

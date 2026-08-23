@@ -44,6 +44,8 @@ interface AppState {
   tabRefreshTick: number;
   closeOverlaysTick: number;
   quickActionsOpen: boolean;
+  /** Cross-screen bridge for the +CTA sheet: the screen that consumes it must call consumeQuickAction() after acting. */
+  pendingQuickAction: 'newPost' | 'addRoutine' | 'registerBaby' | null;
   // Auth actions
   setAccessToken: (token: string) => void;
   setAuth: (token: string, user: ApiUser, refreshToken?: string) => void;
@@ -71,6 +73,8 @@ interface AppState {
   closeAllOverlays: () => void;
   openQuickActions: () => void;
   closeQuickActions: () => void;
+  requestQuickAction: (action: 'newPost' | 'addRoutine' | 'registerBaby') => void;
+  consumeQuickAction: () => void;
 }
 
 const safeLocalStorage = {
@@ -150,6 +154,7 @@ export const useAppStore = create<AppState>()(
       tabRefreshTick: 0,
       closeOverlaysTick: 0,
       quickActionsOpen: false,
+      pendingQuickAction: null,
       // Auth actions
       setAccessToken: (token) => set({ accessToken: token }),
       setAuth: (token, user, refreshTok) =>
@@ -235,6 +240,8 @@ export const useAppStore = create<AppState>()(
       closeAllOverlays: () => set((s) => ({ closeOverlaysTick: s.closeOverlaysTick + 1, quickActionsOpen: false })),
       openQuickActions: () => set({ quickActionsOpen: true }),
       closeQuickActions: () => set({ quickActionsOpen: false }),
+      requestQuickAction: (action) => set({ pendingQuickAction: action }),
+      consumeQuickAction: () => set({ pendingQuickAction: null }),
       setSelectedDate: (date) => set({ selectedDate: date }),
       toggleFeedSide: () =>
         set((s) => ({ lastFeedSide: s.lastFeedSide === 'left' ? 'right' : 'left' })),

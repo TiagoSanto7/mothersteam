@@ -20,9 +20,9 @@ export function MtPillButton({
 }: MtPillButtonProps) {
   return (
     <button
+      {...rest}
       type={rest.type ?? 'button'}
       className={`rounded-mt-pill py-3 px-6 text-sm font-semibold transition-opacity disabled:opacity-50 disabled:cursor-not-allowed ${VARIANT_CLASSES[variant]} ${className}`}
-      {...rest}
     >
       {children}
     </button>

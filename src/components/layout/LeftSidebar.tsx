@@ -80,8 +80,7 @@ export function LeftSidebar({
             aria-label={label}
             onClick={() => {
               useAppStore.getState().closeAllOverlays();
-              if (activeTab === id) bumpTabRefresh();
-              else setActiveTab(id);
+              if (activeTab !== id) setActiveTab(id);
               bumpTabRefresh();
             }}
             className={navBtnClass(activeTab === id)}

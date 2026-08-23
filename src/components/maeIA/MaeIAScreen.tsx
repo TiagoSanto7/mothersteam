@@ -31,10 +31,10 @@ const STATUS_LABELS: Record<ConvStatus, string> = {
 
 const STATUS_COLORS: Record<ConvStatus, string> = {
   idle: 'text-mt-muted',
-  connecting: 'text-mt-rose',
+  connecting: 'text-mt-rose-dark',
   listening: 'text-green-600',
-  processing: 'text-mt-muted',
-  speaking: 'text-mt-rose',
+  processing: 'text-mt-rose',
+  speaking: 'text-mt-rose-deep',
   error: 'text-red-500',
 };
 

@@ -29,7 +29,8 @@ export function BottomTabBar() {
 
   const handleTabClick = (id: TabId) => {
     closeAllOverlays();
-    setActiveTab(id);
+    // Re-tap on the active tab = "scroll to top / refresh"; don't reset the tab identity.
+    if (activeTab !== id) setActiveTab(id);
     bumpTabRefresh();
   };
 

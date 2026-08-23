@@ -27,6 +27,8 @@ const CATEGORY_LABELS: Category[] = ['todos', 'gestação', 'pós-parto', 'amame
 export function ComunidadeScreen() {
   const isLoggedIn       = useAppStore((s) => s.isLoggedIn);
   const tabRefreshTick   = useAppStore((s) => s.tabRefreshTick);
+  const pendingQuickAction = useAppStore((s) => s.pendingQuickAction);
+  const consumeQuickAction = useAppStore((s) => s.consumeQuickAction);
 
   const queryClient = useQueryClient();
   const sentinelRef = useRef<HTMLDivElement>(null);
@@ -74,6 +76,14 @@ export function ComunidadeScreen() {
   const [activeCategory, setActiveCategory] = useState<Category>('todos');
   const [showCreate, setShowCreate] = useState(false);
   const [showCreateWithImage, setShowCreateWithImage] = useState(false);
+
+  // Bridge from MtQuickActionSheet: when M-CTA's "Novo post" fires, open the composer here.
+  useEffect(() => {
+    if (pendingQuickAction !== 'newPost') return;
+    setTopTab('para-voce');
+    setShowCreate(true);
+    consumeQuickAction();
+  }, [pendingQuickAction, consumeQuickAction]);
   const [selectedPost, setSelectedPost] = useState<CommunityPost | null>(null);
   const [profileUserId, setProfileUserId] = useState<string | null>(null);
   const [openCommunityId, setOpenCommunityId] = useState<string | null>(null);

@@ -95,9 +95,16 @@ export default function App() {
     clearPendingChat();
   }, [pendingChatUserId, clearPendingChat]);
 
-  // When the navbar dispatches closeAllOverlays, close every full-screen overlay
+  // When the navbar dispatches closeAllOverlays, close every full-screen overlay —
+  // but bail out when no overlay is actually open, so nav taps on a clean stack
+  // don't fire 15 redundant setState calls each time.
   useEffect(() => {
     if (closeOverlaysTick === 0) return;
+    const anyOpen =
+      drawerOpen || showSettings || showSavedVerses || showNotifications ||
+      showChat || showSearch || profileUserId || openCommunityId || pendingPostId ||
+      chatTargetUserId || openProduct || openReviews || showCart || showCheckout || openOrderId;
+    if (!anyOpen) return;
     setDrawerOpen(false);
     setShowSettings(false);
     setShowSavedVerses(false);
@@ -113,6 +120,7 @@ export default function App() {
     setShowCart(false);
     setShowCheckout(false);
     setOpenOrderId(null);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [closeOverlaysTick]);
 
   // Session restore: try refresh on first load (cookie for web, body token for Capacitor)
