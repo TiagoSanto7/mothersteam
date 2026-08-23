@@ -48,22 +48,28 @@ export function LoginScreen() {
 
   return (
     <MtScreen variant="gradient">
-      <div className="min-h-screen w-full flex items-center justify-center px-6 py-8">
+      <div className="min-h-screen w-full flex items-center justify-center px-6 py-6">
         <div className="w-full max-w-[380px]">
-          <MtCard.Feature className="flex flex-col items-center gap-6">
-            {/* Brand block — a marca é o herói */}
-            <div className="flex flex-col items-center gap-1 pt-2">
-              <Mark variant="pink" size={72} aria-label="Mother's Team" />
-              <Wordmark variant="rose" size="lg" className="w-auto -mt-1" />
+          <MtCard.Feature className="flex flex-col items-center gap-4 py-5">
+            {/* Brand block — a marca é o herói.
+                Controles de tamanho/espaçamento (mexer aqui se quiser ajustar):
+                - <Mark size={80}> → tamanho do M-logo em px (80 = 80x80)
+                - <Wordmark size="xl"> → 'sm' | 'md' | 'lg' | 'xl' (h-8 / h-16 / h-24 / h-32)
+                - <img w-64> → largura da tagline (w-40 = 160px, w-52 = 208px, w-64 = 256px, w-72 = 288px)
+                - gap-0 no div externo → espaço entre Mark, Wordmark e Tagline (aumenta com gap-1, gap-2, ...)
+                - -mt-2 / mt-0 abaixo → ajuste fino vertical de cada elemento */}
+            <div className="flex flex-col items-center gap-0">
+              <Mark variant="gradient" size={80} aria-label="Mother's Team" />
+              <Wordmark variant="rose" size="xl" className="w-auto -mt-2" />
               <img
                 src={tagline}
                 alt="quem é MÃE sabe."
-                className="w-52 h-auto mt-1"
+                className="w-64 h-auto -mt-2"
               />
             </div>
 
             {/* Form */}
-            <form onSubmit={handleSubmit} className="w-full flex flex-col gap-4">
+            <form onSubmit={handleSubmit} className="w-full flex flex-col gap-3">
               <MtInput
                 id="email"
                 label="E-mail"
@@ -108,7 +114,7 @@ export function LoginScreen() {
             </div>
 
             {/* Social auth */}
-            <div className="w-full flex flex-col gap-3">
+            <div className="w-full flex flex-col gap-2">
               <MtPillButton
                 variant="google"
                 onClick={() => setShowComingSoon(true)}
@@ -152,7 +158,7 @@ export function LoginScreen() {
           </MtCard.Feature>
 
           {/* Mark pequeno como assinatura no rodapé */}
-          <div className="flex justify-center mt-6">
+          <div className="flex justify-center mt-4">
             <Mark variant="mono" size={20} className="opacity-40" aria-label="Mother's Team" />
           </div>
         </div>
