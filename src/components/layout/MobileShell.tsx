@@ -5,6 +5,7 @@ import { BottomTabBar } from './BottomTabBar';
 import { AppHeader } from './AppHeader';
 import { SideDrawer } from './SideDrawer';
 import { useAppStore } from '../../store/useAppStore';
+import { MtQuickActionSheet } from '../mt/MtQuickActionSheet';
 
 const TABS = ['hoje', 'jornada', 'comunidade', 'perfil'];
 
@@ -34,6 +35,9 @@ export function MobileShell({
   headerRightSlot,
 }: MobileShellProps) {
   const activeTab = useAppStore((s) => s.activeTab);
+  const setActiveTab = useAppStore((s) => s.setActiveTab);
+  const quickActionsOpen = useAppStore((s) => s.quickActionsOpen);
+  const closeQuickActions = useAppStore((s) => s.closeQuickActions);
   const prevTabRef = useRef<string>(activeTab);
 
   const currentIndex = TABS.indexOf(activeTab);
@@ -71,6 +75,14 @@ export function MobileShell({
           onClose={onCloseDrawer}
           onOpenSettings={onOpenSettings}
           onOpenSavedVerses={onOpenSavedVerses}
+        />
+        <MtQuickActionSheet
+          open={quickActionsOpen}
+          onClose={closeQuickActions}
+          onMaeIA={() => setActiveTab('maeIA')}
+          onNewPost={() => setActiveTab('comunidade')}
+          onAddRoutine={() => setActiveTab('hoje')}
+          onRegisterBaby={() => setActiveTab('hoje')}
         />
       </div>
     </div>

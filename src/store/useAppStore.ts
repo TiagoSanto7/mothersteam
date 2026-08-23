@@ -43,6 +43,7 @@ interface AppState {
   pendingChatUserId: string | null;
   tabRefreshTick: number;
   closeOverlaysTick: number;
+  quickActionsOpen: boolean;
   // Auth actions
   setAccessToken: (token: string) => void;
   setAuth: (token: string, user: ApiUser, refreshToken?: string) => void;
@@ -68,6 +69,8 @@ interface AppState {
   savePrayer: (ref: string, text: string) => void;
   bumpTabRefresh: () => void;
   closeAllOverlays: () => void;
+  openQuickActions: () => void;
+  closeQuickActions: () => void;
 }
 
 const safeLocalStorage = {
@@ -146,6 +149,7 @@ export const useAppStore = create<AppState>()(
       pendingChatUserId: null,
       tabRefreshTick: 0,
       closeOverlaysTick: 0,
+      quickActionsOpen: false,
       // Auth actions
       setAccessToken: (token) => set({ accessToken: token }),
       setAuth: (token, user, refreshTok) =>
@@ -228,7 +232,9 @@ export const useAppStore = create<AppState>()(
       // UI actions
       setActiveTab: (tab) => set({ activeTab: tab }),
       bumpTabRefresh: () => set((s) => ({ tabRefreshTick: s.tabRefreshTick + 1 })),
-      closeAllOverlays: () => set((s) => ({ closeOverlaysTick: s.closeOverlaysTick + 1 })),
+      closeAllOverlays: () => set((s) => ({ closeOverlaysTick: s.closeOverlaysTick + 1, quickActionsOpen: false })),
+      openQuickActions: () => set({ quickActionsOpen: true }),
+      closeQuickActions: () => set({ quickActionsOpen: false }),
       setSelectedDate: (date) => set({ selectedDate: date }),
       toggleFeedSide: () =>
         set((s) => ({ lastFeedSide: s.lastFeedSide === 'left' ? 'right' : 'left' })),

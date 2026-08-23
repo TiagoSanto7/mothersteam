@@ -53,14 +53,14 @@ export function QuickRegisterSheet({ open, onClose }: QuickRegisterSheetProps) {
       <div
         role="dialog"
         aria-modal="true"
-        aria-label="Registrar mamada"
+        aria-label="Registrar amamentação"
         className={`w-full bg-sara-cream rounded-t-3xl px-5 pb-8 pt-4 transition-transform duration-300 ${
           open ? 'translate-y-0' : 'translate-y-full'
         }`}
       >
         <div className="w-9 h-1 rounded-full bg-[#D4C0A8] mx-auto mb-4" />
 
-        <p className="text-[15px] font-bold text-graphite mb-4">Registrar mamada</p>
+        <p className="text-[15px] font-bold text-graphite mb-4">Registrar amamentação</p>
 
         <p className="text-[10px] font-semibold text-graphite-muted uppercase tracking-wide mb-2">
           Qual seio?
@@ -85,7 +85,7 @@ export function QuickRegisterSheet({ open, onClose }: QuickRegisterSheetProps) {
         <button
           onClick={() => mutation.mutate()}
           disabled={mutation.isPending}
-          aria-label="Registrar mamada agora"
+          aria-label="Registrar amamentação agora"
           className="w-full py-3.5 rounded-2xl bg-sara-gold text-white text-[14px] font-bold disabled:opacity-60"
         >
           {mutation.isPending ? 'Registrando...' : 'Registrar agora'}

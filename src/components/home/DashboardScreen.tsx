@@ -14,6 +14,8 @@ import { BabyDevScreen } from './BabyDevScreen'
 import { MomentoDeusCard } from './MomentoDeusCard'
 import { MomentoDeusScreen } from './MomentoDeusScreen'
 import { MaeIAScreen } from '../maeIA/MaeIAScreen'
+import { MtCard } from '../mt/MtCard'
+import { Mark } from '../brand/Mark'
 
 export function getGreeting(): string {
   const h = new Date().getHours()
@@ -108,7 +110,7 @@ export function DashboardScreen() {
             const d = new Date(lastFeedToday.createdAt)
             return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`
           })(),
-          label: 'Mamada',
+          label: 'Amamentação',
           done: true,
           type: 'feed' as const,
         }
@@ -122,67 +124,67 @@ export function DashboardScreen() {
   return (
     <>
       <div ref={scrollRef} className="flex flex-col gap-3 pb-6 h-full overflow-y-auto">
-        {/* Header */}
-        <div className="flex items-start justify-between px-4 pt-5">
+        {/* Header — saudação + avatar */}
+        <div className="flex items-center justify-between px-4 pt-5">
           <div>
-            <p className="text-[12px] text-graphite-muted font-medium">
+            <p className="text-[12px] text-mt-muted font-medium">
               {getGreeting()},
             </p>
-            <p className="text-[22px] font-bold font-serif text-graphite leading-tight">
-              {motherName || 'Mãe'} 🌷
+            <p className="text-[22px] font-bold font-serif text-mt-charcoal leading-tight">
+              {motherName || 'Mãe'}
             </p>
-            <p className="text-[12px] text-graphite-muted mt-0.5">
+            <p className="text-[12px] text-mt-muted mt-0.5">
               {getContextualPhrase(phase)}
             </p>
           </div>
           <div
             style={{ background: getAvatarColor(motherProfile?.archetypeKey ?? null) }}
-            className="w-9 h-9 rounded-full flex items-center justify-center text-white font-bold text-sm flex-shrink-0"
+            className="w-10 h-10 rounded-full flex items-center justify-center text-white font-bold text-sm flex-shrink-0 ring-2 ring-white shadow-mt"
           >
             {initial}
           </div>
         </div>
 
-        {/* Sara card — hero */}
-        <div className="mx-4 rounded-2xl p-5 bg-gradient-to-br from-sara-gold to-sara-terracotta shadow-md flex flex-col">
-          <p className="text-[9px] font-bold text-white/75 uppercase tracking-wide mb-2">
+        {/* Sara card — hero com gradient rose */}
+        <div className="mx-4 rounded-mt p-5 bg-mt-gradient shadow-mt flex flex-col text-white">
+          <p className="text-[10px] font-bold text-white/80 uppercase tracking-wider mb-2">
             ✦ Sara diz
           </p>
-          <p className="text-[14px] font-medium text-white leading-relaxed flex-1">
+          <p className="text-[14px] font-medium leading-relaxed flex-1">
             "{saraMensagem.mensagem}"
           </p>
           <button
             onClick={() => setActiveTab('maeIA')}
-            aria-label="Conversar com a Sara"
-            className="mt-3 self-start bg-white/20 text-white text-[11px] font-semibold px-3 py-1.5 rounded-xl"
+            aria-label="Conversar com a MãeIA"
+            className="mt-3 self-start bg-white/25 backdrop-blur-sm text-white text-[11px] font-semibold px-3 py-1.5 rounded-mt-pill hover:bg-white/35 transition-colors"
           >
-            Conversar com a Sara →
+            Conversar com a MãeIA →
           </button>
         </div>
 
         {/* Bloco Hoje */}
-        <div className="mx-4 bg-white rounded-2xl p-3.5 shadow-sm">
-          <p className="text-[9px] font-bold text-graphite-muted uppercase tracking-wide mb-2">
+        <MtCard.Compact className="mx-4">
+          <p className="text-[10px] font-bold text-mt-muted uppercase tracking-wider mb-2">
             Hoje
           </p>
 
           {timelineRows.length === 0 ? (
-            <p className="text-[12px] text-graphite-muted">Dia livre hoje 🌸</p>
+            <p className="text-[12px] text-mt-muted">Dia livre hoje 🌸</p>
           ) : (
             <div className="flex flex-col gap-2">
               {timelineRows.map((row) => (
                 <div key={`${row.type}-${row.time}`} className="flex items-center gap-2">
                   <span
                     className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${
-                      row.done ? 'bg-graphite-muted/40' : 'bg-sara-gold'
+                      row.done ? 'bg-mt-muted/40' : 'bg-mt-rose'
                     }`}
                   />
-                  <span className="text-[11px] text-graphite-muted w-9 flex-shrink-0">
+                  <span className="text-[11px] text-mt-muted w-9 flex-shrink-0">
                     {row.time}
                   </span>
                   <span
                     className={`text-[12px] font-medium ${
-                      row.done && row.type === 'rotina' ? 'line-through text-graphite-muted' : 'text-graphite'
+                      row.done && row.type === 'rotina' ? 'line-through text-mt-muted' : 'text-mt-charcoal'
                     }`}
                   >
                     {row.label}
@@ -194,30 +196,30 @@ export function DashboardScreen() {
 
           <button
             onClick={() => setSheetOpen(true)}
-            aria-label="Registrar mamada"
-            className="mt-2.5 inline-block bg-sara-gold text-white rounded-xl text-[10px] font-semibold px-2.5 py-1"
+            aria-label="Registrar amamentação"
+            className="mt-3 inline-flex items-center gap-1 bg-mt-gradient text-white rounded-mt-pill text-[11px] font-semibold px-3 py-1.5 shadow-mt"
           >
-            + Registrar mamada
+            + Registrar amamentação
           </button>
-        </div>
+        </MtCard.Compact>
 
         <BabyDevCard onClick={() => setBabyDevOpen(true)} />
         <MomentoDeusCard onClick={() => setMomentoDeusOpen(true)} />
       </div>
 
-      {/* Sara FAB */}
+      {/* MãeIA FAB — botão flutuante com M gradiente */}
       <button
         onClick={() => setShowMaeIA(true)}
-        aria-label="Conversar com a Sara"
-        className="fixed bottom-[84px] right-4 w-14 h-14 rounded-full bg-gradient-to-br from-sara-gold to-sara-terracotta text-white shadow-lg shadow-sara-terracotta/30 flex items-center justify-center active:scale-95 transition-transform z-30 text-xl"
+        aria-label="Conversar com a MãeIA"
+        className="fixed bottom-[92px] right-4 w-14 h-14 rounded-full bg-white shadow-mt-lg flex items-center justify-center active:scale-95 transition-transform z-30"
       >
-        ✦
+        <Mark variant="gradient" size={44} aria-label="MãeIA" />
       </button>
 
-      {/* MaeIA overlay */}
+      {/* MãeIA overlay */}
       {showMaeIA && (
         <div className="fixed inset-0 z-50 sm:bg-black/40 sm:flex sm:items-center sm:justify-center">
-          <div className="w-full h-full sm:w-[390px] sm:h-[844px] bg-gradient-to-b from-[#F5EDE0] via-[#EAD8C8] to-[#D9C4AF] sm:rounded-[44px] sm:shadow-2xl overflow-hidden">
+          <div className="w-full h-full sm:w-[390px] sm:h-[844px] bg-mt-gradient-pastel sm:rounded-[44px] sm:shadow-2xl overflow-hidden">
             <MaeIAScreen onBack={() => setShowMaeIA(false)} />
           </div>
         </div>
