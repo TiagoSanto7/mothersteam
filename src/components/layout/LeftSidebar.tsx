@@ -54,19 +54,19 @@ export function LeftSidebar({
       'w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-colors',
       'md:justify-center lg:justify-start',
       isActive
-        ? 'bg-sara-gold/10 text-sara-gold'
-        : 'text-graphite-muted hover:bg-sara-linen hover:text-graphite',
+        ? 'bg-mt-rose/10 text-mt-rose'
+        : 'text-mt-muted hover:bg-mt-linen hover:text-mt-charcoal',
     ].join(' ');
 
   const actionBtnClass =
-    'w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-colors text-graphite-muted hover:bg-sara-linen hover:text-graphite md:justify-center lg:justify-start';
+    'w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-colors text-mt-muted hover:bg-mt-linen hover:text-mt-charcoal md:justify-center lg:justify-start';
 
   return (
-    <aside className="sticky top-0 h-screen flex flex-col bg-[#F5EDE0] border-r border-sara-linen md:w-[72px] lg:w-60 flex-shrink-0 overflow-hidden">
+    <aside className="sticky top-0 h-screen flex flex-col bg-[#F5EDE0] border-r border-mt-linen md:w-[72px] lg:w-60 flex-shrink-0 overflow-hidden">
       {/* Logo */}
       <div className="flex items-center md:justify-center lg:justify-start px-3 py-5 flex-shrink-0">
-        <Heart size={22} className="text-sara-gold flex-shrink-0" fill="currentColor" strokeWidth={0} />
-        <span className="hidden lg:block ml-2 font-serif font-bold text-lg text-sara-gold leading-tight">
+        <Heart size={22} className="text-mt-rose flex-shrink-0" fill="currentColor" strokeWidth={0} />
+        <span className="hidden lg:block ml-2 font-serif font-bold text-lg text-mt-rose leading-tight">
           Mother's Team
         </span>
       </div>
@@ -93,7 +93,7 @@ export function LeftSidebar({
       </nav>
 
       {/* Secondary — notifications + messages + recomendações */}
-      <div className="mt-4 pt-4 border-t border-sara-linen/60 flex flex-col gap-1 px-2 flex-shrink-0">
+      <div className="mt-4 pt-4 border-t border-mt-linen/60 flex flex-col gap-1 px-2 flex-shrink-0">
         <button
           title="Notificações"
           aria-label="Notificações"
@@ -103,7 +103,7 @@ export function LeftSidebar({
           <span className="relative flex-shrink-0">
             <Bell size={20} strokeWidth={1.8} />
             {unreadNotifs > 0 && (
-              <span className="absolute -top-1 -right-1 w-4 h-4 bg-sara-terracotta text-white text-[9px] font-bold rounded-full flex items-center justify-center">
+              <span className="absolute -top-1 -right-1 w-4 h-4 bg-mt-rose-dark text-white text-[9px] font-bold rounded-full flex items-center justify-center">
                 {unreadNotifs > 9 ? '9+' : unreadNotifs}
               </span>
             )}
@@ -120,7 +120,7 @@ export function LeftSidebar({
           <span className="relative flex-shrink-0">
             <MessageSquare size={20} strokeWidth={1.8} />
             {unreadChats > 0 && (
-              <span className="absolute -top-1 -right-1 w-4 h-4 bg-sara-terracotta text-white text-[9px] font-bold rounded-full flex items-center justify-center">
+              <span className="absolute -top-1 -right-1 w-4 h-4 bg-mt-rose-dark text-white text-[9px] font-bold rounded-full flex items-center justify-center">
                 {unreadChats > 9 ? '9+' : unreadChats}
               </span>
             )}
@@ -137,7 +137,7 @@ export function LeftSidebar({
           <span className="relative flex-shrink-0">
             <ShoppingBag size={20} strokeWidth={1.8} />
             {cartCount > 0 && (
-              <span className="absolute -top-1 -right-1 w-4 h-4 bg-sara-terracotta text-white text-[9px] font-bold rounded-full flex items-center justify-center">
+              <span className="absolute -top-1 -right-1 w-4 h-4 bg-mt-rose-dark text-white text-[9px] font-bold rounded-full flex items-center justify-center">
                 {cartCount > 9 ? '9+' : cartCount}
               </span>
             )}
@@ -155,7 +155,7 @@ export function LeftSidebar({
           >
             {motherName ? motherName.charAt(0).toUpperCase() : 'M'}
           </div>
-          <span className="text-sm font-medium text-graphite truncate">{motherName || 'Mãe'}</span>
+          <span className="text-sm font-medium text-mt-charcoal truncate">{motherName || 'Mãe'}</span>
         </div>
 
         <button
@@ -172,7 +172,7 @@ export function LeftSidebar({
           title="Sair"
           aria-label="Sair"
           onClick={handleLogout}
-          className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-colors text-sara-terracotta hover:bg-sara-terracotta/10 md:justify-center lg:justify-start"
+          className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-colors text-mt-rose-dark hover:bg-mt-rose-dark/10 md:justify-center lg:justify-start"
         >
           <LogOut size={20} strokeWidth={1.8} className="flex-shrink-0" />
           <span className="text-sm font-medium hidden lg:block">Sair</span>

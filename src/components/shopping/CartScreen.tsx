@@ -77,12 +77,12 @@ export function CartScreen({ onBack, onCheckout }: Props) {
 
   if (isLoading) {
     return (
-      <div className="flex flex-col h-full bg-gradient-to-b from-[#F5EDE0] via-[#EAD8C8] to-[#D9C4AF]">
+      <div className="flex flex-col h-full bg-mt-gradient-pastel">
         <div className="flex items-center gap-3 px-4 pt-10 pb-4">
           <button onClick={onBack} className="w-9 h-9 rounded-xl bg-white/70 flex items-center justify-center">
-            <ChevronLeft size={20} className="text-graphite" />
+            <ChevronLeft size={20} className="text-mt-charcoal" />
           </button>
-          <h1 className="text-base font-semibold text-graphite">Carrinho</h1>
+          <h1 className="text-base font-semibold text-mt-charcoal">Carrinho</h1>
         </div>
         <div className="px-4 flex flex-col gap-3 animate-pulse">
           {Array.from({ length: 2 }).map((_, i) => (
@@ -94,26 +94,26 @@ export function CartScreen({ onBack, onCheckout }: Props) {
   }
 
   return (
-    <div className="flex flex-col h-full bg-gradient-to-b from-[#F5EDE0] via-[#EAD8C8] to-[#D9C4AF] overflow-hidden">
+    <div className="flex flex-col h-full bg-mt-gradient-pastel overflow-hidden">
       <div className="flex items-center gap-3 px-4 pt-10 pb-4 flex-shrink-0">
         <button
           onClick={onBack}
           className="w-9 h-9 rounded-xl bg-white/70 backdrop-blur-sm flex items-center justify-center active:scale-95 transition-transform"
         >
-          <ChevronLeft size={20} className="text-graphite" />
+          <ChevronLeft size={20} className="text-mt-charcoal" />
         </button>
-        <h1 className="text-base font-semibold text-graphite">
+        <h1 className="text-base font-semibold text-mt-charcoal">
           Carrinho {items.length > 0 && `(${cart?.itemCount} itens)`}
         </h1>
       </div>
 
       {items.length === 0 ? (
         <div className="flex-1 flex flex-col items-center justify-center gap-4 px-8">
-          <ShoppingCart size={48} className="text-graphite-muted/30" />
-          <p className="text-graphite-muted text-sm font-medium">Seu carrinho está vazio</p>
+          <ShoppingCart size={48} className="text-mt-muted/30" />
+          <p className="text-mt-muted text-sm font-medium">Seu carrinho está vazio</p>
           <button
             onClick={onBack}
-            className="px-5 py-2.5 rounded-xl bg-sara-gold text-white text-sm font-semibold active:scale-95 transition-transform"
+            className="px-5 py-2.5 rounded-xl bg-mt-rose text-white text-sm font-semibold active:scale-95 transition-transform"
           >
             Explorar produtos
           </button>
@@ -122,7 +122,7 @@ export function CartScreen({ onBack, onCheckout }: Props) {
         <>
           <div className="flex-1 overflow-y-auto px-4 pb-2">
             {mutationError && (
-              <p className="text-xs text-sara-terracotta bg-sara-terracotta/10 rounded-xl px-3 py-2 mb-3">{mutationError}</p>
+              <p className="text-xs text-mt-rose-dark bg-mt-rose-dark/10 rounded-xl px-3 py-2 mb-3">{mutationError}</p>
             )}
             <div className="flex flex-col gap-3">
               {items.map((item) => {
@@ -133,18 +133,18 @@ export function CartScreen({ onBack, onCheckout }: Props) {
                       <img
                         src={images[0]}
                         alt={item.ownProduct.name}
-                        className="w-16 h-16 rounded-2xl object-cover bg-sara-linen flex-shrink-0"
+                        className="w-16 h-16 rounded-2xl object-cover bg-mt-linen flex-shrink-0"
                       />
                     ) : (
-                      <div className="w-16 h-16 rounded-2xl bg-sara-linen flex items-center justify-center flex-shrink-0">
-                        <Package size={20} className="text-graphite-muted" />
+                      <div className="w-16 h-16 rounded-2xl bg-mt-linen flex items-center justify-center flex-shrink-0">
+                        <Package size={20} className="text-mt-muted" />
                       </div>
                     )}
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-semibold text-graphite line-clamp-2 leading-tight">
+                      <p className="text-sm font-semibold text-mt-charcoal line-clamp-2 leading-tight">
                         {item.ownProduct.name}
                       </p>
-                      <p className="text-sm font-bold text-sara-gold mt-0.5">
+                      <p className="text-sm font-bold text-mt-rose mt-0.5">
                         R$ {Number(item.ownProduct.price).toFixed(2)}
                       </p>
                       <div className="flex items-center gap-2 mt-2">
@@ -153,11 +153,11 @@ export function CartScreen({ onBack, onCheckout }: Props) {
                             updateMutation.mutate({ itemId: item.id, quantity: item.quantity - 1 })
                           }
                           disabled={updateMutation.isPending}
-                          className="w-7 h-7 rounded-lg bg-sara-linen flex items-center justify-center active:scale-95 transition-transform disabled:opacity-40"
+                          className="w-7 h-7 rounded-lg bg-mt-linen flex items-center justify-center active:scale-95 transition-transform disabled:opacity-40"
                         >
-                          <Minus size={12} className="text-graphite" />
+                          <Minus size={12} className="text-mt-charcoal" />
                         </button>
-                        <span className="text-sm font-semibold text-graphite w-5 text-center">
+                        <span className="text-sm font-semibold text-mt-charcoal w-5 text-center">
                           {item.quantity}
                         </span>
                         <button
@@ -165,16 +165,16 @@ export function CartScreen({ onBack, onCheckout }: Props) {
                             updateMutation.mutate({ itemId: item.id, quantity: item.quantity + 1 })
                           }
                           disabled={updateMutation.isPending || item.quantity >= item.ownProduct.stock}
-                          className="w-7 h-7 rounded-lg bg-sara-linen flex items-center justify-center active:scale-95 transition-transform disabled:opacity-40"
+                          className="w-7 h-7 rounded-lg bg-mt-linen flex items-center justify-center active:scale-95 transition-transform disabled:opacity-40"
                         >
-                          <Plus size={12} className="text-graphite" />
+                          <Plus size={12} className="text-mt-charcoal" />
                         </button>
                         <button
                           onClick={() => removeMutation.mutate(item.id)}
                           disabled={removeMutation.isPending}
-                          className="ml-auto w-7 h-7 rounded-lg bg-sara-terracotta/10 flex items-center justify-center active:scale-95 transition-transform"
+                          className="ml-auto w-7 h-7 rounded-lg bg-mt-rose-dark/10 flex items-center justify-center active:scale-95 transition-transform"
                         >
-                          <Trash2 size={12} className="text-sara-terracotta" />
+                          <Trash2 size={12} className="text-mt-rose-dark" />
                         </button>
                       </div>
                     </div>
@@ -184,11 +184,11 @@ export function CartScreen({ onBack, onCheckout }: Props) {
             </div>
 
             <div className="bg-white/60 rounded-3xl p-4 mt-4">
-              <div className="flex justify-between text-sm text-graphite mb-2">
+              <div className="flex justify-between text-sm text-mt-charcoal mb-2">
                 <span>Subtotal</span>
                 <span className="font-semibold">R$ {subtotal.toFixed(2)}</span>
               </div>
-              <div className="flex justify-between text-sm text-graphite mb-2">
+              <div className="flex justify-between text-sm text-mt-charcoal mb-2">
                 <span>Frete</span>
                 <span className="font-semibold">
                   {shipping !== null
@@ -199,13 +199,13 @@ export function CartScreen({ onBack, onCheckout }: Props) {
                 </span>
               </div>
               {shippingDays !== null && (
-                <p className="text-[10px] text-graphite-muted mb-2">
+                <p className="text-[10px] text-mt-muted mb-2">
                   Prazo estimado: {shippingDays} dias úteis
                 </p>
               )}
-              <div className="border-t border-sara-linen pt-2 flex justify-between text-sm font-bold text-graphite">
+              <div className="border-t border-mt-linen pt-2 flex justify-between text-sm font-bold text-mt-charcoal">
                 <span>Total</span>
-                <span className="text-sara-gold">
+                <span className="text-mt-rose">
                   {total !== null ? `R$ ${total.toFixed(2)}` : '—'}
                 </span>
               </div>
@@ -215,7 +215,7 @@ export function CartScreen({ onBack, onCheckout }: Props) {
           <div className="px-4 pb-8 pt-3 flex-shrink-0">
             <button
               onClick={onCheckout}
-              className="w-full py-4 rounded-2xl bg-sara-gold text-white font-bold text-sm active:scale-95 transition-transform shadow-lg"
+              className="w-full py-4 rounded-2xl bg-mt-rose text-white font-bold text-sm active:scale-95 transition-transform shadow-lg"
             >
               Finalizar pedido
             </button>

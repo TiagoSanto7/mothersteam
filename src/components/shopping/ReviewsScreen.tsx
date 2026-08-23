@@ -61,17 +61,17 @@ export function ReviewsScreen({ productType, productId, productName, onBack }: P
 
   return (
     <>
-      <div className="flex flex-col h-full bg-gradient-to-b from-[#F5EDE0] via-[#EAD8C8] to-[#D9C4AF] overflow-hidden">
+      <div className="flex flex-col h-full bg-mt-gradient-pastel overflow-hidden">
         <div className="flex items-center gap-3 px-4 pt-10 pb-4 flex-shrink-0">
           <button
             onClick={onBack}
             className="w-9 h-9 rounded-xl bg-white/70 backdrop-blur-sm flex items-center justify-center active:scale-95 transition-transform"
           >
-            <ChevronLeft size={20} className="text-graphite" />
+            <ChevronLeft size={20} className="text-mt-charcoal" />
           </button>
           <div className="flex-1 min-w-0">
-            <h1 className="text-sm font-semibold text-graphite truncate">Avaliações</h1>
-            <p className="text-xs text-graphite-muted truncate">{productName}</p>
+            <h1 className="text-sm font-semibold text-mt-charcoal truncate">Avaliações</h1>
+            <p className="text-xs text-mt-muted truncate">{productName}</p>
           </div>
         </div>
 
@@ -80,7 +80,7 @@ export function ReviewsScreen({ productType, productId, productName, onBack }: P
             <div className="bg-white/60 rounded-3xl p-4 mb-4">
               <div className="flex items-start gap-4">
                 <div className="text-center flex-shrink-0">
-                  <p className="text-4xl font-extrabold text-graphite">{summary.average.toFixed(1)}</p>
+                  <p className="text-4xl font-extrabold text-mt-charcoal">{summary.average.toFixed(1)}</p>
                   <div className="flex justify-center mt-1">
                     {[1, 2, 3, 4, 5].map((s) => (
                       <Star
@@ -88,13 +88,13 @@ export function ReviewsScreen({ productType, productId, productName, onBack }: P
                         size={12}
                         className={
                           s <= Math.round(summary.average)
-                            ? 'text-sara-gold fill-current'
-                            : 'text-graphite-muted/30'
+                            ? 'text-mt-rose fill-current'
+                            : 'text-mt-muted/30'
                         }
                       />
                     ))}
                   </div>
-                  <p className="text-[10px] text-graphite-muted mt-1">{summary.count} avaliações</p>
+                  <p className="text-[10px] text-mt-muted mt-1">{summary.count} avaliações</p>
                 </div>
                 <div className="flex-1 flex flex-col gap-1.5">
                   {[5, 4, 3, 2, 1].map((r) => {
@@ -102,14 +102,14 @@ export function ReviewsScreen({ productType, productId, productName, onBack }: P
                     const pct = summary.count ? (count / summary.count) * 100 : 0
                     return (
                       <div key={r} className="flex items-center gap-2">
-                        <span className="text-[10px] text-graphite-muted w-2.5">{r}★</span>
-                        <div className="flex-1 h-2 rounded-full bg-graphite-muted/20 overflow-hidden">
+                        <span className="text-[10px] text-mt-muted w-2.5">{r}★</span>
+                        <div className="flex-1 h-2 rounded-full bg-mt-muted/20 overflow-hidden">
                           <div
-                            className="h-full bg-sara-gold rounded-full transition-all"
+                            className="h-full bg-mt-rose rounded-full transition-all"
                             style={{ width: `${pct}%` }}
                           />
                         </div>
-                        <span className="text-[10px] text-graphite-muted w-4 text-right">{count}</span>
+                        <span className="text-[10px] text-mt-muted w-4 text-right">{count}</span>
                       </div>
                     )
                   })}
@@ -120,7 +120,7 @@ export function ReviewsScreen({ productType, productId, productName, onBack }: P
 
           <button
             onClick={() => setShowModal(true)}
-            className="w-full mb-4 py-3 rounded-2xl border border-sara-gold/40 bg-white/60 text-sara-gold text-sm font-semibold flex items-center justify-center gap-2 active:scale-95 transition-transform"
+            className="w-full mb-4 py-3 rounded-2xl border border-mt-rose/40 bg-white/60 text-mt-rose text-sm font-semibold flex items-center justify-center gap-2 active:scale-95 transition-transform"
           >
             <PenLine size={16} />
             {myReview ? 'Editar minha avaliação' : 'Escrever avaliação'}
@@ -137,14 +137,14 @@ export function ReviewsScreen({ productType, productId, productName, onBack }: P
           {data?.items.map((review) => (
             <div key={review.id} className="bg-white/60 rounded-3xl p-4 mb-3">
               <div className="flex items-center gap-2 mb-2">
-                <div className="w-8 h-8 rounded-full bg-sara-gold/20 flex items-center justify-center text-sm font-bold text-sara-gold flex-shrink-0">
+                <div className="w-8 h-8 rounded-full bg-mt-rose/20 flex items-center justify-center text-sm font-bold text-mt-rose flex-shrink-0">
                   {review.user.name.charAt(0).toUpperCase()}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-xs font-semibold text-graphite truncate">
+                  <p className="text-xs font-semibold text-mt-charcoal truncate">
                     {review.user.name.split(' ')[0]} {review.user.name.split(' ').pop()?.charAt(0)}.
                   </p>
-                  <p className="text-[10px] text-graphite-muted">{formatDate(review.createdAt)}</p>
+                  <p className="text-[10px] text-mt-muted">{formatDate(review.createdAt)}</p>
                 </div>
                 <div className="flex flex-shrink-0">
                   {[1, 2, 3, 4, 5].map((s) => (
@@ -152,7 +152,7 @@ export function ReviewsScreen({ productType, productId, productName, onBack }: P
                       key={s}
                       size={11}
                       className={
-                        s <= review.rating ? 'text-sara-gold fill-current' : 'text-graphite-muted/30'
+                        s <= review.rating ? 'text-mt-rose fill-current' : 'text-mt-muted/30'
                       }
                     />
                   ))}
@@ -164,7 +164,7 @@ export function ReviewsScreen({ productType, productId, productName, onBack }: P
                 </span>
               )}
               {review.text && (
-                <p className="text-sm text-graphite leading-relaxed">{review.text}</p>
+                <p className="text-sm text-mt-charcoal leading-relaxed">{review.text}</p>
               )}
             </div>
           ))}
@@ -174,17 +174,17 @@ export function ReviewsScreen({ productType, productId, productName, onBack }: P
               <button
                 onClick={() => setPage((p) => Math.max(1, p - 1))}
                 disabled={page === 1}
-                className="px-4 py-2 rounded-xl bg-white/70 text-xs font-medium text-graphite disabled:opacity-40"
+                className="px-4 py-2 rounded-xl bg-white/70 text-xs font-medium text-mt-charcoal disabled:opacity-40"
               >
                 Anterior
               </button>
-              <span className="px-3 py-2 text-xs text-graphite-muted">
+              <span className="px-3 py-2 text-xs text-mt-muted">
                 {page} / {totalPages}
               </span>
               <button
                 onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
                 disabled={page === totalPages}
-                className="px-4 py-2 rounded-xl bg-white/70 text-xs font-medium text-graphite disabled:opacity-40"
+                className="px-4 py-2 rounded-xl bg-white/70 text-xs font-medium text-mt-charcoal disabled:opacity-40"
               >
                 Próxima
               </button>
@@ -193,9 +193,9 @@ export function ReviewsScreen({ productType, productId, productName, onBack }: P
 
           {data?.items.length === 0 && !isLoading && (
             <div className="flex flex-col items-center py-12 gap-2">
-              <Star size={32} className="text-graphite-muted/30" />
-              <p className="text-sm text-graphite-muted">Nenhuma avaliação ainda</p>
-              <p className="text-xs text-graphite-muted">Seja a primeira a avaliar!</p>
+              <Star size={32} className="text-mt-muted/30" />
+              <p className="text-sm text-mt-muted">Nenhuma avaliação ainda</p>
+              <p className="text-xs text-mt-muted">Seja a primeira a avaliar!</p>
             </div>
           )}
         </div>

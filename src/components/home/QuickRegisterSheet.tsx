@@ -54,15 +54,15 @@ export function QuickRegisterSheet({ open, onClose }: QuickRegisterSheetProps) {
         role="dialog"
         aria-modal="true"
         aria-label="Registrar amamentação"
-        className={`w-full bg-sara-cream rounded-t-3xl px-5 pb-8 pt-4 transition-transform duration-300 ${
+        className={`w-full bg-mt-cream rounded-t-3xl px-5 pb-8 pt-4 transition-transform duration-300 ${
           open ? 'translate-y-0' : 'translate-y-full'
         }`}
       >
         <div className="w-9 h-1 rounded-full bg-[#D4C0A8] mx-auto mb-4" />
 
-        <p className="text-[15px] font-bold text-graphite mb-4">Registrar amamentação</p>
+        <p className="text-[15px] font-bold text-mt-charcoal mb-4">Registrar amamentação</p>
 
-        <p className="text-[10px] font-semibold text-graphite-muted uppercase tracking-wide mb-2">
+        <p className="text-[10px] font-semibold text-mt-muted uppercase tracking-wide mb-2">
           Qual seio?
         </p>
         <div className="flex gap-2 mb-4">
@@ -73,8 +73,8 @@ export function QuickRegisterSheet({ open, onClose }: QuickRegisterSheetProps) {
               aria-pressed={selectedSide === side}
               className={`flex-1 py-2.5 rounded-2xl text-[13px] font-semibold border-2 transition-colors ${
                 selectedSide === side
-                  ? 'border-sara-gold bg-sara-gold/10 text-sara-gold'
-                  : 'border-sara-linen bg-white text-graphite-muted'
+                  ? 'border-mt-rose bg-mt-rose/10 text-mt-rose'
+                  : 'border-mt-linen bg-white text-mt-muted'
               }`}
             >
               {side === 'Esquerdo' ? '← Esquerdo' : 'Direito →'}
@@ -86,7 +86,7 @@ export function QuickRegisterSheet({ open, onClose }: QuickRegisterSheetProps) {
           onClick={() => mutation.mutate()}
           disabled={mutation.isPending}
           aria-label="Registrar amamentação agora"
-          className="w-full py-3.5 rounded-2xl bg-sara-gold text-white text-[14px] font-bold disabled:opacity-60"
+          className="w-full py-3.5 rounded-2xl bg-mt-rose text-white text-[14px] font-bold disabled:opacity-60"
         >
           {mutation.isPending ? 'Registrando...' : 'Registrar agora'}
         </button>
@@ -97,7 +97,7 @@ export function QuickRegisterSheet({ open, onClose }: QuickRegisterSheetProps) {
           </p>
         )}
 
-        <p className="text-[11px] text-graphite-muted text-center mt-3">
+        <p className="text-[11px] text-mt-muted text-center mt-3">
           Horário: agora · {nowDisplay}
         </p>
       </div>

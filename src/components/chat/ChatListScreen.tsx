@@ -119,7 +119,7 @@ export function ChatListScreen({ onBack, onOpenProfile, initialChatUserId }: Cha
 
   if (selectedChat) {
     return (
-      <div className="flex flex-col w-full h-full sm:w-[390px] sm:h-[844px] bg-gradient-to-b from-[#F5EDE0] via-[#EAD8C8] to-[#D9C4AF] sm:rounded-[44px] sm:shadow-2xl overflow-hidden">
+      <div className="flex flex-col w-full h-full sm:w-[390px] sm:h-[844px] bg-mt-gradient-pastel sm:rounded-[44px] sm:shadow-2xl overflow-hidden">
         <ChatScreen chat={selectedChat} onBack={() => setSelectedChat(null)} onOpenProfile={onOpenProfile} />
       </div>
     );
@@ -128,30 +128,30 @@ export function ChatListScreen({ onBack, onOpenProfile, initialChatUserId }: Cha
   const followingUsers = followingData?.items ?? [];
 
   return (
-    <div className="flex flex-col w-full h-full sm:w-[390px] sm:h-[844px] bg-gradient-to-b from-[#F5EDE0] via-[#EAD8C8] to-[#D9C4AF] sm:rounded-[44px] sm:shadow-2xl overflow-hidden relative">
-      <div className="flex items-center justify-between px-4 pt-6 pb-4 border-b border-sara-linen/60 flex-shrink-0">
-        <button onClick={onBack} className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-sara-linen">
-          <ChevronLeft size={20} className="text-graphite" />
+    <div className="flex flex-col w-full h-full sm:w-[390px] sm:h-[844px] bg-mt-gradient-pastel sm:rounded-[44px] sm:shadow-2xl overflow-hidden relative">
+      <div className="flex items-center justify-between px-4 pt-6 pb-4 border-b border-mt-linen/60 flex-shrink-0">
+        <button onClick={onBack} className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-mt-linen">
+          <ChevronLeft size={20} className="text-mt-charcoal" />
         </button>
-        <p className="text-sm font-semibold text-graphite">Mensagens</p>
+        <p className="text-sm font-semibold text-mt-charcoal">Mensagens</p>
         <button
           onClick={() => setShowNewChat(true)}
           aria-label="Nova conversa"
-          className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-sara-linen"
+          className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-mt-linen"
         >
-          <Edit size={16} className="text-graphite" />
+          <Edit size={16} className="text-mt-charcoal" />
         </button>
       </div>
 
       <div className="px-4 py-3 flex-shrink-0">
         <div className="flex items-center gap-2 bg-gray-100 rounded-xl px-3 py-2.5">
-          <Search size={14} className="text-graphite-muted flex-shrink-0" />
+          <Search size={14} className="text-mt-muted flex-shrink-0" />
           <input
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Buscar conversa..."
-            className="flex-1 bg-transparent text-sm text-graphite placeholder:text-graphite-muted outline-none"
+            className="flex-1 bg-transparent text-sm text-mt-charcoal placeholder:text-mt-muted outline-none"
           />
         </div>
       </div>
@@ -167,11 +167,11 @@ export function ChatListScreen({ onBack, onOpenProfile, initialChatUserId }: Cha
           <SaraPullIndicator pullY={pullY} isLoading={isLoading} />
         )}
         {chats.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-full gap-2 text-graphite-muted">
+          <div className="flex flex-col items-center justify-center h-full gap-2 text-mt-muted">
             <p className="text-sm">Nenhuma conversa ainda</p>
             <button
               onClick={() => setShowNewChat(true)}
-              className="text-xs text-sara-gold font-semibold mt-1"
+              className="text-xs text-mt-rose font-semibold mt-1"
             >
               Iniciar uma conversa
             </button>
@@ -185,7 +185,7 @@ export function ChatListScreen({ onBack, onOpenProfile, initialChatUserId }: Cha
                   onPointerDown={() => handleChatLongPressStart(chat)}
                   onPointerUp={handleChatLongPressEnd}
                   onPointerCancel={handleChatLongPressEnd}
-                  className="w-full flex items-center gap-3 px-4 py-3.5 active:bg-sara-linen transition-colors text-left"
+                  className="w-full flex items-center gap-3 px-4 py-3.5 active:bg-mt-linen transition-colors text-left"
                 >
                   <UserAvatar
                     name={chat.with}
@@ -195,13 +195,13 @@ export function ChatListScreen({ onBack, onOpenProfile, initialChatUserId }: Cha
                   />
                   <div className="flex-1 min-w-0">
                     <div className="flex items-baseline justify-between gap-2">
-                      <p className={`text-sm truncate ${chat.unread > 0 ? 'font-semibold text-graphite' : 'font-medium text-graphite'}`}>{chat.with}</p>
-                      <span className="text-[10px] text-graphite-muted flex-shrink-0">{chat.time}</span>
+                      <p className={`text-sm truncate ${chat.unread > 0 ? 'font-semibold text-mt-charcoal' : 'font-medium text-mt-charcoal'}`}>{chat.with}</p>
+                      <span className="text-[10px] text-mt-muted flex-shrink-0">{chat.time}</span>
                     </div>
-                    <p className={`text-xs truncate mt-0.5 ${chat.unread > 0 ? 'text-graphite font-medium' : 'text-graphite-muted'}`}>{chat.lastMessage}</p>
+                    <p className={`text-xs truncate mt-0.5 ${chat.unread > 0 ? 'text-mt-charcoal font-medium' : 'text-mt-muted'}`}>{chat.lastMessage}</p>
                   </div>
                   {chat.unread > 0 && (
-                    <div className="w-5 h-5 rounded-full bg-sara-gold flex items-center justify-center flex-shrink-0">
+                    <div className="w-5 h-5 rounded-full bg-mt-rose flex items-center justify-center flex-shrink-0">
                       <span className="text-[10px] font-bold text-white">{chat.unread}</span>
                     </div>
                   )}
@@ -222,28 +222,28 @@ export function ChatListScreen({ onBack, onOpenProfile, initialChatUserId }: Cha
             onClick={(e) => e.stopPropagation()}
           >
             <div className="w-10 h-1 bg-gray-200 rounded-full mx-auto mt-3 mb-2" />
-            <p className="text-center text-[11px] font-semibold text-graphite-muted uppercase tracking-wide mb-2">
+            <p className="text-center text-[11px] font-semibold text-mt-muted uppercase tracking-wide mb-2">
               {chatMenu.with}
             </p>
             {chatMenu.unread > 0 && (
               <button
                 onClick={() => markReadMutation.mutate(chatMenu.id)}
                 disabled={markReadMutation.isPending}
-                className="w-full flex items-center gap-3 px-5 py-3.5 hover:bg-gray-50 text-graphite text-sm font-medium"
+                className="w-full flex items-center gap-3 px-5 py-3.5 hover:bg-gray-50 text-mt-charcoal text-sm font-medium"
               >
-                <Check size={18} className="text-graphite-muted" />
+                <Check size={18} className="text-mt-muted" />
                 Marcar como lida
               </button>
             )}
             <button
               onClick={() => setChatMenu(null)}
-              className="w-full flex items-center gap-3 px-5 py-3.5 hover:bg-gray-50 text-graphite text-sm font-medium opacity-60"
+              className="w-full flex items-center gap-3 px-5 py-3.5 hover:bg-gray-50 text-mt-charcoal text-sm font-medium opacity-60"
               disabled
               title="Em breve"
             >
-              <BellOff size={18} className="text-graphite-muted" />
+              <BellOff size={18} className="text-mt-muted" />
               Silenciar
-              <span className="ml-auto text-[10px] text-graphite-muted">em breve</span>
+              <span className="ml-auto text-[10px] text-mt-muted">em breve</span>
             </button>
             <button
               onClick={() => setConfirmDelete(chatMenu)}
@@ -267,8 +267,8 @@ export function ChatListScreen({ onBack, onOpenProfile, initialChatUserId }: Cha
             onClick={(e) => e.stopPropagation()}
           >
             <div className="w-10 h-1 bg-gray-200 rounded-full mx-auto mb-1" />
-            <p className="text-sm font-semibold text-graphite">Apagar conversa com {confirmDelete.with}?</p>
-            <p className="text-xs text-graphite-muted mb-2">A conversa não aparecerá mais para você.</p>
+            <p className="text-sm font-semibold text-mt-charcoal">Apagar conversa com {confirmDelete.with}?</p>
+            <p className="text-xs text-mt-muted mb-2">A conversa não aparecerá mais para você.</p>
             <button
               onClick={() => deleteChatMutation.mutate(confirmDelete.id)}
               disabled={deleteChatMutation.isPending}
@@ -278,7 +278,7 @@ export function ChatListScreen({ onBack, onOpenProfile, initialChatUserId }: Cha
             </button>
             <button
               onClick={() => { setConfirmDelete(null); setChatMenu(null); }}
-              className="w-full py-3 rounded-2xl bg-sara-linen text-graphite text-sm font-medium"
+              className="w-full py-3 rounded-2xl bg-mt-linen text-mt-charcoal text-sm font-medium"
             >
               Cancelar
             </button>
@@ -289,18 +289,18 @@ export function ChatListScreen({ onBack, onOpenProfile, initialChatUserId }: Cha
       {showNewChat && (
         <div className="absolute inset-0 z-20 flex flex-col bg-white/95 backdrop-blur-sm">
           <div className="flex items-center justify-between px-4 py-4 border-b border-gray-100 flex-shrink-0">
-            <p className="text-sm font-semibold text-graphite">Nova conversa</p>
+            <p className="text-sm font-semibold text-mt-charcoal">Nova conversa</p>
             <button
               onClick={() => setShowNewChat(false)}
               aria-label="Fechar"
               className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100"
             >
-              <X size={18} className="text-graphite" />
+              <X size={18} className="text-mt-charcoal" />
             </button>
           </div>
           <div className="flex-1 overflow-y-auto">
             {followingUsers.length === 0 ? (
-              <div className="flex flex-col items-center justify-center h-full gap-2 text-graphite-muted px-4 text-center">
+              <div className="flex flex-col items-center justify-center h-full gap-2 text-mt-muted px-4 text-center">
                 <p className="text-sm">Siga alguém para iniciar uma conversa</p>
               </div>
             ) : (
@@ -310,14 +310,14 @@ export function ChatListScreen({ onBack, onOpenProfile, initialChatUserId }: Cha
                     <button
                       onClick={() => createChatMutation.mutate(user.id)}
                       disabled={createChatMutation.isPending}
-                      className="w-full flex items-center gap-3 px-4 py-3.5 active:bg-sara-linen transition-colors text-left"
+                      className="w-full flex items-center gap-3 px-4 py-3.5 active:bg-mt-linen transition-colors text-left"
                     >
                       <UserAvatar
                         name={user.name}
                         archetypeKey={null}
                         size={40}
                       />
-                      <p className="text-sm font-medium text-graphite">{user.name}</p>
+                      <p className="text-sm font-medium text-mt-charcoal">{user.name}</p>
                     </button>
                   </li>
                 ))}

@@ -61,7 +61,7 @@ export function SaraPullIndicator({ pullY, isLoading }: SaraPullIndicatorProps) 
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 4 }}
             transition={{ duration: 0.25 }}
-            className="text-[11px] text-sara-gold font-medium italic text-center px-4"
+            className="text-[11px] text-mt-rose font-medium italic text-center px-4"
           >
             "Deixa eu ver se apareceu alguma novidade..."
           </motion.p>

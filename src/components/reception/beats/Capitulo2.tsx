@@ -48,7 +48,7 @@ export function Capitulo2({ onComplete }: Capitulo2Props) {
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-sara-cream">
+    <div className="min-h-screen flex flex-col bg-mt-cream">
       <div className="px-6 pt-8">
         <ProgressBar percent={50} />
       </div>
@@ -57,25 +57,25 @@ export function Capitulo2({ onComplete }: Capitulo2Props) {
         <OrbeVisual amplitude={amplitude} state={state} size="md" />
 
         {state === 'connecting' && (
-          <p className="text-[13px] text-graphite-muted">Conectando…</p>
+          <p className="text-[13px] text-mt-muted">Conectando…</p>
         )}
 
         {state === 'error' && (
           <div className="flex flex-col items-center gap-3">
-            <p className="text-[13px] text-sara-terracotta text-center max-w-xs">
+            <p className="text-[13px] text-mt-rose-dark text-center max-w-xs">
               Não foi possível conectar com a Sara. Verifique as permissões de microfone e tente novamente.
             </p>
             <button
               type="button"
               onClick={() => void startConversation(CAP2_CONFIG)}
-              className="px-4 py-2 rounded-2xl bg-sara-gold text-white text-xs font-semibold"
+              className="px-4 py-2 rounded-2xl bg-mt-rose text-white text-xs font-semibold"
             >
               Tentar de novo
             </button>
             <button
               type="button"
               onClick={() => { stop(); onComplete({}) }}
-              className="px-4 py-2 rounded-2xl border border-graphite-muted text-graphite-muted text-xs"
+              className="px-4 py-2 rounded-2xl border border-mt-charcoal-muted text-mt-muted text-xs"
             >
               Pular esta etapa
             </button>
@@ -91,13 +91,13 @@ export function Capitulo2({ onComplete }: Capitulo2Props) {
             onChange={(e) => setTextInput(e.target.value)}
             placeholder="ou digite pra Sara…"
             aria-label="Digite sua resposta"
-            className="flex-1 px-4 py-3 rounded-2xl bg-white border border-sara-linen text-sm text-graphite placeholder:text-graphite-muted focus:outline-none focus:border-sara-gold"
+            className="flex-1 px-4 py-3 rounded-2xl bg-white border border-mt-linen text-sm text-mt-charcoal placeholder:text-mt-muted focus:outline-none focus:border-mt-rose"
           />
           <button
             type="submit"
             disabled={!textInput.trim() || (state !== 'listening' && state !== 'error')}
             aria-label="Enviar"
-            className="px-4 py-3 rounded-2xl bg-sara-gold text-white text-sm font-semibold disabled:opacity-40"
+            className="px-4 py-3 rounded-2xl bg-mt-rose text-white text-sm font-semibold disabled:opacity-40"
           >
             →
           </button>

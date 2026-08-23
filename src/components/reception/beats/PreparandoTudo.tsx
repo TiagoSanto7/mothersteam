@@ -17,13 +17,13 @@ export function PreparandoTudo({ data, onReady }: PreparandoTudoProps) {
   }, [data, onReady])
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center gap-8 bg-sara-cream px-8">
+    <div className="min-h-screen flex flex-col items-center justify-center gap-8 bg-mt-cream px-8">
       <OrbeVisual amplitude={0.3} state="listening" size="lg" />
       <motion.p
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 0.6, delay: 0.4 }}
-        className="text-[15px] text-graphite-muted text-center"
+        className="text-[15px] text-mt-muted text-center"
       >
         Só mais um instantinho… 🌷
       </motion.p>

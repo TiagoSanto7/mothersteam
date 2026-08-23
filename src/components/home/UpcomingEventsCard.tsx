@@ -36,12 +36,12 @@ export function UpcomingEventsCard() {
     <>
       <div className="mx-4 bg-white rounded-2xl p-4 shadow-sm">
         <div className="flex items-center justify-between mb-3">
-          <h3 className="text-xs font-bold text-graphite-muted uppercase tracking-wide">
+          <h3 className="text-xs font-bold text-mt-muted uppercase tracking-wide">
             Próximos Eventos
           </h3>
           <button
             onClick={() => setShowAll(true)}
-            className="flex items-center gap-0.5 text-[11px] text-sara-gold font-medium"
+            className="flex items-center gap-0.5 text-[11px] text-mt-rose font-medium"
             aria-label="Ver outros eventos"
           >
             ver outros eventos <ChevronRight size={13} />
@@ -54,18 +54,18 @@ export function UpcomingEventsCard() {
               key={entry.id}
               onClick={() => setSelectedEntry(entry)}
               aria-label={`Detalhe: ${entry.title}`}
-              className="flex items-center gap-3 p-2.5 rounded-xl bg-sara-linen/60 text-left w-full hover:bg-sara-linen transition-colors"
+              className="flex items-center gap-3 p-2.5 rounded-xl bg-mt-linen/60 text-left w-full hover:bg-mt-linen transition-colors"
             >
               <span className="text-base flex-shrink-0">{CATEGORY_EMOJI[entry.category]}</span>
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-graphite truncate">{entry.title}</p>
+                <p className="text-sm font-medium text-mt-charcoal truncate">{entry.title}</p>
                 {entry.notes && (
-                  <p className="text-[11px] text-graphite-muted truncate">{entry.notes}</p>
+                  <p className="text-[11px] text-mt-muted truncate">{entry.notes}</p>
                 )}
               </div>
               <div className="flex flex-col items-end flex-shrink-0">
-                <span className="text-[11px] text-graphite-muted">{formatDateCompact(entry.date)}</span>
-                <span className="text-[10px] text-graphite-muted/70">{entry.time}</span>
+                <span className="text-[11px] text-mt-muted">{formatDateCompact(entry.date)}</span>
+                <span className="text-[10px] text-mt-muted/70">{entry.time}</span>
               </div>
             </button>
           ))}

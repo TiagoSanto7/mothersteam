@@ -69,11 +69,11 @@ function AddressStep({
     setZipLoading(false)
   }
 
-  const inputClass = 'w-full px-3 py-2.5 rounded-xl bg-white/70 text-sm text-graphite outline-none border border-transparent focus:border-sara-gold/40 placeholder:text-graphite-muted/50'
+  const inputClass = 'w-full px-3 py-2.5 rounded-xl bg-white/70 text-sm text-mt-charcoal outline-none border border-transparent focus:border-mt-rose/40 placeholder:text-mt-muted/50'
 
   return (
     <div className="flex flex-col gap-4 pb-4">
-      <p className="text-sm font-semibold text-graphite">Selecione o endereço de entrega</p>
+      <p className="text-sm font-semibold text-mt-charcoal">Selecione o endereço de entrega</p>
 
       {addresses.map((addr) => (
         <button
@@ -81,22 +81,22 @@ function AddressStep({
           onClick={() => setSelectedId(addr.id)}
           className={`w-full text-left p-4 rounded-2xl border-2 transition-colors flex gap-3 items-start ${
             selectedId === addr.id
-              ? 'border-sara-gold bg-sara-gold/5'
-              : 'border-sara-linen/60 bg-white/50'
+              ? 'border-mt-rose bg-mt-rose/5'
+              : 'border-mt-linen/60 bg-white/50'
           }`}
         >
-          <MapPin size={16} className="text-sara-gold flex-shrink-0 mt-0.5" />
+          <MapPin size={16} className="text-mt-rose flex-shrink-0 mt-0.5" />
           <div>
-            <p className="text-sm font-semibold text-graphite">{addr.recipientName}</p>
-            <p className="text-xs text-graphite-muted">
+            <p className="text-sm font-semibold text-mt-charcoal">{addr.recipientName}</p>
+            <p className="text-xs text-mt-muted">
               {addr.street}, {addr.number}
               {addr.complement ? `, ${addr.complement}` : ''} — {addr.neighborhood}
             </p>
-            <p className="text-xs text-graphite-muted">
+            <p className="text-xs text-mt-muted">
               {addr.city} / {addr.state} — CEP {addr.zipCode}
             </p>
             {addr.isDefault && (
-              <span className="text-[10px] text-sara-gold font-medium">Padrão</span>
+              <span className="text-[10px] text-mt-rose font-medium">Padrão</span>
             )}
           </div>
         </button>
@@ -105,7 +105,7 @@ function AddressStep({
       {!showForm && (
         <button
           onClick={() => setShowForm(true)}
-          className="w-full py-3 rounded-2xl border border-dashed border-sara-gold/40 text-sara-gold text-sm font-medium flex items-center justify-center gap-2"
+          className="w-full py-3 rounded-2xl border border-dashed border-mt-rose/40 text-mt-rose text-sm font-medium flex items-center justify-center gap-2"
         >
           <Plus size={14} /> Novo endereço
         </button>
@@ -113,7 +113,7 @@ function AddressStep({
 
       {showForm && (
         <div className="bg-white/60 rounded-3xl p-4 flex flex-col gap-3">
-          <p className="text-sm font-semibold text-graphite">Novo endereço</p>
+          <p className="text-sm font-semibold text-mt-charcoal">Novo endereço</p>
           <input
             className={inputClass}
             placeholder="Nome do destinatário"
@@ -132,7 +132,7 @@ function AddressStep({
                 if (v.length === 8) fetchZip(v)
               }}
             />
-            {zipLoading && <Loader2 size={16} className="animate-spin text-sara-gold self-center" />}
+            {zipLoading && <Loader2 size={16} className="animate-spin text-mt-rose self-center" />}
           </div>
           <input
             className={inputClass}
@@ -175,26 +175,26 @@ function AddressStep({
               onChange={(e) => setForm((f) => ({ ...f, state: e.target.value.toUpperCase().slice(0, 2) }))}
             />
           </div>
-          <label className="flex items-center gap-2 text-xs text-graphite-muted">
+          <label className="flex items-center gap-2 text-xs text-mt-muted">
             <input
               type="checkbox"
               checked={form.isDefault}
               onChange={(e) => setForm((f) => ({ ...f, isDefault: e.target.checked }))}
-              className="accent-sara-gold"
+              className="accent-mt-rose"
             />
             Definir como endereço padrão
           </label>
           <div className="flex gap-2 mt-1">
             <button
               onClick={() => setShowForm(false)}
-              className="flex-1 py-2.5 rounded-xl border border-sara-linen text-graphite-muted text-sm"
+              className="flex-1 py-2.5 rounded-xl border border-mt-linen text-mt-muted text-sm"
             >
               Cancelar
             </button>
             <button
               onClick={() => createMutation.mutate()}
               disabled={createMutation.isPending || !form.recipientName || !form.street || !form.number}
-              className="flex-1 py-2.5 rounded-xl bg-sara-gold text-white text-sm font-semibold disabled:opacity-50"
+              className="flex-1 py-2.5 rounded-xl bg-mt-rose text-white text-sm font-semibold disabled:opacity-50"
             >
               {createMutation.isPending ? 'Salvando...' : 'Salvar'}
             </button>
@@ -205,7 +205,7 @@ function AddressStep({
       <button
         onClick={() => selectedId && onNext(selectedId)}
         disabled={!selectedId}
-        className="w-full py-4 rounded-2xl bg-sara-gold text-white font-bold text-sm active:scale-95 transition-transform disabled:opacity-50 shadow-lg mt-2"
+        className="w-full py-4 rounded-2xl bg-mt-rose text-white font-bold text-sm active:scale-95 transition-transform disabled:opacity-50 shadow-lg mt-2"
       >
         Continuar
       </button>
@@ -390,7 +390,7 @@ function PaymentStep({
 
   const subtotal = Number(cart?.subtotal ?? 0)
   const inputClass =
-    'w-full px-3 py-2.5 rounded-xl bg-white/70 text-sm text-graphite outline-none border border-transparent focus:border-sara-gold/40 placeholder:text-graphite-muted/50'
+    'w-full px-3 py-2.5 rounded-xl bg-white/70 text-sm text-mt-charcoal outline-none border border-transparent focus:border-mt-rose/40 placeholder:text-mt-muted/50'
 
   const creditCardDisabled = orderMutation.isPending || (() => {
     if (savedCardId && savedCardId !== 'new') return !cvvForSaved
@@ -405,14 +405,14 @@ function PaymentStep({
 
   return (
     <div className="flex flex-col gap-4 pb-4">
-      <div className="bg-white/50 rounded-2xl px-4 py-3 flex justify-between items-center">
-        <span className="text-xs text-graphite-muted">
+      <div className="bg-white/60 rounded-mt px-4 py-3 flex justify-between items-center">
+        <span className="text-xs text-mt-muted">
           {cart?.itemCount ?? 0} itens · Total estimado
         </span>
-        <span className="text-sm font-bold text-graphite">R$ {subtotal.toFixed(2)}</span>
+        <span className="text-sm font-bold text-mt-charcoal">R$ {subtotal.toFixed(2)}</span>
       </div>
 
-      <p className="text-sm font-semibold text-graphite">Forma de pagamento</p>
+      <p className="text-sm font-semibold text-mt-charcoal">Forma de pagamento</p>
       <div className="flex gap-2">
         {(['pix', 'credit_card'] as const).map((m) => (
           <button
@@ -420,8 +420,8 @@ function PaymentStep({
             onClick={() => setMethod(m)}
             className={`flex-1 py-3 rounded-2xl border-2 text-sm font-medium transition-colors flex items-center justify-center gap-2 ${
               method === m
-                ? 'border-sara-gold bg-sara-gold/5 text-sara-gold'
-                : 'border-sara-linen/60 bg-white/50 text-graphite-muted'
+                ? 'border-mt-rose bg-mt-rose/5 text-mt-rose'
+                : 'border-mt-linen/60 bg-white/50 text-mt-muted'
             }`}
           >
             {m === 'pix' ? <><QrCode size={14} /> PIX</> : <><CreditCard size={14} /> Cartão</>}
@@ -430,10 +430,10 @@ function PaymentStep({
       </div>
 
       {method === 'pix' && (
-        <div className="bg-white/60 rounded-2xl p-4 text-center">
-          <QrCode size={32} className="text-sara-gold mx-auto mb-2" />
-          <p className="text-sm text-graphite font-medium">Aprovação imediata</p>
-          <p className="text-xs text-graphite-muted mt-1">
+        <div className="bg-white/70 rounded-mt p-4 text-center">
+          <QrCode size={32} className="text-mt-rose mx-auto mb-2" />
+          <p className="text-sm text-mt-charcoal font-medium">Aprovação imediata</p>
+          <p className="text-xs text-mt-muted mt-1">
             QR Code gerado após confirmar o pedido. Válido por 10 minutos.
           </p>
         </div>
@@ -443,23 +443,23 @@ function PaymentStep({
         <div className="flex flex-col gap-3">
           {savedCards.length > 0 && (
             <>
-              <p className="text-xs font-semibold text-graphite-muted uppercase tracking-wide">Cartões salvos</p>
+              <p className="text-xs font-semibold text-mt-muted uppercase tracking-wide">Cartões salvos</p>
               {savedCards.map((card) => (
                 <button
                   key={card.id}
                   onClick={() => { setSavedCardId(card.id); setCvvForSaved('') }}
                   className={`w-full text-left p-3 rounded-2xl border-2 transition-colors flex items-center gap-3 ${
                     savedCardId === card.id
-                      ? 'border-sara-gold bg-sara-gold/5'
-                      : 'border-sara-linen/60 bg-white/50'
+                      ? 'border-mt-rose bg-mt-rose/5'
+                      : 'border-mt-linen/60 bg-white/50'
                   }`}
                 >
-                  <CreditCard size={16} className="text-sara-gold flex-shrink-0" />
+                  <CreditCard size={16} className="text-mt-rose flex-shrink-0" />
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-semibold text-graphite">
+                    <p className="text-sm font-semibold text-mt-charcoal">
                       {BRAND_LABEL[card.brand] ?? card.brand} •••• {card.lastFour}
                     </p>
-                    <p className="text-xs text-graphite-muted">{card.holderName} · {card.expirationMonth.toString().padStart(2, '0')}/{card.expirationYear}</p>
+                    <p className="text-xs text-mt-muted">{card.holderName} · {card.expirationMonth.toString().padStart(2, '0')}/{card.expirationYear}</p>
                   </div>
                 </button>
               ))}
@@ -478,8 +478,8 @@ function PaymentStep({
                 onClick={() => { setSavedCardId('new'); setSaveCard(false) }}
                 className={`w-full py-2.5 rounded-2xl border-2 text-sm font-medium transition-colors flex items-center justify-center gap-2 ${
                   savedCardId === 'new'
-                    ? 'border-sara-gold bg-sara-gold/5 text-sara-gold'
-                    : 'border-dashed border-sara-linen/60 text-graphite-muted'
+                    ? 'border-mt-rose bg-mt-rose/5 text-mt-rose'
+                    : 'border-dashed border-mt-linen/60 text-mt-muted'
                 }`}
               >
                 <Plus size={14} /> Usar outro cartão
@@ -546,9 +546,9 @@ function PaymentStep({
                 }}
               />
               <div className="flex items-center gap-2">
-                <label className="text-xs text-graphite-muted flex-shrink-0">Parcelar em:</label>
+                <label className="text-xs text-mt-muted flex-shrink-0">Parcelar em:</label>
                 {installmentsFetching ? (
-                  <div className={`${inputClass} flex-1 flex items-center gap-2 text-graphite-muted`}>
+                  <div className={`${inputClass} flex-1 flex items-center gap-2 text-mt-muted`}>
                     <Loader2 size={12} className="animate-spin" /> Calculando...
                   </div>
                 ) : (
@@ -568,12 +568,12 @@ function PaymentStep({
                   </select>
                 )}
               </div>
-              <label className="flex items-center gap-2 text-xs text-graphite-muted">
+              <label className="flex items-center gap-2 text-xs text-mt-muted">
                 <input
                   type="checkbox"
                   checked={saveCard}
                   onChange={(e) => setSaveCard(e.target.checked)}
-                  className="accent-sara-gold"
+                  className="accent-mt-rose"
                 />
                 Salvar cartão para próximas compras
               </label>
@@ -583,7 +583,7 @@ function PaymentStep({
       )}
 
       {error && (
-        <p className="text-xs text-sara-terracotta bg-sara-terracotta/10 rounded-xl px-3 py-2">{error}</p>
+        <p className="text-xs text-mt-rose-dark bg-mt-rose-dark/10 rounded-xl px-3 py-2">{error}</p>
       )}
 
       <div className="flex gap-2 mt-2">
@@ -591,12 +591,12 @@ function PaymentStep({
           onClick={onBack}
           className="flex-none w-11 h-11 rounded-xl bg-white/70 flex items-center justify-center active:scale-95 transition-transform"
         >
-          <ChevronLeft size={18} className="text-graphite" />
+          <ChevronLeft size={18} className="text-mt-charcoal" />
         </button>
         <button
           onClick={() => orderMutation.mutate()}
           disabled={method === 'credit_card' ? creditCardDisabled : orderMutation.isPending}
-          className="flex-1 py-3.5 rounded-2xl bg-sara-gold text-white font-bold text-sm active:scale-95 transition-transform disabled:opacity-60 shadow-lg"
+          className="flex-1 py-3.5 rounded-2xl bg-mt-rose text-white font-bold text-sm active:scale-95 transition-transform disabled:opacity-60 shadow-lg"
         >
           {orderMutation.isPending ? 'Processando...' : 'Confirmar pedido'}
         </button>
@@ -672,11 +672,11 @@ function PixWaitingScreen({
   if (pollError) {
     return (
       <div className="flex flex-col items-center gap-4 py-8 text-center">
-        <p className="text-sara-terracotta font-semibold text-sm">Erro ao verificar pagamento</p>
-        <p className="text-xs text-graphite-muted">{pollError}</p>
+        <p className="text-mt-rose-dark font-semibold text-sm">Erro ao verificar pagamento</p>
+        <p className="text-xs text-mt-muted">{pollError}</p>
         <button
           onClick={onCancel}
-          className="px-6 py-2.5 rounded-xl bg-white/70 text-graphite text-sm font-medium"
+          className="px-6 py-2.5 rounded-xl bg-white/70 text-mt-charcoal text-sm font-medium"
         >
           Ver meus pedidos
         </button>
@@ -687,11 +687,11 @@ function PixWaitingScreen({
   if (expired) {
     return (
       <div className="flex flex-col items-center gap-4 py-8 text-center">
-        <p className="text-sara-terracotta font-semibold text-sm">QR Code expirado</p>
-        <p className="text-xs text-graphite-muted">O tempo de pagamento via PIX expirou.</p>
+        <p className="text-mt-rose-dark font-semibold text-sm">QR Code expirado</p>
+        <p className="text-xs text-mt-muted">O tempo de pagamento via PIX expirou.</p>
         <button
           onClick={onCancel}
-          className="px-6 py-2.5 rounded-xl bg-white/70 text-graphite text-sm font-medium"
+          className="px-6 py-2.5 rounded-xl bg-white/70 text-mt-charcoal text-sm font-medium"
         >
           Voltar ao carrinho
         </button>
@@ -702,21 +702,21 @@ function PixWaitingScreen({
   return (
     <div className="flex flex-col items-center gap-4 py-4">
       <div className="flex items-center gap-2">
-        <Loader2 size={16} className="animate-spin text-sara-gold" />
-        <p className="text-sm text-graphite font-medium">Aguardando pagamento PIX...</p>
+        <Loader2 size={16} className="animate-spin text-mt-rose" />
+        <p className="text-sm text-mt-charcoal font-medium">Aguardando pagamento PIX...</p>
       </div>
 
       {pixQrCode && (
         <img
           src={`data:image/png;base64,${pixQrCode}`}
           alt="QR Code PIX"
-          className="w-48 h-48 rounded-2xl border-2 border-sara-gold/20"
+          className="w-48 h-48 rounded-2xl border-2 border-mt-rose/20"
         />
       )}
 
       {pixCode && (
         <div className="w-full">
-          <p className="text-xs text-graphite-muted mb-1">Ou copie o código PIX:</p>
+          <p className="text-xs text-mt-muted mb-1">Ou copie o código PIX:</p>
           <div className="flex gap-2">
             <input
               readOnly
@@ -725,7 +725,7 @@ function PixWaitingScreen({
             />
             <button
               onClick={copyCode}
-              className="px-3 py-2 rounded-xl bg-sara-gold text-white text-xs font-semibold active:scale-95"
+              className="px-3 py-2 rounded-xl bg-mt-rose text-white text-xs font-semibold active:scale-95"
             >
               {copied ? 'Copiado!' : 'Copiar'}
             </button>
@@ -733,7 +733,7 @@ function PixWaitingScreen({
         </div>
       )}
 
-      <p className="text-[10px] text-graphite-muted">
+      <p className="text-[10px] text-mt-muted">
         Verificando automaticamente. Válido por 10 minutos.
       </p>
     </div>
@@ -763,29 +763,29 @@ function ConfirmationStep({
         <CheckCircle size={36} className="text-green-500" />
       </div>
       <div>
-        <p className="text-lg font-bold text-graphite">Pedido confirmado!</p>
-        <p className="text-xs text-graphite-muted mt-1">
+        <p className="text-lg font-bold text-mt-charcoal">Pedido confirmado!</p>
+        <p className="text-xs text-mt-muted mt-1">
           #{order?.id.slice(-8).toUpperCase() ?? orderId.slice(-8).toUpperCase()}
         </p>
       </div>
       {order && (
-        <p className="text-sm text-graphite-muted">
-          Total: <span className="font-bold text-graphite">R$ {Number(order.total).toFixed(2)}</span>
+        <p className="text-sm text-mt-muted">
+          Total: <span className="font-bold text-mt-charcoal">R$ {Number(order.total).toFixed(2)}</span>
         </p>
       )}
-      <p className="text-xs text-graphite-muted">
+      <p className="text-xs text-mt-muted">
         Previsão de entrega: 5–8 dias úteis após o pagamento.
       </p>
       <div className="flex flex-col gap-2 w-full mt-2">
         <button
           onClick={onViewOrder}
-          className="w-full py-3.5 rounded-2xl bg-sara-gold text-white font-bold text-sm active:scale-95 transition-transform"
+          className="w-full py-3.5 rounded-2xl bg-mt-rose text-white font-bold text-sm active:scale-95 transition-transform"
         >
           Ver meu pedido
         </button>
         <button
           onClick={onContinue}
-          className="w-full py-3 rounded-2xl bg-white/70 text-graphite text-sm font-medium active:scale-95 transition-transform"
+          className="w-full py-3 rounded-2xl bg-white/70 text-mt-charcoal text-sm font-medium active:scale-95 transition-transform"
         >
           Continuar comprando
         </button>
@@ -814,19 +814,19 @@ export function CheckoutScreen({ onBack, onOrderComplete }: Props) {
   }
 
   return (
-    <div className="flex flex-col h-full bg-gradient-to-b from-[#F5EDE0] via-[#EAD8C8] to-[#D9C4AF] overflow-hidden">
+    <div className="flex flex-col h-full bg-mt-gradient-pastel overflow-hidden">
       <div className="flex items-center gap-3 px-4 pt-10 pb-4 flex-shrink-0">
         {step !== 'confirmation' && (
           <button
             onClick={step === 'address' ? onBack : () => setStep('address')}
             className="w-9 h-9 rounded-xl bg-white/70 flex items-center justify-center active:scale-95 transition-transform"
           >
-            <ChevronLeft size={20} className="text-graphite" />
+            <ChevronLeft size={20} className="text-mt-charcoal" />
           </button>
         )}
         <div className="flex-1">
-          <h1 className="text-base font-semibold text-graphite">Finalizar pedido</h1>
-          <p className="text-xs text-graphite-muted">{stepLabel[step]}</p>
+          <h1 className="text-base font-semibold text-mt-charcoal">Finalizar pedido</h1>
+          <p className="text-xs text-mt-muted">{stepLabel[step]}</p>
         </div>
       </div>
 
@@ -837,8 +837,8 @@ export function CheckoutScreen({ onBack, onOrderComplete }: Props) {
               key={s}
               className={`h-1 rounded-full flex-1 transition-colors ${
                 i <= stepIndex
-                  ? 'bg-sara-gold'
-                  : 'bg-sara-linen/60'
+                  ? 'bg-mt-rose'
+                  : 'bg-mt-linen/60'
               }`}
             />
           ))}
@@ -904,28 +904,28 @@ export function CheckoutScreen({ onBack, onOrderComplete }: Props) {
 
         {step === 'pending' && pendingOrderId && (
           <div className="flex flex-col items-center gap-5 py-8 text-center">
-            <div className="w-16 h-16 rounded-full bg-sara-gold/10 flex items-center justify-center">
-              <Loader2 size={32} className="text-sara-gold animate-spin" />
+            <div className="w-16 h-16 rounded-full bg-mt-rose/10 flex items-center justify-center">
+              <Loader2 size={32} className="text-mt-rose animate-spin" />
             </div>
             <div>
-              <p className="text-lg font-bold text-graphite">Pagamento em análise</p>
-              <p className="text-xs text-graphite-muted mt-1">
+              <p className="text-lg font-bold text-mt-charcoal">Pagamento em análise</p>
+              <p className="text-xs text-mt-muted mt-1">
                 #{pendingOrderId.slice(-8).toUpperCase()}
               </p>
             </div>
-            <p className="text-sm text-graphite-muted px-4">
+            <p className="text-sm text-mt-muted px-4">
               Seu pagamento está sendo analisado pela operadora. Você receberá uma notificação assim que for aprovado.
             </p>
             <div className="flex flex-col gap-2 w-full mt-2">
               <button
                 onClick={() => onOrderComplete(pendingOrderId)}
-                className="w-full py-3.5 rounded-2xl bg-sara-gold text-white font-bold text-sm active:scale-95 transition-transform"
+                className="w-full py-3.5 rounded-2xl bg-mt-rose text-white font-bold text-sm active:scale-95 transition-transform"
               >
                 Acompanhar pedido
               </button>
               <button
                 onClick={onBack}
-                className="w-full py-3 rounded-2xl bg-white/70 text-graphite text-sm font-medium active:scale-95 transition-transform"
+                className="w-full py-3 rounded-2xl bg-white/70 text-mt-charcoal text-sm font-medium active:scale-95 transition-transform"
               >
                 Voltar à loja
               </button>

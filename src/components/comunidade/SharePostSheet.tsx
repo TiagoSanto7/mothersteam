@@ -95,13 +95,13 @@ export function SharePostSheet({ post, onClose }: SharePostSheetProps) {
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between mb-4">
-          <p className="text-sm font-semibold text-graphite">Enviar para</p>
+          <p className="text-sm font-semibold text-mt-charcoal">Enviar para</p>
           <button
             onClick={onClose}
             aria-label="Fechar"
             className="w-7 h-7 rounded-full bg-gray-100 flex items-center justify-center"
           >
-            <X size={14} className="text-graphite" />
+            <X size={14} className="text-mt-charcoal" />
           </button>
         </div>
 
@@ -110,11 +110,11 @@ export function SharePostSheet({ post, onClose }: SharePostSheetProps) {
           onChange={(e) => setShareComment(e.target.value)}
           placeholder="Adicionar um comentário..."
           rows={2}
-          className="w-full px-3 py-2 rounded-xl border border-sara-linen text-sm text-graphite placeholder:text-graphite-muted resize-none focus:outline-none focus:border-sara-gold mb-3"
+          className="w-full px-3 py-2 rounded-xl border border-mt-linen text-sm text-mt-charcoal placeholder:text-mt-muted resize-none focus:outline-none focus:border-mt-rose mb-3"
         />
 
         {recipients.length === 0 ? (
-          <p className="text-xs text-graphite-muted text-center py-4">
+          <p className="text-xs text-mt-muted text-center py-4">
             Siga alguém para poder compartilhar posts
           </p>
         ) : (
@@ -127,7 +127,7 @@ export function SharePostSheet({ post, onClose }: SharePostSheetProps) {
                     onClick={() => toggleUser(r.id)}
                     aria-pressed={selected}
                     className={`w-full flex items-center gap-3 px-2 py-3 rounded-xl transition-colors ${
-                      selected ? 'bg-sara-linen' : 'active:bg-sara-linen'
+                      selected ? 'bg-mt-linen' : 'active:bg-mt-linen'
                     }`}
                   >
                     <div
@@ -136,9 +136,9 @@ export function SharePostSheet({ post, onClose }: SharePostSheetProps) {
                     >
                       {r.name.charAt(0).toUpperCase()}
                     </div>
-                    <p className="flex-1 text-sm font-medium text-graphite text-left">{r.name}</p>
+                    <p className="flex-1 text-sm font-medium text-mt-charcoal text-left">{r.name}</p>
                     <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 transition-colors ${
-                      selected ? 'bg-sara-gold border-sara-gold' : 'border-sara-linen'
+                      selected ? 'bg-mt-rose border-mt-rose' : 'border-mt-linen'
                     }`}>
                       {selected && <span className="text-white text-[10px] font-bold">✓</span>}
                     </div>
@@ -153,7 +153,7 @@ export function SharePostSheet({ post, onClose }: SharePostSheetProps) {
           data-testid="share-send-btn"
           onClick={handleSend}
           disabled={selectedIds.length === 0}
-          className="w-full py-3 rounded-2xl bg-sara-gold text-white text-sm font-semibold disabled:opacity-40 active:scale-95 transition-all"
+          className="w-full py-3 rounded-2xl bg-mt-rose text-white text-sm font-semibold disabled:opacity-40 active:scale-95 transition-all"
         >
           Enviar
         </button>

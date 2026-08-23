@@ -47,9 +47,9 @@ export function OrdersTab({ onOpenOrder }: Props) {
   if (orders.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-16 gap-3 px-4">
-        <Package size={40} className="text-graphite-muted/30" />
-        <p className="text-graphite-muted text-sm font-medium">Nenhum pedido ainda</p>
-        <p className="text-xs text-graphite-muted text-center">
+        <Package size={40} className="text-mt-muted/30" />
+        <p className="text-mt-muted text-sm font-medium">Nenhum pedido ainda</p>
+        <p className="text-xs text-mt-muted text-center">
           Seus pedidos aparecerão aqui após a compra
         </p>
       </div>
@@ -64,7 +64,7 @@ export function OrdersTab({ onOpenOrder }: Props) {
           <button
             key={order.id}
             onClick={() => onOpenOrder(order.id)}
-            className="w-full text-left bg-white rounded-3xl p-4 shadow-sm flex gap-3 active:scale-[0.98] transition-transform"
+            className="w-full text-left bg-white rounded-mt p-4 shadow-mt flex gap-3 active:scale-[0.98] transition-transform"
           >
             <div className="flex gap-1 flex-shrink-0">
               {firstItems.map((item) => {
@@ -74,28 +74,28 @@ export function OrdersTab({ onOpenOrder }: Props) {
                     key={item.id}
                     src={img}
                     alt={item.ownProduct.name}
-                    className="w-12 h-12 rounded-xl object-cover bg-sara-linen"
+                    className="w-12 h-12 rounded-xl object-cover bg-mt-linen"
                   />
                 ) : (
-                  <div key={item.id} className="w-12 h-12 rounded-xl bg-sara-linen flex items-center justify-center">
-                    <Package size={14} className="text-graphite-muted" />
+                  <div key={item.id} className="w-12 h-12 rounded-xl bg-mt-linen flex items-center justify-center">
+                    <Package size={14} className="text-mt-muted" />
                   </div>
                 )
               })}
             </div>
             <div className="flex-1 min-w-0">
               <div className="flex items-start justify-between gap-2">
-                <p className="text-xs font-semibold text-graphite">
+                <p className="text-xs font-semibold text-mt-charcoal">
                   #{order.id.slice(-8).toUpperCase()}
                 </p>
-                <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full flex-shrink-0 ${STATUS_COLOR[order.status] ?? 'bg-graphite-muted/10 text-graphite-muted'}`}>
+                <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full flex-shrink-0 ${STATUS_COLOR[order.status] ?? 'bg-mt-muted/10 text-mt-muted'}`}>
                   {STATUS_LABEL[order.status] ?? order.status}
                 </span>
               </div>
-              <p className="text-xs text-graphite-muted mt-0.5">
+              <p className="text-xs text-mt-muted mt-0.5">
                 {new Date(order.createdAt).toLocaleDateString('pt-BR')}
               </p>
-              <p className="text-sm font-bold text-sara-gold mt-1">
+              <p className="text-sm font-bold text-mt-rose mt-1">
                 R$ {Number(order.total).toFixed(2)}
               </p>
             </div>

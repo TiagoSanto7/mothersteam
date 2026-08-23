@@ -76,9 +76,9 @@ export function FavoritesTab({ onOpenProduct }: Props) {
   if (items.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-16 gap-3 px-4">
-        <Heart size={40} className="text-graphite-muted/30" />
-        <p className="text-graphite-muted text-sm font-medium">Nenhum favorito ainda</p>
-        <p className="text-xs text-graphite-muted text-center">
+        <Heart size={40} className="text-mt-muted/30" />
+        <p className="text-mt-muted text-sm font-medium">Nenhum favorito ainda</p>
+        <p className="text-xs text-mt-muted text-center">
           Toque no ♡ em qualquer produto para salvar aqui
         </p>
       </div>
@@ -88,7 +88,7 @@ export function FavoritesTab({ onOpenProduct }: Props) {
   return (
     <div className="flex flex-col gap-3 px-4 pt-4 pb-6">
       {cartAddError && (
-        <p className="text-xs text-sara-terracotta bg-sara-terracotta/10 rounded-xl px-3 py-2">{cartAddError}</p>
+        <p className="text-xs text-mt-rose-dark bg-mt-rose-dark/10 rounded-xl px-3 py-2">{cartAddError}</p>
       )}
       {items.map((entry) => {
         const product = entry.product as ApiAdminProduct | ApiOwnProduct
@@ -97,32 +97,32 @@ export function FavoritesTab({ onOpenProduct }: Props) {
         const images = product.images as string[]
 
         return (
-          <div key={`${entry.type}-${product.id}`} className="bg-white rounded-3xl p-4 shadow-sm flex gap-3">
+          <div key={`${entry.type}-${product.id}`} className="bg-white rounded-mt p-4 shadow-mt flex gap-3">
             <button onClick={() => onOpenProduct(entry.type, product.id)} className="flex-shrink-0">
               {images[0] ? (
                 <img
                   src={images[0]}
                   alt={product.name}
-                  className="w-20 h-20 rounded-2xl object-cover bg-sara-linen"
+                  className="w-20 h-20 rounded-2xl object-cover bg-mt-linen"
                 />
               ) : (
-                <div className="w-20 h-20 rounded-2xl bg-sara-linen flex items-center justify-center">
-                  <ShoppingBag size={24} className="text-graphite-muted" />
+                <div className="w-20 h-20 rounded-2xl bg-mt-linen flex items-center justify-center">
+                  <ShoppingBag size={24} className="text-mt-muted" />
                 </div>
               )}
             </button>
 
             <div className="flex-1 min-w-0 flex flex-col gap-1">
-              <p className="text-[11px] text-graphite-muted">
+              <p className="text-[11px] text-mt-muted">
                 {(product as ApiAdminProduct).category?.name ?? ''}
               </p>
               <button
                 onClick={() => onOpenProduct(entry.type, product.id)}
-                className="text-sm font-semibold text-graphite leading-tight text-left line-clamp-2"
+                className="text-sm font-semibold text-mt-charcoal leading-tight text-left line-clamp-2"
               >
                 {product.name}
               </button>
-              <p className="text-sm font-bold text-sara-gold">
+              <p className="text-sm font-bold text-mt-rose">
                 R$ {Number(product.price).toFixed(2)}
               </p>
 
@@ -130,7 +130,7 @@ export function FavoritesTab({ onOpenProduct }: Props) {
                 {!isOwn && (
                   <button
                     onClick={() => onOpenProduct('affiliate', product.id)}
-                    className="flex-1 py-1.5 rounded-xl bg-sara-gold text-white text-xs font-semibold flex items-center justify-center gap-1 active:scale-95 transition-transform"
+                    className="flex-1 py-1.5 rounded-xl bg-mt-rose text-white text-xs font-semibold flex items-center justify-center gap-1 active:scale-95 transition-transform"
                   >
                     Ver detalhes <ExternalLink size={10} />
                   </button>
@@ -139,22 +139,22 @@ export function FavoritesTab({ onOpenProduct }: Props) {
                   <button
                     onClick={() => cartMutation.mutate(product.id)}
                     disabled={cartMutation.isPending}
-                    className="flex-1 py-1.5 rounded-xl bg-sara-gold text-white text-xs font-semibold flex items-center justify-center gap-1 active:scale-95 transition-transform disabled:opacity-60"
+                    className="flex-1 py-1.5 rounded-xl bg-mt-rose text-white text-xs font-semibold flex items-center justify-center gap-1 active:scale-95 transition-transform disabled:opacity-60"
                   >
                     <ShoppingCart size={11} /> Carrinho
                   </button>
                 )}
                 {isOwn && !hasStock && (
-                  <span className="flex-1 py-1.5 rounded-xl bg-graphite-muted/10 text-graphite-muted text-xs font-medium text-center">
+                  <span className="flex-1 py-1.5 rounded-xl bg-mt-muted/10 text-mt-muted text-xs font-medium text-center">
                     Indisponível
                   </span>
                 )}
                 <button
                   onClick={() => removeMutation.mutate({ type: entry.type, id: product.id })}
                   disabled={removeMutation.isPending}
-                  className="w-8 h-8 rounded-xl bg-sara-terracotta/10 flex items-center justify-center active:scale-95 transition-transform"
+                  className="w-8 h-8 rounded-xl bg-mt-rose-dark/10 flex items-center justify-center active:scale-95 transition-transform"
                 >
-                  <Heart size={14} className="text-sara-terracotta fill-current" />
+                  <Heart size={14} className="text-mt-rose-dark fill-current" />
                 </button>
               </div>
             </div>

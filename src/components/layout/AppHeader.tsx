@@ -27,7 +27,7 @@ export function AppHeader({ onOpenDrawer, rightSlot }: AppHeaderProps) {
         aria-label="Abrir menu"
         className="w-9 h-9 rounded-xl flex items-center justify-center active:scale-95 transition-transform"
       >
-        <Menu size={22} className="text-graphite" strokeWidth={1.8} />
+        <Menu size={22} className="text-mt-charcoal" strokeWidth={1.8} />
       </button>
 
       <div className="flex-1 flex flex-col items-center justify-center gap-1">
@@ -38,7 +38,7 @@ export function AppHeader({ onOpenDrawer, rightSlot }: AppHeaderProps) {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.15 }}
-            className="text-base font-semibold font-serif text-graphite tracking-wide"
+            className="text-base font-semibold font-serif text-mt-charcoal tracking-wide"
           >
             {TAB_LABELS[activeTab] ?? activeTab}
           </motion.span>

@@ -68,37 +68,37 @@ export function SleepCard() {
     : `${minutesInput}m`;
 
   return (
-    <div className="bg-white rounded-3xl p-4 shadow-sm flex flex-col gap-3 min-w-0">
+    <div className="bg-white rounded-mt p-4 shadow-mt flex flex-col gap-3 min-w-0">
       <div className="flex items-center gap-1.5 min-w-0">
-        <Moon size={16} className="text-sara-gold flex-shrink-0" strokeWidth={1.8} />
-        <span className="text-sm font-semibold text-graphite truncate">Sono</span>
+        <Moon size={16} className="text-mt-rose flex-shrink-0" strokeWidth={1.8} />
+        <span className="text-sm font-semibold text-mt-charcoal truncate">Sono</span>
       </div>
 
       <div className="flex items-baseline gap-1">
-        <span className="text-3xl font-bold text-graphite tabular-nums leading-none">
+        <span className="text-3xl font-bold text-mt-charcoal tabular-nums leading-none">
           {totalToday === 0 ? '0m' : todayLabel}
         </span>
-        <span className="text-[10px] text-graphite-muted">hoje</span>
+        <span className="text-[10px] text-mt-muted">hoje</span>
       </div>
 
       {/* Duration stepper: [−] 1h30 [+] */}
-      <div className="flex items-center justify-between bg-sara-linen/60 rounded-2xl p-1">
+      <div className="flex items-center justify-between bg-mt-linen/60 rounded-2xl p-1">
         <button
           onClick={dec}
           aria-label="Diminuir duração"
           disabled={totalMinutes <= 30}
-          className="w-8 h-8 flex items-center justify-center rounded-xl bg-white text-sara-gold disabled:opacity-30 active:scale-90 transition-transform"
+          className="w-8 h-8 flex items-center justify-center rounded-xl bg-white text-mt-rose disabled:opacity-30 active:scale-90 transition-transform"
         >
           <Minus size={14} strokeWidth={2.5} />
         </button>
-        <span className="text-sm font-bold text-graphite tabular-nums">
+        <span className="text-sm font-bold text-mt-charcoal tabular-nums">
           {durationLabel}
         </span>
         <button
           onClick={inc}
           aria-label="Aumentar duração"
           disabled={totalMinutes >= 12 * 60}
-          className="w-8 h-8 flex items-center justify-center rounded-xl bg-white text-sara-gold disabled:opacity-30 active:scale-90 transition-transform"
+          className="w-8 h-8 flex items-center justify-center rounded-xl bg-white text-mt-rose disabled:opacity-30 active:scale-90 transition-transform"
         >
           <Plus size={14} strokeWidth={2.5} />
         </button>
@@ -114,8 +114,8 @@ export function SleepCard() {
             aria-label={opt.aria}
             className={`flex-1 h-9 rounded-xl text-base transition-colors flex items-center justify-center ${
               period === opt.key
-                ? 'bg-sara-gold/15 ring-2 ring-sara-gold'
-                : 'bg-sara-linen/60'
+                ? 'bg-mt-rose/15 ring-2 ring-mt-rose'
+                : 'bg-mt-linen/60'
             }`}
           >
             <span>{opt.emoji}</span>
@@ -127,7 +127,7 @@ export function SleepCard() {
         onClick={() => addSleep()}
         disabled={isPending}
         aria-label="Registrar soneca"
-        className="w-full py-2 rounded-2xl bg-sara-linen text-sara-gold text-xs font-semibold flex items-center justify-center gap-1 active:scale-[0.98] transition-transform disabled:opacity-60"
+        className="w-full py-2 rounded-2xl bg-mt-linen text-mt-rose text-xs font-semibold flex items-center justify-center gap-1 active:scale-[0.98] transition-transform disabled:opacity-60"
       >
         <Plus size={14} strokeWidth={2.5} />
         {isPending ? 'Registrando...' : 'Registrar'}

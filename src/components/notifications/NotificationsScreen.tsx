@@ -21,10 +21,10 @@ interface NotificationsScreenProps {
 }
 
 const ICON: Record<ApiNotification['type'], React.ReactElement> = {
-  like:    <Heart size={14} className="text-sara-terracotta" fill="currentColor" />,
-  follow:  <UserPlus size={14} className="text-sara-gold" />,
-  comment: <MessageCircle size={14} className="text-sara-warm" />,
-  mention: <AtSign size={14} className="text-sara-gold" />,
+  like:    <Heart size={14} className="text-mt-rose-dark" fill="currentColor" />,
+  follow:  <UserPlus size={14} className="text-mt-rose" />,
+  comment: <MessageCircle size={14} className="text-mt-muted" />,
+  mention: <AtSign size={14} className="text-mt-rose" />,
 };
 
 export function NotificationsScreen({ onBack, onOpenPost, onOpenUser, onOpenCommunity }: NotificationsScreenProps) {
@@ -90,16 +90,16 @@ export function NotificationsScreen({ onBack, onOpenPost, onOpenUser, onOpenComm
   }
 
   return (
-    <div className="flex flex-col w-full h-full sm:w-[390px] sm:h-[844px] bg-gradient-to-b from-[#F5EDE0] via-[#EAD8C8] to-[#D9C4AF] sm:rounded-[44px] sm:shadow-2xl overflow-hidden">
-      <div className="flex items-center justify-between px-4 pt-6 pb-4 border-b border-sara-linen/60">
-        <button onClick={onBack} className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-sara-linen">
-          <ChevronLeft size={20} className="text-graphite" />
+    <div className="flex flex-col w-full h-full sm:w-[390px] sm:h-[844px] bg-mt-gradient-pastel sm:rounded-[44px] sm:shadow-2xl overflow-hidden">
+      <div className="flex items-center justify-between px-4 pt-6 pb-4 border-b border-mt-linen/60">
+        <button onClick={onBack} className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-mt-linen">
+          <ChevronLeft size={20} className="text-mt-charcoal" />
         </button>
-        <p className="text-sm font-semibold text-graphite">Notificações</p>
+        <p className="text-sm font-semibold text-mt-charcoal">Notificações</p>
         {unreadCount > 0 ? (
           <button
             onClick={() => readAllMutation.mutate()}
-            className="text-[11px] text-sara-gold font-semibold"
+            className="text-[11px] text-mt-rose font-semibold"
           >
             Marcar lidas
           </button>
@@ -109,7 +109,7 @@ export function NotificationsScreen({ onBack, onOpenPost, onOpenUser, onOpenComm
       </div>
 
       {followError && (
-        <p role="alert" className="text-[11px] text-sara-terracotta text-center px-4 py-2 bg-sara-cream border-b border-sara-linen/60">
+        <p role="alert" className="text-[11px] text-mt-rose-dark text-center px-4 py-2 bg-mt-cream border-b border-mt-linen/60">
           {followError}
         </p>
       )}
@@ -119,7 +119,7 @@ export function NotificationsScreen({ onBack, onOpenPost, onOpenUser, onOpenComm
           <SaraPullIndicator pullY={pullY} isLoading={isLoading} />
         )}
         {notifications.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-full gap-2 text-graphite-muted">
+          <div className="flex flex-col items-center justify-center h-full gap-2 text-mt-muted">
             <p className="text-sm">Nenhuma notificação</p>
           </div>
         ) : (
@@ -139,7 +139,7 @@ export function NotificationsScreen({ onBack, onOpenPost, onOpenUser, onOpenComm
                     tabIndex={0}
                     onClick={() => handleNotificationClick(n)}
                     onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') handleNotificationClick(n); }}
-                    className={`w-full flex items-start gap-3 px-4 py-4 cursor-pointer ${!n.read ? 'bg-sara-linen' : 'bg-white'} hover:brightness-95 transition-all`}
+                    className={`w-full flex items-start gap-3 px-4 py-4 cursor-pointer ${!n.read ? 'bg-mt-linen' : 'bg-white'} hover:brightness-95 transition-all`}
                   >
                     {/* Actor avatar with notification-type badge */}
                     <div className="relative flex-shrink-0">
@@ -151,7 +151,7 @@ export function NotificationsScreen({ onBack, onOpenPost, onOpenUser, onOpenComm
                           size={36}
                         />
                       ) : (
-                        <div className="w-9 h-9 rounded-full bg-sara-cream flex items-center justify-center">
+                        <div className="w-9 h-9 rounded-full bg-mt-cream flex items-center justify-center">
                           {ICON[n.type]}
                         </div>
                       )}
@@ -165,33 +165,33 @@ export function NotificationsScreen({ onBack, onOpenPost, onOpenUser, onOpenComm
                     <div className="flex-1 min-w-0">
                       {/* Main text — actor name is a tappable link for follow notifications */}
                       {n.type === 'follow' && n.actorId ? (
-                        <p className="text-sm text-graphite leading-snug">
+                        <p className="text-sm text-mt-charcoal leading-snug">
                           <button
                             type="button"
                             onClick={(e) => handleActorClick(e, n.actorId!)}
-                            className="font-semibold text-graphite hover:underline"
+                            className="font-semibold text-mt-charcoal hover:underline"
                           >
                             {n.actorName ?? 'Alguém'}
                           </button>
                           {' '}começou a te seguir.
                         </p>
                       ) : (
-                        <p className="text-sm text-graphite leading-snug">{n.text}</p>
+                        <p className="text-sm text-mt-charcoal leading-snug">{n.text}</p>
                       )}
 
                       {/* Post excerpt for like/comment */}
                       {(n.type === 'like' || n.type === 'comment') && n.postExcerpt && (
-                        <p className="text-xs text-graphite-muted mt-1 line-clamp-2 bg-white/60 rounded-lg px-2 py-1">
+                        <p className="text-xs text-mt-muted mt-1 line-clamp-2 bg-white/60 rounded-lg px-2 py-1">
                           {n.postExcerpt}
                         </p>
                       )}
 
-                      <p className="text-[11px] text-graphite-muted mt-1">{relativeTime(n.createdAt)} atrás</p>
+                      <p className="text-[11px] text-mt-muted mt-1">{relativeTime(n.createdAt)} atrás</p>
                     </div>
 
                     <div className="flex flex-col items-end gap-2 flex-shrink-0">
                       {!n.read && (
-                        <div className="w-2 h-2 rounded-full bg-sara-gold" />
+                        <div className="w-2 h-2 rounded-full bg-mt-rose" />
                       )}
                       {/* Follow-back button — only for follow notifications from other users */}
                       {isFollowNotif && (
@@ -206,8 +206,8 @@ export function NotificationsScreen({ onBack, onOpenPost, onOpenUser, onOpenComm
                           }}
                           className={`flex items-center gap-1 text-[11px] font-semibold px-2 py-1 rounded-full active:scale-95 transition-all ${
                             isFollowing
-                              ? 'bg-transparent border border-sara-gold text-sara-gold cursor-default'
-                              : 'bg-sara-gold text-white'
+                              ? 'bg-transparent border border-mt-rose text-mt-rose cursor-default'
+                              : 'bg-mt-rose text-white'
                           }`}
                         >
                           <UserCheck size={11} />

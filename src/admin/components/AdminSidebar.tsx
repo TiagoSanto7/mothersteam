@@ -28,8 +28,8 @@ export function AdminSidebar({ activeRoute, onNavigate, role }: AdminSidebarProp
   return (
     <aside className="w-60 bg-white border-r border-gray-200 flex flex-col sticky top-0 h-screen">
       <div className="px-6 py-5 border-b border-gray-100">
-        <p className="font-bold text-sara-gold font-serif text-lg">Mother's Team</p>
-        <p className="text-[11px] text-graphite-muted mt-0.5">Painel Admin</p>
+        <p className="font-bold text-mt-rose font-serif text-lg">Mother's Team</p>
+        <p className="text-[11px] text-mt-muted mt-0.5">Painel Admin</p>
       </div>
 
       <nav className="flex-1 py-4 px-3 flex flex-col gap-1">
@@ -40,8 +40,8 @@ export function AdminSidebar({ activeRoute, onNavigate, role }: AdminSidebarProp
             aria-current={isActive(id) ? 'page' : undefined}
             className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-colors ${
               isActive(id)
-                ? 'bg-sara-gold/10 text-sara-gold'
-                : 'text-graphite-muted hover:bg-gray-50 hover:text-graphite'
+                ? 'bg-mt-rose/10 text-mt-rose'
+                : 'text-mt-muted hover:bg-gray-50 hover:text-mt-charcoal'
             }`}
           >
             <Icon size={18} strokeWidth={1.8} />
@@ -53,12 +53,12 @@ export function AdminSidebar({ activeRoute, onNavigate, role }: AdminSidebarProp
 
       <div className="p-3 border-t border-gray-100">
         <div className="px-3 py-2 mb-2">
-          <p className="text-xs font-semibold text-graphite truncate">{motherName || 'Admin'}</p>
-          <p className="text-[11px] text-graphite-muted">{role}</p>
+          <p className="text-xs font-semibold text-mt-charcoal truncate">{motherName || 'Admin'}</p>
+          <p className="text-[11px] text-mt-muted">{role}</p>
         </div>
         <button
           onClick={handleLogout}
-          className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-sara-terracotta hover:bg-gray-50 transition-colors"
+          className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-mt-rose-dark hover:bg-gray-50 transition-colors"
         >
           <LogOut size={18} strokeWidth={1.8} />
           Sair

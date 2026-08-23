@@ -38,7 +38,7 @@ describe('SettingsScreen toggles', () => {
   it('clicking Curtidas toggle changes background color', () => {
     renderScreen();
     const btn = screen.getByLabelText('Curtidas e comentários');
-    expect(btn.className).toMatch(/bg-sara-gold/);
+    expect(btn.className).toMatch(/bg-mt-rose/);
     fireEvent.click(btn);
     expect(btn.className).toMatch(/bg-gray-200/);
   });
@@ -48,6 +48,6 @@ describe('SettingsScreen toggles', () => {
     const btn = screen.getByLabelText('Novas publicações');
     expect(btn.className).toMatch(/bg-gray-200/);
     fireEvent.click(btn);
-    expect(btn.className).toMatch(/bg-sara-gold/);
+    expect(btn.className).toMatch(/bg-mt-rose/);
   });
 });

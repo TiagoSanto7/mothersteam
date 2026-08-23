@@ -99,15 +99,15 @@ export function CreatePostScreen({ onBack, autoOpenImage, initialCommunityId, in
       <div className="flex items-center justify-between px-4 pt-4 pb-2">
         <button
           onClick={onBack}
-          className="text-sm text-graphite-muted font-medium px-1 py-1"
+          className="text-sm text-mt-muted font-medium px-1 py-1"
         >
           Cancelar
         </button>
-        <h1 className="text-sm font-semibold text-graphite">Publicação</h1>
+        <h1 className="text-sm font-semibold text-mt-charcoal">Publicação</h1>
         <button
           onClick={handlePublish}
           disabled={!canPublish || isPending}
-          className="text-sm font-semibold text-sara-gold disabled:opacity-40 px-1 py-1"
+          className="text-sm font-semibold text-mt-rose disabled:opacity-40 px-1 py-1"
         >
           Publicar
         </button>
@@ -121,7 +121,7 @@ export function CreatePostScreen({ onBack, autoOpenImage, initialCommunityId, in
           rows={7}
           aria-label="Conteúdo do post"
           autoFocus
-          className="w-full px-4 py-3 rounded-2xl bg-white border border-sara-linen text-sm text-graphite placeholder:text-graphite-muted leading-relaxed resize-none focus:outline-none focus:border-sara-gold"
+          className="w-full px-4 py-3 rounded-2xl bg-white border border-mt-linen text-sm text-mt-charcoal placeholder:text-mt-muted leading-relaxed resize-none focus:outline-none focus:border-mt-rose"
         />
 
         <input
@@ -152,7 +152,7 @@ export function CreatePostScreen({ onBack, autoOpenImage, initialCommunityId, in
         <button
           onClick={() => setShowImageSheet(true)}
           aria-label="Adicionar foto"
-          className="flex items-center gap-2 text-sm text-sara-gold font-medium"
+          className="flex items-center gap-2 text-sm text-mt-rose font-medium"
         >
           <ImagePlus size={18} />
           Adicionar foto
@@ -176,7 +176,7 @@ export function CreatePostScreen({ onBack, autoOpenImage, initialCommunityId, in
         )}
 
         <div className="flex flex-col gap-2">
-          <p className="text-xs font-medium text-graphite-muted">Categoria</p>
+          <p className="text-xs font-medium text-mt-muted">Categoria</p>
           <div className="flex gap-2 flex-wrap">
             {CATEGORIES.map((cat) => (
               <button
@@ -185,8 +185,8 @@ export function CreatePostScreen({ onBack, autoOpenImage, initialCommunityId, in
                 aria-pressed={category === cat.value}
                 className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
                   category === cat.value
-                    ? 'bg-sara-gold text-white'
-                    : 'bg-white text-graphite-muted border border-sara-linen'
+                    ? 'bg-mt-rose text-white'
+                    : 'bg-white text-mt-muted border border-mt-linen'
                 }`}
               >
                 {cat.label}

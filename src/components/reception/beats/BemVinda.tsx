@@ -10,10 +10,10 @@ export function BemVinda({ onContinue }: BemVindaProps) {
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.8 }}
-      className="min-h-screen flex flex-col items-center justify-center px-8 gap-10 bg-sara-cream"
+      className="min-h-screen flex flex-col items-center justify-center px-8 gap-10 bg-mt-cream"
     >
       <div className="text-center max-w-sm">
-        <h1 className="text-[26px] leading-snug font-serif font-semibold text-graphite">
+        <h1 className="text-[26px] leading-snug font-serif font-semibold text-mt-charcoal">
           Companhia para cada fase da maternidade.
         </h1>
       </div>
@@ -21,7 +21,7 @@ export function BemVinda({ onContinue }: BemVindaProps) {
         type="button"
         onClick={onContinue}
         aria-label="Começar"
-        className="w-full max-w-xs py-4 rounded-2xl bg-sara-gold text-white text-sm font-semibold active:scale-95 transition-transform"
+        className="w-full max-w-xs py-4 rounded-2xl bg-mt-rose text-white text-sm font-semibold active:scale-95 transition-transform"
       >
         Começar
       </button>

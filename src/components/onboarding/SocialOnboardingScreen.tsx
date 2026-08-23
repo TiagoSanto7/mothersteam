@@ -58,16 +58,16 @@ export function SocialOnboardingScreen({ onDone }: SocialOnboardingScreenProps) 
   }
 
   return (
-    <div className="w-full h-full flex flex-col bg-gradient-to-b from-[#F5EDE0] via-[#EAD8C8] to-[#D9C4AF] overflow-hidden">
+    <div className="w-full h-full flex flex-col bg-mt-gradient-pastel overflow-hidden">
       <div className="flex-1 overflow-y-auto px-5 pt-10 pb-6">
-        <h1 className="text-2xl font-bold text-graphite mb-1">Conecte-se</h1>
-        <p className="text-sm text-graphite-muted mb-6">
+        <h1 className="text-2xl font-bold text-mt-charcoal mb-1">Conecte-se</h1>
+        <p className="text-sm text-mt-muted mb-6">
           Siga pessoas e entre em comunidades para começar.
         </p>
 
         {suggestedCommunities.length > 0 && (
           <>
-            <p className="text-xs font-semibold text-graphite-muted uppercase tracking-wide mb-3">
+            <p className="text-xs font-semibold text-mt-muted uppercase tracking-wide mb-3">
               Comunidades sugeridas
             </p>
             <ul className="flex flex-col gap-2 mb-6">
@@ -76,7 +76,7 @@ export function SocialOnboardingScreen({ onDone }: SocialOnboardingScreenProps) 
                 return (
                   <li
                     key={community.id}
-                    className="flex items-center gap-3 bg-white/60 rounded-2xl px-4 py-3"
+                    className="flex items-center gap-3 bg-white/70 rounded-mt px-4 py-3"
                   >
                     <div
                       style={{ background: getAvatarColor(null) }}
@@ -86,14 +86,14 @@ export function SocialOnboardingScreen({ onDone }: SocialOnboardingScreenProps) 
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-1.5 flex-wrap">
-                        <p className="text-sm font-semibold text-graphite truncate">{community.name}</p>
-                        <span className="flex items-center gap-0.5 text-[10px] font-medium text-sara-warm bg-sara-cream px-1.5 py-0.5 rounded-full flex-shrink-0">
+                        <p className="text-sm font-semibold text-mt-charcoal truncate">{community.name}</p>
+                        <span className="flex items-center gap-0.5 text-[10px] font-medium text-mt-muted bg-mt-cream px-1.5 py-0.5 rounded-full flex-shrink-0">
                           <Users size={9} />
                           Comunidade
                         </span>
                       </div>
                       {community.description && (
-                        <p className="text-xs text-graphite-muted truncate mt-0.5">{community.description}</p>
+                        <p className="text-xs text-mt-muted truncate mt-0.5">{community.description}</p>
                       )}
                     </div>
                     <button
@@ -104,8 +104,8 @@ export function SocialOnboardingScreen({ onDone }: SocialOnboardingScreenProps) 
                       }
                       className={`text-xs font-semibold px-3 py-1.5 rounded-xl transition-colors flex-shrink-0 ${
                         joined
-                          ? 'bg-sara-linen text-graphite-muted'
-                          : 'bg-sara-gold text-white active:scale-95'
+                          ? 'bg-mt-linen text-mt-muted'
+                          : 'bg-mt-rose text-white active:scale-95'
                       }`}
                     >
                       {joined ? 'Membro' : 'Entrar'}
@@ -119,7 +119,7 @@ export function SocialOnboardingScreen({ onDone }: SocialOnboardingScreenProps) 
 
         {suggestedUsersFiltered.length > 0 && (
           <>
-            <p className="text-xs font-semibold text-graphite-muted uppercase tracking-wide mb-3">
+            <p className="text-xs font-semibold text-mt-muted uppercase tracking-wide mb-3">
               Pessoas para seguir
             </p>
             <ul className="flex flex-col gap-2 mb-6">
@@ -128,20 +128,20 @@ export function SocialOnboardingScreen({ onDone }: SocialOnboardingScreenProps) 
                 return (
                   <li
                     key={user.id}
-                    className="flex items-center gap-3 bg-white/60 rounded-2xl px-4 py-3"
+                    className="flex items-center gap-3 bg-white/70 rounded-mt px-4 py-3"
                   >
-                    <div className="w-10 h-10 rounded-full bg-sara-gold flex items-center justify-center text-white font-bold flex-shrink-0">
+                    <div className="w-10 h-10 rounded-full bg-mt-rose flex items-center justify-center text-white font-bold flex-shrink-0">
                       {user.name.charAt(0).toUpperCase()}
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-baseline gap-1.5">
-                        <p className="text-sm font-semibold text-graphite truncate">{user.name}</p>
+                        <p className="text-sm font-semibold text-mt-charcoal truncate">{user.name}</p>
                         {user.username && (
-                          <span className="text-xs text-graphite-muted/70 flex-shrink-0">@{user.username}</span>
+                          <span className="text-xs text-mt-muted/70 flex-shrink-0">@{user.username}</span>
                         )}
                       </div>
                       {user.bio && (
-                        <p className="text-xs text-graphite-muted truncate mt-0.5">{user.bio}</p>
+                        <p className="text-xs text-mt-muted truncate mt-0.5">{user.bio}</p>
                       )}
                     </div>
                     <button
@@ -150,8 +150,8 @@ export function SocialOnboardingScreen({ onDone }: SocialOnboardingScreenProps) 
                       aria-label={followed ? `Seguindo ${user.name}` : `Seguir ${user.name}`}
                       className={`text-xs font-semibold px-3 py-1.5 rounded-xl transition-colors flex-shrink-0 ${
                         followed
-                          ? 'bg-sara-linen text-graphite-muted'
-                          : 'bg-sara-gold text-white active:scale-95'
+                          ? 'bg-mt-linen text-mt-muted'
+                          : 'bg-mt-rose text-white active:scale-95'
                       }`}
                     >
                       {followed ? 'Seguindo' : 'Seguir'}
@@ -168,7 +168,7 @@ export function SocialOnboardingScreen({ onDone }: SocialOnboardingScreenProps) 
         <button
           onClick={handleDone}
           data-testid="social-onboarding-continue"
-          className="w-full py-4 rounded-2xl bg-sara-gold text-white font-semibold text-base active:scale-95 transition-all"
+          className="w-full py-4 rounded-2xl bg-mt-rose text-white font-semibold text-base active:scale-95 transition-all"
         >
           Continuar
         </button>

@@ -44,7 +44,7 @@ export function HomeScreen({ onOpenProfile }: HomeScreenProps) {
           {initial}
         </button>
         <div>
-          <h1 className="text-[15px] font-semibold font-serif text-graphite leading-snug max-w-[260px]">
+          <h1 className="text-[15px] font-semibold font-serif text-mt-charcoal leading-snug max-w-[260px]">
             {greeting}
           </h1>
         </div>
@@ -55,8 +55,8 @@ export function HomeScreen({ onOpenProfile }: HomeScreenProps) {
       <UpcomingEventsCard />
 
       <div className="flex items-center justify-between px-4">
-        <h2 className="text-sm font-semibold text-graphite">Sua Rotina</h2>
-        <span className="text-xs text-graphite-muted">
+        <h2 className="text-sm font-semibold text-mt-charcoal">Sua Rotina</h2>
+        <span className="text-xs text-mt-muted">
           {formatDateHeading(selectedDate)}
         </span>
       </div>
@@ -68,7 +68,7 @@ export function HomeScreen({ onOpenProfile }: HomeScreenProps) {
         aria-label="Adicionar lembrete ou evento"
         whileTap={{ scale: 0.97 }}
         transition={{ duration: 0.15, ease: 'easeOut' }}
-        className="fixed bottom-24 right-6 w-12 h-12 rounded-full bg-sara-gold shadow-lg shadow-sara-terracotta/30 flex items-center justify-center"
+        className="fixed bottom-24 right-6 w-12 h-12 rounded-full bg-mt-rose shadow-lg shadow-mt-rose-dark/30 flex items-center justify-center"
       >
         <Plus size={22} className="text-white" strokeWidth={2.5} />
       </motion.button>

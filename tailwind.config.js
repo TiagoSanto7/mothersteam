@@ -14,19 +14,7 @@ export default {
         'mt-linen':      '#f5ede4',
         'mt-charcoal':   '#3d342e',
         'mt-muted':      '#8b7268',
-        // Aliases legado — remapeados para tons Mother's Team.
-        // Removidos na Onda 3 quando não houver mais referências.
-        'sara-gold':       '#db958b',
-        'sara-terracotta': '#c47c73',
-        'sara-linen':      '#f5ede4',
-        'sara-cream':      '#faf5f0',
-        'sara-charcoal':   '#3d342e',
-        'sara-muted':      '#8b7268',
-        'sara-warm':       '#8b7268',
-        graphite:          '#3d342e',
-        'graphite-light':  '#8b7268',
-        'graphite-muted':  '#8b7268',
-        offwhite:          '#faf5f0',
+        offwhite:        '#faf5f0',
       },
       borderRadius: {
         'mt':      '24px',

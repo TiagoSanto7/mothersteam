@@ -135,37 +135,37 @@ export function ProductFormPage({ productId, onBack, onSaved }: ProductFormPageP
   return (
     <div className="p-8 max-w-3xl">
       <div className="flex items-center gap-3 mb-6">
-        <button onClick={onBack} aria-label="Voltar" className="w-9 h-9 rounded-xl flex items-center justify-center hover:bg-gray-100 text-graphite">
+        <button onClick={onBack} aria-label="Voltar" className="w-9 h-9 rounded-xl flex items-center justify-center hover:bg-gray-100 text-mt-charcoal">
           <ArrowLeft size={20} />
         </button>
-        <h1 className="text-xl font-bold text-graphite">{isEdit ? 'Editar produto' : 'Novo produto'}</h1>
+        <h1 className="text-xl font-bold text-mt-charcoal">{isEdit ? 'Editar produto' : 'Novo produto'}</h1>
       </div>
 
       <div className="bg-white rounded-2xl border border-gray-100 p-6 flex flex-col gap-5">
         <div>
-          <label className="text-xs font-semibold text-graphite-muted">Nome do produto *</label>
+          <label className="text-xs font-semibold text-mt-muted">Nome do produto *</label>
           <input
             value={form.name}
             onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
             placeholder="Ex: Vitamina D Gotas"
-            className="w-full mt-1 px-4 py-2.5 rounded-xl border border-gray-200 text-sm text-graphite outline-none focus:border-sara-gold"
+            className="w-full mt-1 px-4 py-2.5 rounded-xl border border-gray-200 text-sm text-mt-charcoal outline-none focus:border-mt-rose"
           />
         </div>
 
         <div>
-          <label className="text-xs font-semibold text-graphite-muted">Descrição *</label>
+          <label className="text-xs font-semibold text-mt-muted">Descrição *</label>
           <textarea
             value={form.description}
             onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
             rows={3}
             placeholder="Descreva o produto..."
-            className="w-full mt-1 px-4 py-2.5 rounded-xl border border-gray-200 text-sm text-graphite outline-none focus:border-sara-gold resize-none"
+            className="w-full mt-1 px-4 py-2.5 rounded-xl border border-gray-200 text-sm text-mt-charcoal outline-none focus:border-mt-rose resize-none"
           />
         </div>
 
         <div className="grid grid-cols-3 gap-4">
           <div>
-            <label className="text-xs font-semibold text-graphite-muted">Preço (R$) *</label>
+            <label className="text-xs font-semibold text-mt-muted">Preço (R$) *</label>
             <input
               type="number"
               min="0"
@@ -173,46 +173,46 @@ export function ProductFormPage({ productId, onBack, onSaved }: ProductFormPageP
               value={form.price}
               onChange={(e) => setForm((f) => ({ ...f, price: e.target.value }))}
               placeholder="0,00"
-              className="w-full mt-1 px-4 py-2.5 rounded-xl border border-gray-200 text-sm text-graphite outline-none focus:border-sara-gold"
+              className="w-full mt-1 px-4 py-2.5 rounded-xl border border-gray-200 text-sm text-mt-charcoal outline-none focus:border-mt-rose"
             />
           </div>
           <div>
-            <label className="text-xs font-semibold text-graphite-muted">Categoria *</label>
+            <label className="text-xs font-semibold text-mt-muted">Categoria *</label>
             <select
               value={form.categoryId}
               onChange={(e) => setForm((f) => ({ ...f, categoryId: e.target.value }))}
-              className="w-full mt-1 px-4 py-2.5 rounded-xl border border-gray-200 text-sm text-graphite outline-none focus:border-sara-gold"
+              className="w-full mt-1 px-4 py-2.5 rounded-xl border border-gray-200 text-sm text-mt-charcoal outline-none focus:border-mt-rose"
             >
               <option value="">Selecionar...</option>
               {categories.map((c) => <option key={c.id} value={c.id}>{c.icon} {c.name}</option>)}
             </select>
           </div>
           <div>
-            <label className="text-xs font-semibold text-graphite-muted">Estoque</label>
+            <label className="text-xs font-semibold text-mt-muted">Estoque</label>
             <input
               type="number"
               min="0"
               value={form.stock}
               onChange={(e) => setForm((f) => ({ ...f, stock: e.target.value }))}
               placeholder="Ilimitado"
-              className="w-full mt-1 px-4 py-2.5 rounded-xl border border-gray-200 text-sm text-graphite outline-none focus:border-sara-gold"
+              className="w-full mt-1 px-4 py-2.5 rounded-xl border border-gray-200 text-sm text-mt-charcoal outline-none focus:border-mt-rose"
             />
           </div>
         </div>
 
         <div>
-          <label className="text-xs font-semibold text-graphite-muted">Link afiliado (opcional)</label>
+          <label className="text-xs font-semibold text-mt-muted">Link afiliado (opcional)</label>
           <input
             type="url"
             value={form.affiliateUrl}
             onChange={(e) => setForm((f) => ({ ...f, affiliateUrl: e.target.value }))}
             placeholder="https://..."
-            className="w-full mt-1 px-4 py-2.5 rounded-xl border border-gray-200 text-sm text-graphite outline-none focus:border-sara-gold"
+            className="w-full mt-1 px-4 py-2.5 rounded-xl border border-gray-200 text-sm text-mt-charcoal outline-none focus:border-mt-rose"
           />
         </div>
 
         <div>
-          <label className="text-xs font-semibold text-graphite-muted mb-2 block">Fases da gravidez/pós-parto</label>
+          <label className="text-xs font-semibold text-mt-muted mb-2 block">Fases da gravidez/pós-parto</label>
           <div className="flex flex-wrap gap-2">
             {PHASES.map(({ value, label }) => (
               <button
@@ -221,8 +221,8 @@ export function ProductFormPage({ productId, onBack, onSaved }: ProductFormPageP
                 onClick={() => togglePhase(value)}
                 className={`px-3 py-1.5 rounded-xl text-xs font-medium transition-colors ${
                   form.phases.includes(value)
-                    ? 'bg-sara-gold text-white'
-                    : 'bg-gray-100 text-graphite-muted hover:bg-gray-200'
+                    ? 'bg-mt-rose text-white'
+                    : 'bg-gray-100 text-mt-muted hover:bg-gray-200'
                 }`}
               >
                 {label}
@@ -232,7 +232,7 @@ export function ProductFormPage({ productId, onBack, onSaved }: ProductFormPageP
         </div>
 
         <div>
-          <label className="text-xs font-semibold text-graphite-muted mb-2 block">Imagens</label>
+          <label className="text-xs font-semibold text-mt-muted mb-2 block">Imagens</label>
           {form.images.length > 0 && (
             <div className="flex flex-wrap gap-2 mb-3">
               {form.images.map((url, i) => (
@@ -241,7 +241,7 @@ export function ProductFormPage({ productId, onBack, onSaved }: ProductFormPageP
                   <button
                     onClick={() => removeImage(i)}
                     aria-label="Remover imagem"
-                    className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-sara-terracotta text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                    className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-mt-rose-dark text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
                   >
                     <X size={10} />
                   </button>
@@ -250,7 +250,7 @@ export function ProductFormPage({ productId, onBack, onSaved }: ProductFormPageP
             </div>
           )}
           <div className="flex gap-2">
-            <label className="flex items-center gap-2 px-4 py-2 bg-gray-100 text-graphite text-sm font-medium rounded-xl cursor-pointer hover:bg-gray-200 transition-colors">
+            <label className="flex items-center gap-2 px-4 py-2 bg-gray-100 text-mt-charcoal text-sm font-medium rounded-xl cursor-pointer hover:bg-gray-200 transition-colors">
               <Upload size={14} />
               {uploading ? 'Enviando...' : 'Upload'}
               <input
@@ -267,12 +267,12 @@ export function ProductFormPage({ productId, onBack, onSaved }: ProductFormPageP
                 value={newImageUrl}
                 onChange={(e) => setNewImageUrl(e.target.value)}
                 placeholder="Ou cole uma URL de imagem..."
-                className="flex-1 px-3 py-2 rounded-xl border border-gray-200 text-sm text-graphite outline-none focus:border-sara-gold"
+                className="flex-1 px-3 py-2 rounded-xl border border-gray-200 text-sm text-mt-charcoal outline-none focus:border-mt-rose"
               />
               <button
                 onClick={addImageUrl}
                 disabled={!newImageUrl.trim()}
-                className="px-3 py-2 bg-sara-gold text-white rounded-xl disabled:opacity-40"
+                className="px-3 py-2 bg-mt-rose text-white rounded-xl disabled:opacity-40"
               >
                 <Plus size={14} />
               </button>
@@ -286,34 +286,34 @@ export function ProductFormPage({ productId, onBack, onSaved }: ProductFormPageP
               type="checkbox"
               checked={form.featured}
               onChange={(e) => setForm((f) => ({ ...f, featured: e.target.checked }))}
-              className="w-4 h-4 accent-sara-gold"
+              className="w-4 h-4 accent-mt-rose"
             />
-            <span className="text-sm text-graphite font-medium">★ Produto em destaque</span>
+            <span className="text-sm text-mt-charcoal font-medium">★ Produto em destaque</span>
           </label>
           <label className="flex items-center gap-2 cursor-pointer">
             <input
               type="checkbox"
               checked={form.active}
               onChange={(e) => setForm((f) => ({ ...f, active: e.target.checked }))}
-              className="w-4 h-4 accent-sara-gold"
+              className="w-4 h-4 accent-mt-rose"
             />
-            <span className="text-sm text-graphite font-medium">Produto ativo</span>
+            <span className="text-sm text-mt-charcoal font-medium">Produto ativo</span>
           </label>
         </div>
 
-        {error && <p className="text-xs text-sara-terracotta">{error}</p>}
+        {error && <p className="text-xs text-mt-rose-dark">{error}</p>}
 
         <div className="flex gap-3 pt-2 border-t border-gray-100">
           <button
             onClick={() => saveMutation.mutate()}
             disabled={!isValid || saveMutation.isPending}
-            className="px-6 py-2.5 bg-sara-gold text-white text-sm font-semibold rounded-xl disabled:opacity-50 hover:bg-sara-gold/90 transition-colors"
+            className="px-6 py-2.5 bg-mt-rose text-white text-sm font-semibold rounded-xl disabled:opacity-50 hover:bg-mt-rose/90 transition-colors"
           >
             {saveMutation.isPending ? 'Salvando...' : isEdit ? 'Salvar alterações' : 'Criar produto'}
           </button>
           <button
             onClick={onBack}
-            className="px-6 py-2.5 bg-gray-100 text-graphite text-sm font-medium rounded-xl hover:bg-gray-200 transition-colors"
+            className="px-6 py-2.5 bg-gray-100 text-mt-charcoal text-sm font-medium rounded-xl hover:bg-gray-200 transition-colors"
           >
             Cancelar
           </button>

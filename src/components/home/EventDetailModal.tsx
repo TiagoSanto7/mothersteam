@@ -74,30 +74,30 @@ export function EventDetailModal({ entry, onClose }: EventDetailModalProps) {
         animate={{ opacity: 1, y: 0 }}
         exit={{ opacity: 0, y: 24 }}
         transition={{ duration: 0.2, ease: 'easeOut' }}
-        className="fixed bottom-0 left-0 right-0 mx-auto max-w-[390px] w-full bg-sara-linen/95 backdrop-blur-md rounded-t-[32px] z-50 px-6 pt-5 pb-10 flex flex-col gap-4 shadow-2xl overflow-y-auto max-h-[90vh]"
+        className="fixed bottom-0 left-0 right-0 mx-auto max-w-[390px] w-full bg-mt-linen/95 backdrop-blur-md rounded-t-[32px] z-50 px-6 pt-5 pb-10 flex flex-col gap-4 shadow-2xl overflow-y-auto max-h-[90vh]"
       >
         {/* Handle + close */}
         <div className="flex items-center justify-between">
           <div className="w-10 h-1 bg-gray-200 rounded-full mx-auto absolute left-1/2 -translate-x-1/2 top-3" />
-          <h2 className="text-base font-semibold font-serif text-graphite pt-2 flex-1 truncate pr-8">
+          <h2 className="text-base font-semibold font-serif text-mt-charcoal pt-2 flex-1 truncate pr-8">
             {entry.title}
           </h2>
           <button onClick={onClose} aria-label="Fechar" className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0">
-            <X size={14} className="text-graphite-muted" strokeWidth={2} />
+            <X size={14} className="text-mt-muted" strokeWidth={2} />
           </button>
         </div>
 
         {/* Meta info */}
         <div className="flex flex-col gap-2">
-          <div className="flex items-center gap-2 text-sm text-graphite-muted">
+          <div className="flex items-center gap-2 text-sm text-mt-muted">
             <Calendar size={15} className="flex-shrink-0" />
             <span>{formatDateFull(entry.date)}</span>
           </div>
-          <div className="flex items-center gap-2 text-sm text-graphite-muted">
+          <div className="flex items-center gap-2 text-sm text-mt-muted">
             <Clock size={15} className="flex-shrink-0" />
             <span>{entry.time}</span>
           </div>
-          <div className="flex items-center gap-2 text-sm text-graphite-muted">
+          <div className="flex items-center gap-2 text-sm text-mt-muted">
             <Tag size={15} className="flex-shrink-0" />
             <span>{CATEGORY_LABELS[entry.category]}</span>
           </div>
@@ -105,16 +105,16 @@ export function EventDetailModal({ entry, onClose }: EventDetailModalProps) {
 
         {/* Notes */}
         {entry.notes && (
-          <div className="bg-white rounded-2xl p-4 border border-sara-linen">
-            <p className="text-xs font-medium text-graphite-muted mb-1">Observação</p>
-            <p className="text-sm text-graphite leading-relaxed whitespace-pre-wrap">{entry.notes}</p>
+          <div className="bg-white rounded-2xl p-4 border border-mt-linen">
+            <p className="text-xs font-medium text-mt-muted mb-1">Observação</p>
+            <p className="text-sm text-mt-charcoal leading-relaxed whitespace-pre-wrap">{entry.notes}</p>
           </div>
         )}
 
         {/* Go to date */}
         <button
           onClick={goToDate}
-          className="flex items-center gap-1 text-xs text-sara-gold font-medium self-start"
+          className="flex items-center gap-1 text-xs text-mt-rose font-medium self-start"
         >
           ir para a data <ArrowRight size={13} />
         </button>
@@ -122,12 +122,12 @@ export function EventDetailModal({ entry, onClose }: EventDetailModalProps) {
         {/* Delete confirm */}
         {showDeleteConfirm ? (
           <div className="flex flex-col gap-2 bg-white rounded-2xl p-4 border border-red-100">
-            <p className="text-sm font-medium text-graphite">Excluir este evento?</p>
-            <p className="text-xs text-graphite-muted">Esta ação não pode ser desfeita.</p>
+            <p className="text-sm font-medium text-mt-charcoal">Excluir este evento?</p>
+            <p className="text-xs text-mt-muted">Esta ação não pode ser desfeita.</p>
             <div className="flex gap-2 mt-1">
               <button
                 onClick={() => setShowDeleteConfirm(false)}
-                className="flex-1 py-2 rounded-xl border border-sara-linen text-sm text-graphite-muted"
+                className="flex-1 py-2 rounded-xl border border-mt-linen text-sm text-mt-muted"
               >
                 Cancelar
               </button>
@@ -145,7 +145,7 @@ export function EventDetailModal({ entry, onClose }: EventDetailModalProps) {
             <button
               onClick={() => setShowEditModal(true)}
               aria-label="Editar evento"
-              className="flex-1 flex items-center justify-center gap-2 py-3 rounded-2xl border-2 border-sara-gold text-sara-gold text-sm font-semibold"
+              className="flex-1 flex items-center justify-center gap-2 py-3 rounded-2xl border-2 border-mt-rose text-mt-rose text-sm font-semibold"
             >
               <Pencil size={15} />
               Editar

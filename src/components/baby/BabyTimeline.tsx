@@ -20,11 +20,11 @@ export function BabyTimeline() {
 
   return (
     <div className="flex flex-col gap-2 px-4">
-      <h3 className="text-sm font-semibold font-serif text-graphite">Timeline de hoje</h3>
+      <h3 className="text-sm font-semibold font-serif text-mt-charcoal">Timeline de hoje</h3>
       {sorted.length === 0 ? (
         <div className="flex flex-col items-center gap-2 py-8">
           <span className="text-3xl">🌙</span>
-          <p className="text-xs text-graphite-muted">Nenhuma atividade registrada</p>
+          <p className="text-xs text-mt-muted">Nenhuma atividade registrada</p>
         </div>
       ) : (
         sorted.map((entry, index) => (
@@ -35,14 +35,14 @@ export function BabyTimeline() {
             transition={{ delay: index * 0.06, duration: 0.3 }}
             className="flex items-center gap-3 bg-white/70 backdrop-blur-sm border border-white/50 rounded-2xl p-3"
           >
-            <div className="w-8 h-8 rounded-xl bg-sara-linen flex items-center justify-center text-lg flex-shrink-0">
+            <div className="w-8 h-8 rounded-xl bg-mt-linen flex items-center justify-center text-lg flex-shrink-0">
               {TYPE_EMOJI[entry.type]}
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-xs text-graphite-muted font-medium">{TYPE_LABEL[entry.type]}</p>
-              <p className="text-sm font-medium text-graphite truncate">{entry.detail}</p>
+              <p className="text-xs text-mt-muted font-medium">{TYPE_LABEL[entry.type]}</p>
+              <p className="text-sm font-medium text-mt-charcoal truncate">{entry.detail}</p>
             </div>
-            <span className="text-xs text-graphite-muted flex-shrink-0">{entry.time}</span>
+            <span className="text-xs text-mt-muted flex-shrink-0">{entry.time}</span>
           </motion.div>
         ))
       )}

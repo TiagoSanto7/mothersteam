@@ -42,7 +42,7 @@ export function JornadaScreen() {
     <>
       <div ref={scrollRef} className="flex flex-col pb-28 h-full overflow-y-auto">
         {/* Segmented control */}
-        <div className="flex gap-1 mx-4 mt-4 mb-3 bg-white/60 rounded-2xl p-1">
+        <div className="flex gap-1 mx-4 mt-4 mb-3 bg-white/70 rounded-mt p-1">
           {SEGMENTS.map(({ id, label }) => (
             <button
               key={id}
@@ -50,8 +50,8 @@ export function JornadaScreen() {
               aria-pressed={segment === id}
               className={`flex-1 py-1.5 rounded-xl text-[12px] font-semibold transition-colors ${
                 segment === id
-                  ? 'bg-sara-gold text-white shadow-sm'
-                  : 'text-graphite-muted hover:text-graphite'
+                  ? 'bg-mt-rose text-white shadow-sm'
+                  : 'text-mt-muted hover:text-mt-charcoal'
               }`}
             >
               {label}
@@ -67,11 +67,11 @@ export function JornadaScreen() {
           <div className="flex flex-col gap-4 pb-6">
             <WeekCalendar referenceDate={selectedDate} />
             <div className="flex items-center justify-between px-4">
-              <h2 className="text-sm font-semibold text-graphite">Sua Rotina</h2>
+              <h2 className="text-sm font-semibold text-mt-charcoal">Sua Rotina</h2>
               <button
                 onClick={() => setAddModalOpen(true)}
                 aria-label="Adicionar tarefa"
-                className="w-7 h-7 rounded-full bg-sara-gold text-white flex items-center justify-center shadow-sm"
+                className="w-7 h-7 rounded-full bg-mt-rose text-white flex items-center justify-center shadow-sm"
               >
                 <Plus size={14} />
               </button>
@@ -92,7 +92,7 @@ export function JornadaScreen() {
       <button
         onClick={() => setRegisterOpen(true)}
         aria-label="Registrar"
-        className="fixed bottom-[84px] right-4 w-14 h-14 rounded-full bg-sara-terracotta text-white shadow-lg shadow-sara-terracotta/30 flex items-center justify-center active:scale-95 transition-transform z-30"
+        className="fixed bottom-[84px] right-4 w-14 h-14 rounded-full bg-mt-rose-dark text-white shadow-lg shadow-mt-rose-dark/30 flex items-center justify-center active:scale-95 transition-transform z-30"
       >
         <Plus size={24} />
       </button>

@@ -70,18 +70,18 @@ export function WeekCalendar({ referenceDate: _referenceDate }: { referenceDate?
               transition={{ duration: 0.15, ease: 'easeOut' }}
               className={`flex-shrink-0 flex flex-col items-center gap-1 w-11 py-2 rounded-2xl transition-colors ${
                 isSelected
-                  ? 'bg-sara-gold text-white shadow-md shadow-sara-gold/30'
-                  : 'bg-white text-graphite'
+                  ? 'bg-mt-rose text-white shadow-md shadow-mt-rose/30'
+                  : 'bg-white text-mt-charcoal'
               }`}
             >
               <span className="text-[11px] font-medium">
                 {DAYS_PT[day.getDay()]}
               </span>
-              <span className={`text-base font-semibold ${isToday && !isSelected ? 'text-sara-gold' : ''}`}>
+              <span className={`text-base font-semibold ${isToday && !isSelected ? 'text-mt-rose' : ''}`}>
                 {day.getDate()}
               </span>
               {isToday && (
-                <span className={`w-1 h-1 rounded-full ${isSelected ? 'bg-white' : 'bg-sara-terracotta'}`} />
+                <span className={`w-1 h-1 rounded-full ${isSelected ? 'bg-white' : 'bg-mt-rose-dark'}`} />
               )}
             </motion.button>
           );
@@ -97,12 +97,12 @@ export function WeekCalendar({ referenceDate: _referenceDate }: { referenceDate?
           transition={{ duration: 0.18 }}
           className="flex justify-center"
         >
-          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-sara-gold/15 border border-sara-gold/30 text-sara-gold text-[11px] font-medium">
+          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-mt-rose/15 border border-mt-rose/30 text-mt-rose text-[11px] font-medium">
             📅 {formatSelectedDateLabel(selectedDate)}
             <button
               onClick={clearToToday}
               aria-label="Voltar para hoje"
-              className="ml-0.5 rounded-full hover:bg-sara-gold/20 transition-colors p-0.5"
+              className="ml-0.5 rounded-full hover:bg-mt-rose/20 transition-colors p-0.5"
             >
               <X size={10} strokeWidth={2.5} />
             </button>
@@ -114,7 +114,7 @@ export function WeekCalendar({ referenceDate: _referenceDate }: { referenceDate?
         <button
           onClick={openDatePicker}
           aria-label="Ver outras datas"
-          className="text-[11px] text-graphite-muted underline underline-offset-2 py-0.5"
+          className="text-[11px] text-mt-muted underline underline-offset-2 py-0.5"
         >
           ver outras datas
         </button>

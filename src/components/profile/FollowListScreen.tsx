@@ -36,17 +36,17 @@ export function FollowListScreen({ mode, userId, onOpenUser, onBack }: FollowLis
   const items = data?.items ?? [];
 
   return (
-    <div className="flex flex-col w-full h-full sm:w-[390px] sm:h-[844px] bg-gradient-to-b from-[#F5EDE0] via-[#EAD8C8] to-[#D9C4AF] sm:rounded-[44px] sm:shadow-2xl overflow-hidden">
+    <div className="flex flex-col w-full h-full sm:w-[390px] sm:h-[844px] bg-mt-gradient-pastel sm:rounded-[44px] sm:shadow-2xl overflow-hidden">
       <div className="flex items-center gap-3 px-4 pt-6 pb-3 flex-shrink-0">
-        <button onClick={onBack} aria-label="Voltar" className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-sara-linen">
-          <ChevronLeft size={20} className="text-graphite" />
+        <button onClick={onBack} aria-label="Voltar" className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-mt-linen">
+          <ChevronLeft size={20} className="text-mt-charcoal" />
         </button>
-        <h1 className="text-base font-semibold text-graphite">{title}</h1>
+        <h1 className="text-base font-semibold text-mt-charcoal">{title}</h1>
       </div>
 
       <div className="flex-1 overflow-y-auto">
         {items.length === 0 ? (
-          <p className="text-sm text-graphite-muted text-center py-8">Ninguém aqui ainda</p>
+          <p className="text-sm text-mt-muted text-center py-8">Ninguém aqui ainda</p>
         ) : (
           <ul className="divide-y divide-gray-100">
             {items.map((u) => (
@@ -61,15 +61,15 @@ export function FollowListScreen({ mode, userId, onOpenUser, onBack }: FollowLis
                   >
                     {u.name.charAt(0).toUpperCase()}
                   </div>
-                  <p className="text-sm font-semibold text-graphite">{u.name}</p>
+                  <p className="text-sm font-semibold text-mt-charcoal">{u.name}</p>
                 </button>
                 {!u.isSelf && (
                   <button
                     onClick={() => followMutation.mutate({ id: u.id, isFollowing: !u.isFollowedByCurrentUser })}
                     className={`px-3 py-1.5 rounded-full text-xs font-semibold flex-shrink-0 ${
                       u.isFollowedByCurrentUser
-                        ? 'bg-white text-graphite-muted border border-sara-linen'
-                        : 'bg-sara-gold text-white'
+                        ? 'bg-white text-mt-muted border border-mt-linen'
+                        : 'bg-mt-rose text-white'
                     }`}
                   >
                     {u.isFollowedByCurrentUser ? 'Seguindo' : 'Seguir'}

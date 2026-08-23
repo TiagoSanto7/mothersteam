@@ -123,7 +123,7 @@ export function ComunidadeScreen() {
   if (isLoading && communityPosts.length === 0) {
     return (
       <div className="flex items-center justify-center py-20">
-        <div className="w-8 h-8 rounded-full border-2 border-sara-gold border-t-transparent animate-spin" />
+        <div className="w-8 h-8 rounded-full border-2 border-mt-rose border-t-transparent animate-spin" />
       </div>
     );
   }
@@ -138,7 +138,7 @@ export function ComunidadeScreen() {
         {(isPulling || isPullLoading) && (
           <SaraPullIndicator pullY={pullY} isLoading={isPullLoading} />
         )}
-        <div className="flex gap-1 px-4 border-b border-sara-linen">
+        <div className="flex gap-1 px-4 border-b border-mt-linen">
           {(['para-voce', 'comunidades'] as TopTab[]).map((tab) => {
             const label = tab === 'para-voce' ? 'Para Você' : 'Comunidades';
             const active = topTab === tab;
@@ -152,12 +152,12 @@ export function ComunidadeScreen() {
                 }}
                 aria-label={label}
                 className={`px-4 py-2 text-sm font-semibold transition-colors relative ${
-                  active ? 'text-sara-gold' : 'text-graphite-muted'
+                  active ? 'text-mt-rose' : 'text-mt-muted'
                 }`}
               >
                 {label}
                 {active && (
-                  <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-sara-gold rounded-full" />
+                  <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-mt-rose rounded-full" />
                 )}
               </button>
             );
@@ -182,8 +182,8 @@ export function ComunidadeScreen() {
                     aria-label={label}
                     className={`flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
                       activeCategory === cat
-                        ? 'bg-sara-gold text-white'
-                        : 'bg-white text-graphite-muted'
+                        ? 'bg-mt-rose text-white'
+                        : 'bg-white text-mt-muted'
                     }`}
                   >
                     {label}
@@ -205,7 +205,7 @@ export function ComunidadeScreen() {
               ))}
               <div ref={sentinelRef} className="h-4" />
               {isFetchingNextPage && (
-                <p className="text-center text-xs text-graphite-muted py-2">Carregando...</p>
+                <p className="text-center text-xs text-mt-muted py-2">Carregando...</p>
               )}
             </div>
 
@@ -215,7 +215,7 @@ export function ComunidadeScreen() {
               whileTap={{ scale: 0.92 }}
               transition={{ type: 'spring', duration: 0.3 }}
               onClick={() => setShowCreate(true)}
-              className="fixed bottom-24 right-4 z-20 w-14 h-14 rounded-full bg-sara-gold text-white shadow-lg flex items-center justify-center"
+              className="fixed bottom-24 right-4 z-20 w-14 h-14 rounded-full bg-mt-rose text-white shadow-lg flex items-center justify-center"
               aria-label="Criar post"
             >
               <Plus size={24} />
@@ -248,7 +248,7 @@ export function ComunidadeScreen() {
               role="dialog"
               aria-modal="true"
               aria-label="Nova publicação"
-              className="w-full max-w-[390px] mx-auto h-[90%] bg-gradient-to-b from-[#F5EDE0] via-[#EAD8C8] to-[#D9C4AF] rounded-t-3xl flex flex-col overflow-hidden"
+              className="w-full max-w-[390px] mx-auto h-[90%] bg-mt-gradient-pastel rounded-t-3xl flex flex-col overflow-hidden"
               onClick={(e) => e.stopPropagation()}
             >
               <CreatePostScreen

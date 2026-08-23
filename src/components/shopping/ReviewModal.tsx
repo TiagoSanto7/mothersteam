@@ -43,19 +43,19 @@ export function ReviewModal({ productType, productId, existingReview, onClose, o
       <div className="absolute inset-0 bg-black/40" onClick={onClose} />
       <div className="relative w-full sm:w-[390px] bg-[#F5EDE0] rounded-t-3xl sm:rounded-3xl p-6 flex flex-col gap-4 shadow-2xl">
         <div className="flex items-center justify-between">
-          <h2 className="text-base font-semibold text-graphite">
+          <h2 className="text-base font-semibold text-mt-charcoal">
             {existingReview ? 'Editar avaliação' : 'Escrever avaliação'}
           </h2>
           <button
             onClick={onClose}
             className="w-8 h-8 rounded-xl bg-white/70 flex items-center justify-center"
           >
-            <X size={16} className="text-graphite" />
+            <X size={16} className="text-mt-charcoal" />
           </button>
         </div>
 
         <div className="flex flex-col items-center gap-2">
-          <p className="text-xs text-graphite-muted">Selecione sua nota</p>
+          <p className="text-xs text-mt-muted">Selecione sua nota</p>
           <div className="flex gap-2">
             {[1, 2, 3, 4, 5].map((s) => (
               <button
@@ -68,29 +68,29 @@ export function ReviewModal({ productType, productId, existingReview, onClose, o
                 <Star
                   size={32}
                   className={
-                    s <= displayRating ? 'text-sara-gold fill-current' : 'text-graphite-muted/30'
+                    s <= displayRating ? 'text-mt-rose fill-current' : 'text-mt-muted/30'
                   }
                 />
               </button>
             ))}
           </div>
           {rating > 0 && (
-            <p className="text-xs text-graphite-muted">
+            <p className="text-xs text-mt-muted">
               {['', 'Péssimo', 'Ruim', 'Regular', 'Bom', 'Excelente'][rating]}
             </p>
           )}
         </div>
 
         <div className="flex flex-col gap-1">
-          <label className="text-xs text-graphite-muted">Comentário (opcional)</label>
+          <label className="text-xs text-mt-muted">Comentário (opcional)</label>
           <textarea
             value={text}
             onChange={(e) => setText(e.target.value.slice(0, MAX_CHARS))}
             placeholder="Conte sua experiência com o produto..."
             rows={4}
-            className="w-full rounded-xl bg-white/70 px-3 py-2.5 text-sm text-graphite placeholder:text-graphite-muted/50 resize-none outline-none border border-transparent focus:border-sara-gold/40"
+            className="w-full rounded-xl bg-white/70 px-3 py-2.5 text-sm text-mt-charcoal placeholder:text-mt-muted/50 resize-none outline-none border border-transparent focus:border-mt-rose/40"
           />
-          <span className="text-[10px] text-graphite-muted text-right">
+          <span className="text-[10px] text-mt-muted text-right">
             {text.length}/{MAX_CHARS}
           </span>
         </div>
@@ -98,13 +98,13 @@ export function ReviewModal({ productType, productId, existingReview, onClose, o
         <button
           onClick={() => mutation.mutate()}
           disabled={rating === 0 || mutation.isPending}
-          className="w-full py-3.5 rounded-2xl bg-sara-gold text-white font-semibold text-sm active:scale-95 transition-transform disabled:opacity-50"
+          className="w-full py-3.5 rounded-2xl bg-mt-rose text-white font-semibold text-sm active:scale-95 transition-transform disabled:opacity-50"
         >
           {mutation.isPending ? 'Publicando...' : 'Publicar avaliação'}
         </button>
 
         {mutation.isError && (
-          <p className="text-xs text-sara-terracotta text-center">
+          <p className="text-xs text-mt-rose-dark text-center">
             Erro ao publicar. Tente novamente.
           </p>
         )}

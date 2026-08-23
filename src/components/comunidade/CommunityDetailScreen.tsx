@@ -20,11 +20,11 @@ interface CommunityDetailScreenProps {
 }
 
 const COLOR_MAP: Record<string, string> = {
-  gold:       'bg-sara-gold',
-  terracotta: 'bg-sara-terracotta',
-  warm:       'bg-sara-warm',
-  linen:      'bg-sara-linen',
-  cream:      'bg-sara-cream',
+  gold:       'bg-mt-rose',
+  terracotta: 'bg-mt-rose-dark',
+  warm:       'bg-mt-muted',
+  linen:      'bg-mt-linen',
+  cream:      'bg-mt-cream',
 };
 
 // Maps memberId → true once the current user successfully followed that member (optimistic).
@@ -55,17 +55,17 @@ function MemberRow({ member, isFollowing, onFollow, onOpenProfile, isPending }: 
           size={32}
         />
         <div className="flex-1 min-w-0">
-          <p className="text-xs font-semibold text-graphite truncate">{member.name}</p>
+          <p className="text-xs font-semibold text-mt-charcoal truncate">{member.name}</p>
           {member.username && (
-            <p className="text-[10px] text-graphite-muted truncate">@{member.username}</p>
+            <p className="text-[10px] text-mt-muted truncate">@{member.username}</p>
           )}
         </div>
         {(member.role === 'owner' || member.role === 'admin') && (
           <span
             className={`text-[9px] font-semibold px-1.5 py-0.5 rounded-full flex-shrink-0 ${
               member.role === 'owner'
-                ? 'bg-sara-gold/20 text-sara-gold'
-                : 'bg-sara-terracotta/20 text-sara-terracotta'
+                ? 'bg-mt-rose/20 text-mt-rose'
+                : 'bg-mt-rose-dark/20 text-mt-rose-dark'
             }`}
           >
             {member.role === 'owner' ? 'Criadora' : 'Admin'}
@@ -84,8 +84,8 @@ function MemberRow({ member, isFollowing, onFollow, onOpenProfile, isPending }: 
           }}
           className={`flex items-center gap-1 text-[11px] font-semibold px-2 py-1 rounded-full active:scale-95 transition-all flex-shrink-0 ${
             isFollowing
-              ? 'bg-transparent border border-sara-gold text-sara-gold cursor-default'
-              : 'bg-sara-gold text-white'
+              ? 'bg-transparent border border-mt-rose text-mt-rose cursor-default'
+              : 'bg-mt-rose text-white'
           }`}
         >
           <UserCheck size={11} />
@@ -117,18 +117,18 @@ function CommunityMembersModal({
   isPending,
 }: CommunityMembersModalProps) {
   return (
-    <div className="absolute inset-0 z-20 flex flex-col bg-gradient-to-b from-[#F5EDE0] via-[#EAD8C8] to-[#D9C4AF]">
+    <div className="absolute inset-0 z-20 flex flex-col bg-mt-gradient-pastel">
       {/* Header */}
-      <div className="flex items-center justify-between px-4 pt-6 pb-3 flex-shrink-0 border-b border-sara-linen/60">
-        <p className="text-sm font-semibold text-graphite">
+      <div className="flex items-center justify-between px-4 pt-6 pb-3 flex-shrink-0 border-b border-mt-linen/60">
+        <p className="text-sm font-semibold text-mt-charcoal">
           Membros ({members.length})
         </p>
         <button
           onClick={onClose}
           aria-label="Fechar lista de membros"
-          className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-sara-linen"
+          className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-mt-linen"
         >
-          <X size={18} className="text-graphite" />
+          <X size={18} className="text-mt-charcoal" />
         </button>
       </div>
 
@@ -272,7 +272,7 @@ export function CommunityDetailScreen({ communityId, onBack, onOpenProfile }: Co
 
   if (showCreate) {
     return (
-      <div className="flex flex-col w-full h-full sm:w-[390px] sm:h-[844px] bg-gradient-to-b from-[#F5EDE0] via-[#EAD8C8] to-[#D9C4AF] sm:rounded-[44px] sm:shadow-2xl overflow-hidden">
+      <div className="flex flex-col w-full h-full sm:w-[390px] sm:h-[844px] bg-mt-gradient-pastel sm:rounded-[44px] sm:shadow-2xl overflow-hidden">
         <CreatePostScreen onBack={() => setShowCreate(false)} initialCommunityId={communityId} />
       </div>
     );
@@ -291,7 +291,7 @@ export function CommunityDetailScreen({ communityId, onBack, onOpenProfile }: Co
   if (!community) {
     return (
       <div className="flex items-center justify-center w-full h-full">
-        <div className="w-8 h-8 rounded-full border-2 border-sara-gold border-t-transparent animate-spin" />
+        <div className="w-8 h-8 rounded-full border-2 border-mt-rose border-t-transparent animate-spin" />
       </div>
     );
   }
@@ -302,12 +302,12 @@ export function CommunityDetailScreen({ communityId, onBack, onOpenProfile }: Co
   const isAdmin = community.role === 'owner' || community.role === 'admin';
 
   return (
-    <div className="relative flex flex-col w-full h-full sm:w-[390px] sm:h-[844px] bg-gradient-to-b from-[#F5EDE0] via-[#EAD8C8] to-[#D9C4AF] sm:rounded-[44px] sm:shadow-2xl overflow-hidden">
+    <div className="relative flex flex-col w-full h-full sm:w-[390px] sm:h-[844px] bg-mt-gradient-pastel sm:rounded-[44px] sm:shadow-2xl overflow-hidden">
       <div className="flex items-center justify-between px-4 pt-6 pb-3 flex-shrink-0">
-        <button onClick={onBack} aria-label="Voltar" className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-sara-linen">
-          <ChevronLeft size={20} className="text-graphite" />
+        <button onClick={onBack} aria-label="Voltar" className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-mt-linen">
+          <ChevronLeft size={20} className="text-mt-charcoal" />
         </button>
-        <p className="text-sm font-semibold text-graphite">{community.category}</p>
+        <p className="text-sm font-semibold text-mt-charcoal">{community.category}</p>
         <div className="w-8" />
       </div>
 
@@ -327,7 +327,7 @@ export function CommunityDetailScreen({ communityId, onBack, onOpenProfile }: Co
             className="w-full h-24 object-cover"
           />
         ) : (
-          <div className={`h-24 ${COLOR_MAP[community.colorKey] ?? 'bg-sara-gold'}`} />
+          <div className={`h-24 ${COLOR_MAP[community.colorKey] ?? 'bg-mt-rose'}`} />
         )}
         {isAdmin && (
           <button
@@ -339,7 +339,7 @@ export function CommunityDetailScreen({ communityId, onBack, onOpenProfile }: Co
             {uploadingCover ? <div className="w-3 h-3 rounded-full border border-white border-t-transparent animate-spin" /> : <Camera size={13} />}
           </button>
         )}
-        <div className={`absolute left-4 -bottom-6 w-12 h-12 rounded-full border-4 border-white ${COLOR_MAP[community.colorKey] ?? 'bg-sara-gold'} overflow-hidden shadow-sm flex items-center justify-center`}>
+        <div className={`absolute left-4 -bottom-6 w-12 h-12 rounded-full border-4 border-white ${COLOR_MAP[community.colorKey] ?? 'bg-mt-rose'} overflow-hidden shadow-sm flex items-center justify-center`}>
           {community.avatarUrl ? (
             <img src={resolveMediaUrl(community.avatarUrl)!} alt={community.name} className="w-full h-full object-cover" />
           ) : (
@@ -359,20 +359,20 @@ export function CommunityDetailScreen({ communityId, onBack, onOpenProfile }: Co
       </div>
 
       <div className="px-4 pt-8 pb-4 flex-shrink-0 bg-white/40">
-        <h1 className="text-base font-bold text-graphite">{community.name}</h1>
-        <p className="text-xs text-graphite-muted mt-1">{community._count.members} membros · {community.category}</p>
+        <h1 className="text-base font-bold text-mt-charcoal">{community.name}</h1>
+        <p className="text-xs text-mt-muted mt-1">{community._count.members} membros · {community.category}</p>
 
         {/* Privacy badges */}
         {(community.isPrivate || !community.isOpen) && (
           <div className="flex gap-1.5 mt-2">
             {community.isPrivate && (
-              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-graphite/10 text-graphite text-[10px] font-medium">
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-mt-charcoal/10 text-mt-charcoal text-[10px] font-medium">
                 <EyeOff size={10} />
                 Posts privados
               </span>
             )}
             {!community.isOpen && (
-              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-graphite/10 text-graphite text-[10px] font-medium">
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-mt-charcoal/10 text-mt-charcoal text-[10px] font-medium">
                 <Lock size={10} />
                 Comunidade fechada
               </span>
@@ -380,7 +380,7 @@ export function CommunityDetailScreen({ communityId, onBack, onOpenProfile }: Co
           </div>
         )}
 
-        <p className="text-sm text-graphite mt-3 leading-relaxed">{community.description}</p>
+        <p className="text-sm text-mt-charcoal mt-3 leading-relaxed">{community.description}</p>
 
         <div className="flex gap-2 mt-4">
           {/* Join/leave button — disabled with tooltip when community is closed and user is not a member */}
@@ -388,12 +388,12 @@ export function CommunityDetailScreen({ communityId, onBack, onOpenProfile }: Co
             <div className="flex-1 relative group">
               <button
                 disabled
-                className="w-full py-2.5 rounded-xl text-xs font-semibold bg-graphite/10 text-graphite-muted cursor-not-allowed flex items-center justify-center gap-1"
+                className="w-full py-2.5 rounded-xl text-xs font-semibold bg-mt-charcoal/10 text-mt-muted cursor-not-allowed flex items-center justify-center gap-1"
               >
                 <Lock size={12} />
                 Comunidade fechada
               </button>
-              <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 px-2 py-1 rounded-lg bg-graphite text-white text-[10px] whitespace-nowrap opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity">
+              <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 px-2 py-1 rounded-lg bg-mt-charcoal text-white text-[10px] whitespace-nowrap opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity">
                 Comunidade fechada
               </span>
             </div>
@@ -402,8 +402,8 @@ export function CommunityDetailScreen({ communityId, onBack, onOpenProfile }: Co
               onClick={() => joinMutation.mutate(!community.isMember)}
               className={`flex-1 py-2.5 rounded-xl text-xs font-semibold active:scale-95 transition-transform ${
                 community.isMember
-                  ? 'bg-white text-graphite-muted border border-sara-linen'
-                  : 'bg-sara-gold text-white'
+                  ? 'bg-white text-mt-muted border border-mt-linen'
+                  : 'bg-mt-rose text-white'
               }`}
             >
               {community.isMember ? 'Sair' : 'Entrar'}
@@ -412,7 +412,7 @@ export function CommunityDetailScreen({ communityId, onBack, onOpenProfile }: Co
           {community.isMember && (
             <button
               onClick={() => setShowCreate(true)}
-              className="flex-1 py-2.5 rounded-xl text-xs font-semibold bg-sara-terracotta text-white active:scale-95 transition-transform flex items-center justify-center gap-1.5"
+              className="flex-1 py-2.5 rounded-xl text-xs font-semibold bg-mt-rose-dark text-white active:scale-95 transition-transform flex items-center justify-center gap-1.5"
             >
               <Pencil size={12} strokeWidth={2.5} />
               Publicar
@@ -423,12 +423,12 @@ export function CommunityDetailScreen({ communityId, onBack, onOpenProfile }: Co
 
       <div className="flex-1 overflow-y-auto px-4 py-4 flex flex-col gap-3">
         {/* Members section */}
-        <div className="bg-white/50 rounded-2xl p-3">
-          <p className="text-xs font-semibold text-graphite mb-2">
+        <div className="bg-white/60 rounded-mt p-3">
+          <p className="text-xs font-semibold text-mt-charcoal mb-2">
             Membros{members ? ` (${members.length})` : ''}
           </p>
           {!members ? (
-            <p className="text-xs text-graphite-muted text-center py-2">Carregando...</p>
+            <p className="text-xs text-mt-muted text-center py-2">Carregando...</p>
           ) : (
             <div className="flex flex-col gap-2">
               {previewMembers.map((member) => {
@@ -449,7 +449,7 @@ export function CommunityDetailScreen({ communityId, onBack, onOpenProfile }: Co
                 <button
                   type="button"
                   onClick={() => setShowAllMembers(true)}
-                  className="text-[11px] text-sara-gold font-semibold text-left mt-1 hover:underline"
+                  className="text-[11px] text-mt-rose font-semibold text-left mt-1 hover:underline"
                 >
                   ver mais... ({members.length} membros)
                 </button>
@@ -459,9 +459,9 @@ export function CommunityDetailScreen({ communityId, onBack, onOpenProfile }: Co
         </div>
 
         {/* Posts section */}
-        <p className="text-xs font-semibold text-graphite px-1">Publicações</p>
+        <p className="text-xs font-semibold text-mt-charcoal px-1">Publicações</p>
         {posts.length === 0 ? (
-          <p className="text-sm text-graphite-muted text-center py-8">Nenhuma publicação ainda</p>
+          <p className="text-sm text-mt-muted text-center py-8">Nenhuma publicação ainda</p>
         ) : (
           posts.map((post) => (
             <PostCard
@@ -475,7 +475,7 @@ export function CommunityDetailScreen({ communityId, onBack, onOpenProfile }: Co
         )}
         <div ref={sentinelRef} className="h-4" />
         {isFetchingNextPage && (
-          <p className="text-center text-xs text-graphite-muted py-2">Carregando...</p>
+          <p className="text-center text-xs text-mt-muted py-2">Carregando...</p>
         )}
       </div>
 

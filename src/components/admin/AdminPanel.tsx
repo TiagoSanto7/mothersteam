@@ -54,19 +54,19 @@ function DashboardView({ onNavigate }: { onNavigate: (v: AdminView) => void }) {
           { label: 'Cliques 30d', value: data?.totalClicks30d ?? '—' },
         ].map(({ label, value }) => (
           <div key={label} className="bg-white rounded-2xl px-4 py-3">
-            <p className="text-xl font-bold text-graphite">{value}</p>
-            <p className="text-[11px] text-graphite-muted">{label}</p>
+            <p className="text-xl font-bold text-mt-charcoal">{value}</p>
+            <p className="text-[11px] text-mt-muted">{label}</p>
           </div>
         ))}
       </div>
 
       {data?.topProducts && data.topProducts.length > 0 && (
         <div className="bg-white rounded-2xl px-4 py-3">
-          <p className="text-[11px] font-semibold text-graphite-muted uppercase tracking-wide mb-2">Top produtos</p>
+          <p className="text-[11px] font-semibold text-mt-muted uppercase tracking-wide mb-2">Top produtos</p>
           {data.topProducts.map((p) => (
             <div key={p.id} className="flex items-center justify-between py-1.5 border-b border-gray-50 last:border-0">
-              <p className="text-sm text-graphite truncate max-w-[220px]">{p.name}</p>
-              <span className="text-xs font-semibold text-sara-gold">{p._count.clicks} cliques</span>
+              <p className="text-sm text-mt-charcoal truncate max-w-[220px]">{p.name}</p>
+              <span className="text-xs font-semibold text-mt-rose">{p._count.clicks} cliques</span>
             </div>
           ))}
         </div>
@@ -75,19 +75,19 @@ function DashboardView({ onNavigate }: { onNavigate: (v: AdminView) => void }) {
       <div className="flex flex-col gap-2">
         <button
           onClick={() => onNavigate('own-products')}
-          className="w-full py-3 rounded-2xl bg-sara-gold text-white text-sm font-semibold active:scale-95 transition-transform"
+          className="w-full py-3 rounded-2xl bg-mt-rose text-white text-sm font-semibold active:scale-95 transition-transform"
         >
           Produtos Próprios
         </button>
         <button
           onClick={() => onNavigate('products')}
-          className="w-full py-3 rounded-2xl bg-white border border-sara-linen text-sm font-semibold text-graphite active:scale-95 transition-transform"
+          className="w-full py-3 rounded-2xl bg-white border border-mt-linen text-sm font-semibold text-mt-charcoal active:scale-95 transition-transform"
         >
           Produtos Afiliados
         </button>
         <button
           onClick={() => onNavigate('categories')}
-          className="w-full py-3 rounded-2xl bg-white border border-sara-linen text-sm font-semibold text-graphite active:scale-95 transition-transform"
+          className="w-full py-3 rounded-2xl bg-white border border-mt-linen text-sm font-semibold text-mt-charcoal active:scale-95 transition-transform"
         >
           Gerenciar Categorias
         </button>
@@ -124,7 +124,7 @@ function OwnProductsView({ onNew, onEdit }: { onNew: () => void; onEdit: (p: Api
     <div className="flex flex-col gap-3 px-4 py-3">
       <button
         onClick={onNew}
-        className="flex items-center justify-center gap-2 w-full py-2.5 rounded-2xl bg-sara-gold text-white text-sm font-semibold"
+        className="flex items-center justify-center gap-2 w-full py-2.5 rounded-2xl bg-mt-rose text-white text-sm font-semibold"
       >
         <Plus size={16} /> Novo produto próprio
       </button>
@@ -135,45 +135,45 @@ function OwnProductsView({ onNew, onEdit }: { onNew: () => void; onEdit: (p: Api
             <img src={p.images[0]} alt={p.name} className="w-12 h-12 rounded-xl object-cover flex-shrink-0" />
           )}
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-semibold text-graphite truncate">{p.name}</p>
-            <p className="text-xs text-graphite-muted">
+            <p className="text-sm font-semibold text-mt-charcoal truncate">{p.name}</p>
+            <p className="text-xs text-mt-muted">
               R$ {Number(p.price).toFixed(2)} · {p.category.name}
             </p>
-            <p className="text-[10px] text-graphite-muted/70 mt-0.5">
+            <p className="text-[10px] text-mt-muted/70 mt-0.5">
               Estoque: {p.stock}{p.sku ? ` · SKU: ${p.sku}` : ''}
             </p>
           </div>
           <div className="flex flex-col items-end gap-2 flex-shrink-0">
             <button onClick={() => toggleMutation.mutate({ id: p.id, active: !p.active })}>
               {p.active
-                ? <ToggleRight size={20} className="text-sara-gold" />
+                ? <ToggleRight size={20} className="text-mt-rose" />
                 : <ToggleLeft size={20} className="text-gray-300" />}
             </button>
             <button onClick={() => onEdit(p)}>
-              <Pencil size={14} className="text-graphite-muted" />
+              <Pencil size={14} className="text-mt-muted" />
             </button>
             <button
               onClick={() => {
                 if (confirm(`Excluir "${p.name}"?`)) deleteMutation.mutate(p.id)
               }}
             >
-              <Trash2 size={14} className="text-sara-terracotta" />
+              <Trash2 size={14} className="text-mt-rose-dark" />
             </button>
           </div>
         </div>
       ))}
 
       {products.length === 0 && (
-        <p className="text-center text-sm text-graphite-muted py-8">Nenhum produto próprio cadastrado.</p>
+        <p className="text-center text-sm text-mt-muted py-8">Nenhum produto próprio cadastrado.</p>
       )}
 
       {data && data.totalPages > 1 && (
         <div className="flex items-center justify-center gap-4 py-2">
-          <button onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={page === 1} className="text-sm text-sara-gold disabled:opacity-30">
+          <button onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={page === 1} className="text-sm text-mt-rose disabled:opacity-30">
             ← Anterior
           </button>
-          <span className="text-xs text-graphite-muted">{page} / {data.totalPages}</span>
-          <button onClick={() => setPage((p) => Math.min(data.totalPages, p + 1))} disabled={page === data.totalPages} className="text-sm text-sara-gold disabled:opacity-30">
+          <span className="text-xs text-mt-muted">{page} / {data.totalPages}</span>
+          <button onClick={() => setPage((p) => Math.min(data.totalPages, p + 1))} disabled={page === data.totalPages} className="text-sm text-mt-rose disabled:opacity-30">
             Próxima →
           </button>
         </div>
@@ -230,43 +230,43 @@ function OwnProductForm({ product, onBack }: { product?: ApiOwnProductAdmin; onB
     },
   });
 
-  const inputClass = 'w-full px-3 py-2.5 rounded-xl border border-sara-linen text-sm text-graphite bg-white focus:outline-none focus:border-sara-gold';
+  const inputClass = 'w-full px-3 py-2.5 rounded-xl border border-mt-linen text-sm text-mt-charcoal bg-white focus:outline-none focus:border-mt-rose';
 
   return (
     <div className="flex flex-col gap-4 px-4 py-4 overflow-y-auto flex-1">
       <div>
-        <p className="text-xs text-graphite-muted mb-1">Nome</p>
+        <p className="text-xs text-mt-muted mb-1">Nome</p>
         <input className={inputClass} value={name} onChange={(e) => setName(e.target.value)} placeholder="Nome do produto" />
       </div>
 
       <div className="flex gap-2">
         <div className="flex-1">
-          <p className="text-xs text-graphite-muted mb-1">Preço (R$)</p>
+          <p className="text-xs text-mt-muted mb-1">Preço (R$)</p>
           <input className={inputClass} type="number" value={price} onChange={(e) => setPrice(e.target.value)} placeholder="0.00" />
         </div>
         <div className="w-28">
-          <p className="text-xs text-graphite-muted mb-1">Estoque</p>
+          <p className="text-xs text-mt-muted mb-1">Estoque</p>
           <input className={inputClass} type="number" value={stock} onChange={(e) => setStock(e.target.value)} placeholder="0" />
         </div>
       </div>
 
       <div>
-        <p className="text-xs text-graphite-muted mb-1">SKU (opcional)</p>
+        <p className="text-xs text-mt-muted mb-1">SKU (opcional)</p>
         <input className={inputClass} value={sku} onChange={(e) => setSku(e.target.value)} placeholder="ex: VIT-D-100ML" />
       </div>
 
       <div>
-        <p className="text-xs text-graphite-muted mb-1">Descrição</p>
+        <p className="text-xs text-mt-muted mb-1">Descrição</p>
         <textarea
           value={description}
           onChange={(e) => setDescription(e.target.value)}
           rows={3}
-          className="w-full px-3 py-2.5 rounded-xl border border-sara-linen text-sm text-graphite bg-white resize-none focus:outline-none focus:border-sara-gold"
+          className="w-full px-3 py-2.5 rounded-xl border border-mt-linen text-sm text-mt-charcoal bg-white resize-none focus:outline-none focus:border-mt-rose"
         />
       </div>
 
       <div>
-        <p className="text-xs text-graphite-muted mb-1">Categoria</p>
+        <p className="text-xs text-mt-muted mb-1">Categoria</p>
         <select value={categoryId} onChange={(e) => setCategoryId(e.target.value)} className={inputClass}>
           <option value="">Selecione...</option>
           {(cats?.items ?? []).map((c) => (
@@ -276,7 +276,7 @@ function OwnProductForm({ product, onBack }: { product?: ApiOwnProductAdmin; onB
       </div>
 
       <div>
-        <p className="text-xs text-graphite-muted mb-1">Imagens (URLs)</p>
+        <p className="text-xs text-mt-muted mb-1">Imagens (URLs)</p>
         <div className="flex gap-2 mb-2">
           <input
             className={`${inputClass} flex-1`}
@@ -285,15 +285,15 @@ function OwnProductForm({ product, onBack }: { product?: ApiOwnProductAdmin; onB
             placeholder="https://..."
             onKeyDown={(e) => e.key === 'Enter' && addImage()}
           />
-          <button onClick={addImage} className="px-3 py-2 rounded-xl bg-sara-gold text-white text-xs font-semibold flex-shrink-0">
+          <button onClick={addImage} className="px-3 py-2 rounded-xl bg-mt-rose text-white text-xs font-semibold flex-shrink-0">
             Adicionar
           </button>
         </div>
         {images.map((url, i) => (
           <div key={i} className="flex items-center gap-2 mb-1.5">
-            <img src={url} alt="" className="w-8 h-8 rounded-lg object-cover bg-sara-linen flex-shrink-0" />
-            <p className="text-xs text-graphite-muted flex-1 truncate">{url}</p>
-            <button onClick={() => setImages((imgs) => imgs.filter((_, j) => j !== i))} className="text-sara-terracotta text-xs flex-shrink-0">
+            <img src={url} alt="" className="w-8 h-8 rounded-lg object-cover bg-mt-linen flex-shrink-0" />
+            <p className="text-xs text-mt-muted flex-1 truncate">{url}</p>
+            <button onClick={() => setImages((imgs) => imgs.filter((_, j) => j !== i))} className="text-mt-rose-dark text-xs flex-shrink-0">
               ✕
             </button>
           </div>
@@ -301,10 +301,10 @@ function OwnProductForm({ product, onBack }: { product?: ApiOwnProductAdmin; onB
       </div>
 
       <div className="flex items-center justify-between bg-white rounded-2xl px-4 py-3">
-        <p className="text-sm text-graphite">Destaque</p>
+        <p className="text-sm text-mt-charcoal">Destaque</p>
         <button
           onClick={() => setFeatured(!featured)}
-          className={`w-10 h-6 rounded-full relative transition-colors ${featured ? 'bg-sara-gold' : 'bg-gray-200'}`}
+          className={`w-10 h-6 rounded-full relative transition-colors ${featured ? 'bg-mt-rose' : 'bg-gray-200'}`}
         >
           <span className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${featured ? 'translate-x-[18px]' : ''}`} />
         </button>
@@ -313,7 +313,7 @@ function OwnProductForm({ product, onBack }: { product?: ApiOwnProductAdmin; onB
       <button
         onClick={() => saveMutation.mutate()}
         disabled={!name || !price || !categoryId || saveMutation.isPending}
-        className="w-full py-3 rounded-2xl bg-sara-gold text-white text-sm font-semibold disabled:opacity-40"
+        className="w-full py-3 rounded-2xl bg-mt-rose text-white text-sm font-semibold disabled:opacity-40"
       >
         {saveMutation.isPending ? 'Salvando...' : product ? 'Salvar alterações' : 'Criar produto'}
       </button>
@@ -344,7 +344,7 @@ function ProductsView({ onNewProduct, onEditProduct }: { onNewProduct: () => voi
     <div className="flex flex-col gap-3 px-4 py-3">
       <button
         onClick={onNewProduct}
-        className="flex items-center justify-center gap-2 w-full py-2.5 rounded-2xl bg-sara-gold text-white text-sm font-semibold"
+        className="flex items-center justify-center gap-2 w-full py-2.5 rounded-2xl bg-mt-rose text-white text-sm font-semibold"
       >
         <Plus size={16} /> Novo produto afiliado
       </button>
@@ -355,24 +355,24 @@ function ProductsView({ onNewProduct, onEditProduct }: { onNewProduct: () => voi
             <img src={p.images[0]} alt={p.name} className="w-12 h-12 rounded-xl object-cover flex-shrink-0" />
           )}
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-semibold text-graphite truncate">{p.name}</p>
-            <p className="text-xs text-graphite-muted">R$ {Number(p.price).toFixed(2)} · {p.category.name}</p>
-            <p className="text-[10px] text-graphite-muted/70 mt-0.5">
+            <p className="text-sm font-semibold text-mt-charcoal truncate">{p.name}</p>
+            <p className="text-xs text-mt-muted">R$ {Number(p.price).toFixed(2)} · {p.category.name}</p>
+            <p className="text-[10px] text-mt-muted/70 mt-0.5">
               {p.phases.map((ph) => PHASE_LABELS[ph]).join(', ')}
             </p>
           </div>
           <div className="flex flex-col items-end gap-2 flex-shrink-0">
             <button onClick={() => toggleMutation.mutate({ id: p.id, active: !p.active })}>
               {p.active
-                ? <ToggleRight size={20} className="text-sara-gold" />
+                ? <ToggleRight size={20} className="text-mt-rose" />
                 : <ToggleLeft size={20} className="text-gray-300" />}
             </button>
             <button onClick={() => onEditProduct(p)}>
-              <Pencil size={14} className="text-graphite-muted" />
+              <Pencil size={14} className="text-mt-muted" />
             </button>
             {p.affiliateUrl && (
               <a href={p.affiliateUrl} target="_blank" rel="noopener noreferrer">
-                <ExternalLink size={14} className="text-graphite-muted" />
+                <ExternalLink size={14} className="text-mt-muted" />
               </a>
             )}
           </div>
@@ -381,11 +381,11 @@ function ProductsView({ onNewProduct, onEditProduct }: { onNewProduct: () => voi
 
       {data && data.totalPages > 1 && (
         <div className="flex items-center justify-center gap-4 py-2">
-          <button onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={page === 1} className="text-sm text-sara-gold disabled:opacity-30">
+          <button onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={page === 1} className="text-sm text-mt-rose disabled:opacity-30">
             ← Anterior
           </button>
-          <span className="text-xs text-graphite-muted">{page} / {data.totalPages}</span>
-          <button onClick={() => setPage((p) => Math.min(data.totalPages, p + 1))} disabled={page === data.totalPages} className="text-sm text-sara-gold disabled:opacity-30">
+          <span className="text-xs text-mt-muted">{page} / {data.totalPages}</span>
+          <button onClick={() => setPage((p) => Math.min(data.totalPages, p + 1))} disabled={page === data.totalPages} className="text-sm text-mt-rose disabled:opacity-30">
             Próxima →
           </button>
         </div>
@@ -407,11 +407,11 @@ function CategoriesView() {
           <div className="flex items-center gap-3">
             <span className="text-xl">{cat.icon}</span>
             <div>
-              <p className="text-sm font-semibold text-graphite">{cat.name}</p>
-              <p className="text-xs text-graphite-muted">{cat._count.products} produtos</p>
+              <p className="text-sm font-semibold text-mt-charcoal">{cat.name}</p>
+              <p className="text-xs text-mt-muted">{cat._count.products} produtos</p>
             </div>
           </div>
-          <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${cat.active ? 'bg-green-50 text-green-600' : 'bg-gray-100 text-graphite-muted'}`}>
+          <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${cat.active ? 'bg-green-50 text-green-600' : 'bg-gray-100 text-mt-muted'}`}>
             {cat.active ? 'Ativa' : 'Inativa'}
           </span>
         </div>
@@ -461,7 +461,7 @@ function ProductForm({ product, onBack }: { product?: ApiAdminProduct; onBack: (
     setSelectedPhases((prev) => prev.includes(ph) ? prev.filter((p) => p !== ph) : [...prev, ph]);
   }
 
-  const inputClass = 'w-full px-3 py-2.5 rounded-xl border border-sara-linen text-sm text-graphite bg-white focus:outline-none focus:border-sara-gold';
+  const inputClass = 'w-full px-3 py-2.5 rounded-xl border border-mt-linen text-sm text-mt-charcoal bg-white focus:outline-none focus:border-mt-rose';
 
   return (
     <div className="flex flex-col gap-4 px-4 py-4 overflow-y-auto flex-1">
@@ -471,7 +471,7 @@ function ProductForm({ product, onBack }: { product?: ApiAdminProduct; onBack: (
         { label: 'URL afiliado', value: affiliateUrl, set: setAffiliateUrl, placeholder: 'https://...' },
       ].map(({ label, value, set, placeholder, type }) => (
         <div key={label}>
-          <p className="text-xs text-graphite-muted mb-1">{label}</p>
+          <p className="text-xs text-mt-muted mb-1">{label}</p>
           <input
             type={type ?? 'text'}
             value={value}
@@ -483,17 +483,17 @@ function ProductForm({ product, onBack }: { product?: ApiAdminProduct; onBack: (
       ))}
 
       <div>
-        <p className="text-xs text-graphite-muted mb-1">Descrição</p>
+        <p className="text-xs text-mt-muted mb-1">Descrição</p>
         <textarea
           value={description}
           onChange={(e) => setDescription(e.target.value)}
           rows={3}
-          className="w-full px-3 py-2.5 rounded-xl border border-sara-linen text-sm text-graphite bg-white resize-none focus:outline-none focus:border-sara-gold"
+          className="w-full px-3 py-2.5 rounded-xl border border-mt-linen text-sm text-mt-charcoal bg-white resize-none focus:outline-none focus:border-mt-rose"
         />
       </div>
 
       <div>
-        <p className="text-xs text-graphite-muted mb-1">Categoria</p>
+        <p className="text-xs text-mt-muted mb-1">Categoria</p>
         <select value={categoryId} onChange={(e) => setCategoryId(e.target.value)} className={inputClass}>
           <option value="">Selecione...</option>
           {(cats?.items ?? []).map((c) => (
@@ -503,7 +503,7 @@ function ProductForm({ product, onBack }: { product?: ApiAdminProduct; onBack: (
       </div>
 
       <div>
-        <p className="text-xs text-graphite-muted mb-2">Fases</p>
+        <p className="text-xs text-mt-muted mb-2">Fases</p>
         <div className="flex flex-wrap gap-2">
           {Object.entries(PHASE_LABELS).map(([ph, label]) => (
             <button
@@ -512,8 +512,8 @@ function ProductForm({ product, onBack }: { product?: ApiAdminProduct; onBack: (
               onClick={() => togglePhase(ph)}
               className={`text-[11px] px-2 py-1 rounded-full border transition-colors ${
                 selectedPhases.includes(ph)
-                  ? 'bg-sara-gold text-white border-sara-gold'
-                  : 'bg-white text-graphite-muted border-sara-linen'
+                  ? 'bg-mt-rose text-white border-mt-rose'
+                  : 'bg-white text-mt-muted border-mt-linen'
               }`}
             >
               {label}
@@ -523,10 +523,10 @@ function ProductForm({ product, onBack }: { product?: ApiAdminProduct; onBack: (
       </div>
 
       <div className="flex items-center justify-between bg-white rounded-2xl px-4 py-3">
-        <p className="text-sm text-graphite">Destaque</p>
+        <p className="text-sm text-mt-charcoal">Destaque</p>
         <button
           onClick={() => setFeatured(!featured)}
-          className={`w-10 h-6 rounded-full relative transition-colors ${featured ? 'bg-sara-gold' : 'bg-gray-200'}`}
+          className={`w-10 h-6 rounded-full relative transition-colors ${featured ? 'bg-mt-rose' : 'bg-gray-200'}`}
         >
           <span className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${featured ? 'translate-x-[18px]' : ''}`} />
         </button>
@@ -535,7 +535,7 @@ function ProductForm({ product, onBack }: { product?: ApiAdminProduct; onBack: (
       <button
         onClick={() => saveMutation.mutate()}
         disabled={!name || !price || !categoryId || saveMutation.isPending}
-        className="w-full py-3 rounded-2xl bg-sara-gold text-white text-sm font-semibold disabled:opacity-40"
+        className="w-full py-3 rounded-2xl bg-mt-rose text-white text-sm font-semibold disabled:opacity-40"
       >
         {saveMutation.isPending ? 'Salvando...' : product ? 'Salvar alterações' : 'Criar produto'}
       </button>
@@ -567,12 +567,12 @@ export function AdminPanel({ onBack }: Props) {
   }
 
   return (
-    <div className="flex flex-col h-full bg-gradient-to-b from-[#F5EDE0] via-[#EAD8C8] to-[#D9C4AF]">
-      <div className="flex items-center gap-3 px-4 pt-6 pb-3 border-b border-sara-linen/60 flex-shrink-0">
-        <button onClick={handleBack} className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-sara-linen">
-          <ChevronLeft size={20} className="text-graphite" />
+    <div className="flex flex-col h-full bg-mt-gradient-pastel">
+      <div className="flex items-center gap-3 px-4 pt-6 pb-3 border-b border-mt-linen/60 flex-shrink-0">
+        <button onClick={handleBack} className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-mt-linen">
+          <ChevronLeft size={20} className="text-mt-charcoal" />
         </button>
-        <h1 className="text-base font-semibold text-graphite">{titles[view]}</h1>
+        <h1 className="text-base font-semibold text-mt-charcoal">{titles[view]}</h1>
       </div>
 
       <div className="flex-1 overflow-y-auto">

@@ -64,36 +64,36 @@ export function SettingsScreen({ onBack, onClose }: SettingsScreenProps) {
 
   return (
     <div className="flex flex-col h-full bg-transparent">
-      <div className="flex items-center gap-3 px-4 pt-6 pb-4 border-b border-sara-linen/60">
-        <button onClick={onBack} className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-sara-linen">
-          <ChevronLeft size={20} className="text-graphite" />
+      <div className="flex items-center gap-3 px-4 pt-6 pb-4 border-b border-mt-linen/60">
+        <button onClick={onBack} className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-mt-linen">
+          <ChevronLeft size={20} className="text-mt-charcoal" />
         </button>
-        <h1 className="text-base font-semibold text-graphite">Configurações</h1>
+        <h1 className="text-base font-semibold text-mt-charcoal">Configurações</h1>
       </div>
 
       <div className="flex-1 overflow-y-auto px-4 py-4 flex flex-col gap-6">
         <section>
-          <p className="text-[10px] font-semibold text-graphite-muted uppercase tracking-wide mb-2 px-1">Conta</p>
+          <p className="text-[10px] font-semibold text-mt-muted uppercase tracking-wide mb-2 px-1">Conta</p>
           <div className="bg-white rounded-2xl overflow-hidden divide-y divide-gray-100">
             <div className="flex items-center justify-between px-4 py-3">
               <div>
-                <p className="text-xs text-graphite-muted">Nome</p>
-                <p className="text-sm font-medium text-graphite">{motherName}</p>
+                <p className="text-xs text-mt-muted">Nome</p>
+                <p className="text-sm font-medium text-mt-charcoal">{motherName}</p>
               </div>
-              <span className="text-[10px] text-graphite-muted bg-gray-100 rounded-full px-2 py-0.5">em breve</span>
+              <span className="text-[10px] text-mt-muted bg-gray-100 rounded-full px-2 py-0.5">em breve</span>
             </div>
             <div className="flex items-center justify-between px-4 py-3">
               <div>
-                <p className="text-xs text-graphite-muted">E-mail</p>
-                <p className="text-sm font-medium text-graphite">{email}</p>
+                <p className="text-xs text-mt-muted">E-mail</p>
+                <p className="text-sm font-medium text-mt-charcoal">{email}</p>
               </div>
             </div>
             <div className="flex items-center justify-between px-4 py-3">
               <div>
-                <p className="text-xs text-graphite-muted">Plano</p>
-                <p className="text-sm font-medium text-graphite">Gratuito</p>
+                <p className="text-xs text-mt-muted">Plano</p>
+                <p className="text-sm font-medium text-mt-charcoal">Gratuito</p>
               </div>
-              <button className="text-[10px] text-sara-gold font-semibold flex items-center gap-0.5">
+              <button className="text-[10px] text-mt-rose font-semibold flex items-center gap-0.5">
                 ver planos <ChevronRight size={12} />
               </button>
             </div>
@@ -102,7 +102,7 @@ export function SettingsScreen({ onBack, onClose }: SettingsScreenProps) {
           <div className="flex flex-col gap-2 mt-3">
             <button
               onClick={handleLogout}
-              className="w-full py-3 rounded-2xl bg-white border border-gray-200 text-sm font-medium text-graphite-light active:scale-95 transition-transform"
+              className="w-full py-3 rounded-2xl bg-white border border-gray-200 text-sm font-medium text-mt-muted active:scale-95 transition-transform"
             >
               Sair da conta
             </button>
@@ -110,24 +110,24 @@ export function SettingsScreen({ onBack, onClose }: SettingsScreenProps) {
         </section>
 
         <section>
-          <p className="text-[10px] font-semibold text-graphite-muted uppercase tracking-wide mb-2 px-1">Notificações</p>
+          <p className="text-[10px] font-semibold text-mt-muted uppercase tracking-wide mb-2 px-1">Notificações</p>
           <div className="bg-white rounded-2xl overflow-hidden divide-y divide-gray-100">
             <div className="flex items-center justify-between px-4 py-3.5">
-              <p className="text-sm text-graphite">Curtidas e comentários</p>
+              <p className="text-sm text-mt-charcoal">Curtidas e comentários</p>
               <button
                 aria-label="Curtidas e comentários"
                 onClick={() => setNotifLikes(!notifLikes)}
-                className={`w-10 h-6 rounded-full p-0 transition-colors relative ${notifLikes ? 'bg-sara-gold' : 'bg-gray-200'}`}
+                className={`w-10 h-6 rounded-full p-0 transition-colors relative ${notifLikes ? 'bg-mt-rose' : 'bg-gray-200'}`}
               >
                 <span className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${notifLikes ? 'translate-x-[18px]' : ''}`} />
               </button>
             </div>
             <div className="flex items-center justify-between px-4 py-3.5">
-              <p className="text-sm text-graphite">Novas publicações</p>
+              <p className="text-sm text-mt-charcoal">Novas publicações</p>
               <button
                 aria-label="Novas publicações"
                 onClick={() => setNotifPosts(!notifPosts)}
-                className={`w-10 h-6 rounded-full p-0 transition-colors relative ${notifPosts ? 'bg-sara-gold' : 'bg-gray-200'}`}
+                className={`w-10 h-6 rounded-full p-0 transition-colors relative ${notifPosts ? 'bg-mt-rose' : 'bg-gray-200'}`}
               >
                 <span className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${notifPosts ? 'translate-x-[18px]' : ''}`} />
               </button>
@@ -136,18 +136,18 @@ export function SettingsScreen({ onBack, onClose }: SettingsScreenProps) {
         </section>
 
         <section>
-          <p className="text-[10px] font-semibold text-graphite-muted uppercase tracking-wide mb-2 px-1">Privacidade</p>
+          <p className="text-[10px] font-semibold text-mt-muted uppercase tracking-wide mb-2 px-1">Privacidade</p>
           <div className="bg-white rounded-2xl overflow-hidden divide-y divide-gray-100">
             <div className="flex items-center justify-between px-4 py-3.5">
               <div>
-                <p className="text-sm text-graphite">Versículos salvos públicos</p>
-                <p className="text-[11px] text-graphite-muted mt-0.5">Outras mães podem ver seus versículos</p>
+                <p className="text-sm text-mt-charcoal">Versículos salvos públicos</p>
+                <p className="text-[11px] text-mt-muted mt-0.5">Outras mães podem ver seus versículos</p>
               </div>
               <button
                 aria-label="Versículos salvos públicos"
                 onClick={() => versesMutation.mutate(!(profile?.versesPublic ?? false))}
                 disabled={versesMutation.isPending}
-                className={`w-10 h-6 rounded-full p-0 transition-colors relative ${(profile?.versesPublic ?? false) ? 'bg-sara-gold' : 'bg-gray-200'}`}
+                className={`w-10 h-6 rounded-full p-0 transition-colors relative ${(profile?.versesPublic ?? false) ? 'bg-mt-rose' : 'bg-gray-200'}`}
               >
                 <span className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${(profile?.versesPublic ?? false) ? 'translate-x-[18px]' : ''}`} />
               </button>
@@ -156,10 +156,10 @@ export function SettingsScreen({ onBack, onClose }: SettingsScreenProps) {
         </section>
 
         <section>
-          <p className="text-[10px] font-semibold text-graphite-muted uppercase tracking-wide mb-2 px-1">Pagamentos</p>
+          <p className="text-[10px] font-semibold text-mt-muted uppercase tracking-wide mb-2 px-1">Pagamentos</p>
           <div className="bg-white rounded-2xl overflow-hidden divide-y divide-gray-100">
             {paymentMethods.length === 0 ? (
-              <div className="px-4 py-3 flex items-center gap-2 text-graphite-muted">
+              <div className="px-4 py-3 flex items-center gap-2 text-mt-muted">
                 <CreditCard size={14} />
                 <p className="text-sm">Nenhum cartão salvo</p>
               </div>
@@ -167,12 +167,12 @@ export function SettingsScreen({ onBack, onClose }: SettingsScreenProps) {
               paymentMethods.map((card) => (
                 <div key={card.id} className="flex items-center justify-between px-4 py-3">
                   <div className="flex items-center gap-2">
-                    <CreditCard size={14} className="text-graphite-muted flex-shrink-0" />
+                    <CreditCard size={14} className="text-mt-muted flex-shrink-0" />
                     <div>
-                      <p className="text-sm font-medium text-graphite capitalize">
+                      <p className="text-sm font-medium text-mt-charcoal capitalize">
                         {card.brand} •••• {card.lastFour}
                       </p>
-                      <p className="text-[11px] text-graphite-muted">
+                      <p className="text-[11px] text-mt-muted">
                         {card.expirationMonth.toString().padStart(2, '0')}/{card.expirationYear}
                       </p>
                     </div>
@@ -184,7 +184,7 @@ export function SettingsScreen({ onBack, onClose }: SettingsScreenProps) {
                     className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-red-50 active:scale-95 transition-all"
                   >
                     {deletingId === card.id ? (
-                      <Loader2 size={14} className="animate-spin text-graphite-muted" />
+                      <Loader2 size={14} className="animate-spin text-mt-muted" />
                     ) : (
                       <Trash2 size={14} className="text-red-400" />
                     )}
@@ -197,23 +197,23 @@ export function SettingsScreen({ onBack, onClose }: SettingsScreenProps) {
 
         {profile?.role === 'ADMIN' && (
           <section>
-            <p className="text-[10px] font-semibold text-graphite-muted uppercase tracking-wide mb-2 px-1">Administração</p>
+            <p className="text-[10px] font-semibold text-mt-muted uppercase tracking-wide mb-2 px-1">Administração</p>
             <div className="bg-white rounded-2xl overflow-hidden">
               <button
                 onClick={() => setShowAdmin(true)}
                 className="flex items-center justify-between w-full px-4 py-3.5"
               >
-                <p className="text-sm text-graphite">Painel da Loja</p>
-                <ChevronRight size={16} className="text-graphite-muted" />
+                <p className="text-sm text-mt-charcoal">Painel da Loja</p>
+                <ChevronRight size={16} className="text-mt-muted" />
               </button>
             </div>
           </section>
         )}
 
         <section>
-          <p className="text-[10px] font-semibold text-graphite-muted uppercase tracking-wide mb-2 px-1">Sobre</p>
+          <p className="text-[10px] font-semibold text-mt-muted uppercase tracking-wide mb-2 px-1">Sobre</p>
           <div className="bg-white rounded-2xl px-4 py-3">
-            <p className="text-sm text-graphite-muted">Versão 1.0.0 · Mothers Team</p>
+            <p className="text-sm text-mt-muted">Versão 1.0.0 · Mothers Team</p>
           </div>
         </section>
       </div>
