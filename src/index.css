@@ -22,13 +22,29 @@
   .font-serif {
     font-family: 'Playfair Display', Georgia, serif;
   }
+  /* Gradient de 4 cantos — BKG-07 (rose) — cores extraídas do material oficial */
   .bg-mt-gradient {
-    background: linear-gradient(135deg, #db958b 0%, #f6bdd8 100%);
+    background-color: #de9891;
+    background-image:
+      radial-gradient(ellipse at top left,     #e29f9d 0%, rgba(226, 159, 157, 0) 65%),
+      radial-gradient(ellipse at top right,    #db968b 0%, rgba(219, 150, 139, 0) 65%),
+      radial-gradient(ellipse at bottom left,  #ebabb6 0%, rgba(235, 171, 182, 0) 65%),
+      radial-gradient(ellipse at bottom right, #de9891 0%, rgba(222, 152, 145, 0) 65%);
   }
+  /* Variante mais quente para heros e splashes internos */
   .bg-mt-gradient-soft {
-    background: linear-gradient(135deg, #fadfec 0%, #f6bdd8 60%, #db958b 100%);
+    background-color: #f2b9c8;
+    background-image:
+      radial-gradient(ellipse at top left,     #fadfec 0%, rgba(250, 223, 236, 0) 65%),
+      radial-gradient(ellipse at bottom right, #db958b 0%, rgba(219, 149, 139, 0) 70%);
   }
+  /* Gradient de 4 cantos — BKG-08 (pastel rose→lavanda→azul) — cores oficiais */
   .bg-mt-gradient-pastel {
-    background: linear-gradient(135deg, #fadfec 0%, #e8e5f0 50%, #d9e8f2 100%);
+    background-color: #dee5ed;
+    background-image:
+      radial-gradient(ellipse at top left,     #e3d6d9 0%, rgba(227, 214, 217, 0) 65%),
+      radial-gradient(ellipse at top right,    #d9effd 0%, rgba(217, 239, 253, 0) 65%),
+      radial-gradient(ellipse at bottom left,  #e7c8c9 0%, rgba(231, 200, 201, 0) 65%),
+      radial-gradient(ellipse at bottom right, #dee5ed 0%, rgba(222, 229, 237, 0) 65%);
   }
 }
