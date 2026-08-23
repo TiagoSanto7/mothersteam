@@ -61,11 +61,11 @@ export function LoginScreen() {
                 - mt-N na tag → ajuste fino positivo/negativo por elemento */}
             <div className="flex flex-col items-center gap-0">
               <Mark variant="gradient" size={80} aria-label="Mother's Team" />
-              <Wordmark variant="rose" size="lg" className="w-auto" />
+              <Wordmark variant="rose" size="md" className="!h-[52px] w-auto mt-[10px]" />
               <img
                 src={tagline}
                 alt="quem é MÃE sabe."
-                className="w-52 h-auto"
+                className="w-[115px] h-auto mt-1"
               />
             </div>
 
