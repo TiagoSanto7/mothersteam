@@ -60,7 +60,7 @@ export function LoginScreen() {
                 - gap-0 → espaço entre Mark, Wordmark e Tagline (gap-1 = 4px de folga, gap-2 = 8px)
                 - mt-N na tag → ajuste fino positivo/negativo por elemento */}
             <div className="flex flex-col items-center gap-0">
-              <Mark variant="gradient" size={80} aria-label="Mother's Team" />
+              <Mark variant="gradient" size={48} aria-label="Mother's Team" />
               <Wordmark variant="rose" size="md" className="!h-[52px] w-auto mt-[10px]" />
               <img
                 src={tagline}
