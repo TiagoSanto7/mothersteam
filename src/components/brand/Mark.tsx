@@ -1,8 +1,15 @@
 import markMono from '../../assets/brand/mark-mt.svg'
 import markGradient from '../../assets/brand/mark-mt-gradient.svg'
+import markPink from '../../assets/brand/mark-mt-pink.svg'
+
+const SRC_BY_VARIANT = {
+  mono:     markMono,
+  gradient: markGradient,
+  pink:     markPink,
+} as const
 
 interface MarkProps {
-  variant?: 'mono' | 'gradient'
+  variant?: keyof typeof SRC_BY_VARIANT
   size?: number
   className?: string
   'aria-label'?: string
@@ -14,10 +21,9 @@ export function Mark({
   className = '',
   'aria-label': ariaLabel = "Mother's Team",
 }: MarkProps) {
-  const src = variant === 'gradient' ? markGradient : markMono
   return (
     <img
-      src={src}
+      src={SRC_BY_VARIANT[variant]}
       alt={ariaLabel}
       className={className}
       style={{ width: size, height: size }}

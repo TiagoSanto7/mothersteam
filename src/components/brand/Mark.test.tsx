@@ -15,6 +15,12 @@ describe('Mark', () => {
     expect(img).toHaveAttribute('src', expect.stringContaining('mark-mt-gradient'))
   })
 
+  it('renders pink variant when specified', () => {
+    render(<Mark variant="pink" />)
+    const img = screen.getByRole('img', { name: /mother's team/i })
+    expect(img).toHaveAttribute('src', expect.stringContaining('mark-mt-pink'))
+  })
+
   it('applies given size as inline style', () => {
     render(<Mark size={56} />)
     const img = screen.getByRole('img', { name: /mother's team/i })

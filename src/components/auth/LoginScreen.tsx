@@ -10,7 +10,7 @@ import { MtInput } from '../mt/MtInput';
 import { MtPillButton } from '../mt/MtPillButton';
 import { Wordmark } from '../brand/Wordmark';
 import { Mark } from '../brand/Mark';
-import tagline from '../../assets/brand/tagline-mt.svg';
+import tagline from '../../assets/brand/tagline-mt-rose.svg';
 
 export function LoginScreen() {
   const setAuth = useAppStore((s) => s.setAuth);
@@ -52,13 +52,13 @@ export function LoginScreen() {
         <div className="w-full max-w-[380px]">
           <MtCard.Feature className="flex flex-col items-center gap-6">
             {/* Brand block — a marca é o herói */}
-            <div className="flex flex-col items-center gap-4 pt-2">
-              <Mark variant="gradient" size={80} aria-label="Mother's Team" />
-              <Wordmark variant="rose" size="lg" className="w-auto" />
+            <div className="flex flex-col items-center gap-1 pt-2">
+              <Mark variant="pink" size={72} aria-label="Mother's Team" />
+              <Wordmark variant="rose" size="lg" className="w-auto -mt-1" />
               <img
                 src={tagline}
                 alt="quem é MÃE sabe."
-                className="w-48 h-auto opacity-90"
+                className="w-52 h-auto mt-1"
               />
             </div>
 
