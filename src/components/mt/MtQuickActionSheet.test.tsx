@@ -24,7 +24,7 @@ describe('MtQuickActionSheet', () => {
     expect(screen.getByRole('button', { name: /falar com a mãeia/i })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /novo post/i })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /adicionar rotina/i })).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: /registrar amamentação|sono|fralda/i })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /registrar bebê/i })).toBeInTheDocument()
   })
 
   it('MãeIA click fires onMaeIA and onClose', () => {

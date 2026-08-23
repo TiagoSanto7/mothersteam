@@ -46,6 +46,8 @@ interface AppState {
   quickActionsOpen: boolean;
   /** Cross-screen bridge for the +CTA sheet: the screen that consumes it must call consumeQuickAction() after acting. */
   pendingQuickAction: 'newPost' | 'addRoutine' | 'registerBaby' | null;
+  /** When the mother taps "Começou a dormir", we stash the ISO timestamp here (persisted). Null = no active sleep. */
+  sleepTimerStartedAt: string | null;
   // Auth actions
   setAccessToken: (token: string) => void;
   setAuth: (token: string, user: ApiUser, refreshToken?: string) => void;
@@ -75,6 +77,9 @@ interface AppState {
   closeQuickActions: () => void;
   requestQuickAction: (action: 'newPost' | 'addRoutine' | 'registerBaby') => void;
   consumeQuickAction: () => void;
+  startSleepTimer: () => void;
+  cancelSleepTimer: () => void;
+  clearSleepTimer: () => void;
 }
 
 const safeLocalStorage = {
@@ -155,6 +160,7 @@ export const useAppStore = create<AppState>()(
       closeOverlaysTick: 0,
       quickActionsOpen: false,
       pendingQuickAction: null,
+      sleepTimerStartedAt: null,
       // Auth actions
       setAccessToken: (token) => set({ accessToken: token }),
       setAuth: (token, user, refreshTok) =>
@@ -242,6 +248,9 @@ export const useAppStore = create<AppState>()(
       closeQuickActions: () => set({ quickActionsOpen: false }),
       requestQuickAction: (action) => set({ pendingQuickAction: action }),
       consumeQuickAction: () => set({ pendingQuickAction: null }),
+      startSleepTimer: () => set({ sleepTimerStartedAt: new Date().toISOString() }),
+      cancelSleepTimer: () => set({ sleepTimerStartedAt: null }),
+      clearSleepTimer: () => set({ sleepTimerStartedAt: null }),
       setSelectedDate: (date) => set({ selectedDate: date }),
       toggleFeedSide: () =>
         set((s) => ({ lastFeedSide: s.lastFeedSide === 'left' ? 'right' : 'left' })),
@@ -322,6 +331,7 @@ export const useAppStore = create<AppState>()(
         versesByUser: state.versesByUser,
         prayersByUser: state.prayersByUser,
         refreshToken: state.refreshToken,
+        sleepTimerStartedAt: state.sleepTimerStartedAt,
       }),
     },
   ),
