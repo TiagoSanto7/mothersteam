@@ -101,7 +101,7 @@ export function SleepCard() {
       {sleepStartedAt ? (
         // ─── Timer ativo ───────────────────────────────────
         <>
-          <div className="rounded-mt bg-mt-gradient-pastel p-4 flex flex-col items-center gap-1">
+          <div className="rounded-mt bg-mt-pink-soft p-4 flex flex-col items-center gap-1">
             <span className="text-[10px] font-semibold text-mt-rose-dark uppercase tracking-wider">
               Dormindo há
             </span>

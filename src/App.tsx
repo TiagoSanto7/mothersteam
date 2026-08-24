@@ -269,7 +269,7 @@ export default function App() {
 
       {showSettings && (
         <div className="fixed inset-0 z-50 sm:bg-black/40 sm:flex sm:items-center sm:justify-center">
-          <div className="w-full h-full sm:w-[390px] sm:h-[844px] bg-mt-gradient-pastel sm:rounded-[44px] sm:shadow-2xl overflow-hidden flex flex-col">
+          <div className="w-full h-full sm:w-[390px] sm:h-[844px] bg-mt-cream sm:rounded-[44px] sm:shadow-2xl overflow-hidden flex flex-col">
             <SettingsScreen
               onBack={() => setShowSettings(false)}
               onClose={() => setShowSettings(false)}
@@ -334,7 +334,7 @@ export default function App() {
 
       {pendingPost && (
         <div className="fixed inset-0 z-50 sm:bg-black/40 sm:flex sm:items-center sm:justify-center">
-          <div className="w-full h-full sm:w-[390px] sm:h-[844px] bg-mt-gradient-pastel sm:rounded-[44px] sm:shadow-2xl overflow-hidden">
+          <div className="w-full h-full sm:w-[390px] sm:h-[844px] bg-mt-cream sm:rounded-[44px] sm:shadow-2xl overflow-hidden">
             <PostDetailScreen post={pendingPost} onBack={() => setPendingPostId(null)} />
           </div>
         </div>
@@ -342,7 +342,7 @@ export default function App() {
 
       {isLoggedIn && onboardingDone && !socialOnboardingDone && (
         <div className="fixed inset-0 z-50 sm:bg-black/40 sm:flex sm:items-center sm:justify-center">
-          <div className="w-full h-full sm:w-[390px] sm:h-[844px] bg-mt-gradient-pastel sm:rounded-[44px] sm:shadow-2xl overflow-hidden">
+          <div className="w-full h-full sm:w-[390px] sm:h-[844px] bg-mt-cream sm:rounded-[44px] sm:shadow-2xl overflow-hidden">
             <SocialOnboardingScreen onDone={completeSocialOnboarding} />
           </div>
         </div>
@@ -350,7 +350,7 @@ export default function App() {
 
       {pendingShareContent !== null && (
         <div className="fixed inset-0 z-50 sm:bg-black/40 sm:flex sm:items-center sm:justify-center">
-          <div className="w-full h-full sm:w-[390px] sm:h-[844px] bg-mt-gradient-pastel sm:rounded-[44px] sm:shadow-2xl overflow-hidden">
+          <div className="w-full h-full sm:w-[390px] sm:h-[844px] bg-mt-cream sm:rounded-[44px] sm:shadow-2xl overflow-hidden">
             <CreatePostScreen
               onBack={() => setPendingShareContent(null)}
               initialContent={pendingShareContent}
@@ -361,7 +361,7 @@ export default function App() {
 
       {openProduct && (
         <div className="fixed inset-0 z-50 sm:bg-black/40 sm:flex sm:items-center sm:justify-center">
-          <div className="w-full h-full sm:w-[390px] sm:h-[844px] bg-mt-gradient-pastel sm:rounded-[44px] sm:shadow-2xl overflow-hidden">
+          <div className="w-full h-full sm:w-[390px] sm:h-[844px] bg-mt-cream sm:rounded-[44px] sm:shadow-2xl overflow-hidden">
             <ProductDetailScreen
               key={openProduct.id}
               productType={openProduct.type}
@@ -380,7 +380,7 @@ export default function App() {
 
       {openReviews && (
         <div className="fixed inset-0 z-[55] sm:bg-black/40 sm:flex sm:items-center sm:justify-center">
-          <div className="w-full h-full sm:w-[390px] sm:h-[844px] bg-mt-gradient-pastel sm:rounded-[44px] sm:shadow-2xl overflow-hidden">
+          <div className="w-full h-full sm:w-[390px] sm:h-[844px] bg-mt-cream sm:rounded-[44px] sm:shadow-2xl overflow-hidden">
             <ReviewsScreen
               productType={openReviews.type}
               productId={openReviews.id}
@@ -393,7 +393,7 @@ export default function App() {
 
       {showCart && (
         <div className="fixed inset-0 z-50 sm:bg-black/40 sm:flex sm:items-center sm:justify-center">
-          <div className="w-full h-full sm:w-[390px] sm:h-[844px] bg-mt-gradient-pastel sm:rounded-[44px] sm:shadow-2xl overflow-hidden">
+          <div className="w-full h-full sm:w-[390px] sm:h-[844px] bg-mt-cream sm:rounded-[44px] sm:shadow-2xl overflow-hidden">
             <CartScreen
               onBack={() => setShowCart(false)}
               onCheckout={() => {
@@ -407,7 +407,7 @@ export default function App() {
 
       {showCheckout && (
         <div className="fixed inset-0 z-50 sm:bg-black/40 sm:flex sm:items-center sm:justify-center">
-          <div className="w-full h-full sm:w-[390px] sm:h-[844px] bg-mt-gradient-pastel sm:rounded-[44px] sm:shadow-2xl overflow-hidden">
+          <div className="w-full h-full sm:w-[390px] sm:h-[844px] bg-mt-cream sm:rounded-[44px] sm:shadow-2xl overflow-hidden">
             <CheckoutScreen
               onBack={() => setShowCheckout(false)}
               onOrderComplete={(orderId) => {
@@ -421,7 +421,7 @@ export default function App() {
 
       {openOrderId && (
         <div className="fixed inset-0 z-50 sm:bg-black/40 sm:flex sm:items-center sm:justify-center">
-          <div className="w-full h-full sm:w-[390px] sm:h-[844px] bg-mt-gradient-pastel sm:rounded-[44px] sm:shadow-2xl overflow-hidden">
+          <div className="w-full h-full sm:w-[390px] sm:h-[844px] bg-mt-cream sm:rounded-[44px] sm:shadow-2xl overflow-hidden">
             <OrderDetailScreen
               orderId={openOrderId}
               onBack={() => setOpenOrderId(null)}

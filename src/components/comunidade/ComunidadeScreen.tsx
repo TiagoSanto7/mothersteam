@@ -258,7 +258,7 @@ export function ComunidadeScreen() {
               role="dialog"
               aria-modal="true"
               aria-label="Nova publicação"
-              className="w-full max-w-[390px] mx-auto h-[90%] bg-mt-gradient-pastel rounded-t-3xl flex flex-col overflow-hidden"
+              className="w-full max-w-[390px] mx-auto h-[90%] bg-mt-cream rounded-t-3xl flex flex-col overflow-hidden"
               onClick={(e) => e.stopPropagation()}
             >
               <CreatePostScreen

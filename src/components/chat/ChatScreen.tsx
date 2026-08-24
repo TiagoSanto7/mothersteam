@@ -495,7 +495,7 @@ export function ChatScreen({ chat, onBack, onOpenProfile }: ChatScreenProps) {
   }
 
   return (
-    <div className="flex flex-col w-full h-full bg-mt-gradient-pastel overflow-hidden relative">
+    <div className="flex flex-col w-full h-full bg-mt-cream overflow-hidden relative">
       {/* Header */}
       <div className="flex items-center gap-3 px-4 pt-6 pb-4 border-b border-mt-linen/60 flex-shrink-0">
         <button onClick={onBack} className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-mt-linen">

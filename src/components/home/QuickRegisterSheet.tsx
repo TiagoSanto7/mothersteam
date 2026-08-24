@@ -228,7 +228,7 @@ function SonoForm({ onDone }: { onDone: () => void }) {
     const label = h > 0 ? `${h}h ${String(m).padStart(2, '0')}m` : `${m} min`
     return (
       <div className="flex flex-col items-center gap-4 py-2">
-        <div className="w-20 h-20 rounded-full bg-mt-gradient-pastel flex items-center justify-center">
+        <div className="w-20 h-20 rounded-full bg-mt-pink-soft flex items-center justify-center">
           <Moon size={32} className="text-mt-rose-dark" strokeWidth={1.6} />
         </div>
         <div className="text-center">

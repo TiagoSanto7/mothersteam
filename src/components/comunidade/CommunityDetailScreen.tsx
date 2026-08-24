@@ -117,7 +117,7 @@ function CommunityMembersModal({
   isPending,
 }: CommunityMembersModalProps) {
   return (
-    <div className="absolute inset-0 z-20 flex flex-col bg-mt-gradient-pastel">
+    <div className="absolute inset-0 z-20 flex flex-col bg-mt-cream">
       {/* Header */}
       <div className="flex items-center justify-between px-4 pt-6 pb-3 flex-shrink-0 border-b border-mt-linen/60">
         <p className="text-sm font-semibold text-mt-charcoal">
@@ -272,7 +272,7 @@ export function CommunityDetailScreen({ communityId, onBack, onOpenProfile }: Co
 
   if (showCreate) {
     return (
-      <div className="flex flex-col w-full h-full sm:w-[390px] sm:h-[844px] bg-mt-gradient-pastel sm:rounded-[44px] sm:shadow-2xl overflow-hidden">
+      <div className="flex flex-col w-full h-full sm:w-[390px] sm:h-[844px] bg-mt-cream sm:rounded-[44px] sm:shadow-2xl overflow-hidden">
         <CreatePostScreen onBack={() => setShowCreate(false)} initialCommunityId={communityId} />
       </div>
     );
@@ -302,7 +302,7 @@ export function CommunityDetailScreen({ communityId, onBack, onOpenProfile }: Co
   const isAdmin = community.role === 'owner' || community.role === 'admin';
 
   return (
-    <div className="relative flex flex-col w-full h-full sm:w-[390px] sm:h-[844px] bg-mt-gradient-pastel sm:rounded-[44px] sm:shadow-2xl overflow-hidden">
+    <div className="relative flex flex-col w-full h-full sm:w-[390px] sm:h-[844px] bg-mt-cream sm:rounded-[44px] sm:shadow-2xl overflow-hidden">
       <div className="flex items-center justify-between px-4 pt-6 pb-3 flex-shrink-0">
         <button onClick={onBack} aria-label="Voltar" className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-mt-linen">
           <ChevronLeft size={20} className="text-mt-charcoal" />

@@ -90,7 +90,7 @@ export function ProductDetailScreen({
 
   if (isLoading) {
     return (
-      <div className="flex flex-col h-full bg-mt-gradient-pastel">
+      <div className="flex flex-col h-full bg-mt-cream">
         <div className="flex items-center gap-3 px-4 pt-10 pb-4">
           <button onClick={onBack} className="w-8 h-8 rounded-xl bg-white/70 flex items-center justify-center">
             <ChevronLeft size={18} className="text-mt-charcoal" />
@@ -107,7 +107,7 @@ export function ProductDetailScreen({
 
   if (isError) {
     return (
-      <div className="flex flex-col h-full bg-mt-gradient-pastel items-center justify-center gap-3 px-6">
+      <div className="flex flex-col h-full bg-mt-cream items-center justify-center gap-3 px-6">
         <Package size={40} className="text-mt-muted" />
         <p className="text-mt-muted text-sm text-center">Não foi possível carregar o produto. Verifique sua conexão.</p>
         <button onClick={() => refetch()} className="px-4 py-2 rounded-xl bg-mt-rose text-white text-sm font-semibold active:scale-95 transition-transform">Tentar novamente</button>
@@ -118,7 +118,7 @@ export function ProductDetailScreen({
 
   if (!product) {
     return (
-      <div className="flex flex-col h-full bg-mt-gradient-pastel items-center justify-center gap-3">
+      <div className="flex flex-col h-full bg-mt-cream items-center justify-center gap-3">
         <Package size={40} className="text-mt-muted" />
         <p className="text-mt-muted text-sm">Produto não encontrado</p>
         <button onClick={onBack} className="text-mt-rose text-sm font-medium">Voltar</button>
@@ -132,7 +132,7 @@ export function ProductDetailScreen({
   const phases = isOwn ? undefined : (product as ApiProductDetail).phases
 
   return (
-    <div className="flex flex-col h-full bg-mt-gradient-pastel overflow-hidden">
+    <div className="flex flex-col h-full bg-mt-cream overflow-hidden">
       {/* Header */}
       <div className="flex items-center justify-between px-4 pt-10 pb-2 flex-shrink-0">
         <button

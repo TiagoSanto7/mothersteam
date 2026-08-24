@@ -61,7 +61,7 @@ export function ReviewsScreen({ productType, productId, productName, onBack }: P
 
   return (
     <>
-      <div className="flex flex-col h-full bg-mt-gradient-pastel overflow-hidden">
+      <div className="flex flex-col h-full bg-mt-cream overflow-hidden">
         <div className="flex items-center gap-3 px-4 pt-10 pb-4 flex-shrink-0">
           <button
             onClick={onBack}

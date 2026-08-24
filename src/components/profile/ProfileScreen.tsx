@@ -118,7 +118,7 @@ export function ProfileScreen({ onClose, userId, onOpenProfile, onMessage, isTab
 
   if (selectedPost) {
     return (
-      <div className="flex flex-col w-full h-full sm:w-[390px] sm:h-[844px] bg-mt-gradient-pastel sm:rounded-[44px] sm:shadow-2xl overflow-hidden">
+      <div className="flex flex-col w-full h-full sm:w-[390px] sm:h-[844px] bg-mt-cream sm:rounded-[44px] sm:shadow-2xl overflow-hidden">
         <PostDetailScreen
           post={selectedPost}
           onBack={() => setSelectedPost(null)}
@@ -130,7 +130,7 @@ export function ProfileScreen({ onClose, userId, onOpenProfile, onMessage, isTab
 
   if (followList && effectiveUserId) {
     return (
-      <div className="flex flex-col w-full h-full sm:w-[390px] sm:h-[844px] bg-mt-gradient-pastel sm:rounded-[44px] sm:shadow-2xl overflow-hidden">
+      <div className="flex flex-col w-full h-full sm:w-[390px] sm:h-[844px] bg-mt-cream sm:rounded-[44px] sm:shadow-2xl overflow-hidden">
         <FollowListScreen
           mode={followList}
           userId={effectiveUserId}
@@ -146,7 +146,7 @@ export function ProfileScreen({ onClose, userId, onOpenProfile, onMessage, isTab
 
   if (showSettings) {
     return (
-      <div className="flex flex-col w-full h-full sm:w-[390px] sm:h-[844px] bg-mt-gradient-pastel sm:rounded-[44px] sm:shadow-2xl overflow-hidden">
+      <div className="flex flex-col w-full h-full sm:w-[390px] sm:h-[844px] bg-mt-cream sm:rounded-[44px] sm:shadow-2xl overflow-hidden">
         <SettingsScreen onBack={() => setShowSettings(false)} onClose={onClose ?? (() => setShowSettings(false))} />
       </div>
     );
@@ -171,7 +171,7 @@ export function ProfileScreen({ onClose, userId, onOpenProfile, onMessage, isTab
   const posts = postsPages?.pages.flatMap((p) => p.items.map(apiPostToCommunityPost)) ?? [];
 
   return (
-    <div className="flex flex-col w-full h-full sm:w-[390px] sm:h-[844px] bg-mt-gradient-pastel sm:rounded-[44px] sm:shadow-2xl overflow-hidden">
+    <div className="flex flex-col w-full h-full sm:w-[390px] sm:h-[844px] bg-mt-cream sm:rounded-[44px] sm:shadow-2xl overflow-hidden">
       {/* Header */}
       <div className="flex items-center justify-between px-4 pt-6 pb-3 flex-shrink-0">
         {isTab ? (

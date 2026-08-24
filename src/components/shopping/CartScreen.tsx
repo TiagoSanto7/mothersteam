@@ -77,7 +77,7 @@ export function CartScreen({ onBack, onCheckout }: Props) {
 
   if (isLoading) {
     return (
-      <div className="flex flex-col h-full bg-mt-gradient-pastel">
+      <div className="flex flex-col h-full bg-mt-cream">
         <div className="flex items-center gap-3 px-4 pt-10 pb-4">
           <button onClick={onBack} className="w-9 h-9 rounded-xl bg-white/70 flex items-center justify-center">
             <ChevronLeft size={20} className="text-mt-charcoal" />
@@ -94,7 +94,7 @@ export function CartScreen({ onBack, onCheckout }: Props) {
   }
 
   return (
-    <div className="flex flex-col h-full bg-mt-gradient-pastel overflow-hidden">
+    <div className="flex flex-col h-full bg-mt-cream overflow-hidden">
       <div className="flex items-center gap-3 px-4 pt-10 pb-4 flex-shrink-0">
         <button
           onClick={onBack}

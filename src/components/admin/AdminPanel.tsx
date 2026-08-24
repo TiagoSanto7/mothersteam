@@ -567,7 +567,7 @@ export function AdminPanel({ onBack }: Props) {
   }
 
   return (
-    <div className="flex flex-col h-full bg-mt-gradient-pastel">
+    <div className="flex flex-col h-full bg-mt-cream">
       <div className="flex items-center gap-3 px-4 pt-6 pb-3 border-b border-mt-linen/60 flex-shrink-0">
         <button onClick={handleBack} className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-mt-linen">
           <ChevronLeft size={20} className="text-mt-charcoal" />

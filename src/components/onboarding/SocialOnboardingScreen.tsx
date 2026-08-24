@@ -58,7 +58,7 @@ export function SocialOnboardingScreen({ onDone }: SocialOnboardingScreenProps) 
   }
 
   return (
-    <div className="w-full h-full flex flex-col bg-mt-gradient-pastel overflow-hidden">
+    <div className="w-full h-full flex flex-col bg-mt-cream overflow-hidden">
       <div className="flex-1 overflow-y-auto px-5 pt-10 pb-6">
         <h1 className="text-2xl font-bold text-mt-charcoal mb-1">Conecte-se</h1>
         <p className="text-sm text-mt-muted mb-6">

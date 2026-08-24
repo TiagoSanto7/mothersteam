@@ -119,7 +119,7 @@ export function ChatListScreen({ onBack, onOpenProfile, initialChatUserId }: Cha
 
   if (selectedChat) {
     return (
-      <div className="flex flex-col w-full h-full sm:w-[390px] sm:h-[844px] bg-mt-gradient-pastel sm:rounded-[44px] sm:shadow-2xl overflow-hidden">
+      <div className="flex flex-col w-full h-full sm:w-[390px] sm:h-[844px] bg-mt-cream sm:rounded-[44px] sm:shadow-2xl overflow-hidden">
         <ChatScreen chat={selectedChat} onBack={() => setSelectedChat(null)} onOpenProfile={onOpenProfile} />
       </div>
     );
@@ -128,7 +128,7 @@ export function ChatListScreen({ onBack, onOpenProfile, initialChatUserId }: Cha
   const followingUsers = followingData?.items ?? [];
 
   return (
-    <div className="flex flex-col w-full h-full sm:w-[390px] sm:h-[844px] bg-mt-gradient-pastel sm:rounded-[44px] sm:shadow-2xl overflow-hidden relative">
+    <div className="flex flex-col w-full h-full sm:w-[390px] sm:h-[844px] bg-mt-cream sm:rounded-[44px] sm:shadow-2xl overflow-hidden relative">
       <div className="flex items-center justify-between px-4 pt-6 pb-4 border-b border-mt-linen/60 flex-shrink-0">
         <button onClick={onBack} className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-mt-linen">
           <ChevronLeft size={20} className="text-mt-charcoal" />

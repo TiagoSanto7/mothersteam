@@ -234,7 +234,7 @@ export function DashboardScreen() {
       {/* MãeIA overlay */}
       {showMaeIA && (
         <div className="fixed inset-0 z-50 sm:bg-black/40 sm:flex sm:items-center sm:justify-center">
-          <div className="w-full h-full sm:w-[390px] sm:h-[844px] bg-mt-gradient-pastel sm:rounded-[44px] sm:shadow-2xl overflow-hidden">
+          <div className="w-full h-full sm:w-[390px] sm:h-[844px] bg-mt-cream sm:rounded-[44px] sm:shadow-2xl overflow-hidden">
             <MaeIAScreen onBack={() => setShowMaeIA(false)} />
           </div>
         </div>
