@@ -104,10 +104,11 @@ describe('DashboardScreen', () => {
     expect(screen.getByText(/Sara diz/i)).toBeInTheDocument()
   })
 
-  it('opens QuickRegisterSheet when Registrar button is clicked', () => {
+  it('opens QuickRegisterSheet (via store) when Registrar button is clicked', () => {
     render(<DashboardScreen />, { wrapper: makeWrapper() })
     fireEvent.click(screen.getByRole('button', { name: 'Registrar amamentação' }))
-    expect(screen.getByRole('dialog')).toBeInTheDocument()
+    // Sheet is now rendered globally by MobileShell; DashboardScreen just triggers the store slot.
+    expect(useAppStore.getState().babySheetMode).toBe('amamentacao')
   })
 
 })

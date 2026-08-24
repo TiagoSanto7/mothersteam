@@ -6,7 +6,6 @@ import { BabyScreen } from '../baby/BabyScreen';
 import { WeekCalendar } from '../home/WeekCalendar';
 import { RoutineTimeline } from '../home/RoutineTimeline';
 import { AddRoutineModal } from '../home/AddRoutineModal';
-import { QuickRegisterSheet } from '../home/QuickRegisterSheet';
 import { BabyDevCard } from '../home/BabyDevCard';
 import { BabyDevScreen } from '../home/BabyDevScreen';
 
@@ -20,11 +19,11 @@ const SEGMENTS: { id: Segment; label: string }[] = [
 
 export function JornadaScreen() {
   const [segment, setSegment]           = useState<Segment>('hoje');
-  const [registerOpen, setRegisterOpen] = useState(false);
   const [addModalOpen, setAddModalOpen] = useState(false);
   const [babyDevOpen, setBabyDevOpen]   = useState(false);
   const selectedDate                    = useAppStore((s) => s.selectedDate);
   const tabRefreshTick                  = useAppStore((s) => s.tabRefreshTick);
+  const openBabySheet                   = useAppStore((s) => s.openBabySheet);
   const queryClient                     = useQueryClient();
   const scrollRef                       = useRef<HTMLDivElement>(null);
 
@@ -88,16 +87,15 @@ export function JornadaScreen() {
         )}
       </div>
 
-      {/* FAB — opens quick-register sheet */}
+      {/* FAB — opens quick-register sheet (defaults to amamentação) */}
       <button
-        onClick={() => setRegisterOpen(true)}
+        onClick={() => openBabySheet('amamentacao')}
         aria-label="Registrar"
         className="fixed bottom-[84px] right-4 w-14 h-14 rounded-full bg-mt-rose-dark text-white shadow-lg shadow-mt-rose-dark/30 flex items-center justify-center active:scale-95 transition-transform z-30"
       >
         <Plus size={24} />
       </button>
 
-      <QuickRegisterSheet open={registerOpen} onClose={() => setRegisterOpen(false)} />
       {addModalOpen && (
         <AddRoutineModal
           onClose={() => setAddModalOpen(false)}

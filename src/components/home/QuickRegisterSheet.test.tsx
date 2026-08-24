@@ -17,7 +17,7 @@ function makeWrapper() {
 }
 
 beforeEach(() => {
-  useAppStore.setState({ isLoggedIn: true, lastFeedSide: 'left', sleepTimerStartedAt: null })
+  useAppStore.setState({ isLoggedIn: true, lastFeedSide: 'left' })
   mockApiFetch.mockResolvedValue({})
 })
 

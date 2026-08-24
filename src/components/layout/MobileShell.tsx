@@ -6,6 +6,7 @@ import { AppHeader } from './AppHeader';
 import { SideDrawer } from './SideDrawer';
 import { useAppStore } from '../../store/useAppStore';
 import { MtQuickActionSheet } from '../mt/MtQuickActionSheet';
+import { QuickRegisterSheet } from '../home/QuickRegisterSheet';
 
 const TABS = ['hoje', 'jornada', 'comunidade', 'perfil'];
 
@@ -39,6 +40,9 @@ export function MobileShell({
   const quickActionsOpen = useAppStore((s) => s.quickActionsOpen);
   const closeQuickActions = useAppStore((s) => s.closeQuickActions);
   const requestQuickAction = useAppStore((s) => s.requestQuickAction);
+  const babySheetMode = useAppStore((s) => s.babySheetMode);
+  const openBabySheet = useAppStore((s) => s.openBabySheet);
+  const closeBabySheet = useAppStore((s) => s.closeBabySheet);
   const prevTabRef = useRef<string>(activeTab);
 
   const currentIndex = TABS.indexOf(activeTab);
@@ -83,7 +87,12 @@ export function MobileShell({
           onMaeIA={() => setActiveTab('maeIA')}
           onNewPost={() => { requestQuickAction('newPost'); setActiveTab('comunidade'); }}
           onAddRoutine={() => { requestQuickAction('addRoutine'); setActiveTab('hoje'); }}
-          onRegisterBaby={() => { requestQuickAction('registerBaby'); setActiveTab('hoje'); }}
+          onRegisterBaby={() => openBabySheet('amamentacao')}
+        />
+        <QuickRegisterSheet
+          open={babySheetMode !== null}
+          initialMode={babySheetMode ?? 'amamentacao'}
+          onClose={closeBabySheet}
         />
       </div>
     </div>

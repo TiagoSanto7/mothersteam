@@ -1,7 +1,6 @@
-import { useEffect, useMemo, useState } from 'react'
+import { forwardRef, useEffect, useRef, useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { Moon, X } from 'lucide-react'
 import { useAppStore } from '../../store/useAppStore'
 import { apiFetch } from '../../lib/api'
 
@@ -10,7 +9,7 @@ type Mode = 'amamentacao' | 'sono' | 'fralda'
 interface QuickRegisterSheetProps {
   open: boolean
   onClose: () => void
-  /** If provided, pre-selects the tab. Defaults to sono when timer is running, else amamentacao. */
+  /** Pre-selects the tab on open. */
   initialMode?: Mode
 }
 
@@ -26,18 +25,13 @@ function nowClock(): string {
 }
 
 export function QuickRegisterSheet({ open, onClose, initialMode }: QuickRegisterSheetProps) {
-  const sleepStartedAt = useAppStore((s) => s.sleepTimerStartedAt)
+  const [mode, setMode] = useState<Mode>(initialMode ?? 'amamentacao')
 
-  // Auto-select sono tab if timer is running (mother's most likely intent when re-opening).
-  const defaultMode: Mode = initialMode ?? (sleepStartedAt ? 'sono' : 'amamentacao')
-  const [mode, setMode] = useState<Mode>(defaultMode)
-
-  // Reset mode when sheet reopens (so a stale selection doesn't linger).
+  // Sync mode whenever the sheet reopens with a new intent.
   useEffect(() => {
-    if (open) setMode(initialMode ?? (sleepStartedAt ? 'sono' : 'amamentacao'))
-  }, [open, initialMode, sleepStartedAt])
+    if (open) setMode(initialMode ?? 'amamentacao')
+  }, [open, initialMode])
 
-  // Escape closes.
   useEffect(() => {
     if (!open) return
     const onKey = (e: KeyboardEvent) => {
@@ -73,7 +67,6 @@ export function QuickRegisterSheet({ open, onClose, initialMode }: QuickRegister
           >
             <div className="mx-auto w-12 h-1.5 bg-mt-linen rounded-full mt-3 mb-3" />
 
-            {/* Tab pills */}
             <div className="px-5">
               <div role="tablist" aria-label="Tipo de registro" className="flex gap-1.5 bg-mt-linen/60 rounded-mt-pill p-1">
                 {TAB_META.map((tab) => (
@@ -106,7 +99,7 @@ export function QuickRegisterSheet({ open, onClose, initialMode }: QuickRegister
 }
 
 // ────────────────────────────────────────────────────────────────────
-// Amamentação — mesma UI da versão antiga, agora enxuta.
+// Amamentação
 // ────────────────────────────────────────────────────────────────────
 function AmamentacaoForm({ onDone }: { onDone: () => void }) {
   const lastFeedSide = useAppStore((s) => s.lastFeedSide)
@@ -163,161 +156,145 @@ function AmamentacaoForm({ onDone }: { onDone: () => void }) {
 }
 
 // ────────────────────────────────────────────────────────────────────
-// Sono — timer live ou entrada manual em minutos.
+// Sono — dois inputs livres (h + m). Sem passos rígidos, sem timer forçado.
 // ────────────────────────────────────────────────────────────────────
 function SonoForm({ onDone }: { onDone: () => void }) {
-  const sleepStartedAt   = useAppStore((s) => s.sleepTimerStartedAt)
-  const startSleepTimer  = useAppStore((s) => s.startSleepTimer)
-  const cancelSleepTimer = useAppStore((s) => s.cancelSleepTimer)
-  const clearSleepTimer  = useAppStore((s) => s.clearSleepTimer)
   const queryClient = useQueryClient()
+  const hInputRef = useRef<HTMLInputElement>(null)
+  const [hours, setHours] = useState('')
+  const [minutes, setMinutes] = useState('')
 
-  const [manualMode, setManualMode] = useState(false)
-  const [manualMinutes, setManualMinutes] = useState('')
-  const [tick, setTick] = useState(0)
-
-  // Re-render every 30s while timer is running so the elapsed time updates.
   useEffect(() => {
-    if (!sleepStartedAt) return
-    const id = window.setInterval(() => setTick((t) => t + 1), 30_000)
-    return () => window.clearInterval(id)
-  }, [sleepStartedAt])
+    // Foca o campo de horas ao abrir a aba, pro teclado já subir.
+    hInputRef.current?.focus()
+  }, [])
 
-  const elapsedMin = useMemo(() => {
-    if (!sleepStartedAt) return 0
-    return Math.max(0, Math.round((Date.now() - new Date(sleepStartedAt).getTime()) / 60_000))
-  }, [sleepStartedAt, tick])
+  const totalMinutes = (parseInt(hours || '0', 10) || 0) * 60 + (parseInt(minutes || '0', 10) || 0)
+  const canSave = totalMinutes > 0
 
   const saveMutation = useMutation({
-    mutationFn: (minutes: number) =>
+    mutationFn: (mins: number) =>
       apiFetch('/baby', {
         method: 'POST',
         body: JSON.stringify({
           type: 'sleep',
           time: nowClock(),
-          detail: `Dormiu por ${minutes} min`,
+          detail: `Dormiu por ${mins} min`,
         }),
       }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['baby'] })
-      clearSleepTimer()
       onDone()
     },
   })
 
-  function handleStop() {
-    if (elapsedMin < 1) {
-      // Menos de 1 minuto — provável tap acidental. Só cancela.
-      cancelSleepTimer()
-      onDone()
-      return
+  function bump(field: 'h' | 'm', dir: 1 | -1) {
+    if (field === 'h') {
+      const n = Math.max(0, Math.min(23, (parseInt(hours || '0', 10) || 0) + dir))
+      setHours(String(n))
+    } else {
+      const n = Math.max(0, Math.min(59, (parseInt(minutes || '0', 10) || 0) + dir))
+      setMinutes(String(n))
     }
-    saveMutation.mutate(elapsedMin)
   }
 
-  function handleManualSubmit() {
-    const n = parseInt(manualMinutes, 10)
-    if (!Number.isFinite(n) || n <= 0) return
-    saveMutation.mutate(n)
-  }
+  const h = parseInt(hours || '0', 10) || 0
+  const m = parseInt(minutes || '0', 10) || 0
+  const summary = h > 0
+    ? m > 0 ? `${h}h ${m}min` : `${h}h`
+    : m > 0 ? `${m}min` : 'quanto tempo?'
 
-  // ── Timer rodando ─────────────────────────────────────────────
-  if (sleepStartedAt) {
-    const h = Math.floor(elapsedMin / 60)
-    const m = elapsedMin % 60
-    const label = h > 0 ? `${h}h ${String(m).padStart(2, '0')}m` : `${m} min`
-    return (
-      <div className="flex flex-col items-center gap-4 py-2">
-        <div className="w-20 h-20 rounded-full bg-mt-pink-soft flex items-center justify-center">
-          <Moon size={32} className="text-mt-rose-dark" strokeWidth={1.6} />
-        </div>
-        <div className="text-center">
-          <p className="text-[11px] font-semibold text-mt-muted uppercase tracking-wide">Bebê dormindo há</p>
-          <p className="text-3xl font-bold text-mt-charcoal tabular-nums mt-1">{label}</p>
-        </div>
-        <button
-          onClick={handleStop}
-          disabled={saveMutation.isPending}
-          className="w-full py-3 rounded-mt-pill bg-mt-gradient text-white text-[14px] font-bold shadow-mt disabled:opacity-60"
-        >
-          {saveMutation.isPending ? 'Salvando…' : 'Acordou'}
-        </button>
-        <button
-          onClick={() => { cancelSleepTimer(); onDone() }}
-          className="text-[12px] text-mt-muted underline underline-offset-4"
-        >
-          Cancelar (não registrar)
-        </button>
-      </div>
-    )
-  }
-
-  // ── Modo manual ──────────────────────────────────────────────
-  if (manualMode) {
-    return (
-      <div className="flex flex-col gap-3">
-        <div className="flex items-center justify-between">
-          <p className="text-[11px] font-semibold text-mt-muted uppercase tracking-wide">
-            Quanto tempo?
-          </p>
-          <button
-            onClick={() => { setManualMode(false); setManualMinutes('') }}
-            aria-label="Voltar para timer"
-            className="text-mt-muted"
-          >
-            <X size={16} strokeWidth={1.8} />
-          </button>
-        </div>
-        <div className="flex items-baseline gap-2">
-          <input
-            type="number"
-            inputMode="numeric"
-            min={1}
-            max={1440}
-            value={manualMinutes}
-            onChange={(e) => setManualMinutes(e.target.value.replace(/[^0-9]/g, ''))}
-            placeholder="0"
-            autoFocus
-            className="flex-1 text-4xl font-bold text-mt-charcoal tabular-nums bg-mt-linen/60 rounded-mt py-4 px-4 text-center focus:outline-none focus:ring-2 focus:ring-mt-rose"
-          />
-          <span className="text-lg text-mt-muted">min</span>
-        </div>
-        <button
-          onClick={handleManualSubmit}
-          disabled={!manualMinutes || saveMutation.isPending}
-          className="w-full py-3 rounded-mt-pill bg-mt-gradient text-white text-[14px] font-bold shadow-mt disabled:opacity-60"
-        >
-          {saveMutation.isPending ? 'Salvando…' : 'Registrar'}
-        </button>
-      </div>
-    )
-  }
-
-  // ── Estado inicial: iniciar timer ────────────────────────────
   return (
-    <div className="flex flex-col gap-3">
-      <p className="text-[12px] text-mt-muted text-center leading-relaxed">
-        Toque quando o bebê começar a dormir. A gente cronometra até você marcar "Acordou".
+    <div className="flex flex-col gap-4">
+      <p className="text-[11px] font-semibold text-mt-muted uppercase tracking-wide text-center">
+        Quanto tempo o bebê dormiu?
       </p>
+
+      <div className="flex items-center justify-center gap-2">
+        <TimeField
+          ref={hInputRef}
+          value={hours}
+          onChange={setHours}
+          onBump={(d) => bump('h', d)}
+          max={23}
+          label="h"
+        />
+        <span className="text-3xl font-bold text-mt-muted pb-6">:</span>
+        <TimeField
+          value={minutes}
+          onChange={setMinutes}
+          onBump={(d) => bump('m', d)}
+          max={59}
+          label="min"
+        />
+      </div>
+
+      <p className="text-[13px] text-mt-muted text-center -mt-2">= {summary}</p>
+
       <button
-        onClick={() => startSleepTimer()}
-        className="w-full py-4 rounded-mt-pill bg-mt-gradient text-white text-[15px] font-bold shadow-mt flex items-center justify-center gap-2"
+        onClick={() => saveMutation.mutate(totalMinutes)}
+        disabled={!canSave || saveMutation.isPending}
+        className="w-full py-3 rounded-mt-pill bg-mt-gradient text-white text-[14px] font-bold shadow-mt disabled:opacity-40"
       >
-        <Moon size={18} strokeWidth={1.8} />
-        Começou a dormir agora
-      </button>
-      <button
-        onClick={() => setManualMode(true)}
-        className="text-[12px] text-mt-rose font-semibold self-center"
-      >
-        Já dormiu — registrar manualmente
+        {saveMutation.isPending ? 'Salvando…' : 'Salvar soneca'}
       </button>
     </div>
   )
 }
 
+interface TimeFieldProps {
+  value: string
+  onChange: (v: string) => void
+  onBump: (dir: 1 | -1) => void
+  max: number
+  label: string
+}
+
+const TimeField = forwardRef<HTMLInputElement, TimeFieldProps>(function TimeField(
+  { value, onChange, onBump, max, label },
+  ref,
+) {
+  return (
+    <div className="flex flex-col items-center gap-1">
+      <button
+        type="button"
+        aria-label={`Aumentar ${label}`}
+        onClick={() => onBump(1)}
+        className="text-mt-muted hover:text-mt-rose transition-colors"
+      >
+        ▲
+      </button>
+      <input
+        ref={ref}
+        type="number"
+        inputMode="numeric"
+        min={0}
+        max={max}
+        value={value}
+        onChange={(e) => {
+          const raw = e.target.value.replace(/[^0-9]/g, '')
+          if (!raw) { onChange(''); return }
+          const n = Math.min(max, parseInt(raw, 10))
+          onChange(String(n))
+        }}
+        placeholder="0"
+        className="w-20 h-16 bg-mt-linen/60 rounded-mt text-4xl font-bold text-mt-charcoal tabular-nums text-center focus:outline-none focus:ring-2 focus:ring-mt-rose"
+      />
+      <button
+        type="button"
+        aria-label={`Diminuir ${label}`}
+        onClick={() => onBump(-1)}
+        className="text-mt-muted hover:text-mt-rose transition-colors"
+      >
+        ▼
+      </button>
+      <span className="text-[10px] font-semibold text-mt-muted uppercase">{label}</span>
+    </div>
+  )
+})
+
 // ────────────────────────────────────────────────────────────────────
-// Fralda — 3 botões grandes (Xixi / Coco / Ambos).
+// Fralda — 3 botões grandes.
 // ────────────────────────────────────────────────────────────────────
 function FraldaForm({ onDone }: { onDone: () => void }) {
   const queryClient = useQueryClient()
@@ -361,4 +338,3 @@ function FraldaForm({ onDone }: { onDone: () => void }) {
     </div>
   )
 }
-

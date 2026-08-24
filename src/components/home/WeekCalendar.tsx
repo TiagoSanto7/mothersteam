@@ -54,8 +54,8 @@ export function WeekCalendar({ referenceDate: _referenceDate }: { referenceDate?
   }
 
   return (
-    <div className="flex flex-col gap-1 px-2 py-2">
-      <div className="flex gap-2 overflow-x-auto scrollbar-hide">
+    <div className="flex flex-col gap-1 px-3 py-2">
+      <div className="flex gap-1.5">
         {days.map((day) => {
           const iso = toISO(day);
           const isSelected = iso === selectedDate;
@@ -68,7 +68,7 @@ export function WeekCalendar({ referenceDate: _referenceDate }: { referenceDate?
               onClick={() => setSelectedDate(iso)}
               whileTap={{ scale: 0.97 }}
               transition={{ duration: 0.15, ease: 'easeOut' }}
-              className={`flex-shrink-0 flex flex-col items-center gap-1 w-11 py-2 rounded-2xl transition-colors ${
+              className={`flex-1 min-w-0 flex flex-col items-center gap-1 py-2 rounded-2xl transition-colors ${
                 isSelected
                   ? 'bg-mt-rose text-white shadow-md shadow-mt-rose/30'
                   : 'bg-white text-mt-charcoal'

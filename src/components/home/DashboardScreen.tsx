@@ -8,7 +8,7 @@ import { getContextualPhrase } from '../../lib/helpers'
 import { getAvatarColor } from '../../utils/avatar'
 import type { ApiRoutineEntry, ApiBabyEntry } from '../../lib/types'
 import type { PregnancyPhase } from '../../types'
-import { QuickRegisterSheet } from './QuickRegisterSheet'
+import { Sparkles } from 'lucide-react'
 import { BabyDevCard } from './BabyDevCard'
 import { BabyDevScreen } from './BabyDevScreen'
 import { MomentoDeusCard } from './MomentoDeusCard'
@@ -16,7 +16,6 @@ import { MomentoDeusScreen } from './MomentoDeusScreen'
 import { MaeIAScreen } from '../maeIA/MaeIAScreen'
 import { AddRoutineModal } from './AddRoutineModal'
 import { MtCard } from '../mt/MtCard'
-import { Mark } from '../brand/Mark'
 
 export function getGreeting(): string {
   const h = new Date().getHours()
@@ -53,9 +52,9 @@ export function DashboardScreen() {
   const tabRefreshTick = useAppStore((s) => s.tabRefreshTick)
   const pendingQuickAction = useAppStore((s) => s.pendingQuickAction)
   const consumeQuickAction = useAppStore((s) => s.consumeQuickAction)
+  const openBabySheet = useAppStore((s) => s.openBabySheet)
   const queryClient    = useQueryClient()
   const scrollRef      = useRef<HTMLDivElement>(null)
-  const [sheetOpen, setSheetOpen] = useState(false)
 
   useEffect(() => {
     if (tabRefreshTick === 0) return;
@@ -71,13 +70,11 @@ export function DashboardScreen() {
   const [showMaeIA, setShowMaeIA] = useState(false)
   const [addRoutineOpen, setAddRoutineOpen] = useState(false)
 
-  // Bridge from MtQuickActionSheet: M-CTA fires either "Adicionar rotina" or "Registrar amamentação/sono/fralda".
+  // Bridge from MtQuickActionSheet: M-CTA "Adicionar rotina" opens AddRoutineModal here.
+  // "Registrar bebê" agora vai direto via store.openBabySheet — o sheet é renderizado no MobileShell.
   useEffect(() => {
     if (pendingQuickAction === 'addRoutine') {
       setAddRoutineOpen(true);
-      consumeQuickAction();
-    } else if (pendingQuickAction === 'registerBaby') {
-      setSheetOpen(true);
       consumeQuickAction();
     }
   }, [pendingQuickAction, consumeQuickAction]);
@@ -210,7 +207,7 @@ export function DashboardScreen() {
           )}
 
           <button
-            onClick={() => setSheetOpen(true)}
+            onClick={() => openBabySheet('amamentacao')}
             aria-label="Registrar amamentação"
             className="mt-3 inline-flex items-center gap-1 bg-mt-gradient text-white rounded-mt-pill text-[11px] font-semibold px-3 py-1.5 shadow-mt"
           >
@@ -222,13 +219,13 @@ export function DashboardScreen() {
         <MomentoDeusCard onClick={() => setMomentoDeusOpen(true)} />
       </div>
 
-      {/* MãeIA FAB — botão flutuante com M gradiente */}
+      {/* MãeIA FAB — estrelinha com fundo rose gradient */}
       <button
         onClick={() => setShowMaeIA(true)}
         aria-label="Conversar com a MãeIA"
-        className="fixed bottom-[92px] right-4 w-14 h-14 rounded-full bg-white shadow-mt-lg flex items-center justify-center active:scale-95 transition-transform z-30"
+        className="fixed bottom-[92px] right-4 w-14 h-14 rounded-full bg-mt-gradient text-white shadow-mt-lg flex items-center justify-center active:scale-95 transition-transform z-30"
       >
-        <Mark variant="gradient" size={44} aria-label="MãeIA" />
+        <Sparkles size={24} fill="currentColor" strokeWidth={0} />
       </button>
 
       {/* MãeIA overlay */}
@@ -240,7 +237,6 @@ export function DashboardScreen() {
         </div>
       )}
 
-      <QuickRegisterSheet open={sheetOpen} onClose={() => setSheetOpen(false)} />
       <BabyDevScreen open={babyDevOpen} onClose={() => setBabyDevOpen(false)} />
       <MomentoDeusScreen open={momentoDeusOpen} onClose={() => setMomentoDeusOpen(false)} />
       {addRoutineOpen && (
