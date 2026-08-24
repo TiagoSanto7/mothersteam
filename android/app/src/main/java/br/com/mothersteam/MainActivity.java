@@ -1,78 +1,69 @@
 package br.com.mothersteam;
 
+import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.webkit.PermissionRequest;
-import android.webkit.WebChromeClient;
+
+import androidx.core.content.ContextCompat;
 
 import com.getcapacitor.BridgeActivity;
+import com.getcapacitor.BridgeWebChromeClient;
 
 /**
- * Android WebView doesn't auto-grant WebRTC/getUserMedia permissions —
- * even when the native RECORD_AUDIO permission is granted at the OS level,
- * the WebView still fires its own {@link WebChromeClient#onPermissionRequest}
- * dance which defaults to DENY. That's why the ElevenLabs voice conversation
- * in <MaeIAScreen> silently failed even though the app had the mic permission.
+ * Fix crítico do microfone no WebView Android.
  *
- * We override {@link WebChromeClient#onPermissionRequest} on the WebView the
- * Capacitor bridge already created, and auto-grant audio/video capture. The
- * native RECORD_AUDIO permission dialog still shows on first use (Android
- * enforces that separately from the WebView permission).
+ * O {@link BridgeWebChromeClient} default do Capacitor 8 intercepta
+ * {@code onPermissionRequest} e chama internamente um {@code permissionLauncher}
+ * pedindo TANTO {@code RECORD_AUDIO} QUANTO {@code MODIFY_AUDIO_SETTINGS}
+ * (ver BridgeWebChromeClient.java do @capacitor/android). Se qualquer uma
+ * delas não estiver granted, o callback recebe {@code isGranted=false}
+ * e a bridge chama {@code request.deny()} — a chamada JS a
+ * {@code navigator.mediaDevices.getUserMedia({audio:true})} rejeita
+ * silenciosamente, mesmo com {@code RECORD_AUDIO} ativo nas config do app.
+ *
+ * Estendemos a bridge, sobrescrevemos {@code onPermissionRequest} e:
+ *   1. Se {@code RECORD_AUDIO} já está granted no OS, chamamos
+ *      {@code request.grant()} imediatamente — bypass do launcher e da
+ *      dependência em {@code MODIFY_AUDIO_SETTINGS} (que agora também está
+ *      declarada no manifesto por segurança).
+ *   2. Caso contrário delegamos pro fluxo default de request permission.
+ *
+ * Todos os outros callbacks (file upload, JS dialogs, geolocation, console log)
+ * continuam funcionando via herança de {@code BridgeWebChromeClient}.
  */
 public class MainActivity extends BridgeActivity {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        final WebChromeClient existingClient = this.bridge.getWebView().getWebChromeClient();
-        this.bridge.getWebView().setWebChromeClient(new WebChromeClient() {
+        // Autoplay de áudio (usado pelo TTS do ElevenLabs) não precisa de gesto
+        // do usuário — já garantimos consentimento via botão "Conectar".
+        this.bridge.getWebView().getSettings().setMediaPlaybackRequiresUserGesture(false);
+
+        this.bridge.getWebView().setWebChromeClient(new BridgeWebChromeClient(this.bridge) {
             @Override
             public void onPermissionRequest(final PermissionRequest request) {
-                runOnUiThread(() -> {
-                    for (String resource : request.getResources()) {
-                        if (PermissionRequest.RESOURCE_AUDIO_CAPTURE.equals(resource)
-                                || PermissionRequest.RESOURCE_VIDEO_CAPTURE.equals(resource)) {
-                            request.grant(request.getResources());
-                            return;
-                        }
+                boolean needsAudio = false;
+                for (String r : request.getResources()) {
+                    if (PermissionRequest.RESOURCE_AUDIO_CAPTURE.equals(r)) {
+                        needsAudio = true;
+                        break;
                     }
-                    request.deny();
-                });
-            }
+                }
 
-            // Delegate everything else to Capacitor's original client so we don't
-            // break file uploads, JS dialogs, console logs, etc.
-            @Override
-            public boolean onShowFileChooser(android.webkit.WebView webView,
-                                             android.webkit.ValueCallback<android.net.Uri[]> filePathCallback,
-                                             FileChooserParams fileChooserParams) {
-                return existingClient != null && existingClient.onShowFileChooser(webView, filePathCallback, fileChooserParams);
-            }
+                boolean audioAlreadyGranted = ContextCompat.checkSelfPermission(
+                    MainActivity.this,
+                    android.Manifest.permission.RECORD_AUDIO
+                ) == PackageManager.PERMISSION_GRANTED;
 
-            @Override
-            public boolean onJsAlert(android.webkit.WebView view, String url, String message,
-                                     android.webkit.JsResult result) {
-                if (existingClient != null) return existingClient.onJsAlert(view, url, message, result);
-                return super.onJsAlert(view, url, message, result);
-            }
+                if (needsAudio && audioAlreadyGranted) {
+                    // Curto-circuito: entrega o mic pro WebView sem passar pelo
+                    // launcher (que quebra se MODIFY_AUDIO_SETTINGS faltar).
+                    runOnUiThread(() -> request.grant(request.getResources()));
+                    return;
+                }
 
-            @Override
-            public boolean onJsConfirm(android.webkit.WebView view, String url, String message,
-                                       android.webkit.JsResult result) {
-                if (existingClient != null) return existingClient.onJsConfirm(view, url, message, result);
-                return super.onJsConfirm(view, url, message, result);
-            }
-
-            @Override
-            public boolean onJsPrompt(android.webkit.WebView view, String url, String message, String defaultValue,
-                                      android.webkit.JsPromptResult result) {
-                if (existingClient != null) return existingClient.onJsPrompt(view, url, message, defaultValue, result);
-                return super.onJsPrompt(view, url, message, defaultValue, result);
-            }
-
-            @Override
-            public boolean onConsoleMessage(android.webkit.ConsoleMessage consoleMessage) {
-                if (existingClient != null) return existingClient.onConsoleMessage(consoleMessage);
-                return super.onConsoleMessage(consoleMessage);
+                super.onPermissionRequest(request);
             }
         });
     }

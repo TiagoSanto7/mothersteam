@@ -98,6 +98,29 @@ export function MaeIAScreen({ onBack }: MaeIAScreenProps = {}) {
   async function connectVoice() {
     if (convRef.current) return;
     setStatus('connecting');
+
+    // Pre-flight: probe the mic BEFORE hitting the backend. Isolates
+    // "mic permission problem" from "ElevenLabs/network problem" and gives
+    // the user a specific, actionable error message.
+    try {
+      if (!navigator.mediaDevices?.getUserMedia) {
+        throw new Error('getUserMedia unavailable in this WebView');
+      }
+      const probe = await navigator.mediaDevices.getUserMedia({ audio: true });
+      // Release immediately so ElevenLabs can claim the mic without conflict.
+      probe.getTracks().forEach((t) => t.stop());
+    } catch (permErr) {
+      console.error('[MãeIA] microfone bloqueado:', permErr);
+      convRef.current = null;
+      setStatus('error');
+      addMessage(
+        'assistant',
+        'Não consegui acessar o microfone. Abra as configurações do sistema, dê permissão de microfone pro Mother\'s Team e tente de novo.',
+      );
+      setTimeout(() => setStatus('idle'), 5000);
+      return;
+    }
+
     try {
       const { signedUrl } = await apiFetch<{ signedUrl: string }>('/mae-ia/token', { method: 'POST' });
 
@@ -109,7 +132,7 @@ export function MaeIAScreen({ onBack }: MaeIAScreenProps = {}) {
           setStatus('idle');
         },
         onError: (error) => {
-          console.error('MãeIA error:', error);
+          console.error('[MãeIA] erro de sessão:', error);
           convRef.current = null;
           setStatus('error');
           setTimeout(() => setStatus('idle'), 3000);
@@ -127,10 +150,14 @@ export function MaeIAScreen({ onBack }: MaeIAScreenProps = {}) {
 
       convRef.current = conv;
     } catch (err) {
+      console.error('[MãeIA] falha ao iniciar sessão:', err);
       convRef.current = null;
       setStatus('error');
       setTimeout(() => setStatus('idle'), 3000);
-      addMessage('assistant', 'Não foi possível conectar à MãeIA. Verifique sua conexão e tente novamente.');
+      addMessage(
+        'assistant',
+        'Não foi possível conectar à MãeIA. Verifique sua conexão e tente novamente.',
+      );
     }
   }
 
@@ -217,15 +244,25 @@ export function MaeIAScreen({ onBack }: MaeIAScreenProps = {}) {
         <div ref={bottomRef} />
       </div>
 
-      {/* Voice status indicator */}
+      {/* Voice status indicator — pulse maior + ring quando ouvindo/falando */}
       {pulsing && (
-        <div className="flex items-center justify-center py-2 flex-shrink-0">
-          <motion.div
-            animate={{ scale: [1, 1.3, 1], opacity: [0.6, 1, 0.6] }}
-            transition={{ repeat: Infinity, duration: 1.2 }}
-            className={`w-3 h-3 rounded-full ${status === 'listening' ? 'bg-green-500' : 'bg-mt-rose'}`}
-          />
-          <span className={`text-xs ml-2 ${STATUS_COLORS[status]}`}>{STATUS_LABELS[status]}</span>
+        <div className="flex items-center justify-center py-3 flex-shrink-0">
+          <div className="relative flex items-center justify-center">
+            <motion.span
+              aria-hidden="true"
+              animate={{ scale: [1, 1.9, 1], opacity: [0.35, 0, 0.35] }}
+              transition={{ repeat: Infinity, duration: 1.4, ease: 'easeOut' }}
+              className={`absolute w-6 h-6 rounded-full ${status === 'listening' ? 'bg-green-500' : 'bg-mt-rose'}`}
+            />
+            <motion.span
+              animate={{ scale: [1, 1.15, 1] }}
+              transition={{ repeat: Infinity, duration: 1.2 }}
+              className={`relative w-4 h-4 rounded-full ${status === 'listening' ? 'bg-green-500' : 'bg-mt-rose'}`}
+            />
+          </div>
+          <span className={`text-xs ml-3 font-medium ${STATUS_COLORS[status]}`}>
+            {STATUS_LABELS[status]}
+          </span>
         </div>
       )}
 
