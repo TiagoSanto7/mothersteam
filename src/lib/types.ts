@@ -17,6 +17,13 @@ export interface ApiUser {
   motherBirthDate?: string | null
   babyBirthDate?: string | null
   expectedBirthDate?: string | null
+  hasMultiples?: boolean
+  mood?: 'A' | 'B' | 'C' | 'D' | null
+  supportNetwork?: 'A' | 'B' | 'C' | null
+  goal?: 'A' | 'B' | 'C' | 'D' | null
+  concern?: 'A' | 'B' | 'C' | 'D' | null
+  babies?: Array<{ id: string; name: string | null; birthDate: string | null; weekAtEntry: number | null }>
+  otherChildren?: Array<{ id: string; name: string; birthDate: string }>
 }
 
 export interface ApiUserProfile {
