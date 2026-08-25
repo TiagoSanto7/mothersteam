@@ -61,8 +61,9 @@ describe('POST /register — new fields', () => {
     expect(body.user.mood).toBe('B')
     expect(body.user.hasMultiples).toBe(true)
     // profile computed server-side because all 4 signals present
-    expect(body.user.profileKey).toBeTruthy()
-    expect(body.user.archetypeKey).toBeTruthy()
+    // mood=B, supportNetwork=A, goal=C, concern=B → q4=C → guerreira_sono → ana
+    expect(body.user.profileKey).toBe('guerreira_sono')
+    expect(body.user.archetypeKey).toBe('ana')
 
     // cleanup
     const created = await prisma.user.findUnique({ where: { email } })
