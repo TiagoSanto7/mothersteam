@@ -114,20 +114,21 @@ export default async function publicProductsRoutes(fastify: FastifyInstance) {
     })
   })
 
-  // GET /:id/go — register click and return affiliate URL
-  fastify.get<{ Params: { id: string } }>('/:id/go', async (request, reply) => {
+  // GET /:id/comprar — register click and redirect to Mercado Livre URL
+  fastify.get<{ Params: { id: string } }>('/:id/comprar', async (request, reply) => {
+    const { id } = request.params as { id: string }
     const product = await fastify.prisma.product.findUnique({
-      where: { id: request.params.id, active: true },
-      select: { id: true, affiliateUrl: true },
+      where: { id },
+      select: { id: true, mercadoLivreUrl: true },
     })
-    if (!product) return reply.status(404).send({ error: 'Not found' })
-    if (!product.affiliateUrl) return reply.status(422).send({ error: 'No affiliate URL' })
-    if (!product.affiliateUrl.startsWith('https://')) return reply.status(422).send({ error: 'No affiliate link' })
-
-    await fastify.prisma.productClick.create({
-      data: { productId: product.id, userId: request.userId },
-    })
-    reply.send({ url: product.affiliateUrl })
+    if (!product || !product.mercadoLivreUrl) {
+      return reply.status(404).send({ error: 'Product or Mercado Livre URL not found' })
+    }
+    // fire-and-forget click log
+    fastify.prisma.productClick.create({
+      data: { productId: id, userId: request.userId || null },
+    }).catch(() => {})
+    return reply.redirect(product.mercadoLivreUrl, 302)
   })
 
   // POST /:id/wishlist — toggle wishlist for affiliate product
