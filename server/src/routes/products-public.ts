@@ -10,32 +10,30 @@ const VALID_PHASES = new Set([
 const ML_DOMAIN_RE = /^https:\/\/([a-z0-9-]+\.)*mercado(livre|libre)\./i
 
 export default async function publicProductsRoutes(fastify: FastifyInstance) {
-  // Public /comprar redirect — no auth required so <a href> / window.open from the
-  // client work without carrying a bearer token. Runs in its own plugin scope so
-  // the authenticate hook below does not fire for this route.
-  fastify.register(async (publicScope) => {
-    publicScope.get<{ Params: { id: string } }>('/:id/comprar', async (request, reply) => {
-      const { id } = request.params as { id: string }
-      const product = await publicScope.prisma.product.findUnique({
-        where: { id, active: true },
-        select: { id: true, mercadoLivreUrl: true },
-      })
-      if (!product || !product.mercadoLivreUrl) {
-        return reply.status(404).send({ error: 'Product or Mercado Livre URL not found' })
-      }
-      if (!ML_DOMAIN_RE.test(product.mercadoLivreUrl)) {
-        return reply.status(400).send({ error: 'Invalid Mercado Livre URL' })
-      }
-      publicScope.prisma.productClick.create({
-        data: { productId: id, userId: null },
-      }).catch((err) => publicScope.log.warn({ err }, 'productClick anon failed'))
-      return reply.redirect(product.mercadoLivreUrl, 302)
+  // Per-route auth (was plugin-level, which forced /comprar to require a bearer
+  // token — breaking <a href> / window.open navigations from the client).
+  const authed = { preHandler: [fastify.authenticate] } as const
+
+  // Public /comprar redirect — NO auth so external navigation works.
+  fastify.get<{ Params: { id: string } }>('/:id/comprar', async (request, reply) => {
+    const { id } = request.params as { id: string }
+    const product = await fastify.prisma.product.findUnique({
+      where: { id, active: true },
+      select: { id: true, mercadoLivreUrl: true },
     })
+    if (!product || !product.mercadoLivreUrl) {
+      return reply.status(404).send({ error: 'Product or Mercado Livre URL not found' })
+    }
+    if (!ML_DOMAIN_RE.test(product.mercadoLivreUrl)) {
+      return reply.status(400).send({ error: 'Invalid Mercado Livre URL' })
+    }
+    fastify.prisma.productClick.create({
+      data: { productId: id, userId: null },
+    }).catch((err) => fastify.log.warn({ err }, 'productClick anon failed'))
+    return reply.redirect(product.mercadoLivreUrl, 302)
   })
 
-  fastify.addHook('preHandler', fastify.authenticate)
-
-  fastify.post<{ Params: { id: string } }>('/:id/click', async (request, reply) => {
+  fastify.post<{ Params: { id: string } }>('/:id/click', authed, async (request, reply) => {
     const product = await fastify.prisma.product.findUnique({
       where: { id: request.params.id, active: true },
       select: { id: true },
@@ -50,7 +48,7 @@ export default async function publicProductsRoutes(fastify: FastifyInstance) {
   // GET public products list (for the shopping screen)
   fastify.get<{
     Querystring: { categoryId?: string; phase?: string; featured?: string; limit?: string; cursor?: string }
-  }>('/', async (request, reply) => {
+  }>('/', authed, async (request, reply) => {
     const limit = Math.min(Number(request.query.limit ?? 20), 50)
     if (request.query.phase && !VALID_PHASES.has(request.query.phase)) {
       return reply.status(400).send({ error: 'Invalid phase' })
@@ -75,7 +73,7 @@ export default async function publicProductsRoutes(fastify: FastifyInstance) {
   })
 
   // GET public categories
-  fastify.get('/categories', async (_request, reply) => {
+  fastify.get('/categories', authed, async (_request, reply) => {
     const categories = await fastify.prisma.category.findMany({
       where: { active: true },
       orderBy: { sortOrder: 'asc' },
@@ -85,7 +83,7 @@ export default async function publicProductsRoutes(fastify: FastifyInstance) {
   })
 
   // GET /:id — product detail with reviewsSummary, recent reviews, inWishlist, related
-  fastify.get<{ Params: { id: string } }>('/:id', async (request, reply) => {
+  fastify.get<{ Params: { id: string } }>('/:id', authed, async (request, reply) => {
     const product = await fastify.prisma.product.findUnique({
       where: { id: request.params.id, active: true },
       include: { category: { select: { id: true, name: true, slug: true, icon: true } } },
@@ -142,7 +140,7 @@ export default async function publicProductsRoutes(fastify: FastifyInstance) {
   })
 
   // POST /:id/wishlist — toggle wishlist for affiliate product
-  fastify.post<{ Params: { id: string } }>('/:id/wishlist', async (request, reply) => {
+  fastify.post<{ Params: { id: string } }>('/:id/wishlist', authed, async (request, reply) => {
     const product = await fastify.prisma.product.findUnique({
       where: { id: request.params.id, active: true },
       select: { id: true },
@@ -167,7 +165,7 @@ export default async function publicProductsRoutes(fastify: FastifyInstance) {
   fastify.get<{
     Params: { id: string }
     Querystring: { page?: string; limit?: string }
-  }>('/:id/reviews', async (request, reply) => {
+  }>('/:id/reviews', authed, async (request, reply) => {
     const page = Math.max(1, Number(request.query.page ?? 1))
     const limit = Math.min(Number(request.query.limit ?? 20), 50)
     const skip = (page - 1) * limit
@@ -203,7 +201,7 @@ export default async function publicProductsRoutes(fastify: FastifyInstance) {
   fastify.post<{
     Params: { id: string }
     Body: { rating: number; text?: string }
-  }>('/:id/reviews', async (request, reply) => {
+  }>('/:id/reviews', authed, async (request, reply) => {
     const { rating, text } = request.body
     if (!Number.isInteger(rating) || rating < 1 || rating > 5) {
       return reply.status(422).send({ error: 'rating must be 1–5' })
