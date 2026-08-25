@@ -56,7 +56,7 @@ export function ShoppingScreen({ onOpenProduct }: ShoppingScreenProps) {
       </div>
 
       {activeTab === 'products' && <ProductsTab onOpenProduct={onOpenProduct} />}
-      {activeTab === 'favorites' && <FavoritesTab onOpenProduct={onOpenProduct} />}
+      {activeTab === 'favorites' && <FavoritesTab />}
     </div>
   )
 }
