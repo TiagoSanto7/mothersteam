@@ -1,9 +1,8 @@
 import { useState } from 'react'
-import { ChevronLeft, Heart, Star, ShoppingCart, ExternalLink, Package } from 'lucide-react'
+import { ChevronLeft, Heart, Star, ExternalLink, Package } from 'lucide-react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { apiFetch } from '../../lib/api'
-import { parseApiError } from '../../lib/errors'
-import type { AnyProductDetail, ApiOwnProductDetail, ApiProductDetail } from '../../lib/types'
+import { apiFetch, resolveApiUrl } from '../../lib/api'
+import type { AnyProductDetail, ApiProductDetail } from '../../lib/types'
 
 interface Props {
   productType: 'affiliate' | 'own'
@@ -25,7 +24,6 @@ export function ProductDetailScreen({
   const queryClient = useQueryClient()
   const [imageIndex, setImageIndex] = useState(0)
   const [descExpanded, setDescExpanded] = useState(false)
-  const [addedToCart, setAddedToCart] = useState(false)
 
   const endpoint = productType === 'affiliate' ? `/products/${productId}` : `/own-products/${productId}`
 
@@ -60,31 +58,6 @@ export function ProductDetailScreen({
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['wishlist'] })
-    },
-  })
-
-  const [cartError, setCartError] = useState('')
-  const [affiliateError, setAffiliateError] = useState('')
-  const cartMutation = useMutation({
-    mutationFn: () =>
-      apiFetch('/cart', { method: 'POST', body: JSON.stringify({ ownProductId: productId, quantity: 1 }) }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['cart'] })
-      setAddedToCart(true)
-      setCartError('')
-      setTimeout(() => setAddedToCart(false), 3000)
-    },
-    onError: (err: unknown) => {
-      setCartError(parseApiError(err, 'Não foi possível adicionar ao carrinho.'))
-    },
-  })
-
-  const affiliateMutation = useMutation({
-    mutationFn: () => apiFetch<{ url: string }>(`/products/${productId}/go`),
-    onSuccess: ({ url }: { url: string }) => window.open(url, '_blank', 'noopener,noreferrer'),
-    onError: () => {
-      setAffiliateError('Não foi possível abrir o produto. Tente novamente.')
-      setTimeout(() => setAffiliateError(''), 3000)
     },
   })
 
@@ -128,8 +101,8 @@ export function ProductDetailScreen({
 
   const images = product.images as string[]
   const isOwn = product.type === 'own'
-  const hasStock = isOwn ? (product as ApiOwnProductDetail).stock > 0 : true
   const phases = isOwn ? undefined : (product as ApiProductDetail).phases
+  const mercadoLivreUrl = isOwn ? undefined : (product as ApiProductDetail).mercadoLivreUrl
 
   return (
     <div className="flex flex-col h-full bg-gradient-to-b from-[#F5EDE0] via-[#EAD8C8] to-[#D9C4AF] overflow-hidden">
@@ -361,50 +334,20 @@ export function ProductDetailScreen({
 
       {/* Footer CTA */}
       <div className="absolute bottom-0 left-0 right-0 px-4 pb-8 pt-3 bg-gradient-to-t from-[#D9C4AF] to-transparent flex-shrink-0">
-        {!isOwn && (
-          <div className="flex flex-col gap-2">
-            {affiliateError && (
-              <p className="text-xs text-sara-terracotta bg-sara-terracotta/10 rounded-xl px-3 py-2">{affiliateError}</p>
-            )}
-            <button
-              onClick={() => affiliateMutation.mutate()}
-              disabled={affiliateMutation.isPending}
-              className="w-full py-3.5 rounded-2xl bg-sara-gold text-white font-semibold text-sm flex items-center justify-center gap-2 active:scale-95 transition-transform shadow-lg"
-            >
-              Ver no site <ExternalLink size={14} />
-            </button>
-          </div>
-        )}
-        {isOwn && hasStock && (
-          <div className="flex flex-col gap-2">
-            {addedToCart && (
-              <div className="flex items-center justify-between px-3 py-2 bg-green-50 rounded-xl border border-green-200">
-                <span className="text-xs text-green-700 font-medium">Adicionado ao carrinho!</span>
-                <button onClick={onOpenCart} className="text-xs text-sara-gold font-semibold">
-                  Ver carrinho
-                </button>
-              </div>
-            )}
-            {cartError && (
-              <p className="text-xs text-sara-terracotta bg-sara-terracotta/10 rounded-xl px-3 py-2">{cartError}</p>
-            )}
-            <button
-              onClick={() => cartMutation.mutate()}
-              disabled={cartMutation.isPending}
-              className="w-full py-3.5 rounded-2xl bg-sara-gold text-white font-semibold text-sm flex items-center justify-center gap-2 active:scale-95 transition-transform shadow-lg disabled:opacity-60"
-            >
-              <ShoppingCart size={16} />
-              {cartMutation.isPending ? 'Adicionando...' : 'Adicionar ao carrinho'}
-            </button>
-          </div>
-        )}
-        {isOwn && !hasStock && (
+        {!isOwn && mercadoLivreUrl ? (
           <button
-            disabled
-            className="w-full py-3.5 rounded-2xl bg-graphite-muted/20 text-graphite-muted font-semibold text-sm cursor-not-allowed"
+            type="button"
+            onClick={() => window.open(resolveApiUrl(`/products/${product.id}/comprar`), '_blank')}
+            className="w-full py-4 rounded-2xl bg-mt-rose text-white font-semibold text-base flex items-center justify-center gap-2 active:scale-95 transition-transform"
+            aria-label="Comprar no Mercado Livre"
           >
-            Indisponível
+            Comprar no Mercado Livre
+            <ExternalLink size={16} />
           </button>
+        ) : (
+          <div className="w-full py-4 rounded-2xl bg-mt-linen text-mt-muted text-sm text-center">
+            Produto indisponível
+          </div>
         )}
       </div>
     </div>
