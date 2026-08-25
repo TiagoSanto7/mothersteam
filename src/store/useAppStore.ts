@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
-import type { TabId, PregnancyPhase, OnboardingAnswers, MotherProfile, Q1Answer } from '../types';
+import type { TabId, PregnancyPhase, OnboardingAnswers, MotherProfile, Q1Answer, Baby, OtherChild } from '../types';
 import { computeProfile } from '../utils/onboardingScoring';
 import type { ApiUser } from '../lib/types';
 import { apiFetch } from '../lib/api';
@@ -13,6 +13,11 @@ function derivarQ1(phase: PregnancyPhase): Q1Answer {
   if (phase.ageInDays <= 365) return 'D';
   return 'E';
 }
+
+// Stable empty references — used by initial state, setAuth, and migration.
+// CLAUDE.md rule: never use `[]` literals as fallbacks — new refs cause React #185.
+const EMPTY_BABIES: Baby[] = [];
+const EMPTY_CHILDREN: OtherChild[] = [];
 
 interface AppState {
   // Auth — NOT persisted (except refreshToken)
@@ -28,6 +33,13 @@ interface AppState {
   babyName: string;
   phase: PregnancyPhase;
   socialOnboardingDone: boolean;
+  babies: Baby[];
+  otherChildren: OtherChild[];
+  hasMultiples: boolean;
+  mood: 'A' | 'B' | 'C' | 'D' | null;
+  supportNetwork: 'A' | 'B' | 'C' | null;
+  goal: 'A' | 'B' | 'C' | 'D' | null;
+  concern: 'A' | 'B' | 'C' | 'D' | null;
   // UI — persisted
   activeTab: TabId;
   selectedDate: string;
@@ -111,6 +123,22 @@ export function migrateAppState(
       prayersByUser: {},
     };
   }
+  if (fromVersion === 2) {
+    // v2 → v3: introduces babies[], otherChildren[], and the new emotional
+    // profile fields (mood, supportNetwork, goal, concern, hasMultiples).
+    // Existing installs get empty defaults; real values arrive from /users/me
+    // on next login (setAuth reads them from ApiUser).
+    return {
+      ...state,
+      babies: EMPTY_BABIES,
+      otherChildren: EMPTY_CHILDREN,
+      hasMultiples: false,
+      mood: null,
+      supportNetwork: null,
+      goal: null,
+      concern: null,
+    };
+  }
   return state;
 }
 
@@ -130,6 +158,13 @@ export const useAppStore = create<AppState>()(
       babyName: '',
       phase: { stage: 'pregnant', week: 28 },
       socialOnboardingDone: false,
+      babies: EMPTY_BABIES,
+      otherChildren: EMPTY_CHILDREN,
+      hasMultiples: false,
+      mood: null,
+      supportNetwork: null,
+      goal: null,
+      concern: null,
       // UI
       activeTab: 'hoje',
       selectedDate: new Date().toISOString().split('T')[0],
@@ -165,6 +200,13 @@ export const useAppStore = create<AppState>()(
             babyName: user.babyName ?? '',
             phase: buildPhase(user),
             onboardingDone: user.onboardingDone,
+            babies: (user.babies as Baby[] | undefined) ?? EMPTY_BABIES,
+            otherChildren: (user.otherChildren as OtherChild[] | undefined) ?? EMPTY_CHILDREN,
+            hasMultiples: user.hasMultiples ?? false,
+            mood: user.mood ?? null,
+            supportNetwork: user.supportNetwork ?? null,
+            goal: user.goal ?? null,
+            concern: user.concern ?? null,
             versesByUser,
           };
         }),
@@ -285,7 +327,7 @@ export const useAppStore = create<AppState>()(
     {
       name: 'mothers-team-v3',
       storage: createJSONStorage(() => safeLocalStorage),
-      version: 2,
+      version: 3,
       migrate: migrateAppState,
       partialize: (state) => ({
         onboardingDone: state.onboardingDone,
@@ -294,6 +336,13 @@ export const useAppStore = create<AppState>()(
         babyName: state.babyName,
         phase: state.phase,
         socialOnboardingDone: state.socialOnboardingDone,
+        babies: state.babies,
+        otherChildren: state.otherChildren,
+        hasMultiples: state.hasMultiples,
+        mood: state.mood,
+        supportNetwork: state.supportNetwork,
+        goal: state.goal,
+        concern: state.concern,
         activeTab: state.activeTab,
         lastFeedSide: state.lastFeedSide,
         versesByUser: state.versesByUser,

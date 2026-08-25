@@ -46,9 +46,9 @@ describe('migrateAppState', () => {
     expect(result.prayersByUser).toEqual({});
   });
 
-  it('is a no-op for version >= 2 (returns state as-is)', () => {
+  it('is a no-op for version >= 3 (returns state as-is)', () => {
     const state = { activeTab: 'home', motherName: 'Ana' };
-    const result = migrateAppState(state, 2);
+    const result = migrateAppState(state, 3);
     expect(result).toStrictEqual(state);
   });
 
