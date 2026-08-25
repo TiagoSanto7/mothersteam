@@ -330,10 +330,6 @@ export default function App() {
               onBack={() => setOpenProduct(null)}
               onOpenProduct={(type, id) => setOpenProduct({ type, id })}
               onOpenReviews={(type, id, name) => setOpenReviews({ type, id, name })}
-              onOpenCart={() => {
-                setOpenProduct(null)
-                setShowCart(true)
-              }}
             />
           </div>
         </div>

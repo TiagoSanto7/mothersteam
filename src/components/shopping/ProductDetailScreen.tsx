@@ -10,7 +10,6 @@ interface Props {
   onBack: () => void
   onOpenProduct: (type: 'affiliate' | 'own', id: string) => void
   onOpenReviews: (productType: 'affiliate' | 'own', productId: string, productName: string) => void
-  onOpenCart: () => void
 }
 
 export function ProductDetailScreen({
@@ -19,7 +18,6 @@ export function ProductDetailScreen({
   onBack,
   onOpenProduct,
   onOpenReviews,
-  onOpenCart,
 }: Props) {
   const queryClient = useQueryClient()
   const [imageIndex, setImageIndex] = useState(0)

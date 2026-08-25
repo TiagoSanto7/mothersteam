@@ -1,11 +1,8 @@
 import { Home, Heart, Users, User, Bell, MessageSquare, Settings, LogOut, ShoppingBag } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
-import { useQuery } from '@tanstack/react-query';
 import { useAppStore } from '../../store/useAppStore';
-import { apiFetch } from '../../lib/api';
 import { getAvatarColor } from '../../utils/avatar';
 import type { TabId } from '../../types';
-import type { ApiCart } from '../../lib/types';
 
 interface LeftSidebarProps {
   unreadNotifs: number;
@@ -35,15 +32,6 @@ export function LeftSidebar({
   const motherName    = useAppStore((s) => s.motherName);
   const motherProfile = useAppStore((s) => s.motherProfile);
   const logout        = useAppStore((s) => s.logout);
-  const isLoggedIn    = useAppStore((s) => s.isLoggedIn);
-
-  const { data: cartData } = useQuery({
-    queryKey: ['cart'],
-    queryFn: () => apiFetch<ApiCart>('/cart'),
-    enabled: isLoggedIn,
-    staleTime: 60_000,
-  })
-  const cartCount = cartData?.itemCount ?? 0
 
   function handleLogout() {
     logout();
@@ -131,11 +119,6 @@ export function LeftSidebar({
         >
           <span className="relative flex-shrink-0">
             <ShoppingBag size={20} strokeWidth={1.8} />
-            {cartCount > 0 && (
-              <span className="absolute -top-1 -right-1 w-4 h-4 bg-sara-terracotta text-white text-[9px] font-bold rounded-full flex items-center justify-center">
-                {cartCount > 9 ? '9+' : cartCount}
-              </span>
-            )}
           </span>
           <span className="text-sm font-medium hidden lg:block">Recomendações</span>
         </button>
