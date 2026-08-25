@@ -370,8 +370,8 @@ function ProductsView({ onNewProduct, onEditProduct }: { onNewProduct: () => voi
             <button onClick={() => onEditProduct(p)}>
               <Pencil size={14} className="text-graphite-muted" />
             </button>
-            {p.affiliateUrl && (
-              <a href={p.affiliateUrl} target="_blank" rel="noopener noreferrer">
+            {p.mercadoLivreUrl && (
+              <a href={p.mercadoLivreUrl} target="_blank" rel="noopener noreferrer">
                 <ExternalLink size={14} className="text-graphite-muted" />
               </a>
             )}
@@ -430,7 +430,7 @@ function ProductForm({ product, onBack }: { product?: ApiAdminProduct; onBack: (
   const [name, setName] = useState(product?.name ?? '');
   const [description, setDescription] = useState(product?.description ?? '');
   const [price, setPrice] = useState(product ? String(product.price) : '');
-  const [affiliateUrl, setAffiliateUrl] = useState(product?.affiliateUrl ?? '');
+  const [mercadoLivreUrl, setMercadoLivreUrl] = useState(product?.mercadoLivreUrl ?? '');
   const [categoryId, setCategoryId] = useState(product?.categoryId ?? '');
   const [featured, setFeatured] = useState(product?.featured ?? false);
   const [selectedPhases, setSelectedPhases] = useState<string[]>(product?.phases ?? []);
@@ -440,7 +440,7 @@ function ProductForm({ product, onBack }: { product?: ApiAdminProduct; onBack: (
       const body = {
         name, description,
         price: parseFloat(price),
-        affiliateUrl: affiliateUrl || null,
+        mercadoLivreUrl: mercadoLivreUrl || null,
         categoryId,
         featured,
         phases: selectedPhases,
@@ -468,7 +468,7 @@ function ProductForm({ product, onBack }: { product?: ApiAdminProduct; onBack: (
       {[
         { label: 'Nome', value: name, set: setName, placeholder: 'Nome do produto' },
         { label: 'Preço (R$)', value: price, set: setPrice, placeholder: '0.00', type: 'number' },
-        { label: 'URL afiliado', value: affiliateUrl, set: setAffiliateUrl, placeholder: 'https://...' },
+        { label: 'URL do Mercado Livre', value: mercadoLivreUrl, set: setMercadoLivreUrl, placeholder: 'https://produto.mercadolivre.com.br/...' },
       ].map(({ label, value, set, placeholder, type }) => (
         <div key={label}>
           <p className="text-xs text-graphite-muted mb-1">{label}</p>

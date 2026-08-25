@@ -173,7 +173,7 @@ export interface ApiAdminProduct {
   name: string
   description: string
   price: string
-  affiliateUrl: string | null
+  mercadoLivreUrl: string | null
   images: string[]
   phases: Phase[]
   stock: number | null
@@ -267,7 +267,7 @@ export interface ApiProductDetail {
   name: string
   description: string
   price: string
-  affiliateUrl?: string | null
+  mercadoLivreUrl?: string | null
   images: string[]
   phases: string[]
   stock?: number | null

@@ -18,7 +18,7 @@ interface FormState {
   name: string;
   description: string;
   price: string;
-  affiliateUrl: string;
+  mercadoLivreUrl: string;
   categoryId: string;
   stock: string;
   featured: boolean;
@@ -28,7 +28,7 @@ interface FormState {
 }
 
 const EMPTY: FormState = {
-  name: '', description: '', price: '', affiliateUrl: '',
+  name: '', description: '', price: '', mercadoLivreUrl: '',
   categoryId: '', stock: '', featured: false, active: true, phases: [], images: [],
 };
 
@@ -65,7 +65,7 @@ export function ProductFormPage({ productId, onBack, onSaved }: ProductFormPageP
         name: existing.name,
         description: existing.description,
         price: existing.price,
-        affiliateUrl: existing.affiliateUrl ?? '',
+        mercadoLivreUrl: existing.mercadoLivreUrl ?? '',
         categoryId: existing.categoryId,
         stock: existing.stock !== null ? String(existing.stock) : '',
         featured: existing.featured,
@@ -82,7 +82,7 @@ export function ProductFormPage({ productId, onBack, onSaved }: ProductFormPageP
         name: form.name.trim(),
         description: form.description.trim(),
         price: Number(form.price),
-        affiliateUrl: form.affiliateUrl.trim() || null,
+        mercadoLivreUrl: form.mercadoLivreUrl.trim() || null,
         categoryId: form.categoryId,
         stock: form.stock !== '' ? Number(form.stock) : null,
         featured: form.featured,
@@ -201,14 +201,17 @@ export function ProductFormPage({ productId, onBack, onSaved }: ProductFormPageP
         </div>
 
         <div>
-          <label className="text-xs font-semibold text-graphite-muted">Link afiliado (opcional)</label>
+          <label className="text-xs font-semibold text-graphite-muted">URL do Mercado Livre (opcional)</label>
           <input
             type="url"
-            value={form.affiliateUrl}
-            onChange={(e) => setForm((f) => ({ ...f, affiliateUrl: e.target.value }))}
-            placeholder="https://..."
+            value={form.mercadoLivreUrl}
+            onChange={(e) => setForm((f) => ({ ...f, mercadoLivreUrl: e.target.value }))}
+            placeholder="https://produto.mercadolivre.com.br/..."
             className="w-full mt-1 px-4 py-2.5 rounded-xl border border-gray-200 text-sm text-graphite outline-none focus:border-sara-gold"
           />
+          {form.mercadoLivreUrl.trim() && !/mercadolivre|mercadolibre/i.test(form.mercadoLivreUrl) && (
+            <p className="mt-1 text-xs text-red-500">URL deve ser do Mercado Livre</p>
+          )}
         </div>
 
         <div>
