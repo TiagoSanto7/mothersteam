@@ -29,6 +29,11 @@ model User {
   motherBirthDate   DateTime?
   babyBirthDate     DateTime?
   expectedBirthDate DateTime?
+  hasMultiples      Boolean @default(false)
+  mood              String? @db.Char(1)
+  supportNetwork    String? @db.Char(1)
+  goal              String? @db.Char(1)
+  concern           String? @db.Char(1)
 
   posts              Post[]
   comments           Comment[]
@@ -57,6 +62,8 @@ model User {
   addresses      Address[]
   refreshTokens  RefreshToken[]
   paymentMethods PaymentMethod[]
+  babies         Baby[]
+  otherChildren  OtherChild[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -415,4 +422,27 @@ model Address {
   isDefault     Boolean  @default(false)
   orders        Order[]
   createdAt     DateTime @default(now())
+}
+
+model Baby {
+  id          String    @id @default(cuid())
+  userId      String
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name        String?   @db.VarChar(80)
+  birthDate   DateTime?
+  weekAtEntry Int?
+  createdAt   DateTime  @default(now())
+
+  @@index([userId])
+}
+
+model OtherChild {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name      String   @db.VarChar(80)
+  birthDate DateTime
+  createdAt DateTime @default(now())
+
+  @@index([userId])
 }
