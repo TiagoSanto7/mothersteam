@@ -52,6 +52,40 @@ export default async function usersRoutes(fastify: FastifyInstance) {
     reply.send({ ...user, isSelf, isFollowedByCurrentUser })
   })
 
+  fastify.get('/me', async (request, reply) => {
+    const user = await fastify.prisma.user.findUnique({
+      where: { id: request.userId },
+      select: {
+        id: true,
+        name: true,
+        username: true,
+        babyName: true,
+        bio: true,
+        avatarUrl: true,
+        pregnancyStage: true,
+        pregnancyWeek: true,
+        babyAgeInDays: true,
+        profileKey: true,
+        archetypeKey: true,
+        versesPublic: true,
+        role: true,
+        onboardingDone: true,
+        motherBirthDate: true,
+        babyBirthDate: true,
+        expectedBirthDate: true,
+        hasMultiples: true,
+        mood: true,
+        supportNetwork: true,
+        goal: true,
+        concern: true,
+        babies: { select: { id: true, name: true, birthDate: true, weekAtEntry: true } },
+        otherChildren: { select: { id: true, name: true, birthDate: true } },
+      },
+    })
+    if (!user) return reply.status(404).send({ error: 'User not found' })
+    reply.send(user)
+  })
+
   fastify.patch('/me', async (request, reply) => {
     const body = updateMeSchema.safeParse(request.body)
     if (!body.success) return reply.status(400).send({ error: body.error.flatten() })
