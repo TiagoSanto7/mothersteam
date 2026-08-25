@@ -4,16 +4,22 @@ import { useMutation } from '@tanstack/react-query';
 import { apiFetch, ApiError } from '../../lib/api';
 import { useAppStore } from '../../store/useAppStore';
 import type { ApiUser } from '../../lib/types';
+import { StepBebes, type StepBebesValue } from './steps/StepBebes';
+import { StepOutrosFilhos } from './steps/StepOutrosFilhos';
+import { StepHumor, type StepHumorValue } from './steps/StepHumor';
+import { StepObjetivo, type StepObjetivoValue } from './steps/StepObjetivo';
+import type { OtherChild } from '../../types';
 
 interface RegisterScreenProps {
   onBack: () => void;
 }
 
 type UsernameStatus = 'idle' | 'checking' | 'available' | 'taken' | 'invalid';
+type StepIndex = 1 | 2 | 3 | 4 | 5;
 
 export function RegisterScreen({ onBack }: RegisterScreenProps) {
   const setAuth = useAppStore((s) => s.setAuth);
-  const [step, setStep] = useState<1 | 2>(1);
+  const [step, setStep] = useState<StepIndex>(1);
 
   const [name, setName] = useState('');
   const [username, setUsername] = useState('');
@@ -26,10 +32,17 @@ export function RegisterScreen({ onBack }: RegisterScreenProps) {
   const [pregnancyStage, setPregnancyStage] = useState<'pregnant' | 'postpartum'>('pregnant');
   const [pregnancyWeek, setPregnancyWeek] = useState('');
   const [babyAgeInDays, setBabyAgeInDays] = useState('');
-  const [babyName, setBabyName] = useState('');
   const [babyBirthDate, setBabyBirthDate] = useState('');
   const [expectedBirthDate, setExpectedBirthDate] = useState('');
   const [motherBirthDate, setMotherBirthDate] = useState('');
+
+  const [bebesState, setBebesState] = useState<StepBebesValue>({
+    hasMultiples: false,
+    babies: [{ name: '' }],
+  });
+  const [outrosFilhos, setOutrosFilhos] = useState<OtherChild[]>([]);
+  const [humorState, setHumorState] = useState<StepHumorValue>({ mood: null, supportNetwork: null });
+  const [objetivoState, setObjetivoState] = useState<StepObjetivoValue>({ goal: null, concern: null });
 
   // Debounced username availability check
   useEffect(() => {
@@ -61,16 +74,26 @@ export function RegisterScreen({ onBack }: RegisterScreenProps) {
   const minExpected = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
   const maxExpected = new Date(Date.now() + 42 * 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
 
-  const step2Valid =
-    acceptedTerms && (
-      pregnancyStage === 'pregnant'
-        ? expectedBirthDate !== '' || (pregnancyWeek !== '' && Number(pregnancyWeek) >= 1 && Number(pregnancyWeek) <= 42)
-        : babyBirthDate !== '' || (babyAgeInDays !== '' && Number(babyAgeInDays) >= 0)
-    );
+  const dadosGestacionaisValid =
+    pregnancyStage === 'pregnant'
+      ? expectedBirthDate !== '' || (pregnancyWeek !== '' && Number(pregnancyWeek) >= 1 && Number(pregnancyWeek) <= 42)
+      : babyBirthDate !== '' || (babyAgeInDays !== '' && Number(babyAgeInDays) >= 0);
+  const bebesValid = !bebesState.hasMultiples || bebesState.babies.length >= 2;
+  const step2Valid = dadosGestacionaisValid && bebesValid;
+
+  const step3Valid =
+    outrosFilhos.length === 0 ||
+    outrosFilhos.every((c) => c.name.trim() && c.birthDate);
+
+  const step4Valid = humorState.mood !== null && humorState.supportNetwork !== null;
+
+  const step5Valid =
+    objetivoState.goal !== null && objetivoState.concern !== null && acceptedTerms;
 
   const { mutate, isPending, isError, error } = useMutation({
-    mutationFn: () =>
-      apiFetch<{ accessToken: string; refreshToken: string; user: ApiUser }>('/auth/register', {
+    mutationFn: () => {
+      const firstBabyName = bebesState.babies[0]?.name?.trim();
+      return apiFetch<{ accessToken: string; refreshToken: string; user: ApiUser }>('/auth/register', {
         method: 'POST',
         body: JSON.stringify({
           name: name.trim(),
@@ -80,13 +103,27 @@ export function RegisterScreen({ onBack }: RegisterScreenProps) {
           pregnancyStage,
           pregnancyWeek: pregnancyStage === 'pregnant' && !expectedBirthDate ? Number(pregnancyWeek) || undefined : undefined,
           babyAgeInDays: pregnancyStage === 'postpartum' && !babyBirthDate ? Number(babyAgeInDays) || undefined : undefined,
-          babyName: babyName.trim() || undefined,
+          babyName: firstBabyName || undefined,
           expectedBirthDate: pregnancyStage === 'pregnant' && expectedBirthDate ? expectedBirthDate : undefined,
           babyBirthDate: pregnancyStage === 'postpartum' && babyBirthDate ? babyBirthDate : undefined,
           motherBirthDate: motherBirthDate || undefined,
           acceptedTerms: true,
+          hasMultiples: bebesState.hasMultiples,
+          babies: bebesState.hasMultiples
+            ? bebesState.babies.map((b) => ({ name: b.name?.trim() || undefined }))
+            : firstBabyName
+              ? [{ name: firstBabyName }]
+              : undefined,
+          otherChildren: outrosFilhos
+            .filter((c) => c.name.trim() && c.birthDate)
+            .map((c) => ({ name: c.name.trim(), birthDate: c.birthDate })),
+          mood: humorState.mood ?? undefined,
+          supportNetwork: humorState.supportNetwork ?? undefined,
+          goal: objetivoState.goal ?? undefined,
+          concern: objetivoState.concern ?? undefined,
         }),
-      }),
+      });
+    },
     onSuccess: ({ accessToken, refreshToken, user }) => {
       setAuth(accessToken, user, refreshToken);
     },
@@ -101,7 +138,7 @@ export function RegisterScreen({ onBack }: RegisterScreenProps) {
 
   function handleSubmit(e: FormEvent) {
     e.preventDefault();
-    if (!step2Valid) return;
+    if (!step5Valid) return;
     mutate();
   }
 
@@ -119,6 +156,13 @@ export function RegisterScreen({ onBack }: RegisterScreenProps) {
     usernameStatus === 'taken' || usernameStatus === 'invalid' ? <X size={14} className="text-mt-rose-dark" /> :
     null;
 
+  const headerTitle =
+    step === 1 ? 'Criar conta'
+    : step === 2 ? 'Sobre a gestação'
+    : step === 3 ? 'Outros filhos'
+    : step === 4 ? 'Como você está?'
+    : 'Objetivos e termos';
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-mt-cream sm:bg-[#EDE6DC]">
       <div className="w-full min-h-screen sm:w-[390px] sm:min-h-[844px] sm:max-h-[844px] bg-mt-cream flex flex-col px-8 gap-6 sm:rounded-[44px] sm:shadow-2xl overflow-y-auto pt-12 pb-8">
@@ -126,23 +170,25 @@ export function RegisterScreen({ onBack }: RegisterScreenProps) {
         <div className="flex items-center gap-3">
           <button
             type="button"
-            onClick={step === 2 ? () => setStep(1) : onBack}
+            onClick={() => (step === 1 ? onBack() : setStep((s) => (s - 1) as StepIndex))}
             aria-label="Voltar"
             className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-mt-linen"
           >
             <ChevronLeft size={20} className="text-mt-charcoal" />
           </button>
-          <h1 className="text-base font-semibold text-mt-charcoal">
-            {step === 1 ? 'Criar conta' : 'Dados gestacionais'}
-          </h1>
+          <h1 className="text-base font-semibold text-mt-charcoal">{headerTitle}</h1>
         </div>
 
         <div className="flex gap-2">
-          <div className="flex-1 h-1 rounded-full bg-mt-rose" />
-          <div className={`flex-1 h-1 rounded-full ${step >= 2 ? 'bg-mt-rose' : 'bg-gray-200'}`} />
+          {[1, 2, 3, 4, 5].map((n) => (
+            <div
+              key={n}
+              className={`flex-1 h-1 rounded-full ${step >= n ? 'bg-mt-rose' : 'bg-gray-200'}`}
+            />
+          ))}
         </div>
 
-        {step === 1 ? (
+        {step === 1 && (
           <div className="flex flex-col gap-4">
             <div className="flex flex-col gap-1">
               <label className="text-xs font-medium text-mt-muted" htmlFor="reg-name">Nome</label>
@@ -226,8 +272,10 @@ export function RegisterScreen({ onBack }: RegisterScreenProps) {
               Continuar →
             </button>
           </div>
-        ) : (
-          <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+        )}
+
+        {step === 2 && (
+          <div className="flex flex-col gap-4">
             <div>
               <p className="text-xs font-medium text-mt-muted mb-2">Fase gestacional</p>
               <div className="flex gap-1 bg-gray-100 rounded-xl p-1">
@@ -324,19 +372,59 @@ export function RegisterScreen({ onBack }: RegisterScreenProps) {
               />
             </div>
 
-            <div className="flex flex-col gap-1">
-              <label className="text-xs font-medium text-mt-muted" htmlFor="reg-baby-name">
-                Nome do bebê <span className="font-normal text-mt-muted/60">(opcional)</span>
-              </label>
-              <input
-                id="reg-baby-name"
-                type="text"
-                value={babyName}
-                onChange={(e) => setBabyName(e.target.value)}
-                placeholder="pode preencher depois"
-                className="w-full px-4 py-3 rounded-2xl bg-white border border-mt-linen text-sm text-mt-charcoal placeholder:text-mt-muted focus:outline-none focus:border-mt-rose"
-              />
-            </div>
+            <StepBebes value={bebesState} onChange={setBebesState} />
+
+            <button
+              type="button"
+              onClick={() => setStep(3)}
+              disabled={!step2Valid}
+              className="w-full py-3 rounded-2xl bg-mt-rose text-white text-sm font-semibold active:scale-95 transition-transform disabled:opacity-50"
+            >
+              Continuar →
+            </button>
+          </div>
+        )}
+
+        {step === 3 && (
+          <div className="flex flex-col gap-4">
+            <StepOutrosFilhos value={outrosFilhos} onChange={setOutrosFilhos} />
+            <button
+              type="button"
+              onClick={() => setStep(4)}
+              disabled={!step3Valid}
+              className="w-full py-3 rounded-2xl bg-mt-rose text-white text-sm font-semibold active:scale-95 transition-transform disabled:opacity-50"
+            >
+              Continuar →
+            </button>
+            {outrosFilhos.length === 0 && (
+              <button
+                type="button"
+                onClick={() => setStep(4)}
+                className="text-mt-muted text-xs underline"
+              >
+                Pular esta etapa
+              </button>
+            )}
+          </div>
+        )}
+
+        {step === 4 && (
+          <div className="flex flex-col gap-4">
+            <StepHumor value={humorState} onChange={setHumorState} />
+            <button
+              type="button"
+              onClick={() => setStep(5)}
+              disabled={!step4Valid}
+              className="w-full py-3 rounded-2xl bg-mt-rose text-white text-sm font-semibold active:scale-95 transition-transform disabled:opacity-50"
+            >
+              Continuar →
+            </button>
+          </div>
+        )}
+
+        {step === 5 && (
+          <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+            <StepObjetivo value={objetivoState} onChange={setObjetivoState} />
 
             <label className="flex items-start gap-2 cursor-pointer">
               <div className="mt-0.5 flex-shrink-0">
@@ -365,7 +453,7 @@ export function RegisterScreen({ onBack }: RegisterScreenProps) {
 
             <button
               type="submit"
-              disabled={!step2Valid || isPending}
+              disabled={!step5Valid || isPending}
               className="w-full py-3 rounded-2xl bg-mt-rose text-white text-sm font-semibold active:scale-95 transition-transform disabled:opacity-50"
             >
               {isPending ? 'Criando conta…' : 'Criar conta'}
