@@ -45,3 +45,6 @@ dist-ssr
 server/.env
 server/dist/
 .claude/worktrees/
+
+# ElevenLabs migration workspace (contains API keys hardcoded)
+.migrate-tmp/
