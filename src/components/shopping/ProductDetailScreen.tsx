@@ -335,7 +335,7 @@ export function ProductDetailScreen({
         {!isOwn && mercadoLivreUrl ? (
           <button
             type="button"
-            onClick={() => window.open(resolveApiUrl(`/products/${product.id}/comprar`), '_blank')}
+            onClick={() => window.open(resolveApiUrl(`/products/${product.id}/comprar`), '_blank', 'noopener,noreferrer')}
             className="w-full py-4 rounded-2xl bg-mt-rose text-white font-semibold text-base flex items-center justify-center gap-2 active:scale-95 transition-transform"
             aria-label="Comprar no Mercado Livre"
           >

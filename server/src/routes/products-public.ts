@@ -5,7 +5,34 @@ const VALID_PHASES = new Set([
   'postpartum_0_30', 'postpartum_31_180', 'postpartum_181_365',
 ])
 
+// Domain allowlist for /comprar redirect target (defence-in-depth against open redirect
+// if a malicious URL ever lands in the DB bypassing the Zod validation on write)
+const ML_DOMAIN_RE = /^https:\/\/([a-z0-9-]+\.)*mercado(livre|libre)\./i
+
 export default async function publicProductsRoutes(fastify: FastifyInstance) {
+  // Public /comprar redirect — no auth required so <a href> / window.open from the
+  // client work without carrying a bearer token. Runs in its own plugin scope so
+  // the authenticate hook below does not fire for this route.
+  fastify.register(async (publicScope) => {
+    publicScope.get<{ Params: { id: string } }>('/:id/comprar', async (request, reply) => {
+      const { id } = request.params as { id: string }
+      const product = await publicScope.prisma.product.findUnique({
+        where: { id, active: true },
+        select: { id: true, mercadoLivreUrl: true },
+      })
+      if (!product || !product.mercadoLivreUrl) {
+        return reply.status(404).send({ error: 'Product or Mercado Livre URL not found' })
+      }
+      if (!ML_DOMAIN_RE.test(product.mercadoLivreUrl)) {
+        return reply.status(400).send({ error: 'Invalid Mercado Livre URL' })
+      }
+      publicScope.prisma.productClick.create({
+        data: { productId: id, userId: null },
+      }).catch((err) => publicScope.log.warn({ err }, 'productClick anon failed'))
+      return reply.redirect(product.mercadoLivreUrl, 302)
+    })
+  })
+
   fastify.addHook('preHandler', fastify.authenticate)
 
   fastify.post<{ Params: { id: string } }>('/:id/click', async (request, reply) => {
@@ -112,23 +139,6 @@ export default async function publicProductsRoutes(fastify: FastifyInstance) {
       inWishlist: !!inWishlistRow,
       related: related.map((r) => ({ ...r, type: 'affiliate' as const })),
     })
-  })
-
-  // GET /:id/comprar — register click and redirect to Mercado Livre URL
-  fastify.get<{ Params: { id: string } }>('/:id/comprar', async (request, reply) => {
-    const { id } = request.params as { id: string }
-    const product = await fastify.prisma.product.findUnique({
-      where: { id },
-      select: { id: true, mercadoLivreUrl: true },
-    })
-    if (!product || !product.mercadoLivreUrl) {
-      return reply.status(404).send({ error: 'Product or Mercado Livre URL not found' })
-    }
-    // fire-and-forget click log
-    fastify.prisma.productClick.create({
-      data: { productId: id, userId: request.userId || null },
-    }).catch(() => {})
-    return reply.redirect(product.mercadoLivreUrl, 302)
   })
 
   // POST /:id/wishlist — toggle wishlist for affiliate product
