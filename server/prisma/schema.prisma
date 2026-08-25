@@ -270,7 +270,7 @@ model Product {
   name         String
   description  String         @db.Text
   price        Decimal        @db.Decimal(10, 2)
-  affiliateUrl String?
+  mercadoLivreUrl String? @db.VarChar(500)
   images       Json           @default("[]")
   phases       Json           @default("[]")
   stock        Int?
