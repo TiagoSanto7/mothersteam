@@ -17,6 +17,19 @@ const COOKIE_OPTS = {
   maxAge: 60 * 60 * 24 * 30,
 }
 
+const babyInputSchema = z.object({
+  name: z.string().max(80).optional(),
+  birthDate: z.string().optional(),
+  weekAtEntry: z.number().int().min(1).max(42).optional(),
+})
+
+const otherChildInputSchema = z.object({
+  name: z.string().min(1).max(80),
+  birthDate: z.string(), // required — user needs exact DOB
+})
+
+const answerLetter = z.enum(['A', 'B', 'C', 'D'])
+
 const registerSchema = z.object({
   email: z.string().email(),
   password: z.string().min(8),
@@ -30,6 +43,14 @@ const registerSchema = z.object({
   babyBirthDate: z.string().optional(),
   expectedBirthDate: z.string().optional(),
   acceptedTerms: z.boolean().optional(),
+  // Novos campos do cadastro estendido:
+  hasMultiples: z.boolean().optional(),
+  babies: z.array(babyInputSchema).max(6).optional(),
+  otherChildren: z.array(otherChildInputSchema).max(10).optional(),
+  mood: answerLetter.optional(),
+  supportNetwork: z.enum(['A', 'B', 'C']).optional(),
+  goal: answerLetter.optional(),
+  concern: answerLetter.optional(),
 })
 
 const loginSchema = z.object({
@@ -43,6 +64,9 @@ const USER_SELECT = {
   onboardingDone: true, profileKey: true, archetypeKey: true,
   motherBirthDate: true, babyBirthDate: true, expectedBirthDate: true,
   role: true,
+  hasMultiples: true, mood: true, supportNetwork: true, goal: true, concern: true,
+  babies: { select: { id: true, name: true, birthDate: true, weekAtEntry: true } },
+  otherChildren: { select: { id: true, name: true, birthDate: true } },
 } as const
 
 export default async function authRoutes(fastify: FastifyInstance) {
@@ -78,7 +102,7 @@ export default async function authRoutes(fastify: FastifyInstance) {
     const passwordHash = await bcrypt.hash(body.data.password, 12)
     const parseDate = (s?: string) => s ? new Date(s) : undefined
 
-    const user = await fastify.prisma.user.create({
+    let user = await fastify.prisma.user.create({
       data: {
         email: body.data.email,
         passwordHash,
@@ -92,9 +116,54 @@ export default async function authRoutes(fastify: FastifyInstance) {
         babyBirthDate: parseDate(body.data.babyBirthDate),
         expectedBirthDate: parseDate(body.data.expectedBirthDate),
         termsAcceptedAt: body.data.acceptedTerms ? new Date() : undefined,
+        hasMultiples: body.data.hasMultiples ?? false,
+        mood: body.data.mood ?? null,
+        supportNetwork: body.data.supportNetwork ?? null,
+        goal: body.data.goal ?? null,
+        concern: body.data.concern ?? null,
+        babies: body.data.babies?.length
+          ? {
+              create: body.data.babies.map((b) => ({
+                name: b.name ?? null,
+                birthDate: parseDate(b.birthDate) ?? null,
+                weekAtEntry: b.weekAtEntry ?? null,
+              })),
+            }
+          : undefined,
+        otherChildren: body.data.otherChildren?.length
+          ? {
+              create: body.data.otherChildren.map((c) => ({
+                name: c.name,
+                birthDate: parseDate(c.birthDate)!,
+              })),
+            }
+          : undefined,
       },
       select: USER_SELECT,
     })
+
+    // Compute mother profile server-side when all 4 signals present
+    if (body.data.mood && body.data.supportNetwork && body.data.goal && body.data.concern) {
+      const { computeProfileFromLetters } = await import('../lib/profile.js')
+      const profile = computeProfileFromLetters({
+        stage: body.data.pregnancyStage,
+        week: body.data.pregnancyWeek,
+        ageInDays: body.data.babyAgeInDays,
+        mood: body.data.mood,
+        supportNetwork: body.data.supportNetwork,
+        goal: body.data.goal,
+        concern: body.data.concern,
+      })
+      user = await fastify.prisma.user.update({
+        where: { id: user.id },
+        data: {
+          onboardingAnswers: profile.answers as any,
+          profileKey: profile.profileKey,
+          archetypeKey: profile.archetypeKey,
+        },
+        select: USER_SELECT,
+      })
+    }
 
     const accessToken = signAccessToken(user.id)
     const refreshToken = signRefreshToken(user.id)
