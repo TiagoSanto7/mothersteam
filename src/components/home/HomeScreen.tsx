@@ -9,7 +9,6 @@ import { AddRoutineModal } from './AddRoutineModal';
 import { UpcomingEventsCard } from './UpcomingEventsCard';
 import { SARA_FRASES } from '../../data/reception/sara-frases';
 import { getAvatarColor } from '../../utils/avatar';
-import type { ReceptionData } from '../../types/reception';
 
 interface HomeScreenProps {
   onOpenProfile: () => void;
@@ -21,14 +20,7 @@ export function HomeScreen({ onOpenProfile }: HomeScreenProps) {
   const motherProfile = useAppStore((s) => s.motherProfile);
   const babyName      = useAppStore((s) => s.babyName);
   const selectedDate  = useAppStore((s) => s.selectedDate);
-  const receptionShape: ReceptionData = {
-    phase: phase.stage,
-    week: phase.stage === 'pregnant' ? phase.week : undefined,
-    ageInDays: phase.stage === 'postpartum' ? phase.ageInDays : undefined,
-    babyName,
-    otherChildren: [],
-  };
-  const greeting = SARA_FRASES.primeiraHome(motherName || 'mãe', receptionShape);
+  const greeting = SARA_FRASES.primeiraHome(motherName || 'mãe', phase, babyName);
   const [showAddModal, setShowAddModal] = useState(false);
   const initial = (motherName || 'M').charAt(0).toUpperCase();
 

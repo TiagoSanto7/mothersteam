@@ -1,11 +1,11 @@
-import type { MoodAnswer } from '../../types/reception'
+export type MoodKey = 'A' | 'B' | 'C' | 'D'
 
 export interface Versiculo {
   verso: string
   referencia: string
 }
 
-const MAPA: Record<MoodAnswer, Versiculo> = {
+const MAPA: Record<MoodKey, Versiculo> = {
   A: {
     verso: 'De modo especial e admirável fui formado; maravilhosas são as tuas obras.',
     referencia: 'Salmos 139:14',
@@ -24,6 +24,6 @@ const MAPA: Record<MoodAnswer, Versiculo> = {
   },
 }
 
-export function versiculoParaHumor(mood: MoodAnswer | undefined): Versiculo {
+export function versiculoParaHumor(mood: MoodKey | null | undefined): Versiculo {
   return MAPA[mood ?? 'A']
 }

@@ -4,10 +4,9 @@ import { SaraSays } from '../SaraSays'
 import { useAppStore } from '../../../store/useAppStore'
 import { SARA_FRASES } from '../../../data/reception/sara-frases'
 import { versiculoParaHumor } from '../../../data/reception/versiculos-presente'
-import type { MoodAnswer } from '../../../types/reception'
 
 interface PresenteProps {
-  mood: MoodAnswer | undefined
+  mood: 'A' | 'B' | 'C' | 'D' | null
   onEnter: () => void
 }
 

@@ -1,18 +1,10 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
-import type { TabId, PregnancyPhase, OnboardingAnswers, MotherProfile, Q1Answer, Baby, OtherChild } from '../types';
+import type { TabId, PregnancyPhase, OnboardingAnswers, MotherProfile, Baby, OtherChild } from '../types';
 import { computeProfile } from '../utils/onboardingScoring';
 import type { ApiUser } from '../lib/types';
 import { apiFetch } from '../lib/api';
 import { buildPhase } from '../lib/helpers';
-import type { ReceptionData } from '../types/reception';
-
-function derivarQ1(phase: PregnancyPhase): Q1Answer {
-  if (phase.stage === 'pregnant') return phase.week < 28 ? 'A' : 'B';
-  if (phase.ageInDays <= 90) return 'C';
-  if (phase.ageInDays <= 365) return 'D';
-  return 'E';
-}
 
 // Stable empty references — used by initial state, setAuth, and migration.
 // CLAUDE.md rule: never use `[]` literals as fallbacks — new refs cause React #185.
@@ -68,7 +60,6 @@ interface AppState {
   refreshAccessToken: () => Promise<void>;
   // Profile actions
   completeOnboarding: (answers: OnboardingAnswers) => void;
-  applyReceptionData: (data: ReceptionData) => void;
   completeReception: () => void;
   resetOnboarding: () => void;
   completeSocialOnboarding: () => void;
@@ -257,26 +248,6 @@ export const useAppStore = create<AppState>()(
       completeOnboarding: (answers) => {
         const profile = computeProfile(answers);
         set({ onboardingDone: true, motherProfile: profile });
-      },
-      applyReceptionData: (data: ReceptionData) => {
-        const phase: PregnancyPhase =
-          data.phase === 'pregnant'
-            ? { stage: 'pregnant', week: data.week ?? 28 }
-            : { stage: 'postpartum', ageInDays: data.ageInDays ?? 0 };
-        const answers: OnboardingAnswers = {
-          q1: derivarQ1(phase),
-          q2: data.mood ?? 'A',
-          q3: data.supportNetwork ?? 'A',
-          q4: data.goal ?? 'A',
-          q5: data.concern ?? 'A',
-        };
-        const profile = computeProfile(answers);
-        set({
-          motherName: data.motherName || get().motherName,
-          babyName: data.babyName || get().babyName,
-          phase,
-          motherProfile: profile,
-        });
       },
       completeReception: () => set({ onboardingDone: true }),
       resetOnboarding: () => set({ onboardingDone: false, motherProfile: null }),
