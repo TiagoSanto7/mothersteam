@@ -14,13 +14,14 @@ const PHASES: { value: Phase; label: string }[] = [
   { value: 'postpartum_181_365', label: 'Pós-parto 6-12 meses' },
 ];
 
+const ML_URL_REGEX = /(?:mercadolivre\.com|mercadolibre\.com|produto\.mercadolivre|articulo\.mercadolibre)/i;
+
 interface FormState {
   name: string;
   description: string;
   price: string;
   mercadoLivreUrl: string;
   categoryId: string;
-  stock: string;
   featured: boolean;
   active: boolean;
   phases: Phase[];
@@ -29,7 +30,7 @@ interface FormState {
 
 const EMPTY: FormState = {
   name: '', description: '', price: '', mercadoLivreUrl: '',
-  categoryId: '', stock: '', featured: false, active: true, phases: [], images: [],
+  categoryId: '', featured: false, active: true, phases: [], images: [],
 };
 
 interface ProductFormPageProps {
@@ -67,7 +68,6 @@ export function ProductFormPage({ productId, onBack, onSaved }: ProductFormPageP
         price: existing.price,
         mercadoLivreUrl: existing.mercadoLivreUrl ?? '',
         categoryId: existing.categoryId,
-        stock: existing.stock !== null ? String(existing.stock) : '',
         featured: existing.featured,
         active: existing.active,
         phases: existing.phases,
@@ -82,9 +82,8 @@ export function ProductFormPage({ productId, onBack, onSaved }: ProductFormPageP
         name: form.name.trim(),
         description: form.description.trim(),
         price: Number(form.price),
-        mercadoLivreUrl: form.mercadoLivreUrl.trim() || null,
+        mercadoLivreUrl: form.mercadoLivreUrl.trim(),
         categoryId: form.categoryId,
-        stock: form.stock !== '' ? Number(form.stock) : null,
         featured: form.featured,
         active: form.active,
         phases: form.phases,
@@ -130,7 +129,14 @@ export function ProductFormPage({ productId, onBack, onSaved }: ProductFormPageP
     setNewImageUrl('');
   }
 
-  const isValid = form.name.trim() && form.description.trim() && form.price && Number(form.price) > 0 && form.categoryId;
+  const mlUrlValid = form.mercadoLivreUrl.trim() && ML_URL_REGEX.test(form.mercadoLivreUrl);
+  const isValid =
+    form.name.trim() &&
+    form.description.trim() &&
+    form.price &&
+    Number(form.price) > 0 &&
+    form.categoryId &&
+    mlUrlValid;
 
   return (
     <div className="p-8 max-w-3xl">
@@ -163,7 +169,21 @@ export function ProductFormPage({ productId, onBack, onSaved }: ProductFormPageP
           />
         </div>
 
-        <div className="grid grid-cols-3 gap-4">
+        <div>
+          <label className="text-xs font-semibold text-graphite-muted">URL do Mercado Livre *</label>
+          <input
+            type="url"
+            value={form.mercadoLivreUrl}
+            onChange={(e) => setForm((f) => ({ ...f, mercadoLivreUrl: e.target.value }))}
+            placeholder="https://produto.mercadolivre.com.br/..."
+            className="w-full mt-1 px-4 py-2.5 rounded-xl border border-gray-200 text-sm text-graphite outline-none focus:border-sara-gold"
+          />
+          {form.mercadoLivreUrl.trim() && !ML_URL_REGEX.test(form.mercadoLivreUrl) && (
+            <p className="mt-1 text-xs text-red-500">URL deve ser do Mercado Livre</p>
+          )}
+        </div>
+
+        <div className="grid grid-cols-2 gap-4">
           <div>
             <label className="text-xs font-semibold text-graphite-muted">Preço (R$) *</label>
             <input
@@ -187,31 +207,6 @@ export function ProductFormPage({ productId, onBack, onSaved }: ProductFormPageP
               {categories.map((c) => <option key={c.id} value={c.id}>{c.icon} {c.name}</option>)}
             </select>
           </div>
-          <div>
-            <label className="text-xs font-semibold text-graphite-muted">Estoque</label>
-            <input
-              type="number"
-              min="0"
-              value={form.stock}
-              onChange={(e) => setForm((f) => ({ ...f, stock: e.target.value }))}
-              placeholder="Ilimitado"
-              className="w-full mt-1 px-4 py-2.5 rounded-xl border border-gray-200 text-sm text-graphite outline-none focus:border-sara-gold"
-            />
-          </div>
-        </div>
-
-        <div>
-          <label className="text-xs font-semibold text-graphite-muted">URL do Mercado Livre (opcional)</label>
-          <input
-            type="url"
-            value={form.mercadoLivreUrl}
-            onChange={(e) => setForm((f) => ({ ...f, mercadoLivreUrl: e.target.value }))}
-            placeholder="https://produto.mercadolivre.com.br/..."
-            className="w-full mt-1 px-4 py-2.5 rounded-xl border border-gray-200 text-sm text-graphite outline-none focus:border-sara-gold"
-          />
-          {form.mercadoLivreUrl.trim() && !/mercadolivre|mercadolibre/i.test(form.mercadoLivreUrl) && (
-            <p className="mt-1 text-xs text-red-500">URL deve ser do Mercado Livre</p>
-          )}
         </div>
 
         <div>

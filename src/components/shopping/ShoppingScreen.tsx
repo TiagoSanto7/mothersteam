@@ -6,9 +6,7 @@ import type { ApiAdminProduct, ApiAdminCategory } from '../../lib/types';
 import { FavoritesTab } from './FavoritesTab';
 
 interface ShoppingScreenProps {
-  onOpenProduct: (type: 'affiliate' | 'own', id: string) => void
-  onOpenCart: () => void
-  onOpenOrder: (orderId: string) => void
+  onOpenProduct: (id: string) => void
 }
 
 interface AffiliateListResult {
@@ -24,7 +22,6 @@ interface DisplayProduct {
   images: string[]
   featured: boolean
   category: { id: string; name: string; slug: string; icon?: string }
-  _type: 'affiliate' | 'own'
 }
 
 export function ShoppingScreen({ onOpenProduct }: ShoppingScreenProps) {
@@ -61,7 +58,7 @@ export function ShoppingScreen({ onOpenProduct }: ShoppingScreenProps) {
   )
 }
 
-function ProductsTab({ onOpenProduct }: { onOpenProduct: (type: 'affiliate' | 'own', id: string) => void }) {
+function ProductsTab({ onOpenProduct }: { onOpenProduct: (id: string) => void }) {
   const [selectedCategory, setSelectedCategory] = useState('');
 
   const { data: categories = [] } = useQuery({
@@ -85,7 +82,6 @@ function ProductsTab({ onOpenProduct }: { onOpenProduct: (type: 'affiliate' | 'o
     images: p.images,
     featured: p.featured,
     category: p.category,
-    _type: 'affiliate' as const,
   }));
 
   const featured = products.filter((p) => p.featured);
@@ -142,7 +138,7 @@ function ProductsTab({ onOpenProduct }: { onOpenProduct: (type: 'affiliate' | 'o
           </p>
           <div className="flex flex-col gap-3">
             {featured.map((p) => (
-              <ProductCard key={`${p._type}-${p.id}`} product={p} onClick={() => onOpenProduct(p._type, p.id)} featured />
+              <ProductCard key={p.id} product={p} onClick={() => onOpenProduct(p.id)} featured />
             ))}
           </div>
         </div>
@@ -152,7 +148,7 @@ function ProductsTab({ onOpenProduct }: { onOpenProduct: (type: 'affiliate' | 'o
       {rest.length > 0 && (
         <div className="grid grid-cols-2 gap-3 px-4">
           {rest.map((p) => (
-            <ProductCard key={`${p._type}-${p.id}`} product={p} onClick={() => onOpenProduct(p._type, p.id)} />
+            <ProductCard key={p.id} product={p} onClick={() => onOpenProduct(p.id)} />
           ))}
         </div>
       )}

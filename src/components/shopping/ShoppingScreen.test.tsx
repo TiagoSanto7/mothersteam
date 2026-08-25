@@ -15,8 +15,6 @@ function renderWith(ui: React.ReactElement) {
 
 const defaultProps = {
   onOpenProduct: vi.fn(),
-  onOpenCart: vi.fn(),
-  onOpenOrder: vi.fn(),
 }
 
 describe('ShoppingScreen — pivot to ML-only', () => {

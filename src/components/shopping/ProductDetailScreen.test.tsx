@@ -31,12 +31,13 @@ function renderWith(ui: React.ReactElement) {
 describe('ProductDetailScreen — Comprar no ML CTA', () => {
   it('shows "Comprar no Mercado Livre" button that opens the mercadoLivreUrl via /comprar endpoint', async () => {
     const openSpy = vi.spyOn(window, 'open').mockImplementation(() => null)
-    renderWith(<ProductDetailScreen productId="p1" productType="affiliate" onBack={vi.fn()} onOpenProduct={vi.fn()} onOpenReviews={vi.fn()} />)
+    renderWith(<ProductDetailScreen productId="p1" onBack={vi.fn()} onOpenProduct={vi.fn()} onOpenReviews={vi.fn()} />)
     const btn = await screen.findByRole('button', { name: /comprar no mercado livre/i })
     fireEvent.click(btn)
     expect(openSpy).toHaveBeenCalledWith(
       expect.stringContaining('/products/p1/comprar'),
-      '_blank'
+      '_blank',
+      'noopener,noreferrer'
     )
     openSpy.mockRestore()
   })

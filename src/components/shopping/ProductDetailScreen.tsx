@@ -2,18 +2,16 @@ import { useState } from 'react'
 import { ChevronLeft, Heart, Star, ExternalLink, Package } from 'lucide-react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { apiFetch, resolveApiUrl } from '../../lib/api'
-import type { AnyProductDetail, ApiProductDetail } from '../../lib/types'
+import type { ApiProductDetail } from '../../lib/types'
 
 interface Props {
-  productType: 'affiliate' | 'own'
   productId: string
   onBack: () => void
-  onOpenProduct: (type: 'affiliate' | 'own', id: string) => void
-  onOpenReviews: (productType: 'affiliate' | 'own', productId: string, productName: string) => void
+  onOpenProduct: (productId: string) => void
+  onOpenReviews: (productId: string, productName: string) => void
 }
 
 export function ProductDetailScreen({
-  productType,
   productId,
   onBack,
   onOpenProduct,
@@ -23,26 +21,21 @@ export function ProductDetailScreen({
   const [imageIndex, setImageIndex] = useState(0)
   const [descExpanded, setDescExpanded] = useState(false)
 
-  const endpoint = productType === 'affiliate' ? `/products/${productId}` : `/own-products/${productId}`
-
   const { data: product, isLoading, isError, refetch } = useQuery({
-    queryKey: ['product-detail', productType, productId],
-    queryFn: () => apiFetch<AnyProductDetail>(endpoint),
+    queryKey: ['product-detail', productId],
+    queryFn: () => apiFetch<ApiProductDetail>(`/products/${productId}`),
     staleTime: 60_000,
     retry: 1,
   })
 
-  const wishlistMutation = useMutation<{ inWishlist: boolean }, unknown, void, { prev?: AnyProductDetail }>({
+  const wishlistMutation = useMutation<{ inWishlist: boolean }, unknown, void, { prev?: ApiProductDetail }>({
     mutationFn: () =>
-      apiFetch<{ inWishlist: boolean }>(
-        productType === 'affiliate' ? `/products/${productId}/wishlist` : `/own-products/${productId}/wishlist`,
-        { method: 'POST' }
-      ),
+      apiFetch<{ inWishlist: boolean }>(`/products/${productId}/wishlist`, { method: 'POST' }),
     onMutate: async () => {
-      await queryClient.cancelQueries({ queryKey: ['product-detail', productType, productId] })
-      const prev = queryClient.getQueryData<AnyProductDetail>(['product-detail', productType, productId])
+      await queryClient.cancelQueries({ queryKey: ['product-detail', productId] })
+      const prev = queryClient.getQueryData<ApiProductDetail>(['product-detail', productId])
       if (prev) {
-        queryClient.setQueryData(['product-detail', productType, productId], {
+        queryClient.setQueryData(['product-detail', productId], {
           ...prev,
           inWishlist: !prev.inWishlist,
         })
@@ -51,7 +44,7 @@ export function ProductDetailScreen({
     },
     onError: (_err, _vars, ctx) => {
       if (ctx?.prev) {
-        queryClient.setQueryData(['product-detail', productType, productId], ctx.prev)
+        queryClient.setQueryData(['product-detail', productId], ctx.prev)
       }
     },
     onSuccess: () => {
@@ -97,10 +90,9 @@ export function ProductDetailScreen({
     )
   }
 
-  const images = product.images as string[]
-  const isOwn = product.type === 'own'
-  const phases = isOwn ? undefined : (product as ApiProductDetail).phases
-  const mercadoLivreUrl = isOwn ? undefined : (product as ApiProductDetail).mercadoLivreUrl
+  const images = product.images
+  const phases = product.phases
+  const mercadoLivreUrl = product.mercadoLivreUrl
 
   return (
     <div className="flex flex-col h-full bg-gradient-to-b from-[#F5EDE0] via-[#EAD8C8] to-[#D9C4AF] overflow-hidden">
@@ -195,7 +187,7 @@ export function ProductDetailScreen({
         {product.reviewsSummary.count > 0 && (
           <button
             className="flex items-center gap-1.5 mb-4"
-            onClick={() => onOpenReviews(productType, productId, product.name)}
+            onClick={() => onOpenReviews(productId, product.name)}
           >
             <div className="flex">
               {[1, 2, 3, 4, 5].map((s) => (
@@ -289,7 +281,7 @@ export function ProductDetailScreen({
               </div>
             ))}
             <button
-              onClick={() => onOpenReviews(productType, productId, product.name)}
+              onClick={() => onOpenReviews(productId, product.name)}
               className="w-full mt-3 py-2 rounded-xl bg-white text-sara-gold text-xs font-semibold border border-sara-gold/30 active:scale-95 transition-transform"
             >
               Ver todas as avaliações
@@ -307,12 +299,12 @@ export function ProductDetailScreen({
               {product.related.map((rel) => (
                 <button
                   key={rel.id}
-                  onClick={() => onOpenProduct(rel.type, rel.id)}
+                  onClick={() => onOpenProduct(rel.id)}
                   className="flex-shrink-0 w-32 bg-white/70 rounded-2xl p-2 flex flex-col gap-1 active:scale-95 transition-transform"
                 >
-                  {(rel.images as string[])[0] ? (
+                  {rel.images[0] ? (
                     <img
-                      src={(rel.images as string[])[0]}
+                      src={rel.images[0]}
                       alt={rel.name}
                       className="w-full h-20 rounded-xl object-cover bg-sara-linen"
                     />
@@ -332,7 +324,7 @@ export function ProductDetailScreen({
 
       {/* Footer CTA */}
       <div className="absolute bottom-0 left-0 right-0 px-4 pb-8 pt-3 bg-gradient-to-t from-[#D9C4AF] to-transparent flex-shrink-0">
-        {!isOwn && mercadoLivreUrl ? (
+        {mercadoLivreUrl ? (
           <button
             type="button"
             onClick={() => window.open(resolveApiUrl(`/products/${product.id}/comprar`), '_blank', 'noopener,noreferrer')}
