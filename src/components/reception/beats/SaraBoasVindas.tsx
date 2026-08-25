@@ -72,7 +72,7 @@ export function SaraBoasVindas({ motherName: _motherName, onComplete }: Props) {
             <button
               type="button"
               onClick={() => { stop(); onComplete() }}
-              className="px-4 py-2 rounded-2xl border border-mt-charcoal-muted text-mt-muted text-xs"
+              className="px-4 py-2 rounded-2xl border border-mt-linen text-mt-muted text-xs"
             >
               Pular
             </button>
