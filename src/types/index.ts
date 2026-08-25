@@ -4,6 +4,19 @@ export type PregnancyPhase =
   | { stage: 'pregnant'; week: number }
   | { stage: 'postpartum'; ageInDays: number };
 
+export interface Baby {
+  id?: string
+  name?: string | null
+  birthDate?: string | null   // ISO YYYY-MM-DD
+  weekAtEntry?: number | null // gestational week at registration (0-44)
+}
+
+export interface OtherChild {
+  id?: string
+  name: string
+  birthDate: string  // ISO YYYY-MM-DD, required
+}
+
 export type EvolutionStage = 'embryo' | 'fetus-early' | 'fetus-late' | 'newborn';
 
 export interface RoutineEntry {
