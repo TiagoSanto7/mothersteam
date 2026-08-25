@@ -2,6 +2,7 @@ import type { FastifyInstance } from 'fastify'
 import { z } from 'zod'
 import { emitNotification } from '../sse'
 import { sendPush } from '../plugins/fcm'
+import { USER_SELECT } from '../lib/user-select'
 
 const updateMeSchema = z.object({
   name: z.string().min(1).max(80).optional(),
@@ -55,32 +56,7 @@ export default async function usersRoutes(fastify: FastifyInstance) {
   fastify.get('/me', async (request, reply) => {
     const user = await fastify.prisma.user.findUnique({
       where: { id: request.userId },
-      select: {
-        id: true,
-        name: true,
-        username: true,
-        babyName: true,
-        bio: true,
-        avatarUrl: true,
-        pregnancyStage: true,
-        pregnancyWeek: true,
-        babyAgeInDays: true,
-        profileKey: true,
-        archetypeKey: true,
-        versesPublic: true,
-        role: true,
-        onboardingDone: true,
-        motherBirthDate: true,
-        babyBirthDate: true,
-        expectedBirthDate: true,
-        hasMultiples: true,
-        mood: true,
-        supportNetwork: true,
-        goal: true,
-        concern: true,
-        babies: { select: { id: true, name: true, birthDate: true, weekAtEntry: true } },
-        otherChildren: { select: { id: true, name: true, birthDate: true } },
-      },
+      select: USER_SELECT,
     })
     if (!user) return reply.status(404).send({ error: 'User not found' })
     reply.send(user)

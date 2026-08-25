@@ -4,6 +4,7 @@ import crypto from 'crypto'
 import { z } from 'zod'
 import { signAccessToken, signRefreshToken, verifyRefreshToken } from '../utils/tokens'
 import { computeProfileFromLetters } from '../lib/profile'
+import { USER_SELECT } from '../lib/user-select'
 
 function escapeHtml(s: string): string {
   return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')
@@ -59,16 +60,6 @@ const loginSchema = z.object({
   password: z.string(),
 })
 
-const USER_SELECT = {
-  id: true, email: true, name: true, username: true, babyName: true,
-  pregnancyStage: true, pregnancyWeek: true, babyAgeInDays: true,
-  onboardingDone: true, profileKey: true, archetypeKey: true,
-  motherBirthDate: true, babyBirthDate: true, expectedBirthDate: true,
-  role: true,
-  hasMultiples: true, mood: true, supportNetwork: true, goal: true, concern: true,
-  babies: { select: { id: true, name: true, birthDate: true, weekAtEntry: true } },
-  otherChildren: { select: { id: true, name: true, birthDate: true } },
-} as const
 
 export default async function authRoutes(fastify: FastifyInstance) {
   fastify.get<{ Querystring: { username: string } }>('/check-username', {
