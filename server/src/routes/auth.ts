@@ -3,6 +3,7 @@ import bcrypt from 'bcrypt'
 import crypto from 'crypto'
 import { z } from 'zod'
 import { signAccessToken, signRefreshToken, verifyRefreshToken } from '../utils/tokens'
+import { computeProfileFromLetters } from '../lib/profile'
 
 function escapeHtml(s: string): string {
   return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')
@@ -25,7 +26,7 @@ const babyInputSchema = z.object({
 
 const otherChildInputSchema = z.object({
   name: z.string().min(1).max(80),
-  birthDate: z.string(), // required — user needs exact DOB
+  birthDate: z.string().regex(/^\d{4}-\d{2}-\d{2}/, 'birthDate must be YYYY-MM-DD'), // required — user needs exact DOB
 })
 
 const answerLetter = z.enum(['A', 'B', 'C', 'D'])
@@ -102,7 +103,22 @@ export default async function authRoutes(fastify: FastifyInstance) {
     const passwordHash = await bcrypt.hash(body.data.password, 12)
     const parseDate = (s?: string) => s ? new Date(s) : undefined
 
-    let user = await fastify.prisma.user.create({
+    // Compute profile BEFORE insert so the create is atomic (no risk of user existing with profileKey=null)
+    let profileFields: { profileKey: string; archetypeKey: string; onboardingAnswers: any } | null = null
+    if (body.data.mood && body.data.supportNetwork && body.data.goal && body.data.concern) {
+      const profile = computeProfileFromLetters({
+        stage: body.data.pregnancyStage,
+        week: body.data.pregnancyWeek,
+        ageInDays: body.data.babyAgeInDays,
+        mood: body.data.mood,
+        supportNetwork: body.data.supportNetwork,
+        goal: body.data.goal,
+        concern: body.data.concern,
+      })
+      profileFields = { profileKey: profile.profileKey, archetypeKey: profile.archetypeKey, onboardingAnswers: profile.answers as any }
+    }
+
+    const user = await fastify.prisma.user.create({
       data: {
         email: body.data.email,
         passwordHash,
@@ -121,6 +137,7 @@ export default async function authRoutes(fastify: FastifyInstance) {
         supportNetwork: body.data.supportNetwork ?? null,
         goal: body.data.goal ?? null,
         concern: body.data.concern ?? null,
+        ...(profileFields ?? {}),
         babies: body.data.babies?.length
           ? {
               create: body.data.babies.map((b) => ({
@@ -134,36 +151,13 @@ export default async function authRoutes(fastify: FastifyInstance) {
           ? {
               create: body.data.otherChildren.map((c) => ({
                 name: c.name,
-                birthDate: parseDate(c.birthDate)!,
+                birthDate: new Date(c.birthDate),
               })),
             }
           : undefined,
       },
       select: USER_SELECT,
     })
-
-    // Compute mother profile server-side when all 4 signals present
-    if (body.data.mood && body.data.supportNetwork && body.data.goal && body.data.concern) {
-      const { computeProfileFromLetters } = await import('../lib/profile.js')
-      const profile = computeProfileFromLetters({
-        stage: body.data.pregnancyStage,
-        week: body.data.pregnancyWeek,
-        ageInDays: body.data.babyAgeInDays,
-        mood: body.data.mood,
-        supportNetwork: body.data.supportNetwork,
-        goal: body.data.goal,
-        concern: body.data.concern,
-      })
-      user = await fastify.prisma.user.update({
-        where: { id: user.id },
-        data: {
-          onboardingAnswers: profile.answers as any,
-          profileKey: profile.profileKey,
-          archetypeKey: profile.archetypeKey,
-        },
-        select: USER_SELECT,
-      })
-    }
 
     const accessToken = signAccessToken(user.id)
     const refreshToken = signRefreshToken(user.id)

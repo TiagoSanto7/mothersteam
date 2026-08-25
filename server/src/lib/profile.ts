@@ -68,5 +68,7 @@ export function computeProfileFromLetters(input: ProfileInput) {
     q5: input.concern,
   }
   const profileKey = pickProfileKey(q1, input.mood, input.supportNetwork, input.goal, input.concern)
-  return { answers, profileKey, archetypeKey: PROFILE_TO_ARCHETYPE[profileKey] }
+  const archetypeKey = PROFILE_TO_ARCHETYPE[profileKey]
+  if (!archetypeKey) throw new Error(`No archetype mapped for profile "${profileKey}"`)
+  return { answers, profileKey, archetypeKey }
 }
