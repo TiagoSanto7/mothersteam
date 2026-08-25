@@ -1,12 +1,10 @@
 import { useState, useCallback } from 'react'
-import type { ReceptionBeat, ReceptionData } from '../../../types/reception'
+import type { ReceptionBeat } from '../../../types/reception'
 
 const ORDER: ReceptionBeat[] = [
   'bem-vinda',
   'sara-aparece',
-  'capitulo-1',
-  'capitulo-2',
-  'capitulo-3',
+  'sara-boas-vindas',
   'preparando-tudo',
   'presente',
   'done',
@@ -14,7 +12,6 @@ const ORDER: ReceptionBeat[] = [
 
 export function useReceptionState() {
   const [beat, setBeat] = useState<ReceptionBeat>('bem-vinda')
-  const [data, setData] = useState<ReceptionData>({ otherChildren: [] })
 
   const advance = useCallback(() => {
     setBeat((current) => {
@@ -23,9 +20,5 @@ export function useReceptionState() {
     })
   }, [])
 
-  const applyData = useCallback((patch: Partial<ReceptionData>) => {
-    setData((prev) => ({ ...prev, ...patch }))
-  }, [])
-
-  return { beat, data, advance, applyData }
+  return { beat, advance }
 }

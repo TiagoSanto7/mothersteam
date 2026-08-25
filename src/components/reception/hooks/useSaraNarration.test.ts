@@ -1,10 +1,6 @@
 import { renderHook, act, waitFor } from '@testing-library/react'
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import {
-  useSaraNarration,
-  receptionDataFromCapitulo1,
-  CAP1_CONFIG,
-} from './useSaraNarration'
+import { useSaraNarration, WELCOME_CONFIG } from './useSaraNarration'
 
 const endSession = vi.fn(() => Promise.resolve())
 const getOutputVolume = vi.fn(() => 0)
@@ -40,7 +36,7 @@ describe('useSaraNarration', () => {
   it('transitions to listening after connect event', async () => {
     const { result } = renderHook(() => useSaraNarration())
     await act(async () => {
-      await result.current.startConversation(CAP1_CONFIG)
+      await result.current.startConversation(WELCOME_CONFIG)
     })
     act(() => {
       capturedHandlers.onStatusChange?.({ status: 'connected' })
@@ -50,20 +46,14 @@ describe('useSaraNarration', () => {
     })
   })
 
-  it('captures data and moves to done when confirmar_capitulo_1_fatos fires', async () => {
+  it('captures data and moves to done when the tool fires', async () => {
     const { result } = renderHook(() => useSaraNarration())
     await act(async () => {
-      await result.current.startConversation(CAP1_CONFIG)
+      await result.current.startConversation(WELCOME_CONFIG)
     })
-    const payload = {
-      motherName: 'Ana',
-      phase: 'pregnant' as const,
-      week: 28,
-      babyName: 'Sofia',
-      otherChildren: [],
-    }
+    const payload = { ok: true }
     await act(async () => {
-      await capturedHandlers.clientTools?.confirmar_capitulo_1_fatos(payload)
+      await capturedHandlers.clientTools?.[WELCOME_CONFIG.toolName](payload)
     })
     expect(result.current.state).toBe('done')
     expect(result.current.collectedFatos).toEqual(payload)
@@ -72,7 +62,7 @@ describe('useSaraNarration', () => {
   it('stop() sets state to idle and endSession is called', async () => {
     const { result } = renderHook(() => useSaraNarration())
     await act(async () => {
-      await result.current.startConversation(CAP1_CONFIG)
+      await result.current.startConversation(WELCOME_CONFIG)
     })
     act(() => {
       result.current.stop()
@@ -84,7 +74,7 @@ describe('useSaraNarration', () => {
   it('surfaces error state via onError', async () => {
     const { result } = renderHook(() => useSaraNarration())
     await act(async () => {
-      await result.current.startConversation(CAP1_CONFIG)
+      await result.current.startConversation(WELCOME_CONFIG)
     })
     act(() => {
       capturedHandlers.onError?.('boom')
@@ -93,35 +83,5 @@ describe('useSaraNarration', () => {
       expect(result.current.state).toBe('error')
       expect(result.current.error).toBe('boom')
     })
-  })
-})
-
-describe('receptionDataFromCapitulo1', () => {
-  it('maps pregnant fatos to ReceptionData shape', () => {
-    const out = receptionDataFromCapitulo1({
-      motherName: 'Ana',
-      phase: 'pregnant',
-      week: 28,
-      babyName: 'Sofia',
-      otherChildren: [],
-    })
-    expect(out).toEqual({
-      motherName: 'Ana',
-      phase: 'pregnant',
-      week: 28,
-      ageInDays: undefined,
-      babyName: 'Sofia',
-      otherChildren: [],
-    })
-  })
-
-  it('defaults otherChildren to empty array when missing', () => {
-    const out = receptionDataFromCapitulo1({
-      motherName: 'Ana',
-      phase: 'postpartum',
-      ageInDays: 45,
-    })
-    expect(out.otherChildren).toEqual([])
-    expect(out.babyName).toBeNull()
   })
 })
