@@ -10,6 +10,7 @@ interface Message {
   text: string;
   isNew?: boolean;
   isStreaming?: boolean;
+  isError?: boolean;
 }
 
 type ConvStatus = 'idle' | 'connecting' | 'listening' | 'processing' | 'speaking' | 'error';
@@ -119,6 +120,7 @@ export function MaeIAScreen({ onBack }: MaeIAScreenProps = {}) {
 
   async function connectVoice() {
     if (convRef.current) return;
+    setIsMuted(false);
     setStatus('connecting');
 
     try {
@@ -131,10 +133,10 @@ export function MaeIAScreen({ onBack }: MaeIAScreenProps = {}) {
       console.error('[Sara] microfone bloqueado:', permErr);
       convRef.current = null;
       setStatus('error');
-      addMessage(
-        'assistant',
-        'Não consegui acessar o microfone. Abra as configurações do sistema, dê permissão de microfone pro Mother\'s Team e tente de novo.',
-      );
+      setMessages((prev) => [
+        ...prev,
+        { id: `${Date.now()}-err`, role: 'assistant', text: 'Não consegui acessar o microfone. Abra as configurações do sistema, dê permissão de microfone pro Mother\'s Team e tente de novo.', isError: true },
+      ]);
       setTimeout(() => setStatus('idle'), 5000);
       return;
     }
@@ -147,6 +149,7 @@ export function MaeIAScreen({ onBack }: MaeIAScreenProps = {}) {
         onConnect: () => setStatus('listening'),
         onDisconnect: () => {
           convRef.current = null;
+          setIsMuted(false);
           setStatus('idle');
         },
         onError: (error) => {
@@ -172,16 +175,17 @@ export function MaeIAScreen({ onBack }: MaeIAScreenProps = {}) {
       convRef.current = null;
       setStatus('error');
       setTimeout(() => setStatus('idle'), 3000);
-      addMessage(
-        'assistant',
-        'Não foi possível conectar à Sara. Verifique sua conexão e tente novamente.',
-      );
+      setMessages((prev) => [
+        ...prev,
+        { id: `${Date.now()}-err`, role: 'assistant', text: 'Não foi possível conectar à Sara. Verifique sua conexão e tente novamente.', isError: true },
+      ]);
     }
   }
 
   async function disconnectVoice() {
     await convRef.current?.endSession().catch(() => {});
     convRef.current = null;
+    setIsMuted(false);
     setStatus('idle');
   }
 
@@ -208,7 +212,7 @@ export function MaeIAScreen({ onBack }: MaeIAScreenProps = {}) {
 
     const history = [
       ...messagesRef.current
-        .filter((m) => m.id !== '0')
+        .filter((m) => m.id !== '0' && !m.isError)
         .map((m) => ({ role: m.role as 'user' | 'assistant', content: m.text })),
       { role: 'user' as const, content: trimmed },
     ].slice(-20);
@@ -234,7 +238,7 @@ export function MaeIAScreen({ onBack }: MaeIAScreenProps = {}) {
       (errMsg) => {
         setMessages((prev) =>
           prev.map((m) =>
-            m.id === streamingId ? { ...m, text: errMsg, isStreaming: false } : m
+            m.id === streamingId ? { ...m, text: errMsg, isStreaming: false, isError: true } : m
           )
         );
         setIsSendingText(false);

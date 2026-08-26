@@ -120,21 +120,42 @@ export async function apiStream(
   onDone: () => void,
   onError: (msg: string) => void,
 ): Promise<void> {
-  const token = useAppStore.getState().accessToken
   const headers: Record<string, string> = { 'Content-Type': 'application/json' }
+  const token = useAppStore.getState().accessToken
   if (token) headers['Authorization'] = `Bearer ${token}`
 
-  let res: Response
-  try {
-    res = await fetch(`${BASE}${path}`, {
-      method: 'POST',
-      headers,
-      credentials: 'include',
-      body: JSON.stringify(body),
-    })
-  } catch {
+  async function doFetch(): Promise<Response | null> {
+    try {
+      return await fetch(`${BASE}${path}`, {
+        method: 'POST',
+        headers,
+        credentials: 'include',
+        body: JSON.stringify(body),
+      })
+    } catch {
+      return null
+    }
+  }
+
+  let res = await doFetch()
+  if (!res) {
     onError('Sem conexão. Verifique sua internet e tente novamente.')
     return
+  }
+
+  // 401: mirror the refresh-and-retry logic from apiFetch
+  if (res.status === 401) {
+    if (!refreshPromise) refreshPromise = doRefresh()
+    const newToken = await refreshPromise
+    refreshPromise = null
+    if (newToken) {
+      headers['Authorization'] = `Bearer ${newToken}`
+      res = (await doFetch()) ?? res
+    } else {
+      useAppStore.getState().clearAuth()
+      onError('Sua sessão expirou. Faça login novamente.')
+      return
+    }
   }
 
   if (!res.ok || !res.body) {
@@ -144,12 +165,16 @@ export async function apiStream(
 
   const reader = res.body.getReader()
   const decoder = new TextDecoder()
+  let buffer = ''
 
   try {
     while (true) {
       const { done, value } = await reader.read()
       if (done) break
-      const lines = decoder.decode(value, { stream: true }).split('\n')
+      // Accumulate across reads — SSE frames can split across TCP chunks
+      buffer += decoder.decode(value, { stream: true })
+      const lines = buffer.split('\n')
+      buffer = lines.pop() ?? ''
       for (const line of lines) {
         if (!line.startsWith('data: ')) continue
         const data = line.slice(6).trim()
@@ -165,10 +190,14 @@ export async function apiStream(
           }
           if (parsed.text) onChunk(parsed.text)
         } catch {
-          // chunk de parsing inválido — ignorar
+          // incomplete frame — will be completed in next read
         }
       }
     }
+  } catch {
+    // mid-stream network drop
+    onError('Erro ao conectar com a Sara. Tente novamente.')
+    return
   } finally {
     reader.releaseLock()
   }

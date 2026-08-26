@@ -1,17 +1,30 @@
 import type { FastifyInstance } from 'fastify'
 import OpenAI from 'openai'
+import { z } from 'zod'
 import { buildSaraSystemPrompt, buildSaraContextBlock } from '../utils/sara-context'
 
 const ELEVENLABS_API_KEY = process.env.ELEVENLABS_API_KEY
 const ELEVENLABS_AGENT_ID = process.env.ELEVENLABS_AGENT_ID
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY
 
-const openai = new OpenAI({ apiKey: OPENAI_API_KEY })
-
-interface ChatMessage {
-  role: 'user' | 'assistant'
-  content: string
+// lazy singleton — only constructed after the 503 guard confirms the key exists
+let _openai: OpenAI | null = null
+function getOpenAI(): OpenAI {
+  _openai ??= new OpenAI({ apiKey: OPENAI_API_KEY! })
+  return _openai
 }
+
+const chatBodySchema = z.object({
+  messages: z
+    .array(
+      z.object({
+        role: z.enum(['user', 'assistant']),
+        content: z.string().min(1).max(4000),
+      })
+    )
+    .min(1)
+    .max(20),
+})
 
 export default async function maeIARoutes(fastify: FastifyInstance) {
   fastify.addHook('preHandler', fastify.authenticate)
@@ -25,10 +38,11 @@ export default async function maeIARoutes(fastify: FastifyInstance) {
         return reply.status(503).send({ error: 'Sara não configurada' })
       }
 
-      const messages = request.body?.messages
-      if (!Array.isArray(messages) || messages.length === 0) {
+      const parsed = chatBodySchema.safeParse(request.body)
+      if (!parsed.success) {
         return reply.status(400).send({ error: 'messages required' })
       }
+      const { messages } = parsed.data
 
       const user = await fastify.prisma.user.findUnique({
         where: { id: request.userId },
@@ -68,7 +82,7 @@ export default async function maeIARoutes(fastify: FastifyInstance) {
       reply.raw.flushHeaders()
 
       try {
-        const stream = await openai.chat.completions.create({
+        const stream = await getOpenAI().chat.completions.create({
           model: 'gpt-4o',
           stream: true,
           messages: [
