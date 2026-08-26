@@ -185,7 +185,7 @@ export function MaeIAScreen({ onBack }: MaeIAScreenProps = {}) {
     setStatus('idle');
   }
 
-  async function toggleMute() {
+  function toggleMute() {
     if (!convRef.current) return;
     const newMuted = !isMuted;
     convRef.current.setMicMuted(newMuted);
