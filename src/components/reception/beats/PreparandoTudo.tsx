@@ -1,20 +1,17 @@
 import { useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { OrbeVisual } from '../OrbeVisual'
-import { useAppStore } from '../../../store/useAppStore'
-import type { ReceptionData } from '../../../types/reception'
 
 interface PreparandoTudoProps {
-  data: ReceptionData
+  mood: 'A' | 'B' | 'C' | 'D' | null
   onReady: () => void
 }
 
-export function PreparandoTudo({ data, onReady }: PreparandoTudoProps) {
+export function PreparandoTudo({ mood: _mood, onReady }: PreparandoTudoProps) {
   useEffect(() => {
-    useAppStore.getState().applyReceptionData(data)
     const t = setTimeout(onReady, 4000)
     return () => clearTimeout(t)
-  }, [data, onReady])
+  }, [onReady])
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center gap-8 bg-sara-cream px-8">

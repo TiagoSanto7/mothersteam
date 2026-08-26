@@ -17,6 +17,13 @@ export interface ApiUser {
   motherBirthDate?: string | null
   babyBirthDate?: string | null
   expectedBirthDate?: string | null
+  hasMultiples?: boolean
+  mood?: 'A' | 'B' | 'C' | 'D' | null
+  supportNetwork?: 'A' | 'B' | 'C' | null
+  goal?: 'A' | 'B' | 'C' | 'D' | null
+  concern?: 'A' | 'B' | 'C' | 'D' | null
+  babies?: Array<{ id: string; name: string | null; birthDate: string | null; weekAtEntry: number | null }>
+  otherChildren?: Array<{ id: string; name: string; birthDate: string }>
 }
 
 export interface ApiUserProfile {
@@ -166,10 +173,9 @@ export interface ApiAdminProduct {
   name: string
   description: string
   price: string
-  affiliateUrl: string | null
+  mercadoLivreUrl: string | null
   images: string[]
   phases: Phase[]
-  stock: number | null
   featured: boolean
   active: boolean
   categoryId: string
@@ -221,23 +227,6 @@ export interface ApiCategory {
   icon: string
 }
 
-export interface ApiOwnProduct {
-  id: string
-  type: 'own'
-  name: string
-  description: string
-  price: string
-  images: string[]
-  stock: number
-  sku?: string | null
-  featured: boolean
-  active: boolean
-  categoryId: string
-  category: ApiCategory
-  createdAt: string
-  updatedAt: string
-}
-
 export interface ApiReview {
   id: string
   rating: number
@@ -254,16 +243,23 @@ export interface ApiReviewsSummary {
   distribution: Record<string, number>
 }
 
+export interface ApiProductRelated {
+  id: string
+  type: 'affiliate'
+  name: string
+  price: string
+  images: string[]
+}
+
 export interface ApiProductDetail {
   id: string
   type: 'affiliate'
   name: string
   description: string
   price: string
-  affiliateUrl?: string | null
+  mercadoLivreUrl?: string | null
   images: string[]
   phases: string[]
-  stock?: number | null
   featured: boolean
   active: boolean
   categoryId: string
@@ -271,93 +267,13 @@ export interface ApiProductDetail {
   reviewsSummary: ApiReviewsSummary
   reviews: ApiReview[]
   inWishlist: boolean
-  related: Array<ApiProductDetail | ApiOwnProductDetail>
+  related: ApiProductRelated[]
   createdAt: string
   updatedAt: string
-}
-
-export interface ApiOwnProductDetail extends ApiOwnProduct {
-  reviewsSummary: ApiReviewsSummary
-  reviews: ApiReview[]
-  inWishlist: boolean
-  related: ApiOwnProduct[]
-}
-
-export type AnyProductDetail = ApiProductDetail | ApiOwnProductDetail
-
-export interface ApiCartItem {
-  id: string
-  ownProductId: string
-  ownProduct: ApiOwnProduct
-  quantity: number
-  createdAt: string
-}
-
-export interface ApiCart {
-  items: ApiCartItem[]
-  subtotal: string
-  itemCount: number
 }
 
 export interface ApiWishlistEntry {
-  type: 'affiliate' | 'own'
-  product: ApiAdminProduct | ApiOwnProduct
+  type: 'affiliate'
+  product: ApiAdminProduct
   savedAt: string
-}
-
-export interface ApiAddress {
-  id: string
-  recipientName: string
-  street: string
-  number: string
-  complement?: string | null
-  neighborhood: string
-  city: string
-  state: string
-  zipCode: string
-  isDefault: boolean
-  createdAt: string
-}
-
-export interface ApiOrderItem {
-  id: string
-  ownProductId: string
-  ownProduct: { id: string; name: string; images: string[]; price: string }
-  quantity: number
-  priceAtPurchase: string
-}
-
-export interface ApiInstallmentOption {
-  installments: number
-  rate: number
-  installmentAmount: number
-  totalAmount: number
-  label: string
-}
-
-export interface ApiPaymentMethod {
-  id: string
-  mpCardId: string
-  brand: string
-  lastFour: string
-  holderName: string
-  expirationMonth: number
-  expirationYear: number
-}
-
-export interface ApiOrder {
-  id: string
-  userId: string
-  status: 'PENDING' | 'PAID' | 'PREPARING' | 'SHIPPED' | 'DELIVERED' | 'CANCELLED'
-  total: string
-  shippingFee: string
-  mercadoPagoPaymentId?: string | null
-  mercadoPagoPixQrCode?: string | null
-  mercadoPagoPixCode?: string | null
-  trackingCode?: string | null
-  addressId: string
-  address: ApiAddress
-  items: ApiOrderItem[]
-  createdAt: string
-  updatedAt: string
 }

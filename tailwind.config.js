@@ -16,6 +16,14 @@ export default {
         'graphite-light':  '#7A6B62',
         'graphite-muted':  '#9E8E84',
         offwhite:          '#FAF7F2',
+        // mt-* aliases — cadastro completo componentes usam esses nomes;
+        // apontam pros mesmos hex das sara-* pra manter identidade visual da prod atual
+        'mt-cream':        '#FAF7F2',
+        'mt-linen':        '#F5EFE6',
+        'mt-charcoal':     '#3D342E',
+        'mt-muted':        '#9E8E84',
+        'mt-rose':         '#A07844',
+        'mt-rose-dark':    '#BC8474',
       },
     },
   },

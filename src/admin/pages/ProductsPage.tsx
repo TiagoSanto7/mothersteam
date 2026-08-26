@@ -74,8 +74,8 @@ export function ProductsPage({ onNew, onEdit }: ProductsPageProps) {
   const autoCloseTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   function downloadTemplate() {
-    const header = 'nome,descricao,preco,categoria_slug,url_afiliado,fases,estoque,destaque'
-    const example = 'Mochila maternidade,Mochila com compartimentos térmicos,189.90,mochilas,https://amazon.com.br/example,trimester3,10,nao'
+    const header = 'nome,descricao,preco,categoria_slug,url_mercadolivre,fases,estoque,destaque'
+    const example = 'Mochila maternidade,Mochila com compartimentos térmicos,189.90,mochilas,https://produto.mercadolivre.com.br/example,trimester3,10,nao'
     const phaseComment = '# Fases válidas: trimester1 | trimester2 | trimester3 | postpartum_0_30 | postpartum_31_180 | postpartum_181_365'
     const slugComment = `# Slugs de categorias: ${categories.map(c => c.slug).join(' | ')}`
     const csv = [header, example, phaseComment, slugComment].join('\n')

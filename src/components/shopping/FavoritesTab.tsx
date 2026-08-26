@@ -1,12 +1,7 @@
-import { useState } from 'react'
-import { Heart, ShoppingBag, ExternalLink, ShoppingCart } from 'lucide-react'
+import { Heart, ShoppingBag } from 'lucide-react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { apiFetch } from '../../lib/api'
-import type { ApiWishlistEntry, ApiAdminProduct, ApiOwnProduct } from '../../lib/types'
-
-interface Props {
-  onOpenProduct: (type: 'affiliate' | 'own', id: string) => void
-}
+import { apiFetch, resolveApiUrl } from '../../lib/api'
+import type { ApiWishlistEntry, ApiAdminProduct } from '../../lib/types'
 
 interface WishlistResponse {
   items: ApiWishlistEntry[]
@@ -14,9 +9,8 @@ interface WishlistResponse {
 
 const EMPTY_ITEMS: ApiWishlistEntry[] = []
 
-export function FavoritesTab({ onOpenProduct }: Props) {
+export function FavoritesTab() {
   const queryClient = useQueryClient()
-  const [cartAddError, setCartAddError] = useState('')
 
   const { data, isLoading } = useQuery({
     queryKey: ['wishlist'],
@@ -24,20 +18,18 @@ export function FavoritesTab({ onOpenProduct }: Props) {
     staleTime: 30_000,
   })
 
-  type RemoveVars = { type: 'affiliate' | 'own'; id: string }
+  type RemoveVars = { id: string }
   type RemoveCtx = { prev?: WishlistResponse }
 
   const removeMutation = useMutation<unknown, unknown, RemoveVars, RemoveCtx>({
-    mutationFn: ({ type, id }: RemoveVars) =>
-      apiFetch(type === 'affiliate' ? `/products/${id}/wishlist` : `/own-products/${id}/wishlist`, {
-        method: 'POST',
-      }),
+    mutationFn: ({ id }: RemoveVars) =>
+      apiFetch(`/products/${id}/wishlist`, { method: 'POST' }),
     onMutate: async ({ id }: RemoveVars): Promise<RemoveCtx> => {
       await queryClient.cancelQueries({ queryKey: ['wishlist'] })
       const prev = queryClient.getQueryData<WishlistResponse>(['wishlist'])
       queryClient.setQueryData<WishlistResponse>(['wishlist'], (old) => ({
         items: (old?.items ?? EMPTY_ITEMS).filter(
-          (entry) => (entry.product as ApiAdminProduct | ApiOwnProduct).id !== id
+          (entry) => (entry.product as ApiAdminProduct).id !== id
         ),
       }))
       return { prev }
@@ -51,16 +43,6 @@ export function FavoritesTab({ onOpenProduct }: Props) {
     },
   })
 
-  const cartMutation = useMutation({
-    mutationFn: (ownProductId: string) =>
-      apiFetch('/cart', { method: 'POST', body: JSON.stringify({ ownProductId, quantity: 1 }) }),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['cart'] }),
-    onError: () => {
-      setCartAddError('Erro ao adicionar ao carrinho. Tente novamente.')
-      setTimeout(() => setCartAddError(''), 3000)
-    },
-  })
-
   if (isLoading) {
     return (
       <div className="flex flex-col gap-3 px-4 pt-4">
@@ -71,7 +53,7 @@ export function FavoritesTab({ onOpenProduct }: Props) {
     )
   }
 
-  const items = data?.items ?? EMPTY_ITEMS
+  const items = (data?.items ?? EMPTY_ITEMS).filter((w) => w.type === 'affiliate')
 
   if (items.length === 0) {
     return (
@@ -87,18 +69,13 @@ export function FavoritesTab({ onOpenProduct }: Props) {
 
   return (
     <div className="flex flex-col gap-3 px-4 pt-4 pb-6">
-      {cartAddError && (
-        <p className="text-xs text-sara-terracotta bg-sara-terracotta/10 rounded-xl px-3 py-2">{cartAddError}</p>
-      )}
       {items.map((entry) => {
-        const product = entry.product as ApiAdminProduct | ApiOwnProduct
-        const isOwn = entry.type === 'own'
-        const hasStock = isOwn ? (product as ApiOwnProduct).stock > 0 : true
+        const product = entry.product as ApiAdminProduct
         const images = product.images as string[]
 
         return (
-          <div key={`${entry.type}-${product.id}`} className="bg-white rounded-3xl p-4 shadow-sm flex gap-3">
-            <button onClick={() => onOpenProduct(entry.type, product.id)} className="flex-shrink-0">
+          <div key={`affiliate-${product.id}`} className="bg-white rounded-3xl p-4 shadow-sm flex gap-3">
+            <div className="flex-shrink-0">
               {images[0] ? (
                 <img
                   src={images[0]}
@@ -110,47 +87,30 @@ export function FavoritesTab({ onOpenProduct }: Props) {
                   <ShoppingBag size={24} className="text-graphite-muted" />
                 </div>
               )}
-            </button>
+            </div>
 
             <div className="flex-1 min-w-0 flex flex-col gap-1">
               <p className="text-[11px] text-graphite-muted">
-                {(product as ApiAdminProduct).category?.name ?? ''}
+                {product.category?.name ?? ''}
               </p>
-              <button
-                onClick={() => onOpenProduct(entry.type, product.id)}
-                className="text-sm font-semibold text-graphite leading-tight text-left line-clamp-2"
-              >
+              <p className="text-sm font-semibold text-graphite leading-tight line-clamp-2">
                 {product.name}
-              </button>
+              </p>
               <p className="text-sm font-bold text-sara-gold">
                 R$ {Number(product.price).toFixed(2)}
               </p>
 
               <div className="flex gap-2 mt-auto pt-1">
-                {!isOwn && (
-                  <button
-                    onClick={() => onOpenProduct('affiliate', product.id)}
-                    className="flex-1 py-1.5 rounded-xl bg-sara-gold text-white text-xs font-semibold flex items-center justify-center gap-1 active:scale-95 transition-transform"
-                  >
-                    Ver detalhes <ExternalLink size={10} />
-                  </button>
-                )}
-                {isOwn && hasStock && (
-                  <button
-                    onClick={() => cartMutation.mutate(product.id)}
-                    disabled={cartMutation.isPending}
-                    className="flex-1 py-1.5 rounded-xl bg-sara-gold text-white text-xs font-semibold flex items-center justify-center gap-1 active:scale-95 transition-transform disabled:opacity-60"
-                  >
-                    <ShoppingCart size={11} /> Carrinho
-                  </button>
-                )}
-                {isOwn && !hasStock && (
-                  <span className="flex-1 py-1.5 rounded-xl bg-graphite-muted/10 text-graphite-muted text-xs font-medium text-center">
-                    Indisponível
-                  </span>
-                )}
+                <a
+                  href={resolveApiUrl(`/products/${product.id}/comprar`)}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-xs font-semibold px-3 py-1.5 rounded-xl bg-mt-rose text-white active:scale-95 transition-colors"
+                >
+                  Comprar no ML
+                </a>
                 <button
-                  onClick={() => removeMutation.mutate({ type: entry.type, id: product.id })}
+                  onClick={() => removeMutation.mutate({ id: product.id })}
                   disabled={removeMutation.isPending}
                   className="w-8 h-8 rounded-xl bg-sara-terracotta/10 flex items-center justify-center active:scale-95 transition-transform"
                 >

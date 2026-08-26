@@ -3,6 +3,8 @@ import bcrypt from 'bcrypt'
 import crypto from 'crypto'
 import { z } from 'zod'
 import { signAccessToken, signRefreshToken, verifyRefreshToken } from '../utils/tokens'
+import { computeProfileFromLetters } from '../lib/profile'
+import { USER_SELECT } from '../lib/user-select'
 
 function escapeHtml(s: string): string {
   return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')
@@ -17,6 +19,19 @@ const COOKIE_OPTS = {
   maxAge: 60 * 60 * 24 * 30,
 }
 
+const babyInputSchema = z.object({
+  name: z.string().max(80).optional(),
+  birthDate: z.string().optional(),
+  weekAtEntry: z.number().int().min(1).max(42).optional(),
+})
+
+const otherChildInputSchema = z.object({
+  name: z.string().min(1).max(80),
+  birthDate: z.string().regex(/^\d{4}-\d{2}-\d{2}/, 'birthDate must be YYYY-MM-DD'), // required — user needs exact DOB
+})
+
+const answerLetter = z.enum(['A', 'B', 'C', 'D'])
+
 const registerSchema = z.object({
   email: z.string().email(),
   password: z.string().min(8),
@@ -30,6 +45,14 @@ const registerSchema = z.object({
   babyBirthDate: z.string().optional(),
   expectedBirthDate: z.string().optional(),
   acceptedTerms: z.boolean().optional(),
+  // Novos campos do cadastro estendido:
+  hasMultiples: z.boolean().optional(),
+  babies: z.array(babyInputSchema).max(6).optional(),
+  otherChildren: z.array(otherChildInputSchema).max(10).optional(),
+  mood: answerLetter.optional(),
+  supportNetwork: z.enum(['A', 'B', 'C']).optional(),
+  goal: answerLetter.optional(),
+  concern: answerLetter.optional(),
 })
 
 const loginSchema = z.object({
@@ -37,13 +60,6 @@ const loginSchema = z.object({
   password: z.string(),
 })
 
-const USER_SELECT = {
-  id: true, email: true, name: true, username: true, babyName: true,
-  pregnancyStage: true, pregnancyWeek: true, babyAgeInDays: true,
-  onboardingDone: true, profileKey: true, archetypeKey: true,
-  motherBirthDate: true, babyBirthDate: true, expectedBirthDate: true,
-  role: true,
-} as const
 
 export default async function authRoutes(fastify: FastifyInstance) {
   fastify.get<{ Querystring: { username: string } }>('/check-username', {
@@ -78,6 +94,21 @@ export default async function authRoutes(fastify: FastifyInstance) {
     const passwordHash = await bcrypt.hash(body.data.password, 12)
     const parseDate = (s?: string) => s ? new Date(s) : undefined
 
+    // Compute profile BEFORE insert so the create is atomic (no risk of user existing with profileKey=null)
+    let profileFields: { profileKey: string; archetypeKey: string; onboardingAnswers: any } | null = null
+    if (body.data.mood && body.data.supportNetwork && body.data.goal && body.data.concern) {
+      const profile = computeProfileFromLetters({
+        stage: body.data.pregnancyStage,
+        week: body.data.pregnancyWeek,
+        ageInDays: body.data.babyAgeInDays,
+        mood: body.data.mood,
+        supportNetwork: body.data.supportNetwork,
+        goal: body.data.goal,
+        concern: body.data.concern,
+      })
+      profileFields = { profileKey: profile.profileKey, archetypeKey: profile.archetypeKey, onboardingAnswers: profile.answers as any }
+    }
+
     const user = await fastify.prisma.user.create({
       data: {
         email: body.data.email,
@@ -92,6 +123,29 @@ export default async function authRoutes(fastify: FastifyInstance) {
         babyBirthDate: parseDate(body.data.babyBirthDate),
         expectedBirthDate: parseDate(body.data.expectedBirthDate),
         termsAcceptedAt: body.data.acceptedTerms ? new Date() : undefined,
+        hasMultiples: body.data.hasMultiples ?? false,
+        mood: body.data.mood ?? null,
+        supportNetwork: body.data.supportNetwork ?? null,
+        goal: body.data.goal ?? null,
+        concern: body.data.concern ?? null,
+        ...(profileFields ?? {}),
+        babies: body.data.babies?.length
+          ? {
+              create: body.data.babies.map((b) => ({
+                name: b.name ?? null,
+                birthDate: parseDate(b.birthDate) ?? null,
+                weekAtEntry: b.weekAtEntry ?? null,
+              })),
+            }
+          : undefined,
+        otherChildren: body.data.otherChildren?.length
+          ? {
+              create: body.data.otherChildren.map((c) => ({
+                name: c.name,
+                birthDate: new Date(c.birthDate),
+              })),
+            }
+          : undefined,
       },
       select: USER_SELECT,
     })

@@ -28,9 +28,6 @@ import { PostDetailScreen } from './components/post/PostDetailScreen';
 import { SocialOnboardingScreen } from './components/onboarding/SocialOnboardingScreen'
 import { SavedVersesScreen } from './components/home/SavedVersesScreen'
 import { ReviewsScreen } from './components/shopping/ReviewsScreen'
-import { CartScreen } from './components/shopping/CartScreen'
-import { CheckoutScreen } from './components/shopping/CheckoutScreen'
-import { OrderDetailScreen } from './components/shopping/OrderDetailScreen'
 import { CreatePostScreen } from './components/comunidade/CreatePostScreen'
 import { useSSE } from './lib/useSSE';
 // import { PushNotifications } from '@capacitor/push-notifications' // TODO (produção): FCM
@@ -81,11 +78,8 @@ export default function App() {
   const [openCommunityId,   setOpenCommunityId]   = useState<string | null>(null);
   const [pendingPostId,     setPendingPostId]     = useState<string | null>(null);
   const [chatTargetUserId,  setChatTargetUserId]  = useState<string | null>(null);
-  const [openProduct,       setOpenProduct]       = useState<{ type: 'affiliate' | 'own'; id: string } | null>(null);
-  const [openReviews,       setOpenReviews]       = useState<{ type: 'affiliate' | 'own'; id: string; name: string } | null>(null);
-  const [showCart,          setShowCart]          = useState(false);
-  const [showCheckout,      setShowCheckout]      = useState(false);
-  const [openOrderId,       setOpenOrderId]       = useState<string | null>(null);
+  const [openProduct,       setOpenProduct]       = useState<string | null>(null);
+  const [openReviews,       setOpenReviews]       = useState<{ id: string; name: string } | null>(null);
 
   // Bridge: any child can call useAppStore().openChatWith(userId) — App opens chat overlay
   useEffect(() => {
@@ -227,9 +221,7 @@ export default function App() {
     ),
     shopping: (
       <ShoppingScreen
-        onOpenProduct={(type, id) => setOpenProduct({ type, id })}
-        onOpenCart={() => setShowCart(true)}
-        onOpenOrder={(orderId) => setOpenOrderId(orderId)}
+        onOpenProduct={(id) => setOpenProduct(id)}
       />
     ),
   };
@@ -355,16 +347,11 @@ export default function App() {
         <div className="fixed inset-0 z-50 sm:bg-black/40 sm:flex sm:items-center sm:justify-center">
           <div className="w-full h-full sm:w-[390px] sm:h-[844px] bg-gradient-to-b from-[#F5EDE0] via-[#EAD8C8] to-[#D9C4AF] sm:rounded-[44px] sm:shadow-2xl overflow-hidden">
             <ProductDetailScreen
-              key={openProduct.id}
-              productType={openProduct.type}
-              productId={openProduct.id}
+              key={openProduct}
+              productId={openProduct}
               onBack={() => setOpenProduct(null)}
-              onOpenProduct={(type, id) => setOpenProduct({ type, id })}
-              onOpenReviews={(type, id, name) => setOpenReviews({ type, id, name })}
-              onOpenCart={() => {
-                setOpenProduct(null)
-                setShowCart(true)
-              }}
+              onOpenProduct={(id) => setOpenProduct(id)}
+              onOpenReviews={(id, name) => setOpenReviews({ id, name })}
             />
           </div>
         </div>
@@ -374,49 +361,10 @@ export default function App() {
         <div className="fixed inset-0 z-[55] sm:bg-black/40 sm:flex sm:items-center sm:justify-center">
           <div className="w-full h-full sm:w-[390px] sm:h-[844px] bg-gradient-to-b from-[#F5EDE0] via-[#EAD8C8] to-[#D9C4AF] sm:rounded-[44px] sm:shadow-2xl overflow-hidden">
             <ReviewsScreen
-              productType={openReviews.type}
+              productType="affiliate"
               productId={openReviews.id}
               productName={openReviews.name}
               onBack={() => setOpenReviews(null)}
-            />
-          </div>
-        </div>
-      )}
-
-      {showCart && (
-        <div className="fixed inset-0 z-50 sm:bg-black/40 sm:flex sm:items-center sm:justify-center">
-          <div className="w-full h-full sm:w-[390px] sm:h-[844px] bg-gradient-to-b from-[#F5EDE0] via-[#EAD8C8] to-[#D9C4AF] sm:rounded-[44px] sm:shadow-2xl overflow-hidden">
-            <CartScreen
-              onBack={() => setShowCart(false)}
-              onCheckout={() => {
-                setShowCart(false)
-                setShowCheckout(true)
-              }}
-            />
-          </div>
-        </div>
-      )}
-
-      {showCheckout && (
-        <div className="fixed inset-0 z-50 sm:bg-black/40 sm:flex sm:items-center sm:justify-center">
-          <div className="w-full h-full sm:w-[390px] sm:h-[844px] bg-gradient-to-b from-[#F5EDE0] via-[#EAD8C8] to-[#D9C4AF] sm:rounded-[44px] sm:shadow-2xl overflow-hidden">
-            <CheckoutScreen
-              onBack={() => setShowCheckout(false)}
-              onOrderComplete={(orderId) => {
-                setShowCheckout(false)
-                setOpenOrderId(orderId)
-              }}
-            />
-          </div>
-        </div>
-      )}
-
-      {openOrderId && (
-        <div className="fixed inset-0 z-50 sm:bg-black/40 sm:flex sm:items-center sm:justify-center">
-          <div className="w-full h-full sm:w-[390px] sm:h-[844px] bg-gradient-to-b from-[#F5EDE0] via-[#EAD8C8] to-[#D9C4AF] sm:rounded-[44px] sm:shadow-2xl overflow-hidden">
-            <OrderDetailScreen
-              orderId={openOrderId}
-              onBack={() => setOpenOrderId(null)}
             />
           </div>
         </div>

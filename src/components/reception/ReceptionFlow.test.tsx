@@ -4,10 +4,10 @@ import { describe, it, expect, vi } from 'vitest'
 import { ReceptionFlow } from './ReceptionFlow'
 import { useAppStore } from '../../store/useAppStore'
 
-vi.mock('./beats/Capitulo1', () => ({
-  Capitulo1: ({ onComplete }: { onComplete: (d: unknown) => void }) => (
-    <button type="button" onClick={() => onComplete({ motherName: 'Ana', phase: 'pregnant', week: 28, otherChildren: [] })}>
-      done-cap1
+vi.mock('./beats/SaraBoasVindas', () => ({
+  SaraBoasVindas: ({ onComplete }: { onComplete: () => void }) => (
+    <button type="button" onClick={() => onComplete()}>
+      done-boas-vindas
     </button>
   ),
 }))
@@ -27,12 +27,12 @@ describe('ReceptionFlow', () => {
     expect(screen.getByText(/Oi, Ana/i)).toBeInTheDocument()
   })
 
-  it('advances from SaraAparece to Capitulo1', async () => {
+  it('advances from SaraAparece to SaraBoasVindas', async () => {
     useAppStore.setState({ motherName: 'Ana' })
     const user = userEvent.setup()
     render(<ReceptionFlow />)
     await user.click(screen.getByRole('button', { name: /começar/i }))
     await user.click(screen.getByRole('button', { name: /vamos lá/i }))
-    expect(screen.getByText('done-cap1')).toBeInTheDocument()
+    expect(screen.getByText('done-boas-vindas')).toBeInTheDocument()
   })
 })

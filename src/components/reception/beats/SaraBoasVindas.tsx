@@ -1,19 +1,14 @@
-import { useEffect, type FormEvent, useState } from 'react'
+import { useEffect, useRef, useState, type FormEvent } from 'react'
 import { OrbeVisual } from '../OrbeVisual'
 import { ProgressBar } from '../ProgressBar'
-import {
-  useSaraNarration,
-  receptionDataFromCapitulo2,
-  CAP2_CONFIG,
-  type Capitulo2Fatos,
-} from '../hooks/useSaraNarration'
-import type { ReceptionData } from '../../../types/reception'
+import { useSaraNarration, WELCOME_CONFIG } from '../hooks/useSaraNarration'
 
-interface Capitulo2Props {
-  onComplete: (data: Partial<ReceptionData>) => void
+interface Props {
+  motherName: string
+  onComplete: () => void
 }
 
-export function Capitulo2({ onComplete }: Capitulo2Props) {
+export function SaraBoasVindas({ motherName: _motherName, onComplete }: Props) {
   const {
     state,
     amplitude,
@@ -24,9 +19,10 @@ export function Capitulo2({ onComplete }: Capitulo2Props) {
   } = useSaraNarration()
 
   const [textInput, setTextInput] = useState('')
+  const completedRef = useRef(false)
 
   useEffect(() => {
-    void startConversation(CAP2_CONFIG)
+    void startConversation(WELCOME_CONFIG)
     return () => {
       stop()
     }
@@ -34,8 +30,9 @@ export function Capitulo2({ onComplete }: Capitulo2Props) {
   }, [])
 
   useEffect(() => {
-    if (collectedFatos) {
-      onComplete(receptionDataFromCapitulo2(collectedFatos as Capitulo2Fatos))
+    if (collectedFatos && !completedRef.current) {
+      completedRef.current = true
+      onComplete()
     }
   }, [collectedFatos, onComplete])
 
@@ -48,36 +45,36 @@ export function Capitulo2({ onComplete }: Capitulo2Props) {
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-sara-cream">
+    <div className="min-h-screen flex flex-col bg-mt-cream">
       <div className="px-6 pt-8">
-        <ProgressBar percent={50} />
+        <ProgressBar percent={80} />
       </div>
 
       <div className="flex-1 flex flex-col items-center justify-center gap-6 px-6">
         <OrbeVisual amplitude={amplitude} state={state} size="md" />
 
         {state === 'connecting' && (
-          <p className="text-[13px] text-graphite-muted">Conectando…</p>
+          <p className="text-[13px] text-mt-muted">Conectando…</p>
         )}
 
         {state === 'error' && (
           <div className="flex flex-col items-center gap-3">
-            <p className="text-[13px] text-sara-terracotta text-center max-w-xs">
-              Não foi possível conectar com a Sara. Verifique as permissões de microfone e tente novamente.
+            <p className="text-[13px] text-mt-rose-dark text-center max-w-xs">
+              Não foi possível conectar. Verifique as permissões de microfone e tente novamente.
             </p>
             <button
               type="button"
-              onClick={() => void startConversation(CAP2_CONFIG)}
-              className="px-4 py-2 rounded-2xl bg-sara-gold text-white text-xs font-semibold"
+              onClick={() => void startConversation(WELCOME_CONFIG)}
+              className="px-4 py-2 rounded-2xl bg-mt-rose text-white text-xs font-semibold"
             >
               Tentar de novo
             </button>
             <button
               type="button"
-              onClick={() => { stop(); onComplete({}) }}
-              className="px-4 py-2 rounded-2xl border border-graphite-muted text-graphite-muted text-xs"
+              onClick={() => { stop(); onComplete() }}
+              className="px-4 py-2 rounded-2xl border border-mt-linen text-mt-muted text-xs"
             >
-              Pular esta etapa
+              Pular
             </button>
           </div>
         )}
@@ -91,13 +88,13 @@ export function Capitulo2({ onComplete }: Capitulo2Props) {
             onChange={(e) => setTextInput(e.target.value)}
             placeholder="ou digite pra Sara…"
             aria-label="Digite sua resposta"
-            className="flex-1 px-4 py-3 rounded-2xl bg-white border border-sara-linen text-sm text-graphite placeholder:text-graphite-muted focus:outline-none focus:border-sara-gold"
+            className="flex-1 px-4 py-3 rounded-2xl bg-white border border-mt-linen text-sm text-mt-charcoal placeholder:text-mt-muted focus:outline-none focus:border-mt-rose"
           />
           <button
             type="submit"
             disabled={!textInput.trim() || (state !== 'listening' && state !== 'error')}
             aria-label="Enviar"
-            className="px-4 py-3 rounded-2xl bg-sara-gold text-white text-sm font-semibold disabled:opacity-40"
+            className="px-4 py-3 rounded-2xl bg-mt-rose text-white text-sm font-semibold disabled:opacity-40"
           >
             →
           </button>

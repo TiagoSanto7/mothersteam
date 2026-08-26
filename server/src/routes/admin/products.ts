@@ -15,7 +15,14 @@ const productSchema = z.object({
   name: z.string().min(1).max(200),
   description: z.string().max(2000),
   price: z.number().positive(),
-  affiliateUrl: z.string().url().optional().nullable(),
+  mercadoLivreUrl: z.string()
+    .url('Deve ser uma URL válida')
+    .regex(
+      /(?:mercadolivre\.com|mercadolibre\.com|produto\.mercadolivre|articulo\.mercadolibre)/i,
+      'URL deve ser do Mercado Livre'
+    )
+    .optional()
+    .nullable(),
   images: z.array(z.string().url()).max(10).optional(),
   phases: z.array(z.enum(VALID_PHASES)).optional(),
   stock: z.number().int().min(0).optional().nullable(),
@@ -141,7 +148,7 @@ export default async function adminProductsRoutes(fastify: FastifyInstance) {
     descricao: z.string().max(2000).optional().default(''),
     preco: z.number({ invalid_type_error: 'valor inválido' }).positive(),
     categoria_slug: z.string().min(1),
-    url_afiliado: z.string().url('deve começar com http').optional().or(z.literal('')).transform(v => v || null),
+    url_mercadolivre: z.string().url('deve começar com http').optional().or(z.literal('')).transform(v => v || null),
     fases: z.string().optional().transform(v =>
       v ? v.split(',').map(s => s.trim()).filter(Boolean) : []
     ),
@@ -165,7 +172,7 @@ export default async function adminProductsRoutes(fastify: FastifyInstance) {
     const categoryBySlug = new Map(allCategories.map(c => [c.slug, c.id]))
 
     const toCreate: {
-      name: string; description: string; price: number; affiliateUrl: string | null;
+      name: string; description: string; price: number; mercadoLivreUrl: string | null;
       phases: string[]; stock: number | null; featured: boolean;
       images: string[]; active: boolean; categoryId: string;
     }[] = []
@@ -202,7 +209,7 @@ export default async function adminProductsRoutes(fastify: FastifyInstance) {
         name: parsed.data.nome,
         description: parsed.data.descricao,
         price: Math.round(parsed.data.preco * 100) / 100,
-        affiliateUrl: parsed.data.url_afiliado ?? null,
+        mercadoLivreUrl: parsed.data.url_mercadolivre ?? null,
         phases: parsed.data.fases,
         stock: parsed.data.estoque ?? null,
         featured: parsed.data.destaque,
