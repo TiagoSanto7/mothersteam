@@ -4,8 +4,9 @@ import { buildSaraSystemPrompt, buildSaraContextBlock } from '../utils/sara-cont
 
 const ELEVENLABS_API_KEY = process.env.ELEVENLABS_API_KEY
 const ELEVENLABS_AGENT_ID = process.env.ELEVENLABS_AGENT_ID
+const OPENAI_API_KEY = process.env.OPENAI_API_KEY
 
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
+const openai = new OpenAI({ apiKey: OPENAI_API_KEY })
 
 interface ChatMessage {
   role: 'user' | 'assistant'
@@ -20,6 +21,10 @@ export default async function maeIARoutes(fastify: FastifyInstance) {
     '/chat',
     { config: { rateLimit: { max: 20, timeWindow: '1 minute' } } },
     async (request, reply) => {
+      if (!OPENAI_API_KEY) {
+        return reply.status(503).send({ error: 'Sara não configurada' })
+      }
+
       const messages = request.body?.messages
       if (!Array.isArray(messages) || messages.length === 0) {
         return reply.status(400).send({ error: 'messages required' })
@@ -73,6 +78,7 @@ export default async function maeIARoutes(fastify: FastifyInstance) {
         })
 
         for await (const chunk of stream) {
+          if (reply.raw.destroyed) break
           const text = chunk.choices[0]?.delta?.content
           if (text) {
             reply.raw.write(`data: ${JSON.stringify({ text })}\n\n`)
@@ -81,6 +87,8 @@ export default async function maeIARoutes(fastify: FastifyInstance) {
       } catch (err) {
         fastify.log.error(`OpenAI stream error: ${err}`)
         reply.raw.write(`data: ${JSON.stringify({ error: 'Erro ao conectar com a Sara. Tente novamente.' })}\n\n`)
+        reply.raw.end()
+        return
       }
 
       reply.raw.write('data: [DONE]\n\n')

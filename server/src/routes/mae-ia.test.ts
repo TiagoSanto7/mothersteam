@@ -1,6 +1,14 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { describe, it, expect, vi } from 'vitest'
 import Fastify from 'fastify'
 import maeIARoutes from './mae-ia'
+
+// vi.hoisted runs before vi.mock hoisting, so mockCreate and env vars are set first
+const { mockCreate } = vi.hoisted(() => {
+  // Ensure the env var is present before the module-level const is read
+  process.env.OPENAI_API_KEY = 'test-openai-key'
+  const mockCreate = vi.fn()
+  return { mockCreate }
+})
 
 // Mock OpenAI SDK
 vi.mock('openai', () => {
@@ -11,11 +19,12 @@ vi.mock('openai', () => {
       yield { choices: [{ delta: { content: null } }] }
     },
   }
+  mockCreate.mockResolvedValue(mockStream)
   return {
     default: vi.fn().mockImplementation(() => ({
       chat: {
         completions: {
-          create: vi.fn().mockResolvedValue(mockStream),
+          create: mockCreate,
         },
       },
     })),
@@ -84,5 +93,18 @@ describe('POST /mae-ia/chat', () => {
       payload: { messages: [{ role: 'user', content: 'Oi' }] },
     })
     expect(res.body).not.toContain('"text":null')
+  })
+
+  it('escreve frame de erro quando OpenAI falha e NÃO escreve [DONE]', async () => {
+    mockCreate.mockRejectedValueOnce(new Error('OpenAI down'))
+    const app = await buildApp()
+    const res = await app.inject({
+      method: 'POST',
+      url: '/mae-ia/chat',
+      headers: { Authorization: 'Bearer fake-token' },
+      payload: { messages: [{ role: 'user', content: 'Oi' }] },
+    })
+    expect(res.body).toContain('"error"')
+    expect(res.body).not.toContain('[DONE]')
   })
 })
