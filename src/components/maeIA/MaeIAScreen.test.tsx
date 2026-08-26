@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { render, screen, fireEvent, waitFor, act } from '@testing-library/react'
+import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import { MaeIAScreen } from './MaeIAScreen'
 
 // ---------- mocks de módulo ----------
@@ -16,18 +16,10 @@ vi.mock('../../store/useAppStore', () => {
 })
 
 // apiStream e apiFetch controláveis por teste
-const mockApiStream = vi.fn<
-  [
-    string,
-    unknown,
-    (text: string) => void,
-    () => void,
-    (msg: string) => void,
-  ],
-  Promise<void>
->()
-
-const mockApiFetch = vi.fn()
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const mockApiStream = vi.fn<any>()
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const mockApiFetch = vi.fn<any>()
 
 vi.mock('../../lib/api', () => ({
   apiFetch: (...args: unknown[]) => mockApiFetch(...args),
@@ -43,21 +35,22 @@ function renderScreen() {
 
 /** Simula um apiStream que entrega chunks e termina com onDone. */
 function streamSuccess(chunks: string[]) {
-  mockApiStream.mockImplementation(
-    async (_path, _body, onChunk, onDone) => {
-      for (const chunk of chunks) onChunk(chunk)
-      onDone()
-    },
-  )
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  mockApiStream.mockImplementation(async (...args: any[]) => {
+    const onChunk = args[2] as (t: string) => void
+    const onDone = args[3] as () => void
+    for (const chunk of chunks) onChunk(chunk)
+    onDone()
+  })
 }
 
 /** Simula um apiStream que entrega um frame de erro SSE. */
 function streamError(msg: string) {
-  mockApiStream.mockImplementation(
-    async (_path, _body, _onChunk, _onDone, onError) => {
-      onError(msg)
-    },
-  )
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  mockApiStream.mockImplementation(async (...args: any[]) => {
+    const onError = args[4] as (m: string) => void
+    onError(msg)
+  })
 }
 
 beforeEach(() => {
@@ -89,7 +82,8 @@ describe('MaeIAScreen — envio de mensagem de texto', () => {
 
     await waitFor(() => expect(mockApiStream).toHaveBeenCalledTimes(1))
 
-    const [path, body] = mockApiStream.mock.calls[0]
+    const path = mockApiStream.mock.calls[0][0] as string
+    const body = mockApiStream.mock.calls[0][1]
     expect(path).toBe('/mae-ia/chat')
     expect((body as { messages: unknown[] }).messages).toEqual(
       expect.arrayContaining([
@@ -168,10 +162,9 @@ describe('MaeIAScreen — quick chips', () => {
 
     await waitFor(() => expect(mockApiStream).toHaveBeenCalledTimes(1))
 
-    const [, body] = mockApiStream.mock.calls[0]
-    expect((body as { messages: { content: string }[] }).messages.at(-1)?.content).toMatch(
-      /cólica/i,
-    )
+    const body = mockApiStream.mock.calls[0][1] as { messages: { content: string }[] }
+    const msgs = body.messages
+    expect(msgs[msgs.length - 1]?.content).toMatch(/cólica/i)
   })
 })
 
@@ -269,8 +262,7 @@ describe('MaeIAScreen — histórico de sessão', () => {
     fireEvent.keyDown(input, { key: 'Enter' })
     await waitFor(() => expect(mockApiStream).toHaveBeenCalledTimes(2))
 
-    const [, body] = mockApiStream.mock.calls[1]
-    const msgs = (body as { messages: { role: string; content: string }[] }).messages
+    const msgs = (mockApiStream.mock.calls[1][1] as { messages: { role: string; content: string }[] }).messages
     expect(msgs.some((m) => m.content === 'primeira pergunta')).toBe(true)
     expect(msgs.some((m) => m.content === 'segunda pergunta')).toBe(true)
   })
@@ -284,8 +276,7 @@ describe('MaeIAScreen — histórico de sessão', () => {
     fireEvent.keyDown(input, { key: 'Enter' })
     await waitFor(() => expect(mockApiStream).toHaveBeenCalledTimes(1))
 
-    const [, body] = mockApiStream.mock.calls[0]
-    const msgs = (body as { messages: { content: string }[] }).messages
+    const msgs = (mockApiStream.mock.calls[0][1] as { messages: { content: string }[] }).messages
     expect(msgs.some((m) => /Sou a Sara/i.test(m.content))).toBe(false)
   })
 })
