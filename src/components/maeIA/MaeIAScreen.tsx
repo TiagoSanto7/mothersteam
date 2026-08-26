@@ -2,13 +2,14 @@ import { useState, useRef, useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { Send, ChevronLeft, Mic, MicOff, Phone, PhoneOff } from 'lucide-react';
 import { Conversation } from '@elevenlabs/client';
-import { apiFetch } from '../../lib/api';
+import { apiFetch, apiStream } from '../../lib/api';
 
 interface Message {
   id: string;
   role: 'user' | 'assistant';
   text: string;
   isNew?: boolean;
+  isStreaming?: boolean;
 }
 
 type ConvStatus = 'idle' | 'connecting' | 'listening' | 'processing' | 'speaking' | 'error';
@@ -21,11 +22,11 @@ const QUICK_CHIPS = [
 ];
 
 const STATUS_LABELS: Record<ConvStatus, string> = {
-  idle: 'Toque em Conectar para falar com a MãeIA',
+  idle: 'Toque em Conectar para falar com a Sara',
   connecting: 'Conectando...',
   listening: 'Ouvindo você...',
   processing: 'Processando...',
-  speaking: 'MãeIA respondendo...',
+  speaking: 'Sara respondendo...',
   error: 'Erro na conexão',
 };
 
@@ -38,7 +39,25 @@ const STATUS_COLORS: Record<ConvStatus, string> = {
   error: 'text-red-500',
 };
 
-function AssistantMessage({ text, isNew }: { text: string; isNew?: boolean }) {
+function AssistantMessage({ text, isNew, isStreaming }: { text: string; isNew?: boolean; isStreaming?: boolean }) {
+  if (isStreaming) {
+    if (!text) {
+      return (
+        <span className="flex gap-1 items-center py-0.5">
+          {[0, 1, 2].map((i) => (
+            <motion.span
+              key={i}
+              className="w-1.5 h-1.5 rounded-full bg-mt-muted"
+              animate={{ opacity: [0.3, 1, 0.3] }}
+              transition={{ repeat: Infinity, duration: 1, delay: i * 0.2 }}
+            />
+          ))}
+        </span>
+      );
+    }
+    return <span>{text}</span>;
+  }
+
   const sentences = text.split(/[.!?]+\s+/).filter(Boolean);
   if (!isNew || sentences.length <= 1) {
     return <span>{text}</span>;
@@ -69,21 +88,24 @@ export function MaeIAScreen({ onBack }: MaeIAScreenProps = {}) {
     {
       id: '0',
       role: 'assistant',
-      text: 'Olá! Sou a MãeIA, sua assistente de saúde materno-infantil. Conecte-se para conversar por voz, ou digite sua pergunta abaixo. 💜',
+      text: 'Olá! Sou a Sara, sua assistente de saúde materno-infantil. Conecte-se para conversar por voz, ou digite sua pergunta abaixo. 💜',
     },
   ]);
   const [input, setInput] = useState('');
   const [status, setStatus] = useState<ConvStatus>('idle');
   const [isMuted, setIsMuted] = useState(false);
+  const [isSendingText, setIsSendingText] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
   const convRef = useRef<Conversation | null>(null);
+  const messagesRef = useRef<Message[]>(messages);
   const isConnected = status !== 'idle' && status !== 'error' && status !== 'connecting';
+
+  useEffect(() => { messagesRef.current = messages; }, [messages]);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
-  // Cleanup on unmount
   useEffect(() => {
     return () => { convRef.current?.endSession().catch(() => {}); };
   }, []);
@@ -99,18 +121,14 @@ export function MaeIAScreen({ onBack }: MaeIAScreenProps = {}) {
     if (convRef.current) return;
     setStatus('connecting');
 
-    // Pre-flight: probe the mic BEFORE hitting the backend. Isolates
-    // "mic permission problem" from "ElevenLabs/network problem" and gives
-    // the user a specific, actionable error message.
     try {
       if (!navigator.mediaDevices?.getUserMedia) {
         throw new Error('getUserMedia unavailable in this WebView');
       }
       const probe = await navigator.mediaDevices.getUserMedia({ audio: true });
-      // Release immediately so ElevenLabs can claim the mic without conflict.
       probe.getTracks().forEach((t) => t.stop());
     } catch (permErr) {
-      console.error('[MãeIA] microfone bloqueado:', permErr);
+      console.error('[Sara] microfone bloqueado:', permErr);
       convRef.current = null;
       setStatus('error');
       addMessage(
@@ -132,7 +150,7 @@ export function MaeIAScreen({ onBack }: MaeIAScreenProps = {}) {
           setStatus('idle');
         },
         onError: (error) => {
-          console.error('[MãeIA] erro de sessão:', error);
+          console.error('[Sara] erro de sessão:', error);
           convRef.current = null;
           setStatus('error');
           setTimeout(() => setStatus('idle'), 3000);
@@ -150,13 +168,13 @@ export function MaeIAScreen({ onBack }: MaeIAScreenProps = {}) {
 
       convRef.current = conv;
     } catch (err) {
-      console.error('[MãeIA] falha ao iniciar sessão:', err);
+      console.error('[Sara] falha ao iniciar sessão:', err);
       convRef.current = null;
       setStatus('error');
       setTimeout(() => setStatus('idle'), 3000);
       addMessage(
         'assistant',
-        'Não foi possível conectar à MãeIA. Verifique sua conexão e tente novamente.',
+        'Não foi possível conectar à Sara. Verifique sua conexão e tente novamente.',
       );
     }
   }
@@ -174,17 +192,54 @@ export function MaeIAScreen({ onBack }: MaeIAScreenProps = {}) {
     setIsMuted(newMuted);
   }
 
-  function sendText(text: string) {
+  async function sendText(text: string) {
     const trimmed = text.trim();
-    if (!trimmed) return;
+    if (!trimmed || isSendingText) return;
+
     addMessage('user', trimmed);
     setInput('');
-    // Fallback static replies when not connected via voice
-    if (!isConnected) {
-      setTimeout(() => {
-        addMessage('assistant', 'Para obter uma resposta personalizada da MãeIA, conecte-se usando o botão de voz. Para questões urgentes de saúde, consulte sempre seu médico. 💜');
-      }, 800);
-    }
+    setIsSendingText(true);
+
+    const streamingId = `${Date.now()}-sara`;
+    setMessages((prev) => [
+      ...prev,
+      { id: streamingId, role: 'assistant', text: '', isStreaming: true },
+    ]);
+
+    const history = [
+      ...messagesRef.current
+        .filter((m) => m.id !== '0')
+        .map((m) => ({ role: m.role as 'user' | 'assistant', content: m.text })),
+      { role: 'user' as const, content: trimmed },
+    ].slice(-20);
+
+    await apiStream(
+      '/mae-ia/chat',
+      { messages: history },
+      (chunk) => {
+        setMessages((prev) =>
+          prev.map((m) =>
+            m.id === streamingId ? { ...m, text: m.text + chunk } : m
+          )
+        );
+      },
+      () => {
+        setMessages((prev) =>
+          prev.map((m) =>
+            m.id === streamingId ? { ...m, isStreaming: false, isNew: false } : m
+          )
+        );
+        setIsSendingText(false);
+      },
+      (errMsg) => {
+        setMessages((prev) =>
+          prev.map((m) =>
+            m.id === streamingId ? { ...m, text: errMsg, isStreaming: false } : m
+          )
+        );
+        setIsSendingText(false);
+      }
+    );
   }
 
   const pulsing = status === 'listening' || status === 'speaking';
@@ -202,7 +257,7 @@ export function MaeIAScreen({ onBack }: MaeIAScreenProps = {}) {
             <ChevronLeft size={18} className="text-mt-charcoal" />
           </button>
         )}
-        <h1 className={`text-base font-semibold font-serif text-mt-charcoal${onBack ? ' pl-10' : ''}`}>MãeIA</h1>
+        <h1 className={`text-base font-semibold font-serif text-mt-charcoal${onBack ? ' pl-10' : ''}`}>Sara</h1>
         <p className={`text-xs mt-0.5 ${STATUS_COLORS[status]}${onBack ? ' pl-10' : ''}`}>
           {STATUS_LABELS[status]}
         </p>
@@ -234,7 +289,7 @@ export function MaeIAScreen({ onBack }: MaeIAScreenProps = {}) {
               }`}
             >
               {msg.role === 'assistant' ? (
-                <AssistantMessage text={msg.text} isNew={msg.isNew} />
+                <AssistantMessage text={msg.text} isNew={msg.isNew} isStreaming={msg.isStreaming} />
               ) : (
                 msg.text
               )}
@@ -244,7 +299,7 @@ export function MaeIAScreen({ onBack }: MaeIAScreenProps = {}) {
         <div ref={bottomRef} />
       </div>
 
-      {/* Voice status indicator — pulse maior + ring quando ouvindo/falando */}
+      {/* Voice status pulse */}
       {pulsing && (
         <div className="flex items-center justify-center py-3 flex-shrink-0">
           <div className="relative flex items-center justify-center">
@@ -269,7 +324,6 @@ export function MaeIAScreen({ onBack }: MaeIAScreenProps = {}) {
       {/* Input bar */}
       <div className="px-4 pb-4 pt-2 bg-mt-linen/80 border-t border-mt-linen/60 flex-shrink-0">
         <div className="flex items-center gap-2">
-          {/* Voice connect/disconnect button */}
           <button
             onClick={isConnected ? disconnectVoice : connectVoice}
             disabled={status === 'connecting'}
@@ -281,7 +335,6 @@ export function MaeIAScreen({ onBack }: MaeIAScreenProps = {}) {
             {isConnected ? <PhoneOff size={16} /> : <Phone size={16} />}
           </button>
 
-          {/* Mute toggle — only when connected */}
           {isConnected && (
             <button
               onClick={toggleMute}
@@ -294,20 +347,19 @@ export function MaeIAScreen({ onBack }: MaeIAScreenProps = {}) {
             </button>
           )}
 
-          {/* Text input */}
           <div className="flex-1 flex items-center gap-2 bg-white rounded-2xl px-3 py-2">
             <input
               type="text"
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && sendText(input)}
-              placeholder="Pergunte à MãeIA…"
-              aria-label="Mensagem para a MãeIA"
+              placeholder="Pergunte à Sara…"
+              aria-label="Mensagem para a Sara"
               className="flex-1 bg-transparent text-sm text-mt-charcoal placeholder:text-mt-muted outline-none"
             />
             <motion.button
               onClick={() => sendText(input)}
-              disabled={!input.trim()}
+              disabled={!input.trim() || isSendingText}
               aria-label="Enviar mensagem"
               whileTap={{ scale: 0.97 }}
               transition={{ duration: 0.15, ease: 'easeOut' }}
