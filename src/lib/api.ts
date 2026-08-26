@@ -108,3 +108,70 @@ export async function uploadImage(file: File, accessToken: string | null): Promi
   const data = (await res.json()) as { url: string }
   return data.url
 }
+
+/**
+ * Faz POST e consome a resposta como SSE stream.
+ * Chama onChunk para cada token recebido, onDone quando termina, onError em falha.
+ */
+export async function apiStream(
+  path: string,
+  body: unknown,
+  onChunk: (text: string) => void,
+  onDone: () => void,
+  onError: (msg: string) => void,
+): Promise<void> {
+  const token = useAppStore.getState().accessToken
+  const headers: Record<string, string> = { 'Content-Type': 'application/json' }
+  if (token) headers['Authorization'] = `Bearer ${token}`
+
+  let res: Response
+  try {
+    res = await fetch(`${BASE}${path}`, {
+      method: 'POST',
+      headers,
+      credentials: 'include',
+      body: JSON.stringify(body),
+    })
+  } catch {
+    onError('Sem conexão. Verifique sua internet e tente novamente.')
+    return
+  }
+
+  if (!res.ok || !res.body) {
+    onError('Erro ao conectar com a Sara. Tente novamente.')
+    return
+  }
+
+  const reader = res.body.getReader()
+  const decoder = new TextDecoder()
+
+  try {
+    while (true) {
+      const { done, value } = await reader.read()
+      if (done) break
+      const lines = decoder.decode(value, { stream: true }).split('\n')
+      for (const line of lines) {
+        if (!line.startsWith('data: ')) continue
+        const data = line.slice(6).trim()
+        if (data === '[DONE]') {
+          onDone()
+          return
+        }
+        try {
+          const parsed = JSON.parse(data) as { text?: string; error?: string }
+          if (parsed.error) {
+            onError(parsed.error)
+            return
+          }
+          if (parsed.text) onChunk(parsed.text)
+        } catch {
+          // chunk de parsing inválido — ignorar
+        }
+      }
+    }
+  } finally {
+    reader.releaseLock()
+  }
+
+  onDone()
+}
