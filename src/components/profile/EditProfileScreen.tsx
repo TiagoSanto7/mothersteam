@@ -109,12 +109,12 @@ export function EditProfileScreen({ onBack }: EditProfileScreenProps) {
   }
 
   return (
-    <div className="flex flex-col w-full h-full sm:w-[390px] sm:h-[844px] bg-gradient-to-b from-[#F5EDE0] via-[#EAD8C8] to-[#D9C4AF] sm:rounded-[44px] sm:shadow-2xl overflow-hidden">
+    <div className="flex flex-col w-full h-full sm:w-[390px] sm:h-[844px] bg-mt-cream sm:rounded-[44px] sm:shadow-2xl overflow-hidden">
       <div className="flex items-center gap-3 px-4 pt-6 pb-3 flex-shrink-0">
-        <button onClick={onBack} aria-label="Voltar" className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-sara-linen">
-          <ChevronLeft size={20} className="text-graphite" />
+        <button onClick={onBack} aria-label="Voltar" className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-mt-linen">
+          <ChevronLeft size={20} className="text-mt-charcoal" />
         </button>
-        <h1 className="text-base font-semibold text-graphite">Editar perfil</h1>
+        <h1 className="text-base font-semibold text-mt-charcoal">Editar perfil</h1>
       </div>
 
       <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto px-4 flex flex-col gap-4">
@@ -153,7 +153,7 @@ export function EditProfileScreen({ onBack }: EditProfileScreenProps) {
               )}
             </button>
           </div>
-          <p className="text-[10px] text-graphite-muted">Foto de perfil</p>
+          <p className="text-[10px] text-mt-muted">Foto de perfil</p>
           <input
             ref={fileInputRef}
             type="file"
@@ -181,27 +181,27 @@ export function EditProfileScreen({ onBack }: EditProfileScreenProps) {
         {/* Read-only username */}
         {username && (
           <div className="flex flex-col gap-1">
-            <label className="text-xs font-medium text-graphite-muted">Nome de usuário</label>
-            <div className="w-full px-4 py-3 rounded-2xl bg-white/60 border border-sara-linen text-sm text-graphite-muted select-none cursor-default">
+            <label className="text-xs font-medium text-mt-muted">Nome de usuário</label>
+            <div className="w-full px-4 py-3 rounded-2xl bg-white/60 border border-mt-linen text-sm text-mt-muted select-none cursor-default">
               @{username}
             </div>
-            <p className="text-[10px] text-graphite-muted pl-1">O nome de usuário não pode ser alterado aqui.</p>
+            <p className="text-[10px] text-mt-muted pl-1">O nome de usuário não pode ser alterado aqui.</p>
           </div>
         )}
 
         <div className="flex flex-col gap-1">
-          <label htmlFor="edit-name" className="text-xs font-medium text-graphite-muted">Nome</label>
+          <label htmlFor="edit-name" className="text-xs font-medium text-mt-muted">Nome</label>
           <input
             id="edit-name"
             value={name}
             onChange={(e) => setName(e.target.value)}
             maxLength={80}
-            className="w-full px-4 py-3 rounded-2xl bg-white border border-sara-linen text-sm text-graphite focus:outline-none focus:border-sara-gold"
+            className="w-full px-4 py-3 rounded-2xl bg-white border border-mt-linen text-sm text-mt-charcoal focus:outline-none focus:border-mt-rose"
           />
         </div>
 
         <div className="flex flex-col gap-1">
-          <label htmlFor="edit-bio" className="text-xs font-medium text-graphite-muted">Bio</label>
+          <label htmlFor="edit-bio" className="text-xs font-medium text-mt-muted">Bio</label>
           <textarea
             id="edit-bio"
             value={bio}
@@ -209,19 +209,19 @@ export function EditProfileScreen({ onBack }: EditProfileScreenProps) {
             maxLength={280}
             rows={4}
             placeholder="Como você se sente hoje na maternidade?"
-            className="w-full px-4 py-3 rounded-2xl bg-white border border-sara-linen text-sm text-graphite resize-none focus:outline-none focus:border-sara-gold"
+            className="w-full px-4 py-3 rounded-2xl bg-white border border-mt-linen text-sm text-mt-charcoal resize-none focus:outline-none focus:border-mt-rose"
           />
-          <span aria-live="polite" className="text-[10px] text-graphite-muted self-end">{bio.length}/280</span>
+          <span aria-live="polite" className="text-[10px] text-mt-muted self-end">{bio.length}/280</span>
         </div>
 
         {error && (
-          <p role="alert" className="text-xs text-sara-terracotta">{error}</p>
+          <p role="alert" className="text-xs text-mt-rose-dark">{error}</p>
         )}
 
         <button
           type="submit"
           disabled={!valid || isPending}
-          className="w-full py-3 rounded-2xl bg-sara-gold text-white text-sm font-semibold active:scale-95 transition-transform disabled:opacity-50 mt-2"
+          className="w-full py-3 rounded-2xl bg-mt-rose text-white text-sm font-semibold active:scale-95 transition-transform disabled:opacity-50 mt-2"
         >
           {isPending ? 'Salvando…' : 'Salvar'}
         </button>

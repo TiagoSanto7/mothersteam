@@ -108,11 +108,11 @@ export function MentionInput({ value, onChange, onSubmit, placeholder, rows = 3,
               <button
                 type="button"
                 onMouseDown={(e) => { e.preventDefault(); applySuggestion(u); }}
-                className="w-full flex items-center gap-2 px-3 py-2 hover:bg-sara-linen text-left"
+                className="w-full flex items-center gap-2 px-3 py-2 hover:bg-mt-linen text-left"
               >
-                <span className="text-sm font-medium text-graphite">{u.name}</span>
+                <span className="text-sm font-medium text-mt-charcoal">{u.name}</span>
                 {u.username && (
-                  <span className="text-xs text-graphite-muted">@{u.username}</span>
+                  <span className="text-xs text-mt-muted">@{u.username}</span>
                 )}
               </button>
             </li>

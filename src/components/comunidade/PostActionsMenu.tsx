@@ -79,7 +79,7 @@ export function PostActionsMenu({ postId, isOwner, onDeleted }: PostActionsMenuP
           e.stopPropagation();
           setOpen((prev) => !prev);
         }}
-        className="w-6 h-6 flex items-center justify-center rounded-full text-graphite-muted hover:bg-sara-linen/60 transition-colors"
+        className="w-6 h-6 flex items-center justify-center rounded-full text-mt-muted hover:bg-mt-linen/60 transition-colors"
       >
         <MoreHorizontal size={16} />
       </button>
@@ -96,10 +96,10 @@ export function PostActionsMenu({ postId, isOwner, onDeleted }: PostActionsMenuP
           {/* Popover */}
           <div
             role="menu"
-            className="absolute right-0 top-7 z-20 min-w-[180px] bg-white rounded-2xl shadow-lg border border-sara-linen/60 py-1 overflow-hidden"
+            className="absolute right-0 top-7 z-20 min-w-[180px] bg-white rounded-2xl shadow-lg border border-mt-linen/60 py-1 overflow-hidden"
           >
             {reported ? (
-              <p className="text-xs text-graphite-muted text-center px-4 py-3">
+              <p className="text-xs text-mt-muted text-center px-4 py-3">
                 Obrigada. Nosso time vai revisar.
               </p>
             ) : isOwner ? (
@@ -109,12 +109,12 @@ export function PostActionsMenu({ postId, isOwner, onDeleted }: PostActionsMenuP
                   type="button"
                   onClick={(e) => { e.stopPropagation(); setDeleteError(null); deleteMutation.mutate(); }}
                   disabled={deleteMutation.isPending}
-                  className="w-full text-left px-4 py-3 text-sm text-sara-terracotta hover:bg-sara-linen/40 transition-colors disabled:opacity-50"
+                  className="w-full text-left px-4 py-3 text-sm text-mt-rose-dark hover:bg-mt-linen/40 transition-colors disabled:opacity-50"
                 >
                   {deleteMutation.isPending ? 'Apagando...' : 'Apagar publicação'}
                 </button>
                 {deleteError && (
-                  <p role="alert" className="text-[11px] text-sara-terracotta px-4 py-2 border-t border-sara-linen/40">
+                  <p role="alert" className="text-[11px] text-mt-rose-dark px-4 py-2 border-t border-mt-linen/40">
                     {deleteError}
                   </p>
                 )}
@@ -124,7 +124,7 @@ export function PostActionsMenu({ postId, isOwner, onDeleted }: PostActionsMenuP
                 role="menuitem"
                 type="button"
                 onClick={(e) => { e.stopPropagation(); handleReport(); }}
-                className="w-full text-left px-4 py-3 text-sm text-graphite hover:bg-sara-linen/40 transition-colors"
+                className="w-full text-left px-4 py-3 text-sm text-mt-charcoal hover:bg-mt-linen/40 transition-colors"
               >
                 Reportar publicação
               </button>

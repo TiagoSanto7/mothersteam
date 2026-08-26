@@ -18,7 +18,7 @@ export function MentionText({ text, onMentionPress, className }: Props) {
               key={i}
               type="button"
               onClick={(e) => { e.stopPropagation(); onMentionPress(username); }}
-              className="text-sara-gold font-medium hover:underline"
+              className="text-mt-rose font-medium hover:underline"
             >
               {part}
             </button>

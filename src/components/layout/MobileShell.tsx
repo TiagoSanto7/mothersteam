@@ -5,6 +5,8 @@ import { BottomTabBar } from './BottomTabBar';
 import { AppHeader } from './AppHeader';
 import { SideDrawer } from './SideDrawer';
 import { useAppStore } from '../../store/useAppStore';
+import { MtQuickActionSheet } from '../mt/MtQuickActionSheet';
+import { QuickRegisterSheet } from '../home/QuickRegisterSheet';
 
 const TABS = ['hoje', 'jornada', 'comunidade', 'perfil'];
 
@@ -34,6 +36,13 @@ export function MobileShell({
   headerRightSlot,
 }: MobileShellProps) {
   const activeTab = useAppStore((s) => s.activeTab);
+  const setActiveTab = useAppStore((s) => s.setActiveTab);
+  const quickActionsOpen = useAppStore((s) => s.quickActionsOpen);
+  const closeQuickActions = useAppStore((s) => s.closeQuickActions);
+  const requestQuickAction = useAppStore((s) => s.requestQuickAction);
+  const babySheetMode = useAppStore((s) => s.babySheetMode);
+  const openBabySheet = useAppStore((s) => s.openBabySheet);
+  const closeBabySheet = useAppStore((s) => s.closeBabySheet);
   const prevTabRef = useRef<string>(activeTab);
 
   const currentIndex = TABS.indexOf(activeTab);
@@ -46,7 +55,7 @@ export function MobileShell({
 
   return (
     <div className="md:hidden sm:min-h-screen sm:bg-gradient-to-br sm:from-[#EDE6DC] sm:to-[#D4C0A8] sm:flex sm:items-center sm:justify-center">
-      <div className="relative w-full h-screen sm:w-[390px] sm:h-[844px] bg-gradient-to-b from-[#F5EDE0] via-[#EAD8C8] to-[#D9C4AF] sm:shadow-2xl overflow-hidden flex flex-col sm:rounded-[44px]">
+      <div className="relative w-full h-screen sm:w-[390px] sm:h-[844px] bg-mt-cream sm:shadow-2xl overflow-hidden flex flex-col sm:rounded-[44px]">
         <div aria-hidden="true" className="hidden sm:block h-11 flex-shrink-0 bg-white/80 backdrop-blur-sm" />
         <AppHeader onOpenDrawer={onOpenDrawer} rightSlot={headerRightSlot} />
         <main aria-label="Conteúdo principal" className="flex-1 overflow-hidden relative">
@@ -71,6 +80,19 @@ export function MobileShell({
           onClose={onCloseDrawer}
           onOpenSettings={onOpenSettings}
           onOpenSavedVerses={onOpenSavedVerses}
+        />
+        <MtQuickActionSheet
+          open={quickActionsOpen}
+          onClose={closeQuickActions}
+          onMaeIA={() => setActiveTab('maeIA')}
+          onNewPost={() => { requestQuickAction('newPost'); setActiveTab('comunidade'); }}
+          onAddRoutine={() => { requestQuickAction('addRoutine'); setActiveTab('hoje'); }}
+          onRegisterBaby={() => openBabySheet('amamentacao')}
+        />
+        <QuickRegisterSheet
+          open={babySheetMode !== null}
+          initialMode={babySheetMode ?? 'amamentacao'}
+          onClose={closeBabySheet}
         />
       </div>
     </div>

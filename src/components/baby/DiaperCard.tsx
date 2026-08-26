@@ -28,29 +28,29 @@ export function DiaperCard() {
   });
 
   return (
-    <div className="bg-white rounded-3xl p-4 shadow-sm flex flex-col gap-3">
+    <div className="bg-white rounded-mt p-4 shadow-mt flex flex-col gap-3">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <span className="text-xl">🧷</span>
-          <span className="text-sm font-semibold text-graphite">Fraldas</span>
+          <span className="text-sm font-semibold text-mt-charcoal">Fraldas</span>
         </div>
-        <span className="text-xs text-graphite-muted">hoje</span>
+        <span className="text-xs text-mt-muted">hoje</span>
       </div>
 
       <div className="flex items-center justify-between">
-        <span data-testid="diaper-count" className="text-4xl font-bold text-graphite tabular-nums">
+        <span data-testid="diaper-count" className="text-4xl font-bold text-mt-charcoal tabular-nums">
           {diaperCount}
         </span>
         <button
           aria-label="Registrar troca de fralda"
           onClick={() => increment()}
-          className="w-11 h-11 rounded-2xl bg-sara-linen flex items-center justify-center active:scale-95 transition-transform"
+          className="w-11 h-11 rounded-2xl bg-mt-linen flex items-center justify-center active:scale-95 transition-transform"
         >
-          <Plus size={20} className="text-sara-gold" strokeWidth={2.5} />
+          <Plus size={20} className="text-mt-rose" strokeWidth={2.5} />
         </button>
       </div>
 
-      <p className="text-xs text-graphite-muted">
+      <p className="text-xs text-mt-muted">
         {diaperCount === 0
           ? 'Nenhuma troca registrada'
           : `${diaperCount} troca${diaperCount > 1 ? 's' : ''} registrada${diaperCount > 1 ? 's' : ''}`}

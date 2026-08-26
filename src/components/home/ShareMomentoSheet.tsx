@@ -58,18 +58,18 @@ export function ShareMomentoSheet({ open, onClose, verso, referencia, oracao, on
             className="fixed bottom-0 left-0 right-0 z-[70] bg-white rounded-t-2xl px-5 pt-5 pb-12 max-w-[390px] mx-auto"
           >
             <div className="w-9 h-1 bg-gray-200 rounded-full mx-auto mb-5" />
-            <p className="text-[11px] font-bold text-graphite-muted uppercase tracking-wide mb-4">
+            <p className="text-[11px] font-bold text-mt-muted uppercase tracking-wide mb-4">
               Compartilhar versículo
             </p>
 
             {/* Toggle com/sem oração */}
-            <div className="flex bg-sara-linen rounded-xl p-1 mb-5 gap-1">
+            <div className="flex bg-mt-linen rounded-xl p-1 mb-5 gap-1">
               <button
                 onClick={() => setIncluirOracao(true)}
                 aria-label="Com oração"
                 aria-pressed={incluirOracao}
                 className={`flex-1 rounded-lg py-2 text-[12px] font-semibold transition-colors ${
-                  incluirOracao ? 'bg-sara-gold text-white' : 'text-graphite-muted'
+                  incluirOracao ? 'bg-mt-rose text-white' : 'text-mt-muted'
                 }`}
               >
                 Com oração
@@ -79,7 +79,7 @@ export function ShareMomentoSheet({ open, onClose, verso, referencia, oracao, on
                 aria-label="Só o versículo"
                 aria-pressed={!incluirOracao}
                 className={`flex-1 rounded-lg py-2 text-[12px] font-semibold transition-colors ${
-                  !incluirOracao ? 'bg-sara-gold text-white' : 'text-graphite-muted'
+                  !incluirOracao ? 'bg-mt-rose text-white' : 'text-mt-muted'
                 }`}
               >
                 Só o versículo
@@ -91,36 +91,36 @@ export function ShareMomentoSheet({ open, onClose, verso, referencia, oracao, on
               <button
                 onClick={handleAmigos}
                 aria-label="Compartilhar com amigos"
-                className="flex items-center gap-3 p-3.5 bg-sara-linen rounded-xl active:scale-[0.98] transition-transform"
+                className="flex items-center gap-3 p-3.5 bg-mt-linen rounded-xl active:scale-[0.98] transition-transform"
               >
                 <span className="text-xl">📱</span>
                 <div className="text-left">
-                  <p className="text-[13px] font-semibold text-graphite">Compartilhar com amigos</p>
-                  <p className="text-[11px] text-graphite-muted">WhatsApp, Instagram, e-mail…</p>
+                  <p className="text-[13px] font-semibold text-mt-charcoal">Compartilhar com amigos</p>
+                  <p className="text-[11px] text-mt-muted">WhatsApp, Instagram, e-mail…</p>
                 </div>
               </button>
 
               <button
                 onClick={handleFeed}
                 aria-label="Publicar no feed"
-                className="flex items-center gap-3 p-3.5 bg-sara-linen rounded-xl active:scale-[0.98] transition-transform"
+                className="flex items-center gap-3 p-3.5 bg-mt-linen rounded-xl active:scale-[0.98] transition-transform"
               >
                 <span className="text-xl">✏️</span>
                 <div className="text-left">
-                  <p className="text-[13px] font-semibold text-graphite">Publicar no feed</p>
-                  <p className="text-[11px] text-graphite-muted">Cria um post com o versículo</p>
+                  <p className="text-[13px] font-semibold text-mt-charcoal">Publicar no feed</p>
+                  <p className="text-[11px] text-mt-muted">Cria um post com o versículo</p>
                 </div>
               </button>
 
               <button
                 onClick={handleComunidade}
                 aria-label="Compartilhar em comunidade"
-                className="flex items-center gap-3 p-3.5 bg-sara-linen rounded-xl active:scale-[0.98] transition-transform"
+                className="flex items-center gap-3 p-3.5 bg-mt-linen rounded-xl active:scale-[0.98] transition-transform"
               >
                 <span className="text-xl">👥</span>
                 <div className="text-left">
-                  <p className="text-[13px] font-semibold text-graphite">Compartilhar em comunidade</p>
-                  <p className="text-[11px] text-graphite-muted">Escolhe a comunidade no post</p>
+                  <p className="text-[13px] font-semibold text-mt-charcoal">Compartilhar em comunidade</p>
+                  <p className="text-[11px] text-mt-muted">Escolhe a comunidade no post</p>
                 </div>
               </button>
             </div>

@@ -5,9 +5,9 @@ interface ProgressBarProps {
 export function ProgressBar({ percent }: ProgressBarProps) {
   const clamped = Math.max(0, Math.min(100, Number.isFinite(percent) ? percent : 0))
   return (
-    <div className="w-full h-1 bg-sara-linen rounded-full overflow-hidden">
+    <div className="w-full h-1 bg-mt-linen rounded-full overflow-hidden">
       <div
-        className="h-full bg-sara-gold transition-all duration-500 ease-out"
+        className="h-full bg-mt-rose transition-all duration-500 ease-out"
         style={{ width: `${clamped}%` }}
         role="progressbar"
         aria-valuenow={clamped}

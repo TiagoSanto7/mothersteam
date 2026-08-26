@@ -1,5 +1,7 @@
 import { render, screen, fireEvent } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import type { ReactNode } from 'react';
 import { LeftSidebar } from './LeftSidebar';
 import { useAppStore } from '../../store/useAppStore';
 
@@ -16,6 +18,11 @@ beforeEach(() => {
   });
 });
 
+function Wrapper({ children }: { children: ReactNode }) {
+  const qc = new QueryClient({ defaultOptions: { queries: { retry: false }, mutations: { retry: false } } });
+  return <QueryClientProvider client={qc}>{children}</QueryClientProvider>;
+}
+
 function renderSidebar() {
   return render(
     <LeftSidebar
@@ -25,6 +32,7 @@ function renderSidebar() {
       onOpenChat={vi.fn()}
       onOpenSettings={vi.fn()}
     />,
+    { wrapper: Wrapper },
   );
 }
 
@@ -63,7 +71,10 @@ describe('LeftSidebar logout', () => {
   it('calls /auth/logout and clears auth when Sair is clicked', () => {
     renderSidebar();
     fireEvent.click(screen.getByRole('button', { name: 'Sair' }));
-    expect(mockApiFetch).toHaveBeenCalledWith('/auth/logout', { method: 'POST' });
+    expect(mockApiFetch).toHaveBeenCalledWith(
+      '/auth/logout',
+      expect.objectContaining({ method: 'POST' }),
+    );
     expect(useAppStore.getState().isLoggedIn).toBe(false);
   });
 });

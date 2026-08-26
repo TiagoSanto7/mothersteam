@@ -23,8 +23,8 @@ async function lookupAndOpen(username: string, onOpenUser: (id: string) => void)
 }
 
 const BADGE_CONFIG = {
-  experiente:   { label: 'Mãe Experiente',       color: 'bg-sara-linen text-sara-terracotta' },
-  profissional: { label: 'Profissional de Saúde', color: 'bg-sara-cream text-sara-warm' },
+  experiente:   { label: 'Mãe Experiente',       color: 'bg-mt-linen text-mt-rose-dark' },
+  profissional: { label: 'Profissional de Saúde', color: 'bg-mt-cream text-mt-muted' },
 } as const;
 
 interface PostCardProps {
@@ -72,7 +72,7 @@ export function PostCard({ post, onOpen, onOpenProfile, onOpenUser, onOpenCommun
       <div
         data-testid="post-card"
         data-category={post.category}
-        className="bg-white rounded-3xl p-4 shadow-sm flex flex-col gap-3"
+        className="bg-white rounded-mt p-4 shadow-mt flex flex-col gap-3"
       >
         <div className="flex items-start justify-between gap-2">
           <button
@@ -91,9 +91,9 @@ export function PostCard({ post, onOpen, onOpenProfile, onOpenUser, onOpenCommun
             </div>
             <div className="flex flex-col gap-0.5">
               <div className="flex items-baseline gap-1.5">
-                <p className="text-sm font-semibold text-graphite">{post.author}</p>
+                <p className="text-sm font-semibold text-mt-charcoal">{post.author}</p>
                 {post.authorUsername && (
-                  <span className="text-xs text-graphite-muted/70">@{post.authorUsername}</span>
+                  <span className="text-xs text-mt-muted/70">@{post.authorUsername}</span>
                 )}
               </div>
               {badge && (
@@ -107,12 +107,12 @@ export function PostCard({ post, onOpen, onOpenProfile, onOpenUser, onOpenCommun
                     type="button"
                     onClick={(e) => { e.stopPropagation(); onOpenCommunity(post.communityId!); }}
                     aria-label={`Ver comunidade ${post.communityName}`}
-                    className="text-[10px] font-medium px-2 py-0.5 rounded-full w-fit bg-sara-cream text-sara-warm"
+                    className="text-[10px] font-medium px-2 py-0.5 rounded-full w-fit bg-mt-cream text-mt-muted"
                   >
                     Em {post.communityName}
                   </button>
                 ) : (
-                  <span className="text-[10px] font-medium px-2 py-0.5 rounded-full w-fit bg-sara-cream text-sara-warm">
+                  <span className="text-[10px] font-medium px-2 py-0.5 rounded-full w-fit bg-mt-cream text-mt-muted">
                     Em {post.communityName}
                   </span>
                 )
@@ -121,11 +121,11 @@ export function PostCard({ post, onOpen, onOpenProfile, onOpenUser, onOpenCommun
           </button>
           <div className="flex items-center gap-2 flex-shrink-0">
             {post.isSuggestion && (
-              <span className="text-[9px] font-semibold uppercase tracking-wide text-graphite-muted/60 px-2 py-0.5 bg-gray-100 rounded-full">
+              <span className="text-[9px] font-semibold uppercase tracking-wide text-mt-muted/60 px-2 py-0.5 bg-gray-100 rounded-full">
                 Sugestão
               </span>
             )}
-            <span className="text-xs text-graphite-muted">{post.time}</span>
+            <span className="text-xs text-mt-muted">{post.time}</span>
             <PostActionsMenu
               postId={post.id}
               isOwner={post.authorId === currentUserId}
@@ -137,23 +137,23 @@ export function PostCard({ post, onOpen, onOpenProfile, onOpenUser, onOpenCommun
         {post.isRepost && post.repostOriginal ? (
           <button onClick={onOpen} aria-label={`Ver post de ${post.author}`} className="text-left w-full">
             <div className="flex items-center gap-1 mb-2">
-              <Repeat2 size={12} className="text-graphite-muted" />
-              <span className="text-[11px] text-graphite-muted">
+              <Repeat2 size={12} className="text-mt-muted" />
+              <span className="text-[11px] text-mt-muted">
                 {post.quoteContent ? 'Citou' : 'Republicou'}
               </span>
             </div>
             {/* Quote comment — shown above the quoted block when present */}
             {post.quoteContent && (
-              <p className="text-sm text-graphite leading-relaxed mb-2">{post.quoteContent}</p>
+              <p className="text-sm text-mt-charcoal leading-relaxed mb-2">{post.quoteContent}</p>
             )}
-            <div className="border border-sara-linen rounded-2xl p-3 bg-white/60">
-              <p className="text-[11px] font-semibold text-graphite mb-1">{post.repostOriginal.author}</p>
-              <MentionText text={post.repostOriginal.content} className="text-sm text-graphite-light leading-relaxed block" onMentionPress={onOpenUser ? (u) => lookupAndOpen(u, onOpenUser) : undefined} />
+            <div className="border border-mt-linen rounded-2xl p-3 bg-white/60">
+              <p className="text-[11px] font-semibold text-mt-charcoal mb-1">{post.repostOriginal.author}</p>
+              <MentionText text={post.repostOriginal.content} className="text-sm text-mt-muted leading-relaxed block" onMentionPress={onOpenUser ? (u) => lookupAndOpen(u, onOpenUser) : undefined} />
             </div>
           </button>
         ) : (
           <button onClick={onOpen} aria-label={`Ver post de ${post.author}`} className="text-left flex flex-col gap-2">
-            <MentionText text={post.content} className="text-sm text-graphite-light leading-relaxed block" onMentionPress={onOpenUser ? (u) => lookupAndOpen(u, onOpenUser) : undefined} />
+            <MentionText text={post.content} className="text-sm text-mt-muted leading-relaxed block" onMentionPress={onOpenUser ? (u) => lookupAndOpen(u, onOpenUser) : undefined} />
             {post.imageUrl && (
               <img
                 src={resolveMediaUrl(post.imageUrl)}
@@ -184,7 +184,7 @@ export function PostCard({ post, onOpen, onOpenProfile, onOpenUser, onOpenCommun
               animate={liked ? { scale: [1, 1.4, 0.9, 1.15, 1] } : { scale: [1, 0.85, 1] }}
               transition={{ duration: liked ? 0.4 : 0.2, ease: 'easeOut' }}
               className={`flex items-center gap-1.5 text-xs transition-colors ${
-                liked ? 'text-sara-terracotta' : 'text-graphite-muted'
+                liked ? 'text-mt-rose-dark' : 'text-mt-muted'
               }`}
             >
               <Heart size={14} fill={liked ? 'currentColor' : 'none'} strokeWidth={1.8} />
@@ -198,7 +198,7 @@ export function PostCard({ post, onOpen, onOpenProfile, onOpenUser, onOpenCommun
                   animate={{ opacity: [0, 1, 1, 0], y: -20 }}
                   exit={{ opacity: 0 }}
                   transition={{ duration: 0.6, ease: 'easeOut' }}
-                  className="absolute -top-1 left-3 text-[10px] font-bold text-sara-terracotta pointer-events-none"
+                  className="absolute -top-1 left-3 text-[10px] font-bold text-mt-rose-dark pointer-events-none"
                 >
                   +1
                 </motion.span>
@@ -208,7 +208,7 @@ export function PostCard({ post, onOpen, onOpenProfile, onOpenUser, onOpenCommun
           <button
             onClick={onOpen}
             aria-label={`Ver ${post.replies} respostas`}
-            className="flex items-center gap-1.5 text-xs text-graphite-muted"
+            className="flex items-center gap-1.5 text-xs text-mt-muted"
           >
             <MessageCircle size={14} strokeWidth={1.8} />
             {post.replies}
@@ -221,7 +221,7 @@ export function PostCard({ post, onOpen, onOpenProfile, onOpenUser, onOpenCommun
             aria-label={reposted ? 'Republicado' : 'Republicar'}
             aria-pressed={reposted}
             className={`flex items-center gap-1.5 text-xs transition-colors ${
-              reposted ? 'text-sara-warm' : 'text-graphite-muted'
+              reposted ? 'text-mt-rose-dark' : 'text-mt-muted'
             }`}
           >
             <Repeat2 size={14} strokeWidth={1.8} />
@@ -230,7 +230,7 @@ export function PostCard({ post, onOpen, onOpenProfile, onOpenUser, onOpenCommun
           <button
             onClick={(e) => { e.stopPropagation(); setShowShare(true); }}
             aria-label="Enviar post"
-            className="flex items-center gap-1.5 text-xs text-graphite-muted"
+            className="flex items-center gap-1.5 text-xs text-mt-muted"
           >
             <Share2 size={14} strokeWidth={1.8} />
           </button>

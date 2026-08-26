@@ -17,19 +17,19 @@ const CATEGORIES: { value: Category; label: string }[] = [
 ];
 
 const COLORS: { value: ColorKey; className: string }[] = [
-  { value: 'gold',       className: 'bg-sara-gold' },
-  { value: 'terracotta', className: 'bg-sara-terracotta' },
-  { value: 'warm',       className: 'bg-sara-warm' },
-  { value: 'linen',      className: 'bg-sara-linen' },
-  { value: 'cream',      className: 'bg-sara-cream' },
+  { value: 'gold',       className: 'bg-mt-rose' },
+  { value: 'terracotta', className: 'bg-mt-rose-dark' },
+  { value: 'warm',       className: 'bg-mt-muted' },
+  { value: 'linen',      className: 'bg-mt-linen' },
+  { value: 'cream',      className: 'bg-mt-cream' },
 ];
 
 const COLOR_MAP: Record<ColorKey, string> = {
-  gold:       'bg-sara-gold',
-  terracotta: 'bg-sara-terracotta',
-  warm:       'bg-sara-warm',
-  linen:      'bg-sara-linen',
-  cream:      'bg-sara-cream',
+  gold:       'bg-mt-rose',
+  terracotta: 'bg-mt-rose-dark',
+  warm:       'bg-mt-muted',
+  linen:      'bg-mt-linen',
+  cream:      'bg-mt-cream',
 };
 
 interface CreateCommunityScreenProps {
@@ -46,7 +46,7 @@ function Toggle({ checked, onChange, id }: { checked: boolean; onChange: (v: boo
       aria-checked={checked}
       onClick={() => onChange(!checked)}
       className={`relative inline-flex h-6 w-11 flex-shrink-0 rounded-full border-2 border-transparent transition-colors duration-200 focus:outline-none ${
-        checked ? 'bg-sara-gold' : 'bg-sara-linen'
+        checked ? 'bg-mt-rose' : 'bg-mt-linen'
       }`}
     >
       <span
@@ -125,20 +125,20 @@ export function CreateCommunityScreen({ onCreated, onBack }: CreateCommunityScre
   }
 
   return (
-    <div className="flex flex-col w-full h-full sm:w-[390px] sm:h-[844px] bg-gradient-to-b from-[#F5EDE0] via-[#EAD8C8] to-[#D9C4AF] sm:rounded-[44px] sm:shadow-2xl overflow-hidden">
+    <div className="flex flex-col w-full h-full sm:w-[390px] sm:h-[844px] bg-mt-cream sm:rounded-[44px] sm:shadow-2xl overflow-hidden">
       <div className="flex items-center gap-3 px-4 pt-6 pb-3 flex-shrink-0">
-        <button type="button" onClick={onBack} aria-label="Voltar" className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-sara-linen">
-          <ChevronLeft size={20} className="text-graphite" />
+        <button type="button" onClick={onBack} aria-label="Voltar" className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-mt-linen">
+          <ChevronLeft size={20} className="text-mt-charcoal" />
         </button>
-        <h1 className="text-base font-semibold text-graphite">Nova comunidade</h1>
+        <h1 className="text-base font-semibold text-mt-charcoal">Nova comunidade</h1>
       </div>
 
       <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto px-4 pb-4 flex flex-col gap-4">
 
         {/* Cover photo picker */}
         <div className="flex flex-col gap-1">
-          <p className="text-xs font-medium text-graphite-muted">Foto de capa (opcional)</p>
-          <div className="relative w-full h-28 rounded-2xl overflow-hidden bg-white border border-sara-linen">
+          <p className="text-xs font-medium text-mt-muted">Foto de capa (opcional)</p>
+          <div className="relative w-full h-28 rounded-2xl overflow-hidden bg-white border border-mt-linen">
             {imagePreviewUrl ? (
               <>
                 <img
@@ -165,7 +165,7 @@ export function CreateCommunityScreen({ onCreated, onBack }: CreateCommunityScre
               <button
                 type="button"
                 onClick={() => setShowImageSheet(true)}
-                className="absolute inset-0 flex flex-col items-center justify-center gap-1 text-graphite-muted hover:text-graphite transition-colors"
+                className="absolute inset-0 flex flex-col items-center justify-center gap-1 text-mt-muted hover:text-mt-charcoal transition-colors"
                 aria-label="Selecionar foto de capa"
               >
                 <ImagePlus size={24} />
@@ -177,7 +177,7 @@ export function CreateCommunityScreen({ onCreated, onBack }: CreateCommunityScre
             <button
               type="button"
               onClick={() => setShowImageSheet(true)}
-              className="flex items-center gap-1.5 text-xs text-sara-gold font-medium mt-0.5"
+              className="flex items-center gap-1.5 text-xs text-mt-rose font-medium mt-0.5"
             >
               <ImagePlus size={14} />
               Trocar foto
@@ -212,30 +212,30 @@ export function CreateCommunityScreen({ onCreated, onBack }: CreateCommunityScre
         </div>
 
         <div className="flex flex-col gap-1">
-          <label htmlFor="cc-name" className="text-xs font-medium text-graphite-muted">Nome</label>
+          <label htmlFor="cc-name" className="text-xs font-medium text-mt-muted">Nome</label>
           <input
             id="cc-name"
             value={name}
             onChange={(e) => setName(e.target.value)}
             placeholder="Ex: Gestantes de 2027"
-            className="w-full px-4 py-3 rounded-2xl bg-white border border-sara-linen text-sm text-graphite focus:outline-none focus:border-sara-gold"
+            className="w-full px-4 py-3 rounded-2xl bg-white border border-mt-linen text-sm text-mt-charcoal focus:outline-none focus:border-mt-rose"
           />
         </div>
 
         <div className="flex flex-col gap-1">
-          <label htmlFor="cc-description" className="text-xs font-medium text-graphite-muted">Descrição</label>
+          <label htmlFor="cc-description" className="text-xs font-medium text-mt-muted">Descrição</label>
           <textarea
             id="cc-description"
             value={description}
             onChange={(e) => setDescription(e.target.value)}
             rows={3}
             placeholder="Para quem é essa comunidade?"
-            className="w-full px-4 py-3 rounded-2xl bg-white border border-sara-linen text-sm text-graphite resize-none focus:outline-none focus:border-sara-gold"
+            className="w-full px-4 py-3 rounded-2xl bg-white border border-mt-linen text-sm text-mt-charcoal resize-none focus:outline-none focus:border-mt-rose"
           />
         </div>
 
         <div className="flex flex-col gap-2">
-          <p className="text-xs font-medium text-graphite-muted">Categoria</p>
+          <p className="text-xs font-medium text-mt-muted">Categoria</p>
           <div className="flex flex-wrap gap-2">
             {CATEGORIES.map((c) => (
               <button
@@ -244,7 +244,7 @@ export function CreateCommunityScreen({ onCreated, onBack }: CreateCommunityScre
                 onClick={() => setCategory(c.value)}
                 aria-pressed={category === c.value}
                 className={`px-3 py-1.5 rounded-full text-xs font-medium ${
-                  category === c.value ? 'bg-sara-gold text-white' : 'bg-white text-graphite-muted border border-sara-linen'
+                  category === c.value ? 'bg-mt-rose text-white' : 'bg-white text-mt-muted border border-mt-linen'
                 }`}
               >
                 {c.label}
@@ -254,7 +254,7 @@ export function CreateCommunityScreen({ onCreated, onBack }: CreateCommunityScre
         </div>
 
         <div className="flex flex-col gap-2">
-          <p className="text-xs font-medium text-graphite-muted">Cor</p>
+          <p className="text-xs font-medium text-mt-muted">Cor</p>
           <div className="flex gap-2">
             {COLORS.map((c) => (
               <button
@@ -263,22 +263,22 @@ export function CreateCommunityScreen({ onCreated, onBack }: CreateCommunityScre
                 onClick={() => setColorKey(c.value)}
                 aria-label={c.value}
                 aria-pressed={colorKey === c.value}
-                className={`w-10 h-10 rounded-full ${c.className} ${colorKey === c.value ? 'ring-2 ring-graphite ring-offset-2' : ''}`}
+                className={`w-10 h-10 rounded-full ${c.className} ${colorKey === c.value ? 'ring-2 ring-mt-charcoal ring-offset-2' : ''}`}
               />
             ))}
           </div>
         </div>
 
         {/* Privacy settings */}
-        <div className="flex flex-col gap-3 bg-white/50 rounded-2xl p-3">
-          <p className="text-xs font-semibold text-graphite">Privacidade</p>
+        <div className="flex flex-col gap-3 bg-white/60 rounded-mt p-3">
+          <p className="text-xs font-semibold text-mt-charcoal">Privacidade</p>
 
           <div className="flex items-center justify-between gap-3">
             <div className="flex flex-col gap-0.5">
-              <label htmlFor="cc-private" className="text-xs font-medium text-graphite">
+              <label htmlFor="cc-private" className="text-xs font-medium text-mt-charcoal">
                 {isPrivate ? 'Apenas membros' : 'Posts visíveis para todos'}
               </label>
-              <p className="text-[10px] text-graphite-muted">
+              <p className="text-[10px] text-mt-muted">
                 {isPrivate
                   ? 'Somente membros podem ver as publicações'
                   : 'Qualquer pessoa pode ver as publicações'}
@@ -287,14 +287,14 @@ export function CreateCommunityScreen({ onCreated, onBack }: CreateCommunityScre
             <Toggle id="cc-private" checked={isPrivate} onChange={setIsPrivate} />
           </div>
 
-          <div className="border-t border-sara-linen/50" />
+          <div className="border-t border-mt-linen/50" />
 
           <div className="flex items-center justify-between gap-3">
             <div className="flex flex-col gap-0.5">
-              <label htmlFor="cc-closed" className="text-xs font-medium text-graphite">
+              <label htmlFor="cc-closed" className="text-xs font-medium text-mt-charcoal">
                 {isOpen ? 'Entrada livre' : 'Comunidade fechada'}
               </label>
-              <p className="text-[10px] text-graphite-muted">
+              <p className="text-[10px] text-mt-muted">
                 {isOpen
                   ? 'Qualquer pessoa pode entrar'
                   : 'Somente a admin pode adicionar membros'}
@@ -307,7 +307,7 @@ export function CreateCommunityScreen({ onCreated, onBack }: CreateCommunityScre
         <button
           type="submit"
           disabled={!valid || isPending}
-          className="w-full py-3 rounded-2xl bg-sara-gold text-white text-sm font-semibold active:scale-95 transition-transform disabled:opacity-50 mt-2"
+          className="w-full py-3 rounded-2xl bg-mt-rose text-white text-sm font-semibold active:scale-95 transition-transform disabled:opacity-50 mt-2"
         >
           {isPending ? 'Criando…' : 'Criar comunidade'}
         </button>

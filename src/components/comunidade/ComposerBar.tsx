@@ -25,7 +25,7 @@ export function ComposerBar({ onOpen, onOpenWithImage }: ComposerBarProps) {
         >
           {initial}
         </div>
-        <span className="flex-1 text-graphite-muted text-sm">
+        <span className="flex-1 text-mt-muted text-sm">
           O que você está sentindo hoje?
         </span>
       </button>
@@ -34,7 +34,7 @@ export function ComposerBar({ onOpen, onOpenWithImage }: ComposerBarProps) {
         aria-label="Adicionar foto"
         className="p-1 flex-shrink-0"
       >
-        <Camera size={20} className="text-sara-gold" />
+        <Camera size={20} className="text-mt-rose" />
       </button>
     </div>
   );

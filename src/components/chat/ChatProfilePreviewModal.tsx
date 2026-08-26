@@ -54,7 +54,7 @@ export function ChatProfilePreviewModal({
         <button
           onClick={onClose}
           aria-label="Fechar"
-          className="absolute top-4 right-4 w-8 h-8 flex items-center justify-center rounded-full hover:bg-sara-linen text-graphite"
+          className="absolute top-4 right-4 w-8 h-8 flex items-center justify-center rounded-full hover:bg-mt-linen text-mt-charcoal"
         >
           <X size={18} />
         </button>
@@ -69,16 +69,16 @@ export function ChatProfilePreviewModal({
 
         {/* Name */}
         <div className="flex flex-col items-center gap-1">
-          <p className="text-lg font-semibold text-graphite">{name}</p>
+          <p className="text-lg font-semibold text-mt-charcoal">{name}</p>
           {username && (
-            <p className="text-sm text-sara-muted">@{username}</p>
+            <p className="text-sm text-mt-muted">@{username}</p>
           )}
           {profile?.bio && (
-            <p className="text-sm text-graphite-muted text-center leading-relaxed px-2">
+            <p className="text-sm text-mt-muted text-center leading-relaxed px-2">
               {profile.bio}
             </p>
           )}
-          <p className="text-xs text-sara-muted mt-1">
+          <p className="text-xs text-mt-muted mt-1">
             {messageCount} {messageCount === 1 ? 'mensagem' : 'mensagens'}
           </p>
         </div>
@@ -87,7 +87,7 @@ export function ChatProfilePreviewModal({
         <button
           onClick={handleVisitProfile}
           aria-label="Visitar perfil"
-          className="w-full py-3 rounded-2xl bg-sara-gold text-white font-semibold text-sm active:scale-95 transition-transform"
+          className="w-full py-3 rounded-2xl bg-mt-rose text-white font-semibold text-sm active:scale-95 transition-transform"
         >
           Visitar perfil
         </button>

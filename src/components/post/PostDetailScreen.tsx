@@ -36,8 +36,8 @@ async function lookupAndOpen(username: string, onOpenProfile?: (id: string) => v
 }
 
 const BADGE_CONFIG = {
-  experiente:   { label: 'Mãe Experiente',       color: 'bg-sara-linen text-sara-terracotta' },
-  profissional: { label: 'Profissional de Saúde', color: 'bg-sara-cream text-sara-warm' },
+  experiente:   { label: 'Mãe Experiente',       color: 'bg-mt-linen text-mt-rose-dark' },
+  profissional: { label: 'Profissional de Saúde', color: 'bg-mt-cream text-mt-muted' },
 } as const;
 
 interface ApiReply {
@@ -229,15 +229,15 @@ export function PostDetailScreen({ post, onBack, onOpenProfile }: PostDetailScre
     <motion.div
       ref={scope}
       initial={{ x: '100%' }}
-      className="flex flex-col w-full h-full sm:w-[390px] sm:h-[844px] bg-gradient-to-b from-[#F5EDE0] via-[#EAD8C8] to-[#D9C4AF] sm:rounded-[44px] sm:shadow-2xl overflow-hidden relative"
+      className="flex flex-col w-full h-full sm:w-[390px] sm:h-[844px] bg-mt-cream sm:rounded-[44px] sm:shadow-2xl overflow-hidden relative"
     >
       <div className="flex flex-col flex-1 overflow-hidden">
-      <div className="flex items-center justify-between gap-3 px-4 pt-6 pb-4 border-b border-sara-linen/60 flex-shrink-0">
+      <div className="flex items-center justify-between gap-3 px-4 pt-6 pb-4 border-b border-mt-linen/60 flex-shrink-0">
         <div className="flex items-center gap-3">
-          <button onClick={handleBack} aria-label="Voltar" className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-sara-linen">
-            <ChevronLeft size={20} className="text-graphite" />
+          <button onClick={handleBack} aria-label="Voltar" className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-mt-linen">
+            <ChevronLeft size={20} className="text-mt-charcoal" />
           </button>
-          <p className="text-sm font-semibold text-graphite">Publicação</p>
+          <p className="text-sm font-semibold text-mt-charcoal">Publicação</p>
         </div>
         <PostActionsMenu
           postId={post.id}
@@ -248,11 +248,11 @@ export function PostDetailScreen({ post, onBack, onOpenProfile }: PostDetailScre
 
       <div className="flex-1 overflow-y-auto">
         {/* Post */}
-        <div className="bg-white px-4 py-4 border-b border-sara-linen/60">
+        <div className="bg-white px-4 py-4 border-b border-mt-linen/60">
           {post.isRepost && (
             <div className="flex items-center gap-1.5 mb-2">
-              <Repeat2 size={12} className="text-graphite-muted" />
-              <span className="text-[11px] text-graphite-muted">
+              <Repeat2 size={12} className="text-mt-muted" />
+              <span className="text-[11px] text-mt-muted">
                 {post.quoteContent ? 'Citou' : 'Republicado'}
               </span>
             </div>
@@ -273,9 +273,9 @@ export function PostDetailScreen({ post, onBack, onOpenProfile }: PostDetailScre
               />
               <div>
                 <div className="flex items-baseline gap-1.5">
-                  <p className="text-sm font-semibold text-graphite">{post.author}</p>
+                  <p className="text-sm font-semibold text-mt-charcoal">{post.author}</p>
                   {post.authorUsername && (
-                    <span className="text-xs text-graphite-muted/70">@{post.authorUsername}</span>
+                    <span className="text-xs text-mt-muted/70">@{post.authorUsername}</span>
                   )}
                 </div>
                 {badge && (
@@ -285,7 +285,7 @@ export function PostDetailScreen({ post, onBack, onOpenProfile }: PostDetailScre
                 )}
               </div>
             </button>
-            <span className="text-xs text-graphite-muted flex-shrink-0">{post.time}</span>
+            <span className="text-xs text-mt-muted flex-shrink-0">{post.time}</span>
           </div>
 
           {/* Repost / quote post */}
@@ -293,27 +293,27 @@ export function PostDetailScreen({ post, onBack, onOpenProfile }: PostDetailScre
             <div className="mb-4">
               {/* Quote comment — shown above the quoted block when present */}
               {post.quoteContent && (
-                <p className="text-sm text-graphite leading-relaxed mb-3">{post.quoteContent}</p>
+                <p className="text-sm text-mt-charcoal leading-relaxed mb-3">{post.quoteContent}</p>
               )}
               <button
                 type="button"
                 onClick={() => post.repostOriginal?.originalPostId && setViewingOriginalId(post.repostOriginal.originalPostId)}
-                className="w-full text-left border border-sara-linen rounded-2xl p-3 bg-white/60 active:bg-sara-linen/50 transition-colors"
+                className="w-full text-left border border-mt-linen rounded-2xl p-3 bg-white/60 active:bg-mt-linen/50 transition-colors"
               >
                 <div className="flex items-baseline gap-1.5 mb-1">
-                  <p className="text-[11px] font-semibold text-graphite">{post.repostOriginal.author}</p>
+                  <p className="text-[11px] font-semibold text-mt-charcoal">{post.repostOriginal.author}</p>
                   {post.repostOriginal.authorUsername && (
-                    <span className="text-[10px] text-graphite-muted/70">@{post.repostOriginal.authorUsername}</span>
+                    <span className="text-[10px] text-mt-muted/70">@{post.repostOriginal.authorUsername}</span>
                   )}
                 </div>
-                <p className="text-sm text-graphite leading-relaxed">{post.repostOriginal.content}</p>
+                <p className="text-sm text-mt-charcoal leading-relaxed">{post.repostOriginal.content}</p>
                 {post.repostOriginal.originalPostId && (
-                  <p className="text-[10px] text-sara-gold mt-1.5">Toque para ver a publicação original →</p>
+                  <p className="text-[10px] text-mt-rose mt-1.5">Toque para ver a publicação original →</p>
                 )}
               </button>
             </div>
           ) : (
-            <MentionText text={post.content} className="text-sm text-graphite leading-relaxed mb-4 block" onMentionPress={(u) => lookupAndOpen(u, onOpenProfile)} />
+            <MentionText text={post.content} className="text-sm text-mt-charcoal leading-relaxed mb-4 block" onMentionPress={(u) => lookupAndOpen(u, onOpenProfile)} />
           )}
 
           {post.imageUrl && (
@@ -324,7 +324,7 @@ export function PostDetailScreen({ post, onBack, onOpenProfile }: PostDetailScre
             />
           )}
 
-          <div className="flex items-center gap-6 pt-3 border-t border-sara-linen/60">
+          <div className="flex items-center gap-6 pt-3 border-t border-mt-linen/60">
             <div className="relative inline-flex">
               <motion.button
                 key={bounceKey}
@@ -333,7 +333,7 @@ export function PostDetailScreen({ post, onBack, onOpenProfile }: PostDetailScre
                 aria-pressed={liked}
                 animate={liked ? { scale: [1, 1.4, 0.9, 1.15, 1] } : { scale: [1, 0.85, 1] }}
                 transition={{ duration: liked ? 0.4 : 0.2, ease: 'easeOut' }}
-                className={`flex items-center gap-1.5 text-xs transition-colors ${liked ? 'text-sara-terracotta' : 'text-graphite-muted'}`}
+                className={`flex items-center gap-1.5 text-xs transition-colors ${liked ? 'text-mt-rose-dark' : 'text-mt-muted'}`}
               >
                 <Heart size={16} fill={liked ? 'currentColor' : 'none'} strokeWidth={1.8} />
                 <span>{post.likes - (post.likedByCurrentUser ? 1 : 0) + (liked ? 1 : 0)}</span>
@@ -345,27 +345,27 @@ export function PostDetailScreen({ post, onBack, onOpenProfile }: PostDetailScre
                     animate={{ opacity: [0, 1, 1, 0], y: -20 }}
                     exit={{ opacity: 0 }}
                     transition={{ duration: 0.6, ease: 'easeOut' }}
-                    className="absolute -top-1 left-3 text-[10px] font-bold text-sara-terracotta pointer-events-none"
+                    className="absolute -top-1 left-3 text-[10px] font-bold text-mt-rose-dark pointer-events-none"
                   >
                     +1
                   </motion.span>
                 )}
               </AnimatePresence>
             </div>
-            <button className="flex items-center gap-1.5 text-xs text-graphite-muted">
+            <button className="flex items-center gap-1.5 text-xs text-mt-muted">
               <MessageCircle size={16} strokeWidth={1.8} />
               <span>{(commentsData?.items ?? []).length > 0 ? (commentsData?.items ?? []).length : post.replies}</span>
             </button>
             <button
               onClick={handleRepost}
-              className={`flex items-center gap-1.5 text-xs transition-colors ${reposted ? 'text-sara-warm' : 'text-graphite-muted'}`}
+              className={`flex items-center gap-1.5 text-xs transition-colors ${reposted ? 'text-mt-rose-dark' : 'text-mt-muted'}`}
             >
               <Repeat2 size={16} strokeWidth={1.8} />
               <span>{reposted ? 'Republicado' : 'Republicar'}</span>
             </button>
             <button
               onClick={() => setShowShareSheet(true)}
-              className="flex items-center gap-1.5 text-xs text-graphite-muted active:text-sara-gold transition-colors"
+              className="flex items-center gap-1.5 text-xs text-mt-muted active:text-mt-rose transition-colors"
             >
               <Share2 size={16} strokeWidth={1.8} />
               <span>Enviar</span>
@@ -376,7 +376,7 @@ export function PostDetailScreen({ post, onBack, onOpenProfile }: PostDetailScre
         {/* Comments */}
         <div className="px-4 py-4 flex flex-col gap-3">
           {(commentsData?.items ?? []).length === 0 && (
-            <p className="text-xs text-graphite-muted text-center py-6">Seja a primeira a comentar</p>
+            <p className="text-xs text-mt-muted text-center py-6">Seja a primeira a comentar</p>
           )}
           {(commentsData?.items ?? []).map((c) => {
             const isLiked = commentLikeState[c.id]?.liked ?? false;
@@ -390,19 +390,19 @@ export function PostDetailScreen({ post, onBack, onOpenProfile }: PostDetailScre
                   avatarUrl={c.author.avatarUrl}
                   size={32}
                 />
-                <div className="flex-1 bg-white rounded-2xl px-3 py-2.5 shadow-sm">
+                <div className="flex-1 bg-white rounded-mt px-3 py-2.5 shadow-mt">
                   <div className="flex items-baseline justify-between gap-2">
-                    <p className="text-[11px] font-semibold text-graphite">{c.author.name}</p>
-                    <span className="text-[10px] text-graphite-muted">{relativeTime(c.createdAt)}</span>
+                    <p className="text-[11px] font-semibold text-mt-charcoal">{c.author.name}</p>
+                    <span className="text-[10px] text-mt-muted">{relativeTime(c.createdAt)}</span>
                   </div>
-                  <MentionText text={c.content} className="text-xs text-graphite leading-relaxed mt-0.5 block" onMentionPress={(u) => lookupAndOpen(u, onOpenProfile)} />
+                  <MentionText text={c.content} className="text-xs text-mt-charcoal leading-relaxed mt-0.5 block" onMentionPress={(u) => lookupAndOpen(u, onOpenProfile)} />
                 </div>
               </div>
               {/* Actions row — Reply on left, Like on right */}
               <div className="ml-10 flex items-center justify-between mt-0.5">
                 <button
                   onClick={() => setReplyingTo({ id: c.id, authorName: c.author.name })}
-                  className="text-[11px] font-semibold text-graphite-muted hover:text-sara-gold transition-colors"
+                  className="text-[11px] font-semibold text-mt-muted hover:text-mt-rose transition-colors"
                 >
                   Responder
                 </button>
@@ -425,7 +425,7 @@ export function PostDetailScreen({ post, onBack, onOpenProfile }: PostDetailScre
                     disabled={!!pendingCommentIds[c.id]}
                     animate={isLiked ? { scale: [1, 1.4, 0.9, 1.15, 1] } : { scale: [1, 0.85, 1] }}
                     transition={{ duration: isLiked ? 0.4 : 0.2, ease: 'easeOut' }}
-                    className={`flex items-center gap-1 transition-colors ${isLiked ? 'text-sara-terracotta' : 'text-graphite-muted'}`}
+                    className={`flex items-center gap-1 transition-colors ${isLiked ? 'text-mt-rose-dark' : 'text-mt-muted'}`}
                   >
                     <Heart size={13} fill={isLiked ? 'currentColor' : 'none'} strokeWidth={1.8} />
                     <span className="text-[11px] tabular-nums">{likeCount}</span>
@@ -437,7 +437,7 @@ export function PostDetailScreen({ post, onBack, onOpenProfile }: PostDetailScre
                         animate={{ opacity: [0, 1, 1, 0], y: -20 }}
                         exit={{ opacity: 0 }}
                         transition={{ duration: 0.6, ease: 'easeOut' }}
-                        className="absolute -top-1 left-3 text-[10px] font-bold text-sara-terracotta pointer-events-none"
+                        className="absolute -top-1 left-3 text-[10px] font-bold text-mt-rose-dark pointer-events-none"
                       >
                         +1
                       </motion.span>
@@ -460,18 +460,18 @@ export function PostDetailScreen({ post, onBack, onOpenProfile }: PostDetailScre
                             avatarUrl={r.author.avatarUrl}
                             size={24}
                           />
-                          <div className="flex-1 bg-white/80 rounded-2xl px-3 py-2 shadow-sm">
+                          <div className="flex-1 bg-white/85 rounded-mt px-3 py-2 shadow-mt">
                             <div className="flex items-baseline justify-between gap-2">
-                              <p className="text-[10px] font-semibold text-graphite">{r.author.name}</p>
-                              <span className="text-[9px] text-graphite-muted">{relativeTime(r.createdAt)}</span>
+                              <p className="text-[10px] font-semibold text-mt-charcoal">{r.author.name}</p>
+                              <span className="text-[9px] text-mt-muted">{relativeTime(r.createdAt)}</span>
                             </div>
-                            <MentionText text={r.content} className="text-[11px] text-graphite leading-relaxed mt-0.5 block" onMentionPress={(u) => lookupAndOpen(u, onOpenProfile)} />
+                            <MentionText text={r.content} className="text-[11px] text-mt-charcoal leading-relaxed mt-0.5 block" onMentionPress={(u) => lookupAndOpen(u, onOpenProfile)} />
                           </div>
                         </div>
                         <div className="ml-8 flex items-center justify-between mt-0.5">
                           <button
                             onClick={() => setReplyingTo({ id: c.id, authorName: r.author.name })}
-                            className="text-[10px] font-semibold text-graphite-muted hover:text-sara-gold transition-colors"
+                            className="text-[10px] font-semibold text-mt-muted hover:text-mt-rose transition-colors"
                           >
                             Responder
                           </button>
@@ -492,7 +492,7 @@ export function PostDetailScreen({ post, onBack, onOpenProfile }: PostDetailScre
                               disabled={!!pendingCommentIds[r.id]}
                               animate={rIsLiked ? { scale: [1, 1.4, 0.9, 1.15, 1] } : { scale: [1, 0.85, 1] }}
                               transition={{ duration: rIsLiked ? 0.4 : 0.2, ease: 'easeOut' }}
-                              className={`flex items-center gap-1 transition-colors ${rIsLiked ? 'text-sara-terracotta' : 'text-graphite-muted'}`}
+                              className={`flex items-center gap-1 transition-colors ${rIsLiked ? 'text-mt-rose-dark' : 'text-mt-muted'}`}
                             >
                               <Heart size={11} fill={rIsLiked ? 'currentColor' : 'none'} strokeWidth={1.8} />
                               <span className="text-[10px] tabular-nums">{rLikeCount}</span>
@@ -504,7 +504,7 @@ export function PostDetailScreen({ post, onBack, onOpenProfile }: PostDetailScre
                                   animate={{ opacity: [0, 1, 1, 0], y: -20 }}
                                   exit={{ opacity: 0 }}
                                   transition={{ duration: 0.6, ease: 'easeOut' }}
-                                  className="absolute -top-1 left-3 text-[10px] font-bold text-sara-terracotta pointer-events-none"
+                                  className="absolute -top-1 left-3 text-[10px] font-bold text-mt-rose-dark pointer-events-none"
                                 >
                                   +1
                                 </motion.span>
@@ -524,14 +524,14 @@ export function PostDetailScreen({ post, onBack, onOpenProfile }: PostDetailScre
       </div>
 
       {/* Comment input */}
-      <div className="px-4 py-3 border-t border-sara-linen/60 flex-shrink-0 bg-sara-linen/80 backdrop-blur-sm">
+      <div className="px-4 py-3 border-t border-mt-linen/60 flex-shrink-0 bg-mt-linen/80 backdrop-blur-sm">
         {replyingTo && (
           <div className="flex items-center justify-between mb-2 px-1">
-            <p className="text-[11px] text-graphite-muted">
-              Respondendo a <span className="font-semibold text-graphite">{replyingTo.authorName}</span>
+            <p className="text-[11px] text-mt-muted">
+              Respondendo a <span className="font-semibold text-mt-charcoal">{replyingTo.authorName}</span>
             </p>
             <button onClick={() => setReplyingTo(null)} aria-label="Cancelar resposta">
-              <X size={14} className="text-graphite-muted" />
+              <X size={14} className="text-mt-muted" />
             </button>
           </div>
         )}
@@ -542,7 +542,7 @@ export function PostDetailScreen({ post, onBack, onOpenProfile }: PostDetailScre
           >
             {motherName.charAt(0)}
           </div>
-          <div className="flex-1 flex items-center gap-2 bg-white rounded-2xl border border-sara-linen px-3 py-2">
+          <div className="flex-1 flex items-center gap-2 bg-white rounded-2xl border border-mt-linen px-3 py-2">
             <div className="flex-1 min-w-0">
               <MentionInput
                 value={commentText}
@@ -550,13 +550,13 @@ export function PostDetailScreen({ post, onBack, onOpenProfile }: PostDetailScre
                 onSubmit={handleComment}
                 placeholder={replyingTo ? `Responder a ${replyingTo.authorName}...` : 'Adicionar comentário...'}
                 rows={1}
-                className="w-full bg-transparent text-sm text-graphite placeholder:text-sara-muted outline-none resize-none"
+                className="w-full bg-transparent text-sm text-mt-charcoal placeholder:text-mt-muted outline-none resize-none"
               />
             </div>
             <button
               onClick={handleComment}
               disabled={!commentText.trim()}
-              className="w-7 h-7 rounded-full bg-sara-gold flex items-center justify-center disabled:opacity-40 active:scale-95 transition-all"
+              className="w-7 h-7 rounded-full bg-mt-rose flex items-center justify-center disabled:opacity-40 active:scale-95 transition-all"
             >
               <Send size={12} className="text-white" />
             </button>

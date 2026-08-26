@@ -16,7 +16,7 @@ export function InsightCard({ profile }: InsightCardProps) {
   const initial = archetype.label.split(' ')[1][0];
 
   return (
-    <div className="mx-4 bg-sara-cream/75 backdrop-blur-md border border-white/50 rounded-3xl p-4">
+    <div className="mx-4 bg-mt-cream/75 backdrop-blur-md border border-white/50 rounded-3xl p-4">
       <div className="flex items-start gap-3">
         <div className="flex flex-col items-center gap-1 flex-shrink-0">
           <div
@@ -25,19 +25,19 @@ export function InsightCard({ profile }: InsightCardProps) {
           >
             {initial}
           </div>
-          <span className="text-[9px] font-semibold text-graphite-muted whitespace-nowrap">
+          <span className="text-[9px] font-semibold text-mt-muted whitespace-nowrap">
             {archetype.label}
           </span>
         </div>
 
         <div className="flex-1 min-w-0">
-          <p className="text-[10px] font-semibold text-sara-gold uppercase tracking-wide mb-0.5">
+          <p className="text-[10px] font-semibold text-mt-rose uppercase tracking-wide mb-0.5">
             Seu perfil personalizado
           </p>
-          <p className="text-sm font-semibold font-serif text-graphite leading-snug">
+          <p className="text-sm font-semibold font-serif text-mt-charcoal leading-snug">
             {profile.profileLabel}
           </p>
-          <p className="text-xs text-graphite-light leading-relaxed mt-1.5 italic">
+          <p className="text-xs text-mt-muted leading-relaxed mt-1.5 italic">
             "{archetype.phrases[0]}"
           </p>
         </div>
@@ -45,9 +45,9 @@ export function InsightCard({ profile }: InsightCardProps) {
         <button
           onClick={() => setDismissed(true)}
           aria-label="Fechar insight"
-          className="w-7 h-7 rounded-full bg-sara-linen flex items-center justify-center flex-shrink-0"
+          className="w-7 h-7 rounded-full bg-mt-linen flex items-center justify-center flex-shrink-0"
         >
-          <X size={12} className="text-sara-gold" strokeWidth={2} />
+          <X size={12} className="text-mt-rose" strokeWidth={2} />
         </button>
       </div>
     </div>

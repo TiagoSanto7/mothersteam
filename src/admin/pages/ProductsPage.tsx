@@ -175,17 +175,17 @@ export function ProductsPage({ onNew, onEdit }: ProductsPageProps) {
   return (
     <div className="p-8 max-w-6xl">
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-xl font-bold text-graphite">Produtos</h1>
+        <h1 className="text-xl font-bold text-mt-charcoal">Produtos</h1>
         <div className="flex items-center gap-2">
           <button
             onClick={downloadTemplate}
-            className="flex items-center gap-2 px-3 py-2 bg-white border border-gray-200 text-graphite text-sm font-medium rounded-xl hover:bg-gray-50 transition-colors"
+            className="flex items-center gap-2 px-3 py-2 bg-white border border-gray-200 text-mt-charcoal text-sm font-medium rounded-xl hover:bg-gray-50 transition-colors"
           >
             <Download size={15} /> Template
           </button>
           <button
             onClick={() => importInputRef.current?.click()}
-            className="flex items-center gap-2 px-3 py-2 bg-white border border-gray-200 text-graphite text-sm font-medium rounded-xl hover:bg-gray-50 transition-colors"
+            className="flex items-center gap-2 px-3 py-2 bg-white border border-gray-200 text-mt-charcoal text-sm font-medium rounded-xl hover:bg-gray-50 transition-colors"
           >
             <Upload size={15} /> Importar
           </button>
@@ -198,7 +198,7 @@ export function ProductsPage({ onNew, onEdit }: ProductsPageProps) {
           />
           <button
             onClick={onNew}
-            className="flex items-center gap-2 px-4 py-2 bg-sara-gold text-white text-sm font-semibold rounded-xl hover:bg-sara-gold/90 transition-colors"
+            className="flex items-center gap-2 px-4 py-2 bg-mt-rose text-white text-sm font-semibold rounded-xl hover:bg-mt-rose/90 transition-colors"
           >
             <Plus size={16} /> Novo produto
           </button>
@@ -207,18 +207,18 @@ export function ProductsPage({ onNew, onEdit }: ProductsPageProps) {
 
       <div className="flex gap-3 mb-5 flex-wrap">
         <div className="flex items-center gap-2 bg-white border border-gray-200 rounded-xl px-3 py-2 w-64">
-          <Search size={14} className="text-graphite-muted" />
+          <Search size={14} className="text-mt-muted" />
           <input
             value={search}
             onChange={(e) => { setSearch(e.target.value); setPage(1); }}
             placeholder="Buscar produto..."
-            className="flex-1 text-sm outline-none text-graphite placeholder:text-graphite-muted"
+            className="flex-1 text-sm outline-none text-mt-charcoal placeholder:text-mt-muted"
           />
         </div>
         <select
           value={categoryId}
           onChange={(e) => { setCategoryId(e.target.value); setPage(1); }}
-          className="bg-white border border-gray-200 rounded-xl px-3 py-2 text-sm text-graphite outline-none"
+          className="bg-white border border-gray-200 rounded-xl px-3 py-2 text-sm text-mt-charcoal outline-none"
         >
           <option value="">Todas categorias</option>
           {categories.map((c) => <option key={c.id} value={c.id}>{c.icon} {c.name}</option>)}
@@ -226,7 +226,7 @@ export function ProductsPage({ onNew, onEdit }: ProductsPageProps) {
         <select
           value={activeFilter}
           onChange={(e) => { setActiveFilter(e.target.value as '' | 'true' | 'false'); setPage(1); }}
-          className="bg-white border border-gray-200 rounded-xl px-3 py-2 text-sm text-graphite outline-none"
+          className="bg-white border border-gray-200 rounded-xl px-3 py-2 text-sm text-mt-charcoal outline-none"
         >
           <option value="">Todos status</option>
           <option value="true">Ativos</option>
@@ -236,18 +236,18 @@ export function ProductsPage({ onNew, onEdit }: ProductsPageProps) {
 
       <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
         {isLoading ? (
-          <p className="text-graphite-muted text-sm p-8">Carregando...</p>
+          <p className="text-mt-muted text-sm p-8">Carregando...</p>
         ) : (
           <>
             <table className="w-full text-sm">
               <thead className="bg-gray-50 border-b border-gray-100">
                 <tr>
-                  <th className="text-left px-4 py-3 text-xs font-semibold text-graphite-muted">Produto</th>
-                  <th className="text-left px-4 py-3 text-xs font-semibold text-graphite-muted">Categoria</th>
-                  <th className="text-left px-4 py-3 text-xs font-semibold text-graphite-muted">Preço</th>
-                  <th className="text-left px-4 py-3 text-xs font-semibold text-graphite-muted">Fases</th>
-                  <th className="text-left px-4 py-3 text-xs font-semibold text-graphite-muted">Cliques</th>
-                  <th className="px-4 py-3 text-xs font-semibold text-graphite-muted text-right">Ações</th>
+                  <th className="text-left px-4 py-3 text-xs font-semibold text-mt-muted">Produto</th>
+                  <th className="text-left px-4 py-3 text-xs font-semibold text-mt-muted">Categoria</th>
+                  <th className="text-left px-4 py-3 text-xs font-semibold text-mt-muted">Preço</th>
+                  <th className="text-left px-4 py-3 text-xs font-semibold text-mt-muted">Fases</th>
+                  <th className="text-left px-4 py-3 text-xs font-semibold text-mt-muted">Cliques</th>
+                  <th className="px-4 py-3 text-xs font-semibold text-mt-muted text-right">Ações</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-50">
@@ -258,33 +258,33 @@ export function ProductsPage({ onNew, onEdit }: ProductsPageProps) {
                         {p.images[0] ? (
                           <img src={p.images[0]} alt={p.name} className="w-10 h-10 rounded-lg object-cover flex-shrink-0 bg-gray-100" />
                         ) : (
-                          <div className="w-10 h-10 rounded-lg bg-sara-linen flex items-center justify-center flex-shrink-0">
+                          <div className="w-10 h-10 rounded-lg bg-mt-linen flex items-center justify-center flex-shrink-0">
                             <span className="text-lg">📦</span>
                           </div>
                         )}
                         <div>
-                          <p className="font-medium text-graphite">{p.name}</p>
-                          {p.featured && <span className="text-[10px] text-sara-gold font-semibold">★ Destaque</span>}
+                          <p className="font-medium text-mt-charcoal">{p.name}</p>
+                          {p.featured && <span className="text-[10px] text-mt-rose font-semibold">★ Destaque</span>}
                         </div>
                       </div>
                     </td>
-                    <td className="px-4 py-3 text-graphite-muted">{p.category.name}</td>
-                    <td className="px-4 py-3 font-semibold text-graphite">R$ {Number(p.price).toFixed(2)}</td>
+                    <td className="px-4 py-3 text-mt-muted">{p.category.name}</td>
+                    <td className="px-4 py-3 font-semibold text-mt-charcoal">R$ {Number(p.price).toFixed(2)}</td>
                     <td className="px-4 py-3">
                       <div className="flex gap-1 flex-wrap">
                         {p.phases.map((ph) => (
-                          <span key={ph} className="text-[10px] bg-sara-linen text-graphite px-1.5 py-0.5 rounded-full">{PHASE_LABELS[ph] ?? ph}</span>
+                          <span key={ph} className="text-[10px] bg-mt-linen text-mt-charcoal px-1.5 py-0.5 rounded-full">{PHASE_LABELS[ph] ?? ph}</span>
                         ))}
                       </div>
                     </td>
-                    <td className="px-4 py-3 text-graphite-muted">{p._count.clicks}</td>
+                    <td className="px-4 py-3 text-mt-muted">{p._count.clicks}</td>
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-1 justify-end">
                         <button
                           onClick={() => toggleFeaturedMutation.mutate({ id: p.id, featured: !p.featured })}
                           aria-label={p.featured ? 'Remover destaque' : 'Destacar'}
                           title={p.featured ? 'Remover destaque' : 'Destacar'}
-                          className={`w-8 h-8 flex items-center justify-center rounded-lg transition-colors ${p.featured ? 'text-sara-gold bg-sara-gold/10' : 'text-graphite-muted hover:bg-gray-100'}`}
+                          className={`w-8 h-8 flex items-center justify-center rounded-lg transition-colors ${p.featured ? 'text-mt-rose bg-mt-rose/10' : 'text-mt-muted hover:bg-gray-100'}`}
                         >
                           <Star size={14} />
                         </button>
@@ -292,21 +292,21 @@ export function ProductsPage({ onNew, onEdit }: ProductsPageProps) {
                           onClick={() => toggleMutation.mutate({ id: p.id, active: !p.active })}
                           aria-label={p.active ? 'Desativar' : 'Ativar'}
                           title={p.active ? 'Desativar' : 'Ativar'}
-                          className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-gray-100 text-graphite-muted"
+                          className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-gray-100 text-mt-muted"
                         >
                           {p.active ? <Eye size={14} /> : <EyeOff size={14} />}
                         </button>
                         <button
                           onClick={() => onEdit(p.id)}
                           aria-label="Editar"
-                          className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-gray-100 text-graphite-muted"
+                          className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-gray-100 text-mt-muted"
                         >
                           <Pencil size={14} />
                         </button>
                         <button
                           onClick={() => { if (confirm(`Desativar "${p.name}"?`)) deleteMutation.mutate(p.id); }}
                           aria-label="Desativar produto"
-                          className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-sara-terracotta/10 text-sara-terracotta"
+                          className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-mt-rose-dark/10 text-mt-rose-dark"
                         >
                           <Trash2 size={14} />
                         </button>
@@ -317,7 +317,7 @@ export function ProductsPage({ onNew, onEdit }: ProductsPageProps) {
               </tbody>
             </table>
             {(data?.items ?? []).length === 0 && (
-              <p className="text-center text-graphite-muted text-sm py-8">Nenhum produto encontrado.</p>
+              <p className="text-center text-mt-muted text-sm py-8">Nenhum produto encontrado.</p>
             )}
           </>
         )}
@@ -325,7 +325,7 @@ export function ProductsPage({ onNew, onEdit }: ProductsPageProps) {
 
       {data && data.totalPages > 1 && (
         <div className="flex items-center justify-between mt-4">
-          <p className="text-sm text-graphite-muted">{data.total} produtos</p>
+          <p className="text-sm text-mt-muted">{data.total} produtos</p>
           <div className="flex gap-2">
             <button
               onClick={() => setPage((p) => Math.max(1, p - 1))}
@@ -334,7 +334,7 @@ export function ProductsPage({ onNew, onEdit }: ProductsPageProps) {
             >
               ← Anterior
             </button>
-            <span className="px-3 py-1.5 text-sm text-graphite-muted">{page} / {data.totalPages}</span>
+            <span className="px-3 py-1.5 text-sm text-mt-muted">{page} / {data.totalPages}</span>
             <button
               onClick={() => setPage((p) => Math.min(data.totalPages, p + 1))}
               disabled={page >= data.totalPages}
@@ -350,20 +350,20 @@ export function ProductsPage({ onNew, onEdit }: ProductsPageProps) {
       {importPhase === 'confirm' && (
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-2xl shadow-xl p-6 max-w-sm w-full">
-            <h2 className="text-base font-semibold text-graphite mb-2">Confirmar import</h2>
-            <p className="text-sm text-graphite-muted mb-5">
+            <h2 className="text-base font-semibold text-mt-charcoal mb-2">Confirmar import</h2>
+            <p className="text-sm text-mt-muted mb-5">
               {parsedRows.length} {parsedRows.length === 1 ? 'linha encontrada' : 'linhas encontradas'}. Importar agora?
             </p>
             <div className="flex gap-2 justify-end">
               <button
                 onClick={() => setImportPhase('idle')}
-                className="px-4 py-2 text-sm text-graphite border border-gray-200 rounded-xl hover:bg-gray-50"
+                className="px-4 py-2 text-sm text-mt-charcoal border border-gray-200 rounded-xl hover:bg-gray-50"
               >
                 Cancelar
               </button>
               <button
                 onClick={handleConfirmImport}
-                className="px-4 py-2 text-sm font-semibold text-white bg-sara-gold rounded-xl hover:bg-sara-gold/90"
+                className="px-4 py-2 text-sm font-semibold text-white bg-mt-rose rounded-xl hover:bg-mt-rose/90"
               >
                 Importar
               </button>
@@ -376,7 +376,7 @@ export function ProductsPage({ onNew, onEdit }: ProductsPageProps) {
       {importPhase === 'loading' && (
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
           <div className="bg-white rounded-2xl shadow-xl p-6">
-            <p className="text-sm text-graphite-muted">Importando produtos...</p>
+            <p className="text-sm text-mt-muted">Importando produtos...</p>
           </div>
         </div>
       )}
@@ -385,7 +385,7 @@ export function ProductsPage({ onNew, onEdit }: ProductsPageProps) {
       {importPhase === 'result' && bulkResult && (
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-2xl shadow-xl p-6 max-w-md w-full max-h-[80vh] flex flex-col">
-            <h2 className="text-base font-semibold text-graphite mb-4">Resultado do import</h2>
+            <h2 className="text-base font-semibold text-mt-charcoal mb-4">Resultado do import</h2>
             <div className="flex-1 overflow-y-auto space-y-3 text-sm">
               {bulkResult.created > 0 && (
                 <p className="text-green-700 font-medium">
@@ -397,8 +397,8 @@ export function ProductsPage({ onNew, onEdit }: ProductsPageProps) {
                   <p className="text-amber-700 font-medium mb-2">⚠️ {bulkResult.errors.length} {bulkResult.errors.length === 1 ? 'erro' : 'erros'}:</p>
                   <ul className="space-y-1">
                     {bulkResult.errors.map((err, i) => (
-                      <li key={i} className="text-graphite-muted">
-                        {err.row > 0 ? <span className="font-medium text-graphite">Linha {err.row}</span> : null}
+                      <li key={i} className="text-mt-muted">
+                        {err.row > 0 ? <span className="font-medium text-mt-charcoal">Linha {err.row}</span> : null}
                         {err.field ? <span> — <span className="font-medium">{err.field}</span>:</span> : null}
                         {' '}{err.message}
                       </li>
@@ -407,14 +407,14 @@ export function ProductsPage({ onNew, onEdit }: ProductsPageProps) {
                 </div>
               )}
               {bulkResult.created === 0 && bulkResult.errors.length === 0 && (
-                <p className="text-graphite-muted">Nenhum produto foi importado.</p>
+                <p className="text-mt-muted">Nenhum produto foi importado.</p>
               )}
             </div>
             <div className="flex gap-2 justify-end mt-4 pt-4 border-t border-gray-100">
               {bulkResult.errors.some(e => e.row > 0) && (
                 <button
                   onClick={downloadErrorRows}
-                  className="flex items-center gap-1.5 px-3 py-2 text-sm text-graphite border border-gray-200 rounded-xl hover:bg-gray-50"
+                  className="flex items-center gap-1.5 px-3 py-2 text-sm text-mt-charcoal border border-gray-200 rounded-xl hover:bg-gray-50"
                 >
                   <Download size={13} /> Baixar linhas com erro
                 </button>

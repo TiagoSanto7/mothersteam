@@ -31,20 +31,20 @@ export function ShoppingScreen({ onOpenProduct }: ShoppingScreenProps) {
     <div className="flex flex-col gap-0 pb-0">
       <div className="flex items-center justify-between px-4 pt-4 pb-2">
         <div>
-          <h1 className="text-base font-semibold text-graphite">Shopping</h1>
-          <p className="text-xs text-graphite-muted">Produtos para você e seu bebê</p>
+          <h1 className="text-base font-semibold text-mt-charcoal">Shopping</h1>
+          <p className="text-xs text-mt-muted">Produtos para você e seu bebê</p>
         </div>
       </div>
 
-      <div className="flex border-b border-sara-linen/60 px-4 mb-0">
+      <div className="flex border-b border-mt-linen/60 px-4 mb-0">
         {(['products', 'favorites'] as const).map((tab) => (
           <button
             key={tab}
             onClick={() => setActiveTab(tab)}
             className={`flex-1 py-2.5 text-xs font-semibold transition-colors border-b-2 -mb-px ${
               activeTab === tab
-                ? 'text-sara-gold border-sara-gold'
-                : 'text-graphite-muted border-transparent'
+                ? 'text-mt-rose border-mt-rose'
+                : 'text-mt-muted border-transparent'
             }`}
           >
             {tab === 'products' ? 'Produtos' : 'Favoritos'}
@@ -111,7 +111,7 @@ function ProductsTab({ onOpenProduct }: { onOpenProduct: (id: string) => void })
           <button
             onClick={() => setSelectedCategory('')}
             className={`flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
-              selectedCategory === '' ? 'bg-sara-gold text-white' : 'bg-white text-graphite-muted border border-sara-linen'
+              selectedCategory === '' ? 'bg-mt-rose text-white' : 'bg-white text-mt-muted border border-mt-linen'
             }`}
           >
             Todos
@@ -121,7 +121,7 @@ function ProductsTab({ onOpenProduct }: { onOpenProduct: (id: string) => void })
               key={c.id}
               onClick={() => setSelectedCategory(selectedCategory === c.id ? '' : c.id)}
               className={`flex-shrink-0 flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
-                selectedCategory === c.id ? 'bg-sara-gold text-white' : 'bg-white text-graphite-muted border border-sara-linen'
+                selectedCategory === c.id ? 'bg-mt-rose text-white' : 'bg-white text-mt-muted border border-mt-linen'
               }`}
             >
               <span>{c.icon}</span> {c.name}
@@ -133,8 +133,8 @@ function ProductsTab({ onOpenProduct }: { onOpenProduct: (id: string) => void })
       {/* Featured products */}
       {featured.length > 0 && (
         <div className="px-4">
-          <p className="text-[11px] font-semibold text-graphite-muted uppercase tracking-wide mb-2 flex items-center gap-1">
-            <Star size={11} className="text-sara-gold" /> Em destaque
+          <p className="text-[11px] font-semibold text-mt-muted uppercase tracking-wide mb-2 flex items-center gap-1">
+            <Star size={11} className="text-mt-rose" /> Em destaque
           </p>
           <div className="flex flex-col gap-3">
             {featured.map((p) => (
@@ -162,19 +162,19 @@ function ProductCard({ product: p, onClick, featured = false }: { product: Displ
     return (
       <div className="bg-white rounded-3xl p-4 shadow-sm flex gap-3">
         {p.images[0] ? (
-          <img src={p.images[0]} alt={p.name} className="w-20 h-20 rounded-2xl object-cover flex-shrink-0 bg-sara-linen" />
+          <img src={p.images[0]} alt={p.name} className="w-20 h-20 rounded-2xl object-cover flex-shrink-0 bg-mt-linen" />
         ) : (
-          <div className="w-20 h-20 rounded-2xl bg-sara-linen flex items-center justify-center flex-shrink-0">
-            <ShoppingBag size={28} className="text-graphite-muted" />
+          <div className="w-20 h-20 rounded-2xl bg-mt-linen flex items-center justify-center flex-shrink-0">
+            <ShoppingBag size={28} className="text-mt-muted" />
           </div>
         )}
         <div className="flex-1 min-w-0 flex flex-col gap-1">
-          <p className="text-xs text-graphite-muted">{p.category.name}</p>
-          <p className="text-sm font-semibold text-graphite leading-tight">{p.name}</p>
-          <p className="text-sm font-bold text-sara-gold">R$ {Number(p.price).toFixed(2)}</p>
+          <p className="text-xs text-mt-muted">{p.category.name}</p>
+          <p className="text-sm font-semibold text-mt-charcoal leading-tight">{p.name}</p>
+          <p className="text-sm font-bold text-mt-rose">R$ {Number(p.price).toFixed(2)}</p>
           <button
             onClick={onClick}
-            className="mt-auto flex items-center justify-center gap-1 w-full py-1.5 rounded-xl bg-sara-gold text-white text-xs font-semibold active:scale-95 transition-transform"
+            className="mt-auto flex items-center justify-center gap-1 w-full py-1.5 rounded-xl bg-mt-rose text-white text-xs font-semibold active:scale-95 transition-transform"
           >
             Ver produto <ExternalLink size={10} />
           </button>
@@ -186,20 +186,20 @@ function ProductCard({ product: p, onClick, featured = false }: { product: Displ
   return (
     <div className="bg-white rounded-3xl p-4 shadow-sm flex flex-col gap-2">
       {p.images[0] ? (
-        <img src={p.images[0]} alt={p.name} className="w-full h-28 rounded-2xl object-cover bg-sara-linen" />
+        <img src={p.images[0]} alt={p.name} className="w-full h-28 rounded-2xl object-cover bg-mt-linen" />
       ) : (
-        <div className="w-full h-28 rounded-2xl bg-sara-linen flex items-center justify-center">
-          <ShoppingBag size={28} className="text-graphite-muted" />
+        <div className="w-full h-28 rounded-2xl bg-mt-linen flex items-center justify-center">
+          <ShoppingBag size={28} className="text-mt-muted" />
         </div>
       )}
       <div>
-        <p className="text-xs text-graphite-muted">{p.category.name}</p>
-        <p className="text-sm font-medium text-graphite leading-tight">{p.name}</p>
+        <p className="text-xs text-mt-muted">{p.category.name}</p>
+        <p className="text-sm font-medium text-mt-charcoal leading-tight">{p.name}</p>
       </div>
-      <p className="text-sm font-bold text-sara-gold">R$ {Number(p.price).toFixed(2)}</p>
+      <p className="text-sm font-bold text-mt-rose">R$ {Number(p.price).toFixed(2)}</p>
       <button
         onClick={onClick}
-        className="w-full py-2 rounded-xl bg-sara-gold text-white text-xs font-semibold active:scale-95 transition-transform flex items-center justify-center gap-1"
+        className="w-full py-2 rounded-xl bg-mt-rose text-white text-xs font-semibold active:scale-95 transition-transform flex items-center justify-center gap-1"
       >
         Ver produto <ExternalLink size={10} />
       </button>
@@ -211,9 +211,9 @@ function StaticShoppingFallback() {
   return (
     <div className="flex flex-col gap-4 pb-6">
       <div className="px-4 pt-4">
-        <p className="text-xs text-graphite-muted">Produtos selecionados para você e seu bebê</p>
+        <p className="text-xs text-mt-muted">Produtos selecionados para você e seu bebê</p>
       </div>
-      <div className="mx-4 rounded-3xl bg-gradient-to-br from-sara-terracotta to-sara-gold p-5 text-white">
+      <div className="mx-4 rounded-3xl bg-gradient-to-br from-mt-rose-dark to-mt-rose p-5 text-white">
         <p className="text-xs font-medium opacity-80 mb-1">Em breve</p>
         <p className="text-base font-bold leading-snug">Seus produtos Baby Team a um clique</p>
         <p className="text-xs opacity-75 mt-1">A loja está sendo preparada — volte em breve!</p>

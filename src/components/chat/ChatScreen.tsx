@@ -84,7 +84,7 @@ function AudioPlayer({ src, isMe }: AudioPlayerProps) {
         onClick={togglePlay}
         aria-label={playing ? 'Pausar' : 'Reproduzir áudio'}
         className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 transition-colors ${
-          isMe ? 'bg-white/20 hover:bg-white/30 text-white' : 'bg-sara-gold/10 hover:bg-sara-gold/20 text-sara-gold'
+          isMe ? 'bg-white/20 hover:bg-white/30 text-white' : 'bg-mt-rose/10 hover:bg-mt-rose/20 text-mt-rose'
         }`}
       >
         {playing ? <Pause size={14} /> : <Play size={14} />}
@@ -100,13 +100,13 @@ function AudioPlayer({ src, isMe }: AudioPlayerProps) {
         aria-valuemin={0}
         aria-valuemax={100}
       >
-        <div className={`h-1 rounded-full overflow-hidden ${isMe ? 'bg-white/30' : 'bg-sara-linen'}`}>
+        <div className={`h-1 rounded-full overflow-hidden ${isMe ? 'bg-white/30' : 'bg-mt-linen'}`}>
           <div
-            className={`h-full rounded-full transition-all ${isMe ? 'bg-white' : 'bg-sara-gold'}`}
+            className={`h-full rounded-full transition-all ${isMe ? 'bg-white' : 'bg-mt-rose'}`}
             style={{ width: `${progress * 100}%` }}
           />
         </div>
-        <span className={`text-[10px] tabular-nums ${isMe ? 'text-white/70' : 'text-sara-muted'}`}>
+        <span className={`text-[10px] tabular-nums ${isMe ? 'text-white/70' : 'text-mt-muted'}`}>
           {timeLabel}
         </span>
       </div>
@@ -495,11 +495,11 @@ export function ChatScreen({ chat, onBack, onOpenProfile }: ChatScreenProps) {
   }
 
   return (
-    <div className="flex flex-col w-full h-full bg-gradient-to-b from-[#F5EDE0] via-[#EAD8C8] to-[#D9C4AF] overflow-hidden relative">
+    <div className="flex flex-col w-full h-full bg-mt-cream overflow-hidden relative">
       {/* Header */}
-      <div className="flex items-center gap-3 px-4 pt-6 pb-4 border-b border-sara-linen/60 flex-shrink-0">
-        <button onClick={onBack} className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-sara-linen">
-          <ChevronLeft size={20} className="text-graphite" />
+      <div className="flex items-center gap-3 px-4 pt-6 pb-4 border-b border-mt-linen/60 flex-shrink-0">
+        <button onClick={onBack} className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-mt-linen">
+          <ChevronLeft size={20} className="text-mt-charcoal" />
         </button>
         <button
           aria-label={`Ver perfil de ${chat.with}`}
@@ -513,7 +513,7 @@ export function ChatScreen({ chat, onBack, onOpenProfile }: ChatScreenProps) {
             size={32}
           />
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-semibold text-graphite truncate">{chat.with}</p>
+            <p className="text-sm font-semibold text-mt-charcoal truncate">{chat.with}</p>
           </div>
         </button>
       </div>
@@ -557,8 +557,8 @@ export function ChatScreen({ chat, onBack, onOpenProfile }: ChatScreenProps) {
               )}
               <div className={`${msg.imageUrl ? 'max-w-[85%]' : 'max-w-[72%]'} rounded-2xl overflow-hidden ${
                 isMe
-                  ? 'bg-sara-gold text-white rounded-br-sm'
-                  : 'bg-white text-graphite shadow-sm rounded-bl-sm'
+                  ? 'bg-mt-rose text-white rounded-br-sm'
+                  : 'bg-white text-mt-charcoal shadow-sm rounded-bl-sm'
               }`}>
                 {msg.imageUrl ? (
                   <img
@@ -578,17 +578,17 @@ export function ChatScreen({ chat, onBack, onOpenProfile }: ChatScreenProps) {
                     onClick={() => setViewingPostId(msg.sharedPostId!)}
                     className="p-3 flex flex-col gap-1.5 w-full text-left"
                   >
-                    <p className={`text-[10px] font-semibold uppercase tracking-wide ${isMe ? 'text-white/70' : 'text-graphite-muted'}`}>
+                    <p className={`text-[10px] font-semibold uppercase tracking-wide ${isMe ? 'text-white/70' : 'text-mt-muted'}`}>
                       Post compartilhado
                     </p>
-                    <p className={`text-[11px] font-semibold ${isMe ? 'text-white' : 'text-graphite'}`}>
+                    <p className={`text-[11px] font-semibold ${isMe ? 'text-white' : 'text-mt-charcoal'}`}>
                       {msg.sharedPostAuthor}
                     </p>
-                    <p className={`text-xs leading-relaxed ${isMe ? 'text-white/90' : 'text-graphite-light'}`}>
+                    <p className={`text-xs leading-relaxed ${isMe ? 'text-white/90' : 'text-mt-muted'}`}>
                       {msg.sharedPostExcerpt}
                     </p>
                     {msg.content && (
-                      <p className={`text-xs pt-1.5 border-t ${isMe ? 'border-white/30 text-white/90' : 'border-sara-linen text-graphite-light'}`}>
+                      <p className={`text-xs pt-1.5 border-t ${isMe ? 'border-white/30 text-white/90' : 'border-mt-linen text-mt-muted'}`}>
                         {msg.content}
                       </p>
                     )}
@@ -601,7 +601,7 @@ export function ChatScreen({ chat, onBack, onOpenProfile }: ChatScreenProps) {
               </div>
               </div>
               {showTs && (
-                <span className="text-[9px] text-graphite-muted mt-0.5 px-1">
+                <span className="text-[9px] text-mt-muted mt-0.5 px-1">
                   {new Date(msg.createdAt).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
                 </span>
               )}
@@ -637,7 +637,7 @@ export function ChatScreen({ chat, onBack, onOpenProfile }: ChatScreenProps) {
             </button>
             <button
               onClick={handlePhotoConfirm}
-              className="flex-1 py-3 rounded-2xl bg-sara-gold text-white font-semibold text-sm"
+              className="flex-1 py-3 rounded-2xl bg-mt-rose text-white font-semibold text-sm"
             >
               Enviar
             </button>
@@ -669,9 +669,9 @@ export function ChatScreen({ chat, onBack, onOpenProfile }: ChatScreenProps) {
                 setMessageMenu(null);
                 setTimeout(() => inputRef.current?.focus(), 50);
               }}
-              className="w-full flex items-center gap-3 px-5 py-3.5 hover:bg-gray-50 text-graphite text-sm font-medium"
+              className="w-full flex items-center gap-3 px-5 py-3.5 hover:bg-gray-50 text-mt-charcoal text-sm font-medium"
             >
-              <MessageCircle size={18} className="text-graphite-muted" />
+              <MessageCircle size={18} className="text-mt-muted" />
               Responder
             </button>
             {messageMenu.content && (
@@ -680,9 +680,9 @@ export function ChatScreen({ chat, onBack, onOpenProfile }: ChatScreenProps) {
                   navigator.clipboard?.writeText(messageMenu.content).catch(() => {});
                   setMessageMenu(null);
                 }}
-                className="w-full flex items-center gap-3 px-5 py-3.5 hover:bg-gray-50 text-graphite text-sm font-medium"
+                className="w-full flex items-center gap-3 px-5 py-3.5 hover:bg-gray-50 text-mt-charcoal text-sm font-medium"
               >
-                <Copy size={18} className="text-graphite-muted" />
+                <Copy size={18} className="text-mt-muted" />
                 Copiar texto
               </button>
             )}
@@ -717,30 +717,30 @@ export function ChatScreen({ chat, onBack, onOpenProfile }: ChatScreenProps) {
       )}
 
       {/* Input area */}
-      <div className="px-4 py-3 border-t border-sara-linen/60 flex-shrink-0 bg-sara-linen/80 backdrop-blur-sm">
+      <div className="px-4 py-3 border-t border-mt-linen/60 flex-shrink-0 bg-mt-linen/80 backdrop-blur-sm">
         {/* Upload status banner rendered above the input row */}
         {isUploadingPhoto && (
           <div className="relative">
-            <div className="absolute bottom-full mb-2 left-0 right-0 bg-white rounded-2xl shadow-lg border border-sara-linen px-4 py-3 z-50 flex items-center gap-3">
-              <div className="w-4 h-4 rounded-full border-2 border-sara-gold border-t-transparent animate-spin flex-shrink-0" />
-              <span className="text-sm text-graphite">Enviando foto...</span>
+            <div className="absolute bottom-full mb-2 left-0 right-0 bg-white rounded-2xl shadow-lg border border-mt-linen px-4 py-3 z-50 flex items-center gap-3">
+              <div className="w-4 h-4 rounded-full border-2 border-mt-rose border-t-transparent animate-spin flex-shrink-0" />
+              <span className="text-sm text-mt-charcoal">Enviando foto...</span>
             </div>
           </div>
         )}
 
         {/* Reply preview */}
         {replyingTo && (
-          <div className="mb-2 bg-white rounded-2xl px-3 py-2 border-l-4 border-sara-gold flex items-start justify-between gap-2">
+          <div className="mb-2 bg-white rounded-2xl px-3 py-2 border-l-4 border-mt-rose flex items-start justify-between gap-2">
             <div className="flex-1 min-w-0">
-              <p className="text-[10px] font-semibold text-sara-gold uppercase tracking-wide">
+              <p className="text-[10px] font-semibold text-mt-rose uppercase tracking-wide">
                 Respondendo a {replyingTo.senderName}
               </p>
-              <p className="text-xs text-graphite-muted truncate">{replyingTo.excerpt}</p>
+              <p className="text-xs text-mt-muted truncate">{replyingTo.excerpt}</p>
             </div>
             <button
               onClick={() => setReplyingTo(null)}
               aria-label="Cancelar resposta"
-              className="w-5 h-5 flex items-center justify-center rounded-full text-graphite-muted hover:bg-gray-100 flex-shrink-0"
+              className="w-5 h-5 flex items-center justify-center rounded-full text-mt-muted hover:bg-gray-100 flex-shrink-0"
             >
               <X size={14} />
             </button>
@@ -765,14 +765,14 @@ export function ChatScreen({ chat, onBack, onOpenProfile }: ChatScreenProps) {
 
         <div data-testid="chat-input-bar" className={`flex items-center gap-2 rounded-2xl border px-3 py-2 overflow-hidden transition-colors ${
           micState === 'recording' ? 'bg-red-50 border-red-200'
-          : micState === 'preparing' ? 'bg-sara-linen border-sara-gold/40'
-          : 'bg-white border-sara-linen'
+          : micState === 'preparing' ? 'bg-mt-linen border-mt-rose/40'
+          : 'bg-white border-mt-linen'
         }`}>
           {/* Preparing (waiting for mic permission / stream ready) */}
           {micState === 'preparing' ? (
             <div className="flex-1 flex items-center gap-2">
-              <div className="w-3 h-3 rounded-full border-2 border-sara-gold border-t-transparent animate-spin flex-shrink-0" />
-              <span className="text-xs text-graphite font-medium">Preparando microfone...</span>
+              <div className="w-3 h-3 rounded-full border-2 border-mt-rose border-t-transparent animate-spin flex-shrink-0" />
+              <span className="text-xs text-mt-charcoal font-medium">Preparando microfone...</span>
             </div>
           ) : micState === 'recording' ? (
             <div className="flex-1 flex items-center gap-2">
@@ -797,7 +797,7 @@ export function ChatScreen({ chat, onBack, onOpenProfile }: ChatScreenProps) {
             onKeyDown={(e) => e.key === 'Enter' && handleSend()}
             placeholder={isUploadingAudio ? 'Enviando áudio...' : isUploadingPhoto ? 'Enviando foto...' : 'Escreva uma mensagem...'}
             disabled={isUploadingAudio || isUploadingPhoto}
-            className="flex-1 bg-transparent text-sm text-graphite placeholder:text-sara-muted outline-none focus:outline-none disabled:opacity-50"
+            className="flex-1 bg-transparent text-sm text-mt-charcoal placeholder:text-mt-muted outline-none focus:outline-none disabled:opacity-50"
           />
           )}
 
@@ -823,7 +823,7 @@ export function ChatScreen({ chat, onBack, onOpenProfile }: ChatScreenProps) {
                 onClick={() => setShowImageSheet(true)}
                 disabled={isUploadingPhoto || isUploadingAudio}
                 aria-label="Enviar foto"
-                className="w-7 h-7 flex items-center justify-center rounded-full transition-colors flex-shrink-0 text-sara-muted hover:text-graphite disabled:opacity-40"
+                className="w-7 h-7 flex items-center justify-center rounded-full transition-colors flex-shrink-0 text-mt-muted hover:text-mt-charcoal disabled:opacity-40"
               >
                 <ImagePlus size={18} />
               </button>
@@ -843,8 +843,8 @@ export function ChatScreen({ chat, onBack, onOpenProfile }: ChatScreenProps) {
                   micState === 'recording'
                     ? 'text-white bg-red-500 scale-110'
                     : micState === 'preparing'
-                    ? 'text-sara-gold bg-sara-gold/10 scale-105'
-                    : 'text-sara-muted hover:text-graphite'
+                    ? 'text-mt-rose bg-mt-rose/10 scale-105'
+                    : 'text-mt-muted hover:text-mt-charcoal'
                 } disabled:opacity-40`}
               >
                 {micState === 'recording' ? <Square size={14} fill="currentColor" /> : <Mic size={18} />}
@@ -857,7 +857,7 @@ export function ChatScreen({ chat, onBack, onOpenProfile }: ChatScreenProps) {
             onClick={handleSend}
             aria-label="Enviar mensagem"
             disabled={!text.trim() || isUploadingAudio || isUploadingPhoto}
-            className="w-8 h-8 rounded-full bg-sara-gold flex items-center justify-center disabled:opacity-40 transition-opacity active:scale-95 flex-shrink-0"
+            className="w-8 h-8 rounded-full bg-mt-rose flex items-center justify-center disabled:opacity-40 transition-opacity active:scale-95 flex-shrink-0"
           >
             <Send size={14} className="text-white" />
           </button>

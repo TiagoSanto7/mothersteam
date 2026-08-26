@@ -9,9 +9,9 @@ import type { RoutineEntry } from '../../types';
 import { EventDetailModal } from './EventDetailModal';
 
 const CATEGORY_CONFIG = {
-  medication:  { icon: Pill,        color: 'text-sara-terracotta', bg: 'bg-sara-linen' },
-  appointment: { icon: Calendar,    color: 'text-sara-gold',       bg: 'bg-sara-cream' },
-  task:        { icon: CheckSquare, color: 'text-sara-warm',       bg: 'bg-sara-linen' },
+  medication:  { icon: Pill,        color: 'text-mt-rose-dark', bg: 'bg-mt-linen' },
+  appointment: { icon: Calendar,    color: 'text-mt-rose',       bg: 'bg-mt-cream' },
+  task:        { icon: CheckSquare, color: 'text-mt-muted',       bg: 'bg-mt-linen' },
 } as const;
 
 function apiToRoutineEntry(e: ApiRoutineEntry): RoutineEntry {
@@ -40,17 +40,17 @@ function EntryCard({ entry, apiEntry, onToggle, onDetail }: EntryCardProps) {
         <cfg.icon size={18} className={cfg.color} />
       </div>
       <div className="flex-1 min-w-0">
-        <p className={`text-sm font-medium truncate ${entry.done ? 'line-through text-graphite-muted' : 'text-graphite'}`}>{entry.title}</p>
-        <p className="text-xs text-graphite-muted">{entry.time}</p>
+        <p className={`text-sm font-medium truncate ${entry.done ? 'line-through text-mt-muted' : 'text-mt-charcoal'}`}>{entry.title}</p>
+        <p className="text-xs text-mt-muted">{entry.time}</p>
         {entry.notes && (
-          <p className="text-[11px] text-graphite-muted/70 truncate">{entry.notes}</p>
+          <p className="text-[11px] text-mt-muted/70 truncate">{entry.notes}</p>
         )}
       </div>
       <button
         onClick={(e) => { e.stopPropagation(); onToggle(entry.id); }}
         aria-label={entry.done ? `Desmarcar: ${entry.title}` : `Marcar como feita: ${entry.title}`}
         className={`w-7 h-7 rounded-full flex items-center justify-center border-2 transition-colors flex-shrink-0 ${
-          entry.done ? 'bg-sara-gold border-sara-gold' : 'border-sara-linen bg-sara-cream'
+          entry.done ? 'bg-mt-rose border-mt-rose' : 'border-mt-linen bg-mt-cream'
         }`}
       >
         {entry.done && <Check size={14} className="text-white" strokeWidth={2.5} />}
@@ -90,8 +90,8 @@ export function RoutineTimeline() {
     return (
       <div className="flex flex-col items-center gap-2 py-10">
         <span className="text-4xl">🌿</span>
-        <p className="text-sm text-graphite-muted">Nenhuma tarefa para hoje</p>
-        <p className="text-xs text-graphite-muted">Toque em + para adicionar</p>
+        <p className="text-sm text-mt-muted">Nenhuma tarefa para hoje</p>
+        <p className="text-xs text-mt-muted">Toque em + para adicionar</p>
       </div>
     );
   }

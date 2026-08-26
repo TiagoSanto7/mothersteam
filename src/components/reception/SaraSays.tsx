@@ -65,7 +65,7 @@ export function SaraSays<V = string>({
         initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
-        className="text-[17px] leading-relaxed text-graphite text-center font-serif px-4"
+        className="text-[17px] leading-relaxed text-mt-charcoal text-center font-serif px-4"
       >
         {message}
       </motion.p>
@@ -82,7 +82,7 @@ export function SaraSays<V = string>({
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.35, delay: 0.15 + i * 0.08 }}
                 whileTap={{ scale: 0.97 }}
-                className="w-full px-4 py-3 rounded-2xl bg-white border border-sara-linen text-left text-[15px] text-graphite shadow-sm active:bg-sara-cream"
+                className="w-full px-4 py-3 rounded-2xl bg-white border border-mt-linen text-left text-[15px] text-mt-charcoal shadow-sm active:bg-mt-cream"
               >
                 {opt.label}
               </motion.button>

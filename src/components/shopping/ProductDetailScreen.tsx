@@ -57,7 +57,7 @@ export function ProductDetailScreen({
       <div className="flex flex-col h-full bg-gradient-to-b from-[#F5EDE0] via-[#EAD8C8] to-[#D9C4AF]">
         <div className="flex items-center gap-3 px-4 pt-10 pb-4">
           <button onClick={onBack} className="w-8 h-8 rounded-xl bg-white/70 flex items-center justify-center">
-            <ChevronLeft size={18} className="text-graphite" />
+            <ChevronLeft size={18} className="text-mt-charcoal" />
           </button>
         </div>
         <div className="flex-1 px-4 flex flex-col gap-4 animate-pulse">
@@ -72,10 +72,10 @@ export function ProductDetailScreen({
   if (isError) {
     return (
       <div className="flex flex-col h-full bg-gradient-to-b from-[#F5EDE0] via-[#EAD8C8] to-[#D9C4AF] items-center justify-center gap-3 px-6">
-        <Package size={40} className="text-graphite-muted" />
-        <p className="text-graphite-muted text-sm text-center">Não foi possível carregar o produto. Verifique sua conexão.</p>
-        <button onClick={() => refetch()} className="px-4 py-2 rounded-xl bg-sara-gold text-white text-sm font-semibold active:scale-95 transition-transform">Tentar novamente</button>
-        <button onClick={onBack} className="text-graphite-muted text-sm">Voltar</button>
+        <Package size={40} className="text-mt-muted" />
+        <p className="text-mt-muted text-sm text-center">Não foi possível carregar o produto. Verifique sua conexão.</p>
+        <button onClick={() => refetch()} className="px-4 py-2 rounded-xl bg-mt-rose text-white text-sm font-semibold active:scale-95 transition-transform">Tentar novamente</button>
+        <button onClick={onBack} className="text-mt-muted text-sm">Voltar</button>
       </div>
     )
   }
@@ -83,9 +83,9 @@ export function ProductDetailScreen({
   if (!product) {
     return (
       <div className="flex flex-col h-full bg-gradient-to-b from-[#F5EDE0] via-[#EAD8C8] to-[#D9C4AF] items-center justify-center gap-3">
-        <Package size={40} className="text-graphite-muted" />
-        <p className="text-graphite-muted text-sm">Produto não encontrado</p>
-        <button onClick={onBack} className="text-sara-gold text-sm font-medium">Voltar</button>
+        <Package size={40} className="text-mt-muted" />
+        <p className="text-mt-muted text-sm">Produto não encontrado</p>
+        <button onClick={onBack} className="text-mt-rose text-sm font-medium">Voltar</button>
       </div>
     )
   }
@@ -102,7 +102,7 @@ export function ProductDetailScreen({
           onClick={onBack}
           className="w-9 h-9 rounded-xl bg-white/70 backdrop-blur-sm flex items-center justify-center active:scale-95 transition-transform"
         >
-          <ChevronLeft size={20} className="text-graphite" />
+          <ChevronLeft size={20} className="text-mt-charcoal" />
         </button>
         <button
           onClick={() => wishlistMutation.mutate()}
@@ -111,7 +111,7 @@ export function ProductDetailScreen({
         >
           <Heart
             size={20}
-            className={product.inWishlist ? 'text-sara-terracotta fill-current' : 'text-graphite-muted'}
+            className={product.inWishlist ? 'text-mt-rose-dark fill-current' : 'text-mt-muted'}
           />
         </button>
       </div>
@@ -129,7 +129,7 @@ export function ProductDetailScreen({
               />
             ) : (
               <div className="w-full h-full flex items-center justify-center">
-                <Package size={48} className="text-graphite-muted" />
+                <Package size={48} className="text-mt-muted" />
               </div>
             )}
           </div>
@@ -141,7 +141,7 @@ export function ProductDetailScreen({
                     key={i}
                     onClick={() => setImageIndex(i)}
                     className={`w-1.5 h-1.5 rounded-full transition-colors ${
-                      i === imageIndex ? 'bg-sara-gold' : 'bg-graphite-muted/30'
+                      i === imageIndex ? 'bg-mt-rose' : 'bg-mt-charcoal-muted/30'
                     }`}
                   />
                 ))}
@@ -151,7 +151,7 @@ export function ProductDetailScreen({
                   onClick={() => setImageIndex((i) => i - 1)}
                   className="absolute left-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-white/80 flex items-center justify-center"
                 >
-                  <ChevronLeft size={16} className="text-graphite" />
+                  <ChevronLeft size={16} className="text-mt-charcoal" />
                 </button>
               )}
               {imageIndex < images.length - 1 && (
@@ -159,7 +159,7 @@ export function ProductDetailScreen({
                   onClick={() => setImageIndex((i) => i + 1)}
                   className="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-white/80 flex items-center justify-center rotate-180"
                 >
-                  <ChevronLeft size={16} className="text-graphite" />
+                  <ChevronLeft size={16} className="text-mt-charcoal" />
                 </button>
               )}
             </>
@@ -168,18 +168,18 @@ export function ProductDetailScreen({
 
         {/* Meta */}
         <div className="mb-3 flex flex-wrap gap-1.5">
-          <span className="px-2.5 py-1 rounded-full bg-white/70 text-xs text-graphite-muted font-medium">
+          <span className="px-2.5 py-1 rounded-full bg-white/70 text-xs text-mt-muted font-medium">
             {product.category.icon} {product.category.name}
           </span>
           {phases?.map((ph) => (
-            <span key={ph} className="px-2.5 py-1 rounded-full bg-sara-gold/10 text-xs text-sara-gold font-medium">
+            <span key={ph} className="px-2.5 py-1 rounded-full bg-mt-rose/10 text-xs text-mt-rose font-medium">
               {ph}
             </span>
           ))}
         </div>
 
-        <h1 className="text-xl font-bold text-graphite leading-snug mb-1">{product.name}</h1>
-        <p className="text-2xl font-extrabold text-sara-gold mb-2">
+        <h1 className="text-xl font-bold text-mt-charcoal leading-snug mb-1">{product.name}</h1>
+        <p className="text-2xl font-extrabold text-mt-rose mb-2">
           R$ {Number(product.price).toFixed(2)}
         </p>
 
@@ -196,13 +196,13 @@ export function ProductDetailScreen({
                   size={14}
                   className={
                     s <= Math.round(product.reviewsSummary.average)
-                      ? 'text-sara-gold fill-current'
-                      : 'text-graphite-muted/30'
+                      ? 'text-mt-rose fill-current'
+                      : 'text-mt-muted/30'
                   }
                 />
               ))}
             </div>
-            <span className="text-xs text-graphite-muted">
+            <span className="text-xs text-mt-muted">
               {product.reviewsSummary.average.toFixed(1)} ({product.reviewsSummary.count} avaliações)
             </span>
           </button>
@@ -211,7 +211,7 @@ export function ProductDetailScreen({
         {/* Description */}
         <div className="mb-5">
           <p
-            className={`text-sm text-graphite leading-relaxed ${
+            className={`text-sm text-mt-charcoal leading-relaxed ${
               !descExpanded ? 'line-clamp-3' : ''
             }`}
           >
@@ -219,7 +219,7 @@ export function ProductDetailScreen({
           </p>
           <button
             onClick={() => setDescExpanded((v) => !v)}
-            className="text-xs text-sara-gold font-medium mt-1"
+            className="text-xs text-mt-rose font-medium mt-1"
           >
             {descExpanded ? 'Ver menos' : 'Ver mais'}
           </button>
@@ -230,10 +230,10 @@ export function ProductDetailScreen({
           <div className="bg-white/60 rounded-3xl p-4 mb-4">
             <div className="flex items-center justify-between mb-3">
               <div>
-                <span className="text-2xl font-bold text-graphite">
+                <span className="text-2xl font-bold text-mt-charcoal">
                   {product.reviewsSummary.average.toFixed(1)}
                 </span>
-                <span className="text-xs text-graphite-muted ml-1">/ 5</span>
+                <span className="text-xs text-mt-muted ml-1">/ 5</span>
               </div>
               <div className="flex flex-col gap-1 flex-1 ml-4">
                 {[5, 4, 3, 2, 1].map((r) => {
@@ -243,10 +243,10 @@ export function ProductDetailScreen({
                     : 0
                   return (
                     <div key={r} className="flex items-center gap-1.5">
-                      <span className="text-[10px] text-graphite-muted w-2">{r}</span>
-                      <div className="flex-1 h-1.5 rounded-full bg-graphite-muted/20 overflow-hidden">
+                      <span className="text-[10px] text-mt-muted w-2">{r}</span>
+                      <div className="flex-1 h-1.5 rounded-full bg-mt-charcoal-muted/20 overflow-hidden">
                         <div
-                          className="h-full bg-sara-gold rounded-full transition-all"
+                          className="h-full bg-mt-rose rounded-full transition-all"
                           style={{ width: `${pct}%` }}
                         />
                       </div>
@@ -256,12 +256,12 @@ export function ProductDetailScreen({
               </div>
             </div>
             {product.reviews.slice(0, 2).map((review) => (
-              <div key={review.id} className="border-t border-sara-linen/60 pt-3 mt-3">
+              <div key={review.id} className="border-t border-mt-linen/60 pt-3 mt-3">
                 <div className="flex items-center gap-2 mb-1">
-                  <div className="w-6 h-6 rounded-full bg-sara-gold/20 flex items-center justify-center text-xs font-bold text-sara-gold">
+                  <div className="w-6 h-6 rounded-full bg-mt-rose/20 flex items-center justify-center text-xs font-bold text-mt-rose">
                     {review.user.name.charAt(0)}
                   </div>
-                  <span className="text-xs font-medium text-graphite">{review.user.name}</span>
+                  <span className="text-xs font-medium text-mt-charcoal">{review.user.name}</span>
                   {review.verifiedPurchase && (
                     <span className="text-[10px] text-green-600 font-medium">✓ Verificado</span>
                   )}
@@ -271,18 +271,18 @@ export function ProductDetailScreen({
                         key={s}
                         size={10}
                         className={
-                          s <= review.rating ? 'text-sara-gold fill-current' : 'text-graphite-muted/30'
+                          s <= review.rating ? 'text-mt-rose fill-current' : 'text-mt-muted/30'
                         }
                       />
                     ))}
                   </div>
                 </div>
-                {review.text && <p className="text-xs text-graphite-muted line-clamp-2">{review.text}</p>}
+                {review.text && <p className="text-xs text-mt-muted line-clamp-2">{review.text}</p>}
               </div>
             ))}
             <button
               onClick={() => onOpenReviews(productId, product.name)}
-              className="w-full mt-3 py-2 rounded-xl bg-white text-sara-gold text-xs font-semibold border border-sara-gold/30 active:scale-95 transition-transform"
+              className="w-full mt-3 py-2 rounded-xl bg-white text-mt-rose text-xs font-semibold border border-mt-rose/30 active:scale-95 transition-transform"
             >
               Ver todas as avaliações
             </button>
@@ -292,7 +292,7 @@ export function ProductDetailScreen({
         {/* Related products */}
         {product.related.length > 0 && (
           <div className="mb-4">
-            <p className="text-xs font-semibold text-graphite-muted uppercase tracking-wide mb-2">
+            <p className="text-xs font-semibold text-mt-muted uppercase tracking-wide mb-2">
               Produtos relacionados
             </p>
             <div className="flex gap-3 overflow-x-auto scrollbar-hide pb-2">
@@ -306,15 +306,15 @@ export function ProductDetailScreen({
                     <img
                       src={rel.images[0]}
                       alt={rel.name}
-                      className="w-full h-20 rounded-xl object-cover bg-sara-linen"
+                      className="w-full h-20 rounded-xl object-cover bg-mt-linen"
                     />
                   ) : (
-                    <div className="w-full h-20 rounded-xl bg-sara-linen flex items-center justify-center">
-                      <Package size={20} className="text-graphite-muted" />
+                    <div className="w-full h-20 rounded-xl bg-mt-linen flex items-center justify-center">
+                      <Package size={20} className="text-mt-muted" />
                     </div>
                   )}
-                  <p className="text-xs font-medium text-graphite line-clamp-2 leading-tight">{rel.name}</p>
-                  <p className="text-xs font-bold text-sara-gold">R$ {Number(rel.price).toFixed(2)}</p>
+                  <p className="text-xs font-medium text-mt-charcoal line-clamp-2 leading-tight">{rel.name}</p>
+                  <p className="text-xs font-bold text-mt-rose">R$ {Number(rel.price).toFixed(2)}</p>
                 </button>
               ))}
             </div>

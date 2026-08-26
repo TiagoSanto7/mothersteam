@@ -134,7 +134,7 @@ export function MomentoDeusScreen({ open, onClose }: Props) {
               onClick={() => isSaved ? unsaveVerse(momento.referencia) : saveVerse(momento.referencia)}
               aria-label={isSaved ? 'Remover dos salvos' : 'Salvar versículo'}
               className={`w-full py-3 rounded-2xl text-sm font-semibold flex items-center justify-center gap-1.5 transition-colors ${
-                isSaved ? 'bg-white text-sara-gold' : 'bg-white/10 text-white'
+                isSaved ? 'bg-white text-mt-rose' : 'bg-white/10 text-white'
               }`}
             >
               ❤️ {isSaved ? 'Salvo' : 'Salvar'}

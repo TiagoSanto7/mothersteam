@@ -91,19 +91,19 @@ export function SavedVersesScreen({ open, onClose, readOnlyVerses, readOnlyUserN
           animate={{ y: 0 }}
           exit={{ y: '100%' }}
           transition={{ duration: 0.35, ease: 'easeOut' }}
-          className="fixed inset-0 z-[60] bg-sara-cream flex flex-col"
+          className="fixed inset-0 z-[60] bg-mt-cream flex flex-col"
           role="dialog"
           aria-modal="true"
           aria-label="Versículos salvos"
         >
           <div className="flex items-center justify-between px-5 pt-14 pb-4 flex-shrink-0">
-            <p className="text-[11px] font-bold text-graphite-muted uppercase tracking-wide">
+            <p className="text-[11px] font-bold text-mt-muted uppercase tracking-wide">
               {isReadOnly ? `Versículos de ${readOnlyUserName ?? 'outra mãe'}` : 'Versículos salvos'}
             </p>
             <button
               onClick={onClose}
               aria-label="Fechar"
-              className="w-8 h-8 flex items-center justify-center rounded-full bg-sara-linen text-graphite text-lg"
+              className="w-8 h-8 flex items-center justify-center rounded-full bg-mt-linen text-mt-charcoal text-lg"
             >
               ×
             </button>
@@ -113,10 +113,10 @@ export function SavedVersesScreen({ open, onClose, readOnlyVerses, readOnlyUserN
             {savedVerses.length === 0 ? (
               <div className="flex flex-col items-center justify-center h-full gap-3 py-16">
                 <span className="text-4xl">📖</span>
-                <p className="text-[13px] text-graphite-muted text-center">
+                <p className="text-[13px] text-mt-muted text-center">
                   Você ainda não salvou nenhum versículo.
                 </p>
-                <p className="text-[11px] text-graphite-muted/60 text-center">
+                <p className="text-[11px] text-mt-muted/60 text-center">
                   Abra o Momento com Deus e toque em ❤️ Salvar.
                 </p>
               </div>
@@ -134,16 +134,16 @@ export function SavedVersesScreen({ open, onClose, readOnlyVerses, readOnlyUserN
                       key={ref}
                       className="bg-white rounded-2xl p-4 shadow-sm"
                     >
-                      <p className="text-[13px] font-serif text-graphite leading-relaxed mb-2">
+                      <p className="text-[13px] font-serif text-mt-charcoal leading-relaxed mb-2">
                         "{entry.verso}"
                       </p>
-                      <p className="text-[11px] font-semibold text-sara-gold mb-3">
+                      <p className="text-[11px] font-semibold text-mt-rose mb-3">
                         {entry.referencia}
                       </p>
 
                       {/* Saved prayer preview */}
                       {savedPrayer && !isPrayerOpen && (
-                        <p className="text-[12px] text-graphite-muted italic leading-relaxed mb-3 border-l-2 border-sara-gold/30 pl-3">
+                        <p className="text-[12px] text-mt-muted italic leading-relaxed mb-3 border-l-2 border-mt-rose/30 pl-3">
                           {savedPrayer}
                         </p>
                       )}
@@ -157,20 +157,20 @@ export function SavedVersesScreen({ open, onClose, readOnlyVerses, readOnlyUserN
                             onChange={(e) => handlePrayerChange(ref, e.target.value)}
                             placeholder="Escreva sua oração aqui..."
                             rows={4}
-                            className="w-full rounded-xl border border-sara-gold/30 bg-sara-linen p-3 text-[13px] text-graphite placeholder-graphite-muted/50 resize-none focus:outline-none focus:border-sara-gold"
+                            className="w-full rounded-xl border border-mt-rose/30 bg-mt-linen p-3 text-[13px] text-mt-charcoal placeholder-mt-muted/50 resize-none focus:outline-none focus:border-mt-rose"
                           />
                           <div className="flex gap-2 mt-2">
                             <button
                               onClick={() => handlePrayerSave(ref)}
                               aria-label="Salvar oração"
-                              className="flex-1 py-2 rounded-xl bg-sara-gold text-white text-[12px] font-semibold"
+                              className="flex-1 py-2 rounded-xl bg-mt-rose text-white text-[12px] font-semibold"
                             >
                               Salvar oração
                             </button>
                             <button
                               onClick={() => setPrayerOpen((prev) => ({ ...prev, [ref]: false }))}
                               aria-label="Cancelar oração"
-                              className="py-2 px-4 rounded-xl bg-sara-linen text-graphite-muted text-[12px] font-medium"
+                              className="py-2 px-4 rounded-xl bg-mt-linen text-mt-muted text-[12px] font-medium"
                             >
                               Cancelar
                             </button>
@@ -185,7 +185,7 @@ export function SavedVersesScreen({ open, onClose, readOnlyVerses, readOnlyUserN
                             <button
                               onClick={() => togglePrayer(ref)}
                               aria-label={isPrayerOpen ? 'Fechar oração' : savedPrayer ? 'Editar oração' : 'Escrever oração'}
-                              className="text-[11px] text-graphite-muted/70 font-medium flex items-center gap-1"
+                              className="text-[11px] text-mt-muted/70 font-medium flex items-center gap-1"
                             >
                               🙏 {isPrayerOpen ? 'Fechar' : savedPrayer ? 'Editar oração' : 'Oração'}
                             </button>
@@ -201,7 +201,7 @@ export function SavedVersesScreen({ open, onClose, readOnlyVerses, readOnlyUserN
                               setTimeout(() => setShareLabel((prev) => { const n = { ...prev }; delete n[ref]; return n; }), 2000);
                             }}
                             aria-label="Compartilhar versículo"
-                            className="text-[11px] text-graphite-muted/70 font-medium flex items-center gap-1"
+                            className="text-[11px] text-mt-muted/70 font-medium flex items-center gap-1"
                           >
                             {shareLabel[ref] ?? '📤 Compartilhar'}
                           </button>
@@ -213,7 +213,7 @@ export function SavedVersesScreen({ open, onClose, readOnlyVerses, readOnlyUserN
                                 setTimeout(() => setShareLabel((prev) => { const n = { ...prev }; delete n[ref]; return n; }), 2000);
                               }}
                               aria-label="Salvar versículo"
-                              className="text-[11px] text-sara-gold font-medium flex items-center gap-1"
+                              className="text-[11px] text-mt-rose font-medium flex items-center gap-1"
                             >
                               {shareLabel[ref] === '✓ Salvo' ? '✓ Salvo' : '❤️ Salvar'}
                             </button>
@@ -223,7 +223,7 @@ export function SavedVersesScreen({ open, onClose, readOnlyVerses, readOnlyUserN
                           <button
                             onClick={() => unsaveVerse(ref)}
                             aria-label="Remover versículo dos salvos"
-                            className="text-[10px] text-graphite-muted/60 font-medium"
+                            className="text-[10px] text-mt-muted/60 font-medium"
                           >
                             Remover
                           </button>

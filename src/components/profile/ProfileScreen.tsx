@@ -118,7 +118,7 @@ export function ProfileScreen({ onClose, userId, onOpenProfile, onMessage, isTab
 
   if (selectedPost) {
     return (
-      <div className="flex flex-col w-full h-full sm:w-[390px] sm:h-[844px] bg-gradient-to-b from-[#F5EDE0] via-[#EAD8C8] to-[#D9C4AF] sm:rounded-[44px] sm:shadow-2xl overflow-hidden">
+      <div className="flex flex-col w-full h-full sm:w-[390px] sm:h-[844px] bg-mt-cream sm:rounded-[44px] sm:shadow-2xl overflow-hidden">
         <PostDetailScreen
           post={selectedPost}
           onBack={() => setSelectedPost(null)}
@@ -130,7 +130,7 @@ export function ProfileScreen({ onClose, userId, onOpenProfile, onMessage, isTab
 
   if (followList && effectiveUserId) {
     return (
-      <div className="flex flex-col w-full h-full sm:w-[390px] sm:h-[844px] bg-gradient-to-b from-[#F5EDE0] via-[#EAD8C8] to-[#D9C4AF] sm:rounded-[44px] sm:shadow-2xl overflow-hidden">
+      <div className="flex flex-col w-full h-full sm:w-[390px] sm:h-[844px] bg-mt-cream sm:rounded-[44px] sm:shadow-2xl overflow-hidden">
         <FollowListScreen
           mode={followList}
           userId={effectiveUserId}
@@ -146,7 +146,7 @@ export function ProfileScreen({ onClose, userId, onOpenProfile, onMessage, isTab
 
   if (showSettings) {
     return (
-      <div className="flex flex-col w-full h-full sm:w-[390px] sm:h-[844px] bg-gradient-to-b from-[#F5EDE0] via-[#EAD8C8] to-[#D9C4AF] sm:rounded-[44px] sm:shadow-2xl overflow-hidden">
+      <div className="flex flex-col w-full h-full sm:w-[390px] sm:h-[844px] bg-mt-cream sm:rounded-[44px] sm:shadow-2xl overflow-hidden">
         <SettingsScreen onBack={() => setShowSettings(false)} onClose={onClose ?? (() => setShowSettings(false))} />
       </div>
     );
@@ -156,7 +156,7 @@ export function ProfileScreen({ onClose, userId, onOpenProfile, onMessage, isTab
   if (!profile) {
     return (
       <div className="flex items-center justify-center w-full h-full">
-        <div className="w-8 h-8 rounded-full border-2 border-sara-gold border-t-transparent animate-spin" />
+        <div className="w-8 h-8 rounded-full border-2 border-mt-rose border-t-transparent animate-spin" />
       </div>
     );
   }
@@ -171,7 +171,7 @@ export function ProfileScreen({ onClose, userId, onOpenProfile, onMessage, isTab
   const posts = postsPages?.pages.flatMap((p) => p.items.map(apiPostToCommunityPost)) ?? [];
 
   return (
-    <div className="flex flex-col w-full h-full sm:w-[390px] sm:h-[844px] bg-gradient-to-b from-[#F5EDE0] via-[#EAD8C8] to-[#D9C4AF] sm:rounded-[44px] sm:shadow-2xl overflow-hidden">
+    <div className="flex flex-col w-full h-full sm:w-[390px] sm:h-[844px] bg-mt-cream sm:rounded-[44px] sm:shadow-2xl overflow-hidden">
       {/* Header */}
       <div className="flex items-center justify-between px-4 pt-6 pb-3 flex-shrink-0">
         {isTab ? (
@@ -180,24 +180,24 @@ export function ProfileScreen({ onClose, userId, onOpenProfile, onMessage, isTab
           <button
             onClick={onClose}
             aria-label="Voltar"
-            className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-sara-linen"
+            className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-mt-linen"
           >
-            <ChevronLeft size={20} className="text-graphite" />
+            <ChevronLeft size={20} className="text-mt-charcoal" />
           </button>
         )}
         <div className="flex flex-col items-center">
-          <p className="text-sm font-semibold font-serif text-graphite">{profile.name}</p>
+          <p className="text-sm font-semibold font-serif text-mt-charcoal">{profile.name}</p>
           {profile.username && (
-            <p className="text-xs text-graphite-muted">@{profile.username}</p>
+            <p className="text-xs text-mt-muted">@{profile.username}</p>
           )}
         </div>
         {isSelf ? (
           <button
             onClick={() => setShowSettings(true)}
             aria-label="Configurações"
-            className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-sara-linen"
+            className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-mt-linen"
           >
-            <Settings size={18} className="text-graphite" />
+            <Settings size={18} className="text-mt-charcoal" />
           </button>
         ) : (
           <div className="w-8" />
@@ -235,20 +235,20 @@ export function ProfileScreen({ onClose, userId, onOpenProfile, onMessage, isTab
                   aria-label={label}
                   className="flex flex-col items-center"
                 >
-                  <span className="text-base font-bold text-graphite">{value}</span>
-                  <span className="text-[10px] text-graphite-muted text-center leading-tight">{label}</span>
+                  <span className="text-base font-bold text-mt-charcoal">{value}</span>
+                  <span className="text-[10px] text-mt-muted text-center leading-tight">{label}</span>
                 </button>
               ) : (
                 <div key={label} className="flex flex-col items-center">
-                  <span className="text-base font-bold text-graphite">{value}</span>
-                  <span className="text-[10px] text-graphite-muted text-center leading-tight">{label}</span>
+                  <span className="text-base font-bold text-mt-charcoal">{value}</span>
+                  <span className="text-[10px] text-mt-muted text-center leading-tight">{label}</span>
                 </div>
               )
             ))}
           </div>
         </div>
 
-        <p className="text-xs text-graphite-muted leading-snug mt-3 italic">
+        <p className="text-xs text-mt-muted leading-snug mt-3 italic">
           &ldquo;{bio}&rdquo;
         </p>
 
@@ -258,7 +258,7 @@ export function ProfileScreen({ onClose, userId, onOpenProfile, onMessage, isTab
             <div className="flex gap-2 mt-3">
               <button
                 onClick={() => setShowEdit(true)}
-                className="flex-1 py-2 rounded-xl bg-sara-linen text-xs font-semibold text-sara-gold active:scale-95 transition-transform"
+                className="flex-1 py-2 rounded-xl bg-mt-linen text-xs font-semibold text-mt-rose active:scale-95 transition-transform"
               >
                 Editar perfil
               </button>
@@ -268,12 +268,12 @@ export function ProfileScreen({ onClose, userId, onOpenProfile, onMessage, isTab
               <button
                 onClick={() => setShowSavedVerses(true)}
                 aria-label="Ver versículos salvos"
-                className="w-full flex items-center justify-between mt-2 px-1 py-2 rounded-xl active:bg-sara-linen transition-colors"
+                className="w-full flex items-center justify-between mt-2 px-1 py-2 rounded-xl active:bg-mt-linen transition-colors"
               >
-                <span className="text-[12px] font-semibold text-graphite flex items-center gap-2">
+                <span className="text-[12px] font-semibold text-mt-charcoal flex items-center gap-2">
                   📖 Versículos salvos
                 </span>
-                <span className="text-[11px] text-sara-gold font-semibold">
+                <span className="text-[11px] text-mt-rose font-semibold">
                   {savedVerses.length} →
                 </span>
               </button>
@@ -286,8 +286,8 @@ export function ProfileScreen({ onClose, userId, onOpenProfile, onMessage, isTab
                 onClick={() => followMutation.mutate(!profile.isFollowedByCurrentUser)}
                 className={`flex-1 py-2 rounded-xl text-xs font-semibold active:scale-95 transition-transform ${
                   profile.isFollowedByCurrentUser
-                    ? 'bg-white text-graphite-muted border border-sara-linen'
-                    : 'bg-sara-gold text-white'
+                    ? 'bg-white text-mt-muted border border-mt-linen'
+                    : 'bg-mt-rose text-white'
                 }`}
               >
                 {profile.isFollowedByCurrentUser ? 'Seguindo' : 'Seguir'}
@@ -296,7 +296,7 @@ export function ProfileScreen({ onClose, userId, onOpenProfile, onMessage, isTab
                 <button
                   onClick={() => onMessage(effectiveUserId)}
                   aria-label="Enviar mensagem"
-                  className="flex-1 py-2 rounded-xl border border-sara-linen bg-white text-graphite text-xs font-semibold flex items-center justify-center gap-1.5 active:scale-95 transition-transform"
+                  className="flex-1 py-2 rounded-xl border border-mt-linen bg-white text-mt-charcoal text-xs font-semibold flex items-center justify-center gap-1.5 active:scale-95 transition-transform"
                 >
                   <MessageCircle size={14} strokeWidth={2} />
                   Mensagem
@@ -308,8 +308,8 @@ export function ProfileScreen({ onClose, userId, onOpenProfile, onMessage, isTab
                   aria-label={notifying ? 'Desativar notificações de publicações' : 'Ativar notificações de publicações'}
                   className={`w-9 flex items-center justify-center rounded-xl border transition-colors flex-shrink-0 ${
                     notifying
-                      ? 'border-sara-gold bg-sara-gold text-white'
-                      : 'border-sara-linen bg-white text-graphite-muted'
+                      ? 'border-mt-rose bg-mt-rose text-white'
+                      : 'border-mt-linen bg-white text-mt-muted'
                   }`}
                 >
                   <Bell size={16} />
@@ -319,12 +319,12 @@ export function ProfileScreen({ onClose, userId, onOpenProfile, onMessage, isTab
             {profile.versesPublic && otherVerses && otherVerses.length > 0 && (
               <button
                 onClick={() => setShowOtherVerses(true)}
-                className="w-full flex items-center justify-between px-1 py-2 rounded-xl active:bg-sara-linen transition-colors"
+                className="w-full flex items-center justify-between px-1 py-2 rounded-xl active:bg-mt-linen transition-colors"
               >
-                <span className="text-[12px] font-semibold text-graphite flex items-center gap-2">
+                <span className="text-[12px] font-semibold text-mt-charcoal flex items-center gap-2">
                   📖 Versículos salvos
                 </span>
-                <span className="text-[11px] text-sara-gold font-semibold">
+                <span className="text-[11px] text-mt-rose font-semibold">
                   {otherVerses.length} →
                 </span>
               </button>
@@ -341,7 +341,7 @@ export function ProfileScreen({ onClose, userId, onOpenProfile, onMessage, isTab
           <SaraPullIndicator pullY={pullY} isLoading={isLoading} />
         )}
         {posts.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-full gap-2 py-12 text-graphite-muted">
+          <div className="flex flex-col items-center justify-center h-full gap-2 py-12 text-mt-muted">
             <p className="text-sm">Nenhuma publicação ainda</p>
             {isSelf && (
               <p className="text-xs text-center px-8">Use o botão Desabafar na Comunidade para compartilhar</p>
@@ -359,7 +359,7 @@ export function ProfileScreen({ onClose, userId, onOpenProfile, onMessage, isTab
         )}
         <div ref={sentinelRef} className="h-4" />
         {isFetchingNextPage && (
-          <p className="text-center text-xs text-graphite-muted py-2">Carregando...</p>
+          <p className="text-center text-xs text-mt-muted py-2">Carregando...</p>
         )}
       </div>
 

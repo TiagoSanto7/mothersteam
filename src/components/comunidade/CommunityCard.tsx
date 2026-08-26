@@ -10,11 +10,11 @@ interface CommunityCardProps {
 }
 
 const COLOR_CONFIG: Record<CommunityColorKey, { avatarBg: string; avatarText: string }> = {
-  gold:       { avatarBg: 'bg-sara-linen', avatarText: 'text-sara-gold' },
-  terracotta: { avatarBg: 'bg-sara-linen', avatarText: 'text-sara-terracotta' },
-  warm:       { avatarBg: 'bg-sara-cream', avatarText: 'text-sara-warm' },
-  linen:      { avatarBg: 'bg-sara-linen', avatarText: 'text-sara-charcoal' },
-  cream:      { avatarBg: 'bg-sara-cream', avatarText: 'text-sara-charcoal' },
+  gold:       { avatarBg: 'bg-mt-linen', avatarText: 'text-mt-rose' },
+  terracotta: { avatarBg: 'bg-mt-linen', avatarText: 'text-mt-rose-dark' },
+  warm:       { avatarBg: 'bg-mt-cream', avatarText: 'text-mt-muted' },
+  linen:      { avatarBg: 'bg-mt-linen', avatarText: 'text-mt-charcoal' },
+  cream:      { avatarBg: 'bg-mt-cream', avatarText: 'text-mt-charcoal' },
 };
 
 export function CommunityCard({ community, isFollowing, onToggle, onOpen }: CommunityCardProps) {
@@ -25,7 +25,7 @@ export function CommunityCard({ community, isFollowing, onToggle, onOpen }: Comm
   const inner = (
     <>
       {resolvedAvatar ? (
-        <div className="w-11 h-11 rounded-2xl overflow-hidden flex-shrink-0 bg-sara-linen">
+        <div className="w-11 h-11 rounded-2xl overflow-hidden flex-shrink-0 bg-mt-linen">
           <img
             src={resolvedAvatar}
             alt={community.name}
@@ -42,15 +42,15 @@ export function CommunityCard({ community, isFollowing, onToggle, onOpen }: Comm
       )}
 
       <div className="flex-1 min-w-0">
-        <h3 className="text-sm font-semibold font-serif text-graphite leading-snug">
+        <h3 className="text-sm font-semibold font-serif text-mt-charcoal leading-snug">
           {community.name}
         </h3>
-        <p className="text-xs text-graphite-muted leading-relaxed mt-0.5 line-clamp-2">
+        <p className="text-xs text-mt-muted leading-relaxed mt-0.5 line-clamp-2">
           {community.description}
         </p>
         <div className="flex items-center gap-1 mt-1.5">
-          <Users size={11} className="text-graphite-muted" strokeWidth={1.8} />
-          <span className="text-[10px] text-graphite-muted">
+          <Users size={11} className="text-mt-muted" strokeWidth={1.8} />
+          <span className="text-[10px] text-mt-muted">
             {community.memberCount.toLocaleString('pt-BR')} membros
           </span>
         </div>
@@ -62,8 +62,8 @@ export function CommunityCard({ community, isFollowing, onToggle, onOpen }: Comm
         aria-label={isFollowing ? 'Deixar de seguir' : 'Seguir'}
         className={`flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-semibold transition-colors ${
           isFollowing
-            ? 'bg-sara-linen text-sara-warm border border-sara-linen'
-            : 'bg-sara-gold text-white'
+            ? 'bg-mt-linen text-mt-muted border border-mt-linen'
+            : 'bg-mt-rose text-white'
         }`}
       >
         {isFollowing ? 'Seguindo' : 'Seguir'}
@@ -77,7 +77,7 @@ export function CommunityCard({ community, isFollowing, onToggle, onOpen }: Comm
         type="button"
         onClick={onOpen}
         aria-label={`Ver comunidade ${community.name}`}
-        className="w-full text-left bg-white/70 backdrop-blur-sm border border-white/50 rounded-3xl p-4 flex items-start gap-3 shadow-sm"
+        className="w-full text-left bg-white/95 backdrop-blur-sm rounded-mt shadow-mt p-4 flex items-start gap-3"
       >
         {inner}
       </button>
@@ -85,7 +85,7 @@ export function CommunityCard({ community, isFollowing, onToggle, onOpen }: Comm
   }
 
   return (
-    <div className="bg-white/70 backdrop-blur-sm border border-white/50 rounded-3xl p-4 flex items-start gap-3 shadow-sm">
+    <div className="bg-white/95 backdrop-blur-sm rounded-mt shadow-mt p-4 flex items-start gap-3">
       {inner}
     </div>
   );

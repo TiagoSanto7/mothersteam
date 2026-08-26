@@ -63,10 +63,10 @@ export function CategoriesPage() {
   return (
     <div className="p-8 max-w-3xl">
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-xl font-bold text-graphite">Categorias</h1>
+        <h1 className="text-xl font-bold text-mt-charcoal">Categorias</h1>
         <button
           onClick={() => { setShowForm(true); setEditId(null); setForm(EMPTY_FORM); setError(null); }}
-          className="flex items-center gap-2 px-4 py-2 bg-sara-gold text-white text-sm font-semibold rounded-xl hover:bg-sara-gold/90 transition-colors"
+          className="flex items-center gap-2 px-4 py-2 bg-mt-rose text-white text-sm font-semibold rounded-xl hover:bg-mt-rose/90 transition-colors"
         >
           <Plus size={16} /> Nova categoria
         </button>
@@ -74,55 +74,55 @@ export function CategoriesPage() {
 
       {showForm && (
         <div className="bg-white rounded-2xl border border-gray-100 p-5 mb-6">
-          <h2 className="text-sm font-semibold text-graphite mb-4">{editId ? 'Editar categoria' : 'Nova categoria'}</h2>
+          <h2 className="text-sm font-semibold text-mt-charcoal mb-4">{editId ? 'Editar categoria' : 'Nova categoria'}</h2>
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="text-xs font-medium text-graphite-muted">Nome</label>
+              <label className="text-xs font-medium text-mt-muted">Nome</label>
               <input
                 value={form.name}
                 onChange={(e) => handleNameChange(e.target.value)}
-                className="w-full mt-1 px-3 py-2 rounded-xl border border-gray-200 text-sm text-graphite outline-none focus:border-sara-gold"
+                className="w-full mt-1 px-3 py-2 rounded-xl border border-gray-200 text-sm text-mt-charcoal outline-none focus:border-mt-rose"
               />
             </div>
             <div>
-              <label className="text-xs font-medium text-graphite-muted">Slug</label>
+              <label className="text-xs font-medium text-mt-muted">Slug</label>
               <input
                 value={form.slug}
                 onChange={(e) => setForm((f) => ({ ...f, slug: e.target.value }))}
-                className="w-full mt-1 px-3 py-2 rounded-xl border border-gray-200 text-sm text-graphite outline-none focus:border-sara-gold"
+                className="w-full mt-1 px-3 py-2 rounded-xl border border-gray-200 text-sm text-mt-charcoal outline-none focus:border-mt-rose"
               />
             </div>
             <div>
-              <label className="text-xs font-medium text-graphite-muted">Ícone (emoji)</label>
+              <label className="text-xs font-medium text-mt-muted">Ícone (emoji)</label>
               <input
                 value={form.icon}
                 onChange={(e) => setForm((f) => ({ ...f, icon: e.target.value }))}
                 maxLength={4}
-                className="w-full mt-1 px-3 py-2 rounded-xl border border-gray-200 text-sm text-graphite outline-none focus:border-sara-gold"
+                className="w-full mt-1 px-3 py-2 rounded-xl border border-gray-200 text-sm text-mt-charcoal outline-none focus:border-mt-rose"
               />
             </div>
             <div>
-              <label className="text-xs font-medium text-graphite-muted">Ordem</label>
+              <label className="text-xs font-medium text-mt-muted">Ordem</label>
               <input
                 type="number"
                 value={form.sortOrder}
                 onChange={(e) => setForm((f) => ({ ...f, sortOrder: Number(e.target.value) }))}
-                className="w-full mt-1 px-3 py-2 rounded-xl border border-gray-200 text-sm text-graphite outline-none focus:border-sara-gold"
+                className="w-full mt-1 px-3 py-2 rounded-xl border border-gray-200 text-sm text-mt-charcoal outline-none focus:border-mt-rose"
               />
             </div>
           </div>
-          {error && <p className="text-xs text-sara-terracotta mt-3">{error}</p>}
+          {error && <p className="text-xs text-mt-rose-dark mt-3">{error}</p>}
           <div className="flex gap-2 mt-4">
             <button
               onClick={() => saveMutation.mutate(form)}
               disabled={!form.name || !form.slug || saveMutation.isPending}
-              className="flex items-center gap-1.5 px-4 py-2 bg-sara-gold text-white text-sm font-semibold rounded-xl disabled:opacity-50"
+              className="flex items-center gap-1.5 px-4 py-2 bg-mt-rose text-white text-sm font-semibold rounded-xl disabled:opacity-50"
             >
               <Check size={14} /> {saveMutation.isPending ? 'Salvando...' : 'Salvar'}
             </button>
             <button
               onClick={() => { setShowForm(false); setEditId(null); setError(null); }}
-              className="flex items-center gap-1.5 px-4 py-2 bg-gray-100 text-graphite text-sm font-medium rounded-xl"
+              className="flex items-center gap-1.5 px-4 py-2 bg-gray-100 text-mt-charcoal text-sm font-medium rounded-xl"
             >
               <X size={14} /> Cancelar
             </button>
@@ -131,16 +131,16 @@ export function CategoriesPage() {
       )}
 
       {isLoading ? (
-        <p className="text-graphite-muted text-sm">Carregando...</p>
+        <p className="text-mt-muted text-sm">Carregando...</p>
       ) : (
         <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
           <table className="w-full text-sm">
             <thead className="bg-gray-50 border-b border-gray-100">
               <tr>
-                <th className="text-left px-4 py-3 text-xs font-semibold text-graphite-muted">Categoria</th>
-                <th className="text-left px-4 py-3 text-xs font-semibold text-graphite-muted">Slug</th>
-                <th className="text-left px-4 py-3 text-xs font-semibold text-graphite-muted">Produtos</th>
-                <th className="text-left px-4 py-3 text-xs font-semibold text-graphite-muted">Ordem</th>
+                <th className="text-left px-4 py-3 text-xs font-semibold text-mt-muted">Categoria</th>
+                <th className="text-left px-4 py-3 text-xs font-semibold text-mt-muted">Slug</th>
+                <th className="text-left px-4 py-3 text-xs font-semibold text-mt-muted">Produtos</th>
+                <th className="text-left px-4 py-3 text-xs font-semibold text-mt-muted">Ordem</th>
                 <th className="px-4 py-3" />
               </tr>
             </thead>
@@ -149,20 +149,20 @@ export function CategoriesPage() {
                 <tr key={cat.id} className={!cat.active ? 'opacity-40' : ''}>
                   <td className="px-4 py-3">
                     <span className="mr-2">{cat.icon}</span>
-                    <span className="font-medium text-graphite">{cat.name}</span>
+                    <span className="font-medium text-mt-charcoal">{cat.name}</span>
                   </td>
-                  <td className="px-4 py-3 text-graphite-muted font-mono text-xs">{cat.slug}</td>
-                  <td className="px-4 py-3 text-graphite-muted">{cat._count.products}</td>
-                  <td className="px-4 py-3 text-graphite-muted">{cat.sortOrder}</td>
+                  <td className="px-4 py-3 text-mt-muted font-mono text-xs">{cat.slug}</td>
+                  <td className="px-4 py-3 text-mt-muted">{cat._count.products}</td>
+                  <td className="px-4 py-3 text-mt-muted">{cat.sortOrder}</td>
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-2 justify-end">
-                      <button onClick={() => startEdit(cat)} aria-label="Editar" className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-gray-100 text-graphite-muted">
+                      <button onClick={() => startEdit(cat)} aria-label="Editar" className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-gray-100 text-mt-muted">
                         <Pencil size={14} />
                       </button>
                       <button
                         onClick={() => { if (confirm(`Desativar "${cat.name}"?`)) deleteMutation.mutate(cat.id); }}
                         aria-label="Desativar"
-                        className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-sara-terracotta/10 text-sara-terracotta"
+                        className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-mt-rose-dark/10 text-mt-rose-dark"
                       >
                         <Trash2 size={14} />
                       </button>
@@ -173,7 +173,7 @@ export function CategoriesPage() {
             </tbody>
           </table>
           {categories.length === 0 && (
-            <p className="text-center text-graphite-muted text-sm py-8">Nenhuma categoria cadastrada.</p>
+            <p className="text-center text-mt-muted text-sm py-8">Nenhuma categoria cadastrada.</p>
           )}
         </div>
       )}

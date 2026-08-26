@@ -186,12 +186,17 @@ describe('ComunidadeScreen', () => {
     expect(screen.getByText('Enviar para')).toBeInTheDocument();
   });
 
-  it('clicking Republicar toggles aria-label to Republicado', async () => {
+  it('clicking Republicar opens the QuoteRepost sheet and confirming toggles aria-label to Republicado', async () => {
     render(<ComunidadeScreen />, { wrapper });
     await screen.findAllByTestId('post-card');
-    const [firstRepost] = screen.getAllByRole('button', { name: /republicar/i });
-    fireEvent.click(firstRepost);
-    expect(screen.getAllByRole('button', { name: /republicado/i })[0]).toBeInTheDocument();
+    // Click on the Republicar button of the first post — this opens the QuoteRepostSheet, does NOT repost yet
+    const repostButtons = screen.getAllByRole('button', { name: 'Republicar' });
+    fireEvent.click(repostButtons[0]);
+    // Now confirm the plain repost (without quote) from the sheet
+    const confirmButton = await screen.findByRole('button', { name: /^repostar$/i });
+    fireEvent.click(confirmButton);
+    // aria-label of the original button flips to Republicado
+    await screen.findByRole('button', { name: 'Republicado' });
   });
 
   it('shows CreatePost modal when ComposerBar is clicked (feed still mounted)', async () => {

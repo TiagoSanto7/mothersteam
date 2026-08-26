@@ -21,10 +21,10 @@ export function BabyEvolutionIcon() {
 
   return (
     <div className="flex flex-col items-center gap-2 py-4">
-      <div className="w-20 h-20 rounded-full bg-sara-linen flex items-center justify-center text-5xl shadow-inner">
+      <div className="w-20 h-20 rounded-full bg-mt-linen flex items-center justify-center text-5xl shadow-inner">
         {emoji}
       </div>
-      <p className="text-xs text-graphite-muted font-medium text-center">{subtitle}</p>
+      <p className="text-xs text-mt-muted font-medium text-center">{subtitle}</p>
     </div>
   );
 }

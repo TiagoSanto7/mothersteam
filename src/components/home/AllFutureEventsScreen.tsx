@@ -56,19 +56,19 @@ export function AllFutureEventsScreen({ onClose }: AllFutureEventsScreenProps) {
         animate={{ opacity: 1, y: 0 }}
         exit={{ opacity: 0, y: 32 }}
         transition={{ duration: 0.22, ease: 'easeOut' }}
-        className="fixed inset-x-0 bottom-0 top-14 bg-sara-linen z-50 rounded-t-[28px] flex flex-col overflow-hidden shadow-2xl"
+        className="fixed inset-x-0 bottom-0 top-14 bg-mt-linen z-50 rounded-t-[28px] flex flex-col overflow-hidden shadow-2xl"
         style={{ maxWidth: 390, margin: '0 auto' }}
       >
         {/* Header */}
-        <div className="flex items-center gap-3 px-4 pt-5 pb-4 border-b border-sara-linen/60">
+        <div className="flex items-center gap-3 px-4 pt-5 pb-4 border-b border-mt-linen/60">
           <button
             onClick={onClose}
             aria-label="Fechar"
             className="w-8 h-8 rounded-full bg-white flex items-center justify-center shadow-sm"
           >
-            <ChevronLeft size={18} className="text-graphite" />
+            <ChevronLeft size={18} className="text-mt-charcoal" />
           </button>
-          <h2 className="text-base font-semibold font-serif text-graphite flex-1">
+          <h2 className="text-base font-semibold font-serif text-mt-charcoal flex-1">
             Eventos Futuros
           </h2>
           <button
@@ -76,26 +76,26 @@ export function AllFutureEventsScreen({ onClose }: AllFutureEventsScreenProps) {
             aria-label="Fechar tela"
             className="w-8 h-8 rounded-full bg-white flex items-center justify-center shadow-sm"
           >
-            <X size={14} className="text-graphite-muted" strokeWidth={2} />
+            <X size={14} className="text-mt-muted" strokeWidth={2} />
           </button>
         </div>
 
         {/* Content */}
         <div className="flex-1 overflow-y-auto px-4 py-4">
           {isLoading && (
-            <p className="text-sm text-graphite-muted text-center pt-8">Carregando…</p>
+            <p className="text-sm text-mt-muted text-center pt-8">Carregando…</p>
           )}
 
           {!isLoading && sortedDates.length === 0 && (
             <div className="flex flex-col items-center gap-2 pt-16">
               <span className="text-4xl">🌿</span>
-              <p className="text-sm text-graphite-muted">Nenhum evento futuro</p>
+              <p className="text-sm text-mt-muted">Nenhum evento futuro</p>
             </div>
           )}
 
           {sortedDates.map((date) => (
             <div key={date} className="mb-5">
-              <p className="text-[11px] font-bold text-graphite-muted uppercase tracking-wide mb-2">
+              <p className="text-[11px] font-bold text-mt-muted uppercase tracking-wide mb-2">
                 {formatDateHeading(date)}
               </p>
               <div className="flex flex-col gap-2">
@@ -108,12 +108,12 @@ export function AllFutureEventsScreen({ onClose }: AllFutureEventsScreenProps) {
                   >
                     <span className="text-lg flex-shrink-0">{CATEGORY_EMOJI[entry.category]}</span>
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-graphite truncate">{entry.title}</p>
+                      <p className="text-sm font-medium text-mt-charcoal truncate">{entry.title}</p>
                       {entry.notes && (
-                        <p className="text-[11px] text-graphite-muted truncate">{entry.notes}</p>
+                        <p className="text-[11px] text-mt-muted truncate">{entry.notes}</p>
                       )}
                     </div>
-                    <span className="text-[11px] text-graphite-muted flex-shrink-0">{entry.time}</span>
+                    <span className="text-[11px] text-mt-muted flex-shrink-0">{entry.time}</span>
                   </button>
                 ))}
               </div>

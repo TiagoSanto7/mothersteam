@@ -73,7 +73,7 @@ export function ImageCropModal({ imageSrc, aspectRatio, onConfirm, onCancel }: P
       <p className="text-white text-sm font-semibold">Arraste para reposicionar</p>
 
       <div
-        className="relative overflow-hidden rounded-2xl border-2 border-sara-gold cursor-move"
+        className="relative overflow-hidden rounded-2xl border-2 border-mt-rose cursor-move"
         style={{ width: cropW, height: cropH }}
       >
         <canvas
@@ -99,7 +99,7 @@ export function ImageCropModal({ imageSrc, aspectRatio, onConfirm, onCancel }: P
           step={0.01}
           value={scale}
           onChange={(e) => setScale(Number(e.target.value))}
-          className="flex-1 accent-sara-gold"
+          className="flex-1 accent-mt-rose"
         />
         <span className="text-white/60 text-xs">+</span>
       </div>
@@ -115,7 +115,7 @@ export function ImageCropModal({ imageSrc, aspectRatio, onConfirm, onCancel }: P
         <button
           onClick={handleConfirm}
           aria-label="Confirmar"
-          className="flex-1 py-3 rounded-2xl bg-sara-gold text-white font-semibold text-sm"
+          className="flex-1 py-3 rounded-2xl bg-mt-rose text-white font-semibold text-sm"
         >
           Confirmar
         </button>

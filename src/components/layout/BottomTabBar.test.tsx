@@ -16,13 +16,25 @@ describe('BottomTabBar', () => {
     expect(screen.getByTestId('tab-perfil')).toBeInTheDocument();
   });
 
-  it('does not render old tabs or central button', () => {
+  it('does not render old tabs', () => {
     render(<BottomTabBar />);
     expect(screen.queryByTestId('tab-home')).not.toBeInTheDocument();
     expect(screen.queryByTestId('tab-maeIA')).not.toBeInTheDocument();
     expect(screen.queryByTestId('tab-baby')).not.toBeInTheDocument();
     expect(screen.queryByTestId('tab-rotina')).not.toBeInTheDocument();
     expect(screen.queryByTestId('baby-central-button')).not.toBeInTheDocument();
+  });
+
+  it('renders the central M-CTA button between jornada and comunidade', () => {
+    render(<BottomTabBar />);
+    expect(screen.getByTestId('bottom-cta')).toBeInTheDocument();
+  });
+
+  it('M-CTA click opens quickActions overlay in store', () => {
+    render(<BottomTabBar />);
+    expect(useAppStore.getState().quickActionsOpen).toBe(false);
+    fireEvent.click(screen.getByTestId('bottom-cta'));
+    expect(useAppStore.getState().quickActionsOpen).toBe(true);
   });
 
   it('activates hoje tab when clicked', () => {

@@ -104,9 +104,6 @@ export default function App() {
     setChatTargetUserId(null);
     setOpenProduct(null);
     setOpenReviews(null);
-    setShowCart(false);
-    setShowCheckout(false);
-    setOpenOrderId(null);
   }, [closeOverlaysTick]);
 
   // Session restore: try refresh on first load (cookie for web, body token for Capacitor)
@@ -176,16 +173,16 @@ export default function App() {
         aria-label="Buscar"
         className="relative w-9 h-9 rounded-xl bg-white/70 backdrop-blur-sm border border-white/50 flex items-center justify-center"
       >
-        <Search size={18} className="text-graphite-light" strokeWidth={1.8} />
+        <Search size={18} className="text-mt-muted" strokeWidth={1.8} />
       </button>
       <button
         onClick={() => setShowChat(true)}
         aria-label="Mensagens"
         className="relative w-9 h-9 rounded-xl bg-white/70 backdrop-blur-sm border border-white/50 flex items-center justify-center"
       >
-        <MessageSquare size={18} className="text-graphite-light" strokeWidth={1.8} />
+        <MessageSquare size={18} className="text-mt-muted" strokeWidth={1.8} />
         {unreadChats > 0 && (
-          <span className="absolute -top-1 -right-1 w-4 h-4 bg-sara-terracotta rounded-full flex items-center justify-center text-[9px] font-bold text-white">
+          <span className="absolute -top-1 -right-1 w-4 h-4 bg-mt-rose-dark rounded-full flex items-center justify-center text-[9px] font-bold text-white">
             {unreadChats}
           </span>
         )}
@@ -195,9 +192,9 @@ export default function App() {
         aria-label="Notificações"
         className="relative w-9 h-9 rounded-xl bg-white/70 backdrop-blur-sm border border-white/50 flex items-center justify-center"
       >
-        <Bell size={18} className="text-graphite-light" strokeWidth={1.8} />
+        <Bell size={18} className="text-mt-muted" strokeWidth={1.8} />
         {unreadNotifs > 0 && (
-          <span className="absolute -top-1 -right-1 w-4 h-4 bg-sara-terracotta rounded-full flex items-center justify-center text-[9px] font-bold text-white">
+          <span className="absolute -top-1 -right-1 w-4 h-4 bg-mt-rose-dark rounded-full flex items-center justify-center text-[9px] font-bold text-white">
             {unreadNotifs}
           </span>
         )}

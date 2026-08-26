@@ -84,20 +84,20 @@ export function AddRoutineModal({ onClose, defaultDate, editEntry }: AddRoutineM
         role="dialog"
         aria-modal="true"
         aria-label={isEdit ? 'Editar evento' : 'Adicionar à rotina'}
-        className="fixed bottom-0 left-1/2 -translate-x-1/2 w-[390px] bg-sara-linen/90 backdrop-blur-md rounded-t-[32px] z-50 px-6 pt-5 pb-10 flex flex-col gap-5 shadow-2xl"
+        className="fixed bottom-0 left-1/2 -translate-x-1/2 w-[390px] bg-mt-linen/90 backdrop-blur-md rounded-t-[32px] z-50 px-6 pt-5 pb-10 flex flex-col gap-5 shadow-2xl"
       >
         <div className="flex items-center justify-between">
           <div className="w-10 h-1 bg-gray-200 rounded-full mx-auto absolute left-1/2 -translate-x-1/2 top-3" />
-          <h2 className="text-base font-semibold font-serif text-graphite pt-2">
+          <h2 className="text-base font-semibold font-serif text-mt-charcoal pt-2">
             {isEdit ? 'Editar Evento' : 'Adicionar à Rotina'}
           </h2>
           <button onClick={onClose} aria-label="Fechar" className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center">
-            <X size={14} className="text-graphite-muted" strokeWidth={2} />
+            <X size={14} className="text-mt-muted" strokeWidth={2} />
           </button>
         </div>
 
         <div className="flex flex-col gap-1">
-          <label className="text-xs font-medium text-graphite-muted" htmlFor="routine-title">
+          <label className="text-xs font-medium text-mt-muted" htmlFor="routine-title">
             O que você precisa fazer?
           </label>
           <input
@@ -107,13 +107,13 @@ export function AddRoutineModal({ onClose, defaultDate, editEntry }: AddRoutineM
             onChange={(e) => setTitle(e.target.value)}
             placeholder="Ex: Tomar vitamina D"
             autoFocus
-            className="w-full px-4 py-3 rounded-2xl bg-white border border-sara-linen text-sm text-graphite placeholder:text-sara-muted focus:outline-none focus:border-sara-gold"
+            className="w-full px-4 py-3 rounded-2xl bg-white border border-mt-linen text-sm text-mt-charcoal placeholder:text-mt-muted focus:outline-none focus:border-mt-rose"
           />
         </div>
 
         <div className="flex gap-3">
           <div className="flex flex-col gap-1 flex-1">
-            <label className="text-xs font-medium text-graphite-muted" htmlFor="routine-time">
+            <label className="text-xs font-medium text-mt-muted" htmlFor="routine-time">
               Horário
             </label>
             <input
@@ -121,11 +121,11 @@ export function AddRoutineModal({ onClose, defaultDate, editEntry }: AddRoutineM
               type="time"
               value={time}
               onChange={(e) => setTime(e.target.value)}
-              className="w-full px-4 py-3 rounded-2xl bg-white border border-sara-linen text-sm text-graphite focus:outline-none focus:border-sara-gold"
+              className="w-full px-4 py-3 rounded-2xl bg-white border border-mt-linen text-sm text-mt-charcoal focus:outline-none focus:border-mt-rose"
             />
           </div>
           <div className="flex flex-col gap-1 flex-1">
-            <label className="text-xs font-medium text-graphite-muted" htmlFor="routine-date">
+            <label className="text-xs font-medium text-mt-muted" htmlFor="routine-date">
               Data
             </label>
             <input
@@ -133,13 +133,13 @@ export function AddRoutineModal({ onClose, defaultDate, editEntry }: AddRoutineM
               type="date"
               value={date}
               onChange={(e) => setDate(e.target.value)}
-              className="w-full px-4 py-3 rounded-2xl bg-white border border-sara-linen text-sm text-graphite focus:outline-none focus:border-sara-gold"
+              className="w-full px-4 py-3 rounded-2xl bg-white border border-mt-linen text-sm text-mt-charcoal focus:outline-none focus:border-mt-rose"
             />
           </div>
         </div>
 
         <div className="flex flex-col gap-2">
-          <p className="text-xs font-medium text-graphite-muted">Categoria</p>
+          <p className="text-xs font-medium text-mt-muted">Categoria</p>
           <div className="flex gap-2">
             {CATEGORIES.map((cat) => (
               <button
@@ -148,8 +148,8 @@ export function AddRoutineModal({ onClose, defaultDate, editEntry }: AddRoutineM
                 aria-pressed={category === cat.value}
                 className={`flex-1 py-2.5 rounded-2xl text-xs font-medium flex flex-col items-center gap-1 transition-colors border-2 ${
                   category === cat.value
-                    ? 'border-sara-gold bg-sara-linen text-graphite'
-                    : 'border-sara-linen bg-sara-cream text-graphite-muted'
+                    ? 'border-mt-rose bg-mt-linen text-mt-charcoal'
+                    : 'border-mt-linen bg-mt-cream text-mt-muted'
                 }`}
               >
                 <span className="text-base">{cat.emoji}</span>
@@ -161,10 +161,10 @@ export function AddRoutineModal({ onClose, defaultDate, editEntry }: AddRoutineM
 
         <div className="flex flex-col gap-1">
           <div className="flex items-center justify-between">
-            <label className="text-xs font-medium text-graphite-muted" htmlFor="routine-notes">
-              Observação <span className="text-graphite-muted/60">(opcional)</span>
+            <label className="text-xs font-medium text-mt-muted" htmlFor="routine-notes">
+              Observação <span className="text-mt-muted/60">(opcional)</span>
             </label>
-            <span className={`text-[10px] ${notesCount > NOTES_MAX ? 'text-red-500' : 'text-graphite-muted/60'}`}>
+            <span className={`text-[10px] ${notesCount > NOTES_MAX ? 'text-red-500' : 'text-mt-muted/60'}`}>
               {notesCount}/{NOTES_MAX}
             </span>
           </div>
@@ -175,7 +175,7 @@ export function AddRoutineModal({ onClose, defaultDate, editEntry }: AddRoutineM
             placeholder="Adicione uma observação…"
             rows={3}
             maxLength={NOTES_MAX}
-            className="w-full px-4 py-3 rounded-2xl bg-white border border-sara-linen text-sm text-graphite placeholder:text-sara-muted focus:outline-none focus:border-sara-gold resize-none"
+            className="w-full px-4 py-3 rounded-2xl bg-white border border-mt-linen text-sm text-mt-charcoal placeholder:text-mt-muted focus:outline-none focus:border-mt-rose resize-none"
           />
         </div>
 
@@ -184,7 +184,7 @@ export function AddRoutineModal({ onClose, defaultDate, editEntry }: AddRoutineM
           disabled={!title.trim() || isPending || notesCount > NOTES_MAX}
           whileTap={{ scale: 0.97 }}
           transition={{ duration: 0.15, ease: 'easeOut' }}
-          className="w-full py-3.5 rounded-2xl bg-sara-gold text-white text-sm font-semibold disabled:opacity-40"
+          className="w-full py-3.5 rounded-2xl bg-mt-rose text-white text-sm font-semibold disabled:opacity-40"
         >
           {isPending ? (isEdit ? 'Salvando…' : 'Adicionando…') : (isEdit ? 'Salvar' : 'Adicionar')}
         </motion.button>

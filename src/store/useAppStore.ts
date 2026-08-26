@@ -47,6 +47,11 @@ interface AppState {
   pendingChatUserId: string | null;
   tabRefreshTick: number;
   closeOverlaysTick: number;
+  quickActionsOpen: boolean;
+  /** Cross-screen bridge for the +CTA sheet: the screen that consumes it must call consumeQuickAction() after acting. */
+  pendingQuickAction: 'newPost' | 'addRoutine' | null;
+  /** null = sheet closed; string = which tab the QuickRegisterSheet should open on. */
+  babySheetMode: 'amamentacao' | 'sono' | 'fralda' | null;
   // Auth actions
   setAccessToken: (token: string) => void;
   setAuth: (token: string, user: ApiUser, refreshToken?: string) => void;
@@ -71,6 +76,12 @@ interface AppState {
   savePrayer: (ref: string, text: string) => void;
   bumpTabRefresh: () => void;
   closeAllOverlays: () => void;
+  openQuickActions: () => void;
+  closeQuickActions: () => void;
+  requestQuickAction: (action: 'newPost' | 'addRoutine') => void;
+  consumeQuickAction: () => void;
+  openBabySheet: (mode: 'amamentacao' | 'sono' | 'fralda') => void;
+  closeBabySheet: () => void;
 }
 
 const safeLocalStorage = {
@@ -172,6 +183,9 @@ export const useAppStore = create<AppState>()(
       pendingChatUserId: null,
       tabRefreshTick: 0,
       closeOverlaysTick: 0,
+      quickActionsOpen: false,
+      pendingQuickAction: null,
+      babySheetMode: null,
       // Auth actions
       setAccessToken: (token) => set({ accessToken: token }),
       setAuth: (token, user, refreshTok) =>
@@ -241,7 +255,13 @@ export const useAppStore = create<AppState>()(
       // UI actions
       setActiveTab: (tab) => set({ activeTab: tab }),
       bumpTabRefresh: () => set((s) => ({ tabRefreshTick: s.tabRefreshTick + 1 })),
-      closeAllOverlays: () => set((s) => ({ closeOverlaysTick: s.closeOverlaysTick + 1 })),
+      closeAllOverlays: () => set((s) => ({ closeOverlaysTick: s.closeOverlaysTick + 1, quickActionsOpen: false })),
+      openQuickActions: () => set({ quickActionsOpen: true }),
+      closeQuickActions: () => set({ quickActionsOpen: false }),
+      requestQuickAction: (action) => set({ pendingQuickAction: action }),
+      consumeQuickAction: () => set({ pendingQuickAction: null }),
+      openBabySheet: (mode) => set({ babySheetMode: mode }),
+      closeBabySheet: () => set({ babySheetMode: null }),
       setSelectedDate: (date) => set({ selectedDate: date }),
       toggleFeedSide: () =>
         set((s) => ({ lastFeedSide: s.lastFeedSide === 'left' ? 'right' : 'left' })),

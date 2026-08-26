@@ -4,26 +4,26 @@ export default {
   theme: {
     extend: {
       colors: {
-        'sara-gold':       '#A07844',
-        'sara-terracotta': '#BC8474',
-        'sara-linen':      '#F5EFE6',
-        'sara-cream':      '#FAF7F2',
-        'sara-charcoal':   '#3D342E',
-        'sara-muted':      '#9E8E84',
-        'sara-warm':       '#7A6B62',
-        // aliases — mantidos para não quebrar classes existentes
-        graphite:          '#3D342E',
-        'graphite-light':  '#7A6B62',
-        'graphite-muted':  '#9E8E84',
-        offwhite:          '#FAF7F2',
-        // mt-* aliases — cadastro completo componentes usam esses nomes;
-        // apontam pros mesmos hex das sara-* pra manter identidade visual da prod atual
-        'mt-cream':        '#FAF7F2',
-        'mt-linen':        '#F5EFE6',
-        'mt-charcoal':     '#3D342E',
-        'mt-muted':        '#9E8E84',
-        'mt-rose':         '#A07844',
-        'mt-rose-dark':    '#BC8474',
+        // Paleta oficial Mother's Team
+        'mt-rose':       '#db958b',
+        'mt-rose-dark':  '#c47c73',
+        'mt-rose-deep':  '#8b3d34',
+        'mt-pink':       '#f6bdd8',
+        'mt-pink-soft':  '#fadfec',
+        'mt-cream':      '#faf5f0',
+        'mt-linen':      '#f5ede4',
+        'mt-charcoal':   '#3d342e',
+        'mt-muted':      '#8b7268',
+        offwhite:        '#faf5f0',
+      },
+      borderRadius: {
+        'mt':      '24px',
+        'mt-lg':   '32px',
+        'mt-pill': '9999px',
+      },
+      boxShadow: {
+        'mt':    '0 8px 24px -8px rgba(219, 149, 139, 0.25)',
+        'mt-lg': '0 20px 40px -12px rgba(219, 149, 139, 0.35)',
       },
     },
   },
