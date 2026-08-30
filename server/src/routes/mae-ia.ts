@@ -1,17 +1,17 @@
 import type { FastifyInstance } from 'fastify'
-import OpenAI from 'openai'
+import { GoogleGenAI } from '@google/genai'
 import { z } from 'zod'
 import { buildSaraSystemPrompt, buildSaraContextBlock } from '../utils/sara-context'
 
 const ELEVENLABS_API_KEY = process.env.ELEVENLABS_API_KEY
 const ELEVENLABS_AGENT_ID = process.env.ELEVENLABS_AGENT_ID
-const OPENAI_API_KEY = process.env.OPENAI_API_KEY
+const GEMINI_API_KEY = process.env.GEMINI_API_KEY
 
 // lazy singleton — only constructed after the 503 guard confirms the key exists
-let _openai: OpenAI | null = null
-function getOpenAI(): OpenAI {
-  _openai ??= new OpenAI({ apiKey: OPENAI_API_KEY! })
-  return _openai
+let _gemini: GoogleGenAI | null = null
+function getGemini(): GoogleGenAI {
+  _gemini ??= new GoogleGenAI({ apiKey: GEMINI_API_KEY! })
+  return _gemini
 }
 
 const chatBodySchema = z.object({
@@ -30,11 +30,11 @@ export default async function maeIARoutes(fastify: FastifyInstance) {
   fastify.addHook('preHandler', fastify.authenticate)
 
   // ── POST /mae-ia/chat — chat de texto com streaming SSE ──────────────────
-  fastify.post<{ Body: { messages?: ChatMessage[] } }>(
+  fastify.post<{ Body: { messages?: { role: 'user' | 'assistant'; content: string }[] } }>(
     '/chat',
     { config: { rateLimit: { max: 20, timeWindow: '1 minute' } } },
     async (request, reply) => {
-      if (!OPENAI_API_KEY) {
+      if (!GEMINI_API_KEY) {
         return reply.status(503).send({ error: 'Sara não configurada' })
       }
 
@@ -81,25 +81,32 @@ export default async function maeIARoutes(fastify: FastifyInstance) {
       reply.raw.setHeader('X-Accel-Buffering', 'no')
       reply.raw.flushHeaders()
 
+      // Gemini espera o histórico no formato {role, parts:[{text}]}
+      // O último item é a mensagem do user que dispara a resposta
+      const history = messages.slice(0, -1).map((m) => ({
+        role: m.role === 'assistant' ? 'model' : 'user',
+        parts: [{ text: m.content }],
+      }))
+      const lastMessage = messages[messages.length - 1].content
+
       try {
-        const stream = await getOpenAI().chat.completions.create({
-          model: 'gpt-4o',
-          stream: true,
-          messages: [
-            { role: 'system', content: systemPrompt },
-            ...messages.slice(-20),
-          ],
+        const chat = getGemini().chats.create({
+          model: 'gemini-2.0-flash',
+          config: { systemInstruction: systemPrompt },
+          history,
         })
+
+        const stream = await chat.sendMessageStream({ message: lastMessage })
 
         for await (const chunk of stream) {
           if (reply.raw.destroyed) break
-          const text = chunk.choices[0]?.delta?.content
+          const text = chunk.text
           if (text) {
             reply.raw.write(`data: ${JSON.stringify({ text })}\n\n`)
           }
         }
       } catch (err) {
-        fastify.log.error(`OpenAI stream error: ${err}`)
+        fastify.log.error(`Gemini stream error: ${err}`)
         reply.raw.write(`data: ${JSON.stringify({ error: 'Erro ao conectar com a Sara. Tente novamente.' })}\n\n`)
         reply.raw.end()
         return

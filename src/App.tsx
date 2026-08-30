@@ -30,8 +30,8 @@ import { SavedVersesScreen } from './components/home/SavedVersesScreen'
 import { ReviewsScreen } from './components/shopping/ReviewsScreen'
 import { CreatePostScreen } from './components/comunidade/CreatePostScreen'
 import { useSSE } from './lib/useSSE';
-// import { PushNotifications } from '@capacitor/push-notifications' // TODO (produção): FCM
-// import { Capacitor } from '@capacitor/core' // TODO (produção): FCM
+import { PushNotifications } from '@capacitor/push-notifications'
+import { Capacitor } from '@capacitor/core'
 
 export default function App() {
   const isLoggedIn           = useAppStore((s) => s.isLoggedIn);
@@ -49,23 +49,22 @@ export default function App() {
 
   useSSE();
 
-  // TODO (produção): registrar FCM após configurar google-services.json no Android
-  // useEffect(() => {
-  //   if (!isLoggedIn || !Capacitor.isNativePlatform()) return
-  //   async function registerFcm() {
-  //     let permission = await PushNotifications.checkPermissions()
-  //     if (permission.receive === 'prompt') { permission = await PushNotifications.requestPermissions() }
-  //     if (permission.receive !== 'granted') return
-  //     await PushNotifications.register()
-  //     const listener = await PushNotifications.addListener('registration', async (token: { value: string }) => {
-  //       try {
-  //         await apiFetch('/users/fcm-token', { method: 'PUT', body: JSON.stringify({ token: token.value, platform: Capacitor.getPlatform() }) })
-  //         listener.remove()
-  //       } catch {}
-  //     })
-  //   }
-  //   registerFcm().catch(() => {})
-  // }, [isLoggedIn])
+  useEffect(() => {
+    if (!isLoggedIn || !Capacitor.isNativePlatform()) return
+    async function registerFcm() {
+      let permission = await PushNotifications.checkPermissions()
+      if (permission.receive === 'prompt') { permission = await PushNotifications.requestPermissions() }
+      if (permission.receive !== 'granted') return
+      await PushNotifications.register()
+      const listener = await PushNotifications.addListener('registration', async (token: { value: string }) => {
+        try {
+          await apiFetch('/users/fcm-token', { method: 'PUT', body: JSON.stringify({ token: token.value, platform: Capacitor.getPlatform() }) })
+          listener.remove()
+        } catch {}
+      })
+    }
+    registerFcm().catch(() => {})
+  }, [isLoggedIn])
 
   const [restoring,         setRestoring]         = useState(true);
   const [drawerOpen,        setDrawerOpen]        = useState(false);

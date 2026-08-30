@@ -3,6 +3,8 @@ import { OrbeVisual } from '../OrbeVisual'
 import { ProgressBar } from '../ProgressBar'
 import { useSaraNarration, WELCOME_CONFIG } from '../hooks/useSaraNarration'
 
+const FALLBACK_TIMEOUT_MS = 60_000
+
 interface Props {
   motherName: string
   onComplete: () => void
@@ -21,20 +23,27 @@ export function SaraBoasVindas({ motherName: _motherName, onComplete }: Props) {
   const [textInput, setTextInput] = useState('')
   const completedRef = useRef(false)
 
+  const complete = () => {
+    if (completedRef.current) return
+    completedRef.current = true
+    stop()
+    onComplete()
+  }
+
   useEffect(() => {
     void startConversation(WELCOME_CONFIG)
+    const timer = setTimeout(complete, FALLBACK_TIMEOUT_MS)
     return () => {
+      clearTimeout(timer)
       stop()
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   useEffect(() => {
-    if (collectedFatos && !completedRef.current) {
-      completedRef.current = true
-      onComplete()
-    }
-  }, [collectedFatos, onComplete])
+    if (collectedFatos) complete()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [collectedFatos])
 
   function handleSubmit(e: FormEvent) {
     e.preventDefault()
@@ -69,13 +78,6 @@ export function SaraBoasVindas({ motherName: _motherName, onComplete }: Props) {
             >
               Tentar de novo
             </button>
-            <button
-              type="button"
-              onClick={() => { stop(); onComplete() }}
-              className="px-4 py-2 rounded-2xl border border-mt-linen text-mt-muted text-xs"
-            >
-              Pular
-            </button>
           </div>
         )}
       </div>
@@ -99,6 +101,13 @@ export function SaraBoasVindas({ motherName: _motherName, onComplete }: Props) {
             →
           </button>
         </form>
+        <button
+          type="button"
+          onClick={complete}
+          className="text-xs text-mt-muted text-center py-1"
+        >
+          Pular
+        </button>
       </div>
     </div>
   )

@@ -2,30 +2,27 @@ import { describe, it, expect, vi } from 'vitest'
 import Fastify from 'fastify'
 import maeIARoutes from './mae-ia'
 
-// vi.hoisted runs before vi.mock hoisting, so mockCreate and env vars are set first
-const { mockCreate } = vi.hoisted(() => {
-  // Ensure the env var is present before the module-level const is read
-  process.env.OPENAI_API_KEY = 'test-openai-key'
-  const mockCreate = vi.fn()
-  return { mockCreate }
+const { mockSendMessageStream } = vi.hoisted(() => {
+  process.env.GEMINI_API_KEY = 'test-gemini-key'
+  const mockSendMessageStream = vi.fn()
+  return { mockSendMessageStream }
 })
 
-// Mock OpenAI SDK
-vi.mock('openai', () => {
+vi.mock('@google/genai', () => {
   const mockStream = {
     [Symbol.asyncIterator]: async function* () {
-      yield { choices: [{ delta: { content: 'Olá' } }] }
-      yield { choices: [{ delta: { content: ', tudo bem?' } }] }
-      yield { choices: [{ delta: { content: null } }] }
+      yield { text: 'Olá' }
+      yield { text: ', tudo bem?' }
+      yield { text: null }
     },
   }
-  mockCreate.mockResolvedValue(mockStream)
+  mockSendMessageStream.mockResolvedValue(mockStream)
   return {
-    default: vi.fn().mockImplementation(() => ({
-      chat: {
-        completions: {
-          create: mockCreate,
-        },
+    GoogleGenAI: vi.fn().mockImplementation(() => ({
+      chats: {
+        create: vi.fn().mockReturnValue({
+          sendMessageStream: mockSendMessageStream,
+        }),
       },
     })),
   }
@@ -45,11 +42,9 @@ const mockUser = {
 
 async function buildApp() {
   const app = Fastify()
-  // Mock prisma
   app.decorate('prisma', {
     user: { findUnique: vi.fn().mockResolvedValue(mockUser) },
-  })
-  // Mock authenticate
+  } as any)
   app.decorate('authenticate', async (request: any) => {
     request.userId = 'user-1'
   })
@@ -58,7 +53,7 @@ async function buildApp() {
 }
 
 describe('POST /mae-ia/chat', () => {
-  it('retorna SSE com tokens da OpenAI e termina com [DONE]', async () => {
+  it('retorna SSE com tokens do Gemini e termina com [DONE]', async () => {
     const app = await buildApp()
     const res = await app.inject({
       method: 'POST',
@@ -84,7 +79,7 @@ describe('POST /mae-ia/chat', () => {
     expect(res.statusCode).toBe(400)
   })
 
-  it('ignora chunks com delta.content null', async () => {
+  it('ignora chunks com text null', async () => {
     const app = await buildApp()
     const res = await app.inject({
       method: 'POST',
@@ -95,8 +90,8 @@ describe('POST /mae-ia/chat', () => {
     expect(res.body).not.toContain('"text":null')
   })
 
-  it('escreve frame de erro quando OpenAI falha e NÃO escreve [DONE]', async () => {
-    mockCreate.mockRejectedValueOnce(new Error('OpenAI down'))
+  it('escreve frame de erro quando Gemini falha e NÃO escreve [DONE]', async () => {
+    mockSendMessageStream.mockRejectedValueOnce(new Error('Gemini down'))
     const app = await buildApp()
     const res = await app.inject({
       method: 'POST',
