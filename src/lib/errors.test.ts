@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { parseApiError, parsePaymentError } from './errors'
+import { parseApiError } from './errors'
 import { ApiError } from './api'
 
 // ── parseApiError ─────────────────────────────────────────────
@@ -64,30 +64,6 @@ describe('parseApiError — 422 (Unprocessable Entity)', () => {
     expect(parseApiError(new ApiError(422, { error: msg }))).toBe(msg)
   })
 
-  it('msg contém "empty" → carrinho vazio', () => {
-    expect(parseApiError(new ApiError(422, { error: 'Cart is empty' }))).toBe('Seu carrinho está vazio.')
-  })
-
-  it('msg contém "vazio" → carrinho vazio', () => {
-    expect(parseApiError(new ApiError(422, { error: 'Carrinho vazio' }))).toBe('Seu carrinho está vazio.')
-  })
-
-  it('msg contém "cardToken" → dados do cartão inválidos', () => {
-    expect(parseApiError(new ApiError(422, { error: 'cardToken is required' }))).toBe('Dados do cartão inválidos.')
-  })
-
-  it('msg contém "paymentMethod" → dados do cartão inválidos', () => {
-    expect(parseApiError(new ApiError(422, { error: 'paymentMethod missing' }))).toBe('Dados do cartão inválidos.')
-  })
-
-  it('msg contém "Address" → endereço não encontrado', () => {
-    expect(parseApiError(new ApiError(422, { error: 'Address not found' }))).toBe('Endereço não encontrado. Volte e selecione novamente.')
-  })
-
-  it('msg contém "pix" → erro ao gerar PIX', () => {
-    expect(parseApiError(new ApiError(422, { error: 'pix generation failed' }))).toBe('Erro ao gerar PIX. Tente novamente.')
-  })
-
   it('msg contém "No affiliate" → produto sem link', () => {
     expect(parseApiError(new ApiError(422, { error: 'No affiliate link' }))).toBe('Este produto não tem link disponível.')
   })
@@ -118,10 +94,6 @@ describe('parseApiError — erros de rede (Error nativo)', () => {
     expect(parseApiError(new Error('Load failed'))).toBe('Sem conexão. Verifique sua internet.')
   })
 
-  it('"sdk not ready" → erro de inicialização do SDK', () => {
-    expect(parseApiError(new Error('SDK not ready'))).toBe('Erro ao inicializar pagamento. Recarregue o app.')
-  })
-
   it('"cancelled" → operação cancelada', () => {
     expect(parseApiError(new Error('cancelled'))).toBe('Operação cancelada.')
   })
@@ -149,32 +121,3 @@ describe('parseApiError — valores desconhecidos', () => {
   })
 })
 
-// ── parsePaymentError ─────────────────────────────────────────
-
-describe('parsePaymentError', () => {
-  it('422 com msg vazia usa fallback de pagamento (não "Dados inválidos")', () => {
-    expect(parsePaymentError(new ApiError(422, {}))).toBe('Erro ao processar pagamento. Tente novamente.')
-  })
-
-  it('erro de rede → sem conexão', () => {
-    expect(parsePaymentError(new Error('network failure'))).toBe('Sem conexão. Verifique sua internet.')
-  })
-
-  it('objeto MP SDK com cause.message inválido → dados do cartão inválidos', () => {
-    const mpError = { cause: { message: 'invalid card data' } }
-    expect(parsePaymentError(mpError)).toBe('Dados do cartão inválidos.')
-  })
-
-  it('objeto MP SDK com cause.message não inválido → fallback de pagamento', () => {
-    const mpError = { cause: { message: 'timeout' } }
-    expect(parsePaymentError(mpError)).toBe('Erro ao processar pagamento. Tente novamente.')
-  })
-
-  it('ApiError 401 → delega ao parseApiError corretamente', () => {
-    expect(parsePaymentError(new ApiError(401, {}))).toBe('Sessão expirada. Faça login novamente.')
-  })
-
-  it('valor desconhecido → fallback de pagamento', () => {
-    expect(parsePaymentError(undefined)).toBe('Erro ao processar pagamento. Tente novamente.')
-  })
-})

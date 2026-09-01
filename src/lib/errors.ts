@@ -12,10 +12,6 @@ export function parseApiError(err: unknown, fallback = 'Algo deu errado. Tente n
       case 409: return 'Conflito: esse item já existe.'
       case 422:
         if (msg.includes('estoque')) return msg
-        if (msg.includes('empty') || msg.includes('vazio')) return 'Seu carrinho está vazio.'
-        if (msg.includes('cardToken') || msg.includes('paymentMethod')) return 'Dados do cartão inválidos.'
-        if (msg.includes('Address')) return 'Endereço não encontrado. Volte e selecione novamente.'
-        if (msg.includes('pix')) return 'Erro ao gerar PIX. Tente novamente.'
         if (msg.includes('No affiliate')) return 'Este produto não tem link disponível.'
         return msg || fallback
       case 429: return 'Muitas tentativas. Aguarde alguns segundos.'
@@ -31,7 +27,6 @@ export function parseApiError(err: unknown, fallback = 'Algo deu errado. Tente n
     const m = err.message.toLowerCase()
     if (m.includes('network') || m.includes('failed to fetch') || m.includes('load failed'))
       return 'Sem conexão. Verifique sua internet.'
-    if (m.includes('sdk not ready')) return 'Erro ao inicializar pagamento. Recarregue o app.'
     if (m === 'cancelled' || m.includes('cancel')) return 'Operação cancelada.'
     return err.message || fallback
   }
@@ -39,11 +34,3 @@ export function parseApiError(err: unknown, fallback = 'Algo deu errado. Tente n
   return fallback
 }
 
-export function parsePaymentError(err: unknown): string {
-  // MP SDK errors come as plain objects or errors before hitting our API
-  if (err && typeof err === 'object' && 'cause' in err) {
-    const cause = (err as { cause?: { message?: string } }).cause
-    if (cause?.message?.toLowerCase().includes('invalid')) return 'Dados do cartão inválidos.'
-  }
-  return parseApiError(err, 'Erro ao processar pagamento. Tente novamente.')
-}
