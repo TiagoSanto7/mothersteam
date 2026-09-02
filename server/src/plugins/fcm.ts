@@ -5,9 +5,30 @@ let initialized = false
 
 function initFirebase() {
   if (initialized || getApps().length) return
-  const projectId = process.env.FIREBASE_PROJECT_ID
-  const clientEmail = process.env.FIREBASE_CLIENT_EMAIL
-  const privateKey = process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n')
+
+  // Prefere FIREBASE_SERVICE_ACCOUNT_B64 (JSON completo em base64url — sem chars
+  // problemáticos em env files). Mantém suporte às 3 vars individuais como fallback.
+  let projectId: string | undefined
+  let clientEmail: string | undefined
+  let privateKey: string | undefined
+
+  const b64 = process.env.FIREBASE_SERVICE_ACCOUNT_B64
+  if (b64) {
+    try {
+      const sa = JSON.parse(Buffer.from(b64, 'base64url').toString())
+      projectId   = sa.project_id
+      clientEmail = sa.client_email
+      privateKey  = sa.private_key
+    } catch {
+      console.warn('[fcm] FIREBASE_SERVICE_ACCOUNT_B64 inválido — push desabilitado')
+      return
+    }
+  } else {
+    projectId   = process.env.FIREBASE_PROJECT_ID
+    clientEmail = process.env.FIREBASE_CLIENT_EMAIL
+    privateKey  = process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n')
+  }
+
   if (!projectId || !clientEmail || !privateKey) {
     console.warn('[fcm] Firebase env vars not set — push notifications disabled')
     return
