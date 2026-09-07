@@ -28,7 +28,8 @@ export async function uploadsRoutes(fastify: FastifyInstance) {
     const data = await request.file()
     if (!data) return reply.status(400).send({ error: 'No file uploaded' })
 
-    const ext = ALLOWED_MIMES.get(data.mimetype)
+    const baseMime = data.mimetype.split(';')[0].trim()
+    const ext = ALLOWED_MIMES.get(baseMime)
     if (!ext) return reply.status(415).send({ error: 'Unsupported file type' })
 
     const filename = `${randomUUID()}${ext}`
