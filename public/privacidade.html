@@ -3,66 +3,133 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Política de Privacidade — Mothers Team</title>
+  <title>Política de Privacidade — Mother's Team</title>
   <style>
+    * { box-sizing: border-box; }
     body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; max-width: 720px; margin: 0 auto; padding: 40px 24px 80px; color: #333; line-height: 1.7; }
-    h1 { color: #C4956A; font-size: 1.5rem; margin-bottom: 8px; }
-    h2 { font-size: 1rem; color: #444; margin-top: 32px; }
-    p, ul { font-size: 0.92rem; color: #555; }
-    ul { padding-left: 20px; }
+    h1 { color: #db958b; font-size: 1.6rem; margin-bottom: 4px; }
+    h2 { font-size: 1.05rem; color: #444; margin-top: 36px; border-bottom: 1px solid #f0e8e4; padding-bottom: 6px; }
+    p, ul, ol { font-size: 0.93rem; color: #555; }
+    ul, ol { padding-left: 20px; }
+    li { margin-bottom: 4px; }
     .date { font-size: 0.8rem; color: #999; margin-bottom: 32px; }
-    a { color: #C4956A; }
+    a { color: #db958b; }
+    .highlight { background: #faf5f0; border-left: 3px solid #db958b; padding: 12px 16px; border-radius: 0 8px 8px 0; margin: 16px 0; }
+    .highlight p { margin: 0; color: #444; }
   </style>
 </head>
 <body>
   <h1>Política de Privacidade</h1>
-  <p class="date">Última atualização: agosto de 2026</p>
+  <p class="date">Última atualização: setembro de 2026</p>
 
-  <p>O <strong>Mothers Team</strong> leva sua privacidade a sério. Esta Política explica como coletamos, usamos e protegemos seus dados, em conformidade com a Lei Geral de Proteção de Dados (LGPD — Lei nº 13.709/2018).</p>
+  <p>O <strong>Mother's Team</strong> é uma plataforma de apoio para mães, desenvolvida com foco em segurança, privacidade e conformidade com a <strong>Lei Geral de Proteção de Dados (LGPD — Lei nº 13.709/2018)</strong>. Esta Política descreve quais dados coletamos, como usamos, com quem compartilhamos e quais são seus direitos.</p>
 
   <h2>1. Dados que Coletamos</h2>
+
+  <p><strong>1.1 Dados de cadastro</strong></p>
   <ul>
-    <li><strong>Cadastro:</strong> nome, e-mail, senha (armazenada em hash), data de nascimento, informações gestacionais.</li>
-    <li><strong>Uso:</strong> publicações, comentários, interações sociais, histórico de rotina e registros do bebê.</li>
-    <li><strong>Compras:</strong> endereço de entrega, histórico de pedidos. Dados de cartão são processados diretamente pelo Mercado Pago — não armazenamos números completos de cartão.</li>
-    <li><strong>Notificações:</strong> token de dispositivo (FCM) para envio de notificações push, quando autorizado.</li>
+    <li>Nome, nome de usuário (@), endereço de e-mail e senha (armazenada em hash bcrypt — nunca em texto simples).</li>
+    <li>Informações gestacionais: fase da gestação, data prevista de parto ou nascimento.</li>
+    <li>Informações sobre bebês: nome, data de nascimento, se há múltiplos bebês.</li>
+    <li>Informações sobre outros filhos: nome e data de nascimento (opcionais).</li>
+    <li>Humor, rede de apoio, objetivo de uso e preocupações principais (informações de perfil para personalização).</li>
+  </ul>
+
+  <p><strong>1.2 Dados gerados pelo uso</strong></p>
+  <ul>
+    <li>Publicações, comentários e interações sociais (curtidas, menções, seguidores).</li>
+    <li>Mensagens de chat entre usuárias, incluindo textos, imagens e <strong>mensagens de áudio</strong> gravadas no aplicativo.</li>
+    <li>Registros de rotina e jornada (amamentação, sono, etc.).</li>
+    <li>Foto de perfil e imagens enviadas no chat.</li>
+  </ul>
+
+  <p><strong>1.3 Dados de compras</strong></p>
+  <ul>
+    <li>Endereço de entrega e histórico de pedidos.</li>
+    <li>Dados de cartão são processados exclusivamente pelo <strong>Mercado Pago</strong> — não armazenamos números completos de cartão.</li>
+  </ul>
+
+  <p><strong>1.4 Dados técnicos</strong></p>
+  <ul>
+    <li>Token de dispositivo (FCM) para envio de notificações push, quando autorizado pela usuária.</li>
+    <li>Plataforma do dispositivo (Android ou iOS) associada ao token de notificação.</li>
+    <li>Logs de acesso para segurança e diagnóstico de erros.</li>
+  </ul>
+
+  <p><strong>1.5 Dados processados pela IA (MãeIA / Sara)</strong></p>
+  <ul>
+    <li>Mensagens de texto digitadas na conversa com a MãeIA são enviadas ao modelo de linguagem para gerar respostas contextualizadas.</li>
+    <li>Mensagens de voz na conversa com a Sara são processadas pelo serviço ElevenLabs para síntese e reconhecimento de voz.</li>
+    <li>Contexto de perfil (fase gestacional, humor, objetivo) é incluído no prompt para personalização das respostas.</li>
+    <li>Nenhuma conversa com a IA é usada para treinar modelos externos.</li>
   </ul>
 
   <h2>2. Finalidade do Tratamento</h2>
   <ul>
-    <li>Operar e melhorar os serviços da plataforma.</li>
-    <li>Personalizar conteúdo e recomendações.</li>
-    <li>Processar pedidos e pagamentos.</li>
-    <li>Enviar comunicações relevantes (confirmações de pedido, redefinição de senha).</li>
+    <li>Operar, manter e melhorar os serviços da plataforma.</li>
+    <li>Personalizar conteúdo, recomendações e respostas da MãeIA com base no perfil da usuária.</li>
+    <li>Facilitar a comunicação entre usuárias (chat, comunidade).</li>
+    <li>Processar pedidos, pagamentos e notificações de entrega.</li>
+    <li>Enviar comunicações transacionais (confirmação de pedido, redefinição de senha).</li>
+    <li>Garantir a segurança da plataforma e prevenir uso indevido.</li>
   </ul>
 
   <h2>3. Compartilhamento de Dados</h2>
-  <p>Não vendemos seus dados. Podemos compartilhá-los apenas com:</p>
+  <p>Não vendemos nem alugamos seus dados. Compartilhamos apenas com os seguintes prestadores de serviço essenciais, nas finalidades indicadas:</p>
   <ul>
-    <li>Provedores de serviço essenciais (Mercado Pago para pagamentos, Resend para e-mails, Google Firebase para notificações push).</li>
-    <li>Autoridades competentes, quando exigido por lei.</li>
+    <li><strong>Mercado Pago</strong> — processamento de pagamentos.</li>
+    <li><strong>Google Firebase (FCM)</strong> — envio de notificações push.</li>
+    <li><strong>ElevenLabs</strong> — processamento de voz da assistente Sara.</li>
+    <li><strong>Google Gemini / OpenAI</strong> — geração de respostas de texto da MãeIA.</li>
+    <li><strong>Resend</strong> — envio de e-mails transacionais.</li>
+    <li><strong>Autoridades competentes</strong> — quando exigido por lei ou ordem judicial.</li>
   </ul>
 
-  <h2>4. Seus Direitos (LGPD)</h2>
-  <p>Você tem direito a:</p>
+  <h2>4. Dados de Crianças e Bebês</h2>
+  <div class="highlight">
+    <p>O Mother's Team coleta informações sobre bebês e filhos fornecidas <strong>voluntariamente pela mãe</strong> para personalização da jornada. Esses dados não são compartilhados com terceiros além dos prestadores essenciais listados acima, não são usados para fins publicitários e são tratados com nível elevado de proteção.</p>
+  </div>
+  <p>O aplicativo é destinado exclusivamente a usuárias maiores de 18 anos. Não coletamos dados diretamente de crianças.</p>
+
+  <h2>5. Seus Direitos (LGPD)</h2>
+  <p>Como titular de dados, você tem direito a:</p>
   <ul>
-    <li>Acessar, corrigir ou excluir seus dados pessoais.</li>
-    <li>Revogar o consentimento a qualquer momento.</li>
-    <li>Solicitar a portabilidade dos seus dados.</li>
-    <li>Solicitar a eliminação dos dados tratados com base no seu consentimento.</li>
+    <li><strong>Acesso:</strong> saber quais dados armazenamos sobre você.</li>
+    <li><strong>Correção:</strong> corrigir dados incompletos ou desatualizados.</li>
+    <li><strong>Exclusão:</strong> solicitar a eliminação dos seus dados pessoais.</li>
+    <li><strong>Portabilidade:</strong> receber seus dados em formato estruturado.</li>
+    <li><strong>Revogação:</strong> retirar o consentimento a qualquer momento.</li>
+    <li><strong>Oposição:</strong> se opor ao tratamento em determinadas situações.</li>
   </ul>
-  <p>Para exercer seus direitos, entre em contato: <a href="mailto:contato@santoti.com">contato@santoti.com</a></p>
 
-  <h2>5. Retenção de Dados</h2>
-  <p>Mantemos seus dados enquanto sua conta estiver ativa ou conforme necessário para cumprir obrigações legais. Após exclusão da conta, os dados são anonimizados ou eliminados em até 30 dias.</p>
+  <h2>6. Exclusão de Conta e Dados</h2>
+  <div class="highlight">
+    <p>Você pode solicitar a exclusão completa da sua conta e de todos os dados associados a qualquer momento pelo e-mail <a href="mailto:contato@santoti.com">contato@santoti.com</a>. Processamos a solicitação em até <strong>15 dias úteis</strong>. Dados anonimizados para fins estatísticos podem ser mantidos sem identificação pessoal.</p>
+  </div>
 
-  <h2>6. Segurança</h2>
-  <p>Utilizamos criptografia (TLS/HTTPS), tokens JWT com expiração e práticas de segurança modernas para proteger seus dados.</p>
+  <h2>7. Retenção de Dados</h2>
+  <p>Mantemos seus dados enquanto sua conta estiver ativa ou conforme necessário para cumprir obrigações legais. Após a exclusão da conta, os dados pessoais são eliminados em até 30 dias.</p>
 
-  <h2>7. Cookies</h2>
-  <p>Utilizamos cookies exclusivamente para manter sua sessão autenticada. Nenhum cookie de rastreamento ou publicidade é utilizado.</p>
+  <h2>8. Segurança</h2>
+  <ul>
+    <li>Comunicações protegidas por <strong>TLS/HTTPS</strong>.</li>
+    <li>Senhas armazenadas com hash bcrypt.</li>
+    <li>Autenticação via tokens JWT com expiração curta.</li>
+    <li>Servidores em ambiente isolado com acesso restrito.</li>
+  </ul>
 
-  <h2>8. Contato do Encarregado (DPO)</h2>
-  <p><a href="mailto:contato@santoti.com">contato@santoti.com</a></p>
+  <h2>9. Cookies e Armazenamento Local</h2>
+  <p>Utilizamos armazenamento local (localStorage) exclusivamente para manter sua sessão autenticada entre aberturas do aplicativo. Nenhum cookie de rastreamento ou publicidade é utilizado.</p>
+
+  <h2>10. Alterações nesta Política</h2>
+  <p>Podemos atualizar esta Política periodicamente. Em caso de alterações relevantes, notificaremos via e-mail ou notificação no aplicativo. O uso continuado após a notificação implica concordância com a versão atualizada.</p>
+
+  <h2>11. Contato e Encarregado de Dados (DPO)</h2>
+  <p>Para exercer seus direitos ou tirar dúvidas sobre privacidade:</p>
+  <p><strong>E-mail:</strong> <a href="mailto:contato@santoti.com">contato@santoti.com</a></p>
+  <p><strong>Prazo de resposta:</strong> até 15 dias úteis.</p>
+
+  <hr style="margin-top:40px; border:none; border-top:1px solid #f0e8e4;" />
+  <p style="font-size:0.8rem; color:#aaa; text-align:center; margin-top:16px;">Mother's Team · LGPD · Setembro de 2026</p>
 </body>
 </html>
