@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+﻿import { useState, useRef, useEffect } from 'react';
 import { ChevronLeft, Pencil, Lock, EyeOff, UserCheck, X, Camera } from 'lucide-react';
 import { useQuery, useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiFetch, resolveMediaUrl, uploadImage } from '../../lib/api';
@@ -272,7 +272,7 @@ export function CommunityDetailScreen({ communityId, onBack, onOpenProfile }: Co
 
   if (showCreate) {
     return (
-      <div className="flex flex-col w-full h-full sm:w-[390px] sm:h-[844px] bg-mt-cream sm:rounded-[44px] sm:shadow-2xl overflow-hidden">
+      <div className="flex flex-col w-full h-full bg-mt-cream overflow-hidden">
         <CreatePostScreen onBack={() => setShowCreate(false)} initialCommunityId={communityId} />
       </div>
     );
@@ -302,7 +302,7 @@ export function CommunityDetailScreen({ communityId, onBack, onOpenProfile }: Co
   const isAdmin = community.role === 'owner' || community.role === 'admin';
 
   return (
-    <div className="relative flex flex-col w-full h-full sm:w-[390px] sm:h-[844px] bg-mt-cream sm:rounded-[44px] sm:shadow-2xl overflow-hidden">
+    <div className="relative flex flex-col w-full h-full bg-mt-cream overflow-hidden">
       <div className="flex items-center justify-between px-4 pt-6 pb-3 flex-shrink-0">
         <button onClick={onBack} aria-label="Voltar" className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-mt-linen">
           <ChevronLeft size={20} className="text-mt-charcoal" />

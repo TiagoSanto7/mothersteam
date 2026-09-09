@@ -11,8 +11,8 @@ interface PresenteProps {
 }
 
 const VERSICULO_DELAY_MS = 2000
-const BOTAO_DELAY_MS = 3000
-const FALLBACK_SPEECH_MS = 15000
+const BOTAO_DELAY_MS = 600
+const FALLBACK_SPEECH_MS = 8000
 
 export function Presente({ mood, onEnter }: PresenteProps) {
   const versiculo = versiculoParaHumor(mood)

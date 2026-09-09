@@ -249,7 +249,10 @@ export const useAppStore = create<AppState>()(
         const profile = computeProfile(answers);
         set({ onboardingDone: true, motherProfile: profile });
       },
-      completeReception: () => set({ onboardingDone: true }),
+      completeReception: () => {
+        set({ onboardingDone: true });
+        apiFetch('/users/me', { method: 'PATCH', body: JSON.stringify({ onboardingDone: true }) }).catch(() => {});
+      },
       resetOnboarding: () => set({ onboardingDone: false, motherProfile: null }),
       completeSocialOnboarding: () => set({ socialOnboardingDone: true }),
       // UI actions

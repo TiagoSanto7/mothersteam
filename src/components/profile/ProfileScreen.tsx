@@ -1,7 +1,7 @@
-import { useState, useRef, useEffect } from 'react';
+﻿import { useState, useRef, useEffect } from 'react';
 import { usePullToRefresh } from '../../lib/usePullToRefresh';
 import { SaraPullIndicator } from '../shared/SaraPullIndicator';
-import { ChevronLeft, Settings, Bell, MessageCircle } from 'lucide-react';
+import { ChevronLeft, Settings, Bell, MessageCircle, BadgeCheck } from 'lucide-react';
 import { useQuery, useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAppStore, selectSavedVerses } from '../../store/useAppStore';
 import { ARCHETYPES } from '../../utils/onboardingScoring';
@@ -118,7 +118,7 @@ export function ProfileScreen({ onClose, userId, onOpenProfile, onMessage, isTab
 
   if (selectedPost) {
     return (
-      <div className="flex flex-col w-full h-full sm:w-[390px] sm:h-[844px] bg-mt-cream sm:rounded-[44px] sm:shadow-2xl overflow-hidden">
+      <div className="flex flex-col w-full h-full bg-mt-cream overflow-hidden">
         <PostDetailScreen
           post={selectedPost}
           onBack={() => setSelectedPost(null)}
@@ -130,7 +130,7 @@ export function ProfileScreen({ onClose, userId, onOpenProfile, onMessage, isTab
 
   if (followList && effectiveUserId) {
     return (
-      <div className="flex flex-col w-full h-full sm:w-[390px] sm:h-[844px] bg-mt-cream sm:rounded-[44px] sm:shadow-2xl overflow-hidden">
+      <div className="flex flex-col w-full h-full bg-mt-cream overflow-hidden">
         <FollowListScreen
           mode={followList}
           userId={effectiveUserId}
@@ -146,7 +146,7 @@ export function ProfileScreen({ onClose, userId, onOpenProfile, onMessage, isTab
 
   if (showSettings) {
     return (
-      <div className="flex flex-col w-full h-full sm:w-[390px] sm:h-[844px] bg-mt-cream sm:rounded-[44px] sm:shadow-2xl overflow-hidden">
+      <div className="flex flex-col w-full h-full bg-mt-cream overflow-hidden">
         <SettingsScreen onBack={() => setShowSettings(false)} onClose={onClose ?? (() => setShowSettings(false))} />
       </div>
     );
@@ -171,7 +171,7 @@ export function ProfileScreen({ onClose, userId, onOpenProfile, onMessage, isTab
   const posts = postsPages?.pages.flatMap((p) => p.items.map(apiPostToCommunityPost)) ?? [];
 
   return (
-    <div className="flex flex-col w-full h-full sm:w-[390px] sm:h-[844px] bg-mt-cream sm:rounded-[44px] sm:shadow-2xl overflow-hidden">
+    <div className="flex flex-col w-full h-full bg-mt-cream overflow-hidden">
       {/* Header */}
       <div className="flex items-center justify-between px-4 pt-6 pb-3 flex-shrink-0">
         {isTab ? (
@@ -186,7 +186,12 @@ export function ProfileScreen({ onClose, userId, onOpenProfile, onMessage, isTab
           </button>
         )}
         <div className="flex flex-col items-center">
-          <p className="text-sm font-semibold font-serif text-mt-charcoal">{profile.name}</p>
+          <div className="flex items-center gap-1">
+            <p className="text-sm font-semibold font-serif text-mt-charcoal">{profile.name}</p>
+            {profile.role === 'OFFICIAL' && (
+              <BadgeCheck size={15} className="text-mt-rose fill-mt-rose stroke-white" />
+            )}
+          </div>
           {profile.username && (
             <p className="text-xs text-mt-muted">@{profile.username}</p>
           )}

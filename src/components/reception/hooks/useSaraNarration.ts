@@ -136,7 +136,7 @@ export function useSaraNarration(): UseSaraNarrationReturn {
 
 export const WELCOME_CONFIG: CapituloConfig = {
   toolName: 'finalizar_boas_vindas',
-  firstMessage: 'Oi. Prazer te conhecer. Como você está se sentindo hoje?',
+  firstMessage: 'Oi, pode me chamar de Sara. Que bom te conhecer! Como você está se sentindo hoje?',
   systemPrompt: [
     'Você é a Sara. Está falando com uma mãe que acabou de completar o cadastro no Mother\'s Team.',
     'Seu papel é único: recebê-la de forma calorosa, escutar como ela está se sentindo, reagir com empatia curta, e reforçar que você estará por perto.',

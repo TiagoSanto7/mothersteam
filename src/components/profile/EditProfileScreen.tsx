@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, type FormEvent } from 'react';
+﻿import { useState, useEffect, useRef, type FormEvent } from 'react';
 import { ChevronLeft, Camera, Loader2 } from 'lucide-react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useAppStore } from '../../store/useAppStore';
@@ -109,7 +109,7 @@ export function EditProfileScreen({ onBack }: EditProfileScreenProps) {
   }
 
   return (
-    <div className="flex flex-col w-full h-full sm:w-[390px] sm:h-[844px] bg-mt-cream sm:rounded-[44px] sm:shadow-2xl overflow-hidden">
+    <div className="flex flex-col w-full h-full bg-mt-cream overflow-hidden">
       <div className="flex items-center gap-3 px-4 pt-6 pb-3 flex-shrink-0">
         <button onClick={onBack} aria-label="Voltar" className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-mt-linen">
           <ChevronLeft size={20} className="text-mt-charcoal" />

@@ -124,6 +124,7 @@ export function apiPostToCommunityPost(post: ApiPost): CommunityPost {
     authorUsername: post.author.username ?? null,
     authorArchetypeKey: post.author.archetypeKey ?? null,
     authorAvatarUrl: post.author.avatarUrl ?? null,
+    authorRole: post.author.role ?? null,
     isSuggestion: post.isSuggestion ?? false,
     category: post.category,
     author: post.author.name,

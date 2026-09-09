@@ -56,7 +56,7 @@ const registerSchema = z.object({
 })
 
 const loginSchema = z.object({
-  email: z.string().email(),
+  identifier: z.string().min(1), // email or username
   password: z.string(),
 })
 
@@ -168,8 +168,10 @@ export default async function authRoutes(fastify: FastifyInstance) {
     const body = loginSchema.safeParse(request.body)
     if (!body.success) return reply.status(400).send({ error: body.error.flatten() })
 
+    const identifier = body.data.identifier.trim().toLowerCase()
+    const isEmail = identifier.includes('@')
     const user = await fastify.prisma.user.findUnique({
-      where: { email: body.data.email },
+      where: isEmail ? { email: identifier } : { username: identifier },
       select: { ...USER_SELECT, passwordHash: true },
     })
     if (!user) return reply.status(401).send({ error: 'Invalid credentials' })

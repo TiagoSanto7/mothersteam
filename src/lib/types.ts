@@ -59,7 +59,7 @@ export interface ApiPost {
   category: 'gestação' | 'pós-parto' | 'amamentação' | 'saúde mental'
   imageUrl?: string | null
   authorId: string
-  author: { id: string; name: string; username?: string | null; archetypeKey?: string | null; avatarUrl?: string | null }
+  author: { id: string; name: string; username?: string | null; archetypeKey?: string | null; avatarUrl?: string | null; role?: string | null }
   communityId?: string | null
   communityName?: string | null
   isRepost: boolean

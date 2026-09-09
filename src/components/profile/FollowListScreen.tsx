@@ -1,4 +1,4 @@
-import { ChevronLeft } from 'lucide-react';
+﻿import { ChevronLeft } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiFetch } from '../../lib/api';
 import { getAvatarColor } from '../../utils/avatar';
@@ -36,7 +36,7 @@ export function FollowListScreen({ mode, userId, onOpenUser, onBack }: FollowLis
   const items = data?.items ?? [];
 
   return (
-    <div className="flex flex-col w-full h-full sm:w-[390px] sm:h-[844px] bg-mt-cream sm:rounded-[44px] sm:shadow-2xl overflow-hidden">
+    <div className="flex flex-col w-full h-full bg-mt-cream overflow-hidden">
       <div className="flex items-center gap-3 px-4 pt-6 pb-3 flex-shrink-0">
         <button onClick={onBack} aria-label="Voltar" className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-mt-linen">
           <ChevronLeft size={20} className="text-mt-charcoal" />

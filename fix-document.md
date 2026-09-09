@@ -1,5 +1,7 @@
-Aiai... a Sara pergunta o tempo de gravidez se eu to gravida mesmo eu ja informando essas informações no cadastro da conta.
+## Bloqueio de Conteudo e Perfis
 
-A conversa encerra do nada na exibição dos cards, vamos retirar esses cards e fazer essas perguntas em conversa natural com a Sara.
+Permitir que o usuario possa bloquear outro usuario impossibilitando a visualização do perfil, comentarios, curtidas e interações entre os mesmos.
 
-Não há tela de presenta ou preparação de perfil apos a conversa com a sara, ja sou levado direto para a aba home.
+Permitir que o usuario possa denunciar um perfil ou conteudo por assedio, preconceito, Fake News ou qualquer outro motivo.
+
+Permitir que o usuario possa bloquear/deixar de ver posts/conteudos que não deseja ver na sua timeline ou feed.

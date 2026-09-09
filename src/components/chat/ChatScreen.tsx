@@ -61,12 +61,13 @@ function AudioPlayer({ src, isMe }: AudioPlayerProps) {
     setProgress(ratio);
   }
 
-  const displaySecs = duration > 0
+  const validDuration = duration > 0 && isFinite(duration);
+  const displaySecs = validDuration
     ? Math.round(playing ? (progress * duration) : duration)
     : 0;
   const mins = Math.floor(displaySecs / 60);
   const secs = displaySecs % 60;
-  const timeLabel = duration > 0 ? `${mins}:${String(secs).padStart(2, '0')}` : '—:——';
+  const timeLabel = validDuration ? `${mins}:${String(secs).padStart(2, '0')}` : '—:——';
 
   return (
     <div className="flex items-center gap-2 px-3 py-2 min-w-[180px]">
@@ -146,11 +147,14 @@ export function ChatScreen({ chat, onBack, onOpenProfile }: ChatScreenProps) {
   const [recordingSecs, setRecordingSecs] = useState(0);
   const [isUploadingAudio, setIsUploadingAudio] = useState(false);
   const [audioError, setAudioError] = useState<string | null>(null);
+  const [micCanceling, setMicCanceling] = useState(false);
+  const [micDragX, setMicDragX] = useState(0);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef   = useRef<Blob[]>([]);
   const recordingTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const streamRef        = useRef<MediaStream | null>(null);
   const releasedBeforeReadyRef = useRef(false);
+  const micStartX = useRef<number | null>(null);
 
   // Photo upload state
   const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
@@ -394,21 +398,58 @@ export function ChatScreen({ chat, onBack, onOpenProfile }: ChatScreenProps) {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [accessToken, sendMutation, recordingSecs]);
 
+  const cancelRecording = useCallback(() => {
+    const recorder = mediaRecorderRef.current;
+    if (!recorder || recorder.state === 'inactive') {
+      stopRecordingCleanup();
+      setMicState('idle');
+      return;
+    }
+    recorder.onstop = () => {
+      stopRecordingCleanup();
+      audioChunksRef.current = [];
+      setMicState('idle');
+    };
+    recorder.stop();
+  }, []);
+
   function handleMicPointerDown(e: React.PointerEvent<HTMLButtonElement>) {
-    e.preventDefault(); // prevent focus/blur side effects
+    e.preventDefault();
     (e.currentTarget as HTMLButtonElement).setPointerCapture(e.pointerId);
+    micStartX.current = e.clientX;
+    setMicDragX(0);
+    setMicCanceling(false);
     setAudioError(null);
     startRecording();
   }
 
+  function handleMicPointerMove(e: React.PointerEvent<HTMLButtonElement>) {
+    if (micState !== 'recording' || micStartX.current === null) return;
+    const dx = e.clientX - micStartX.current;
+    if (dx < 0) {
+      setMicDragX(dx);
+      setMicCanceling(dx < -60);
+    } else {
+      setMicDragX(0);
+      setMicCanceling(false);
+    }
+  }
+
   function handleMicPointerUp() {
     if (micState === 'preparing') {
-      // User released before mic was ready — flag so startRecording aborts
       releasedBeforeReadyRef.current = true;
       return;
     }
     if (micState === 'recording') {
-      stopRecording();
+      const shouldCancel = micCanceling;
+      setMicDragX(0);
+      setMicCanceling(false);
+      micStartX.current = null;
+      if (shouldCancel) {
+        cancelRecording();
+      } else {
+        stopRecording();
+      }
     }
   }
 
@@ -418,7 +459,10 @@ export function ChatScreen({ chat, onBack, onOpenProfile }: ChatScreenProps) {
       return;
     }
     if (micState === 'recording') {
-      stopRecording();
+      setMicDragX(0);
+      setMicCanceling(false);
+      micStartX.current = null;
+      cancelRecording();
     }
   }
 
@@ -764,7 +808,7 @@ export function ChatScreen({ chat, onBack, onOpenProfile }: ChatScreenProps) {
         )}
 
         <div data-testid="chat-input-bar" className={`flex items-center gap-2 rounded-2xl border px-3 py-2 overflow-hidden transition-colors ${
-          micState === 'recording' ? 'bg-red-50 border-red-200'
+          micState === 'recording' ? (micCanceling ? 'bg-gray-100 border-gray-300' : 'bg-red-50 border-red-200')
           : micState === 'preparing' ? 'bg-mt-linen border-mt-rose/40'
           : 'bg-white border-mt-linen'
         }`}>
@@ -775,18 +819,28 @@ export function ChatScreen({ chat, onBack, onOpenProfile }: ChatScreenProps) {
               <span className="text-xs text-mt-charcoal font-medium">Preparando microfone...</span>
             </div>
           ) : micState === 'recording' ? (
-            <div className="flex-1 flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse flex-shrink-0" />
-              <div className="flex gap-0.5 items-center">
-                {[3, 5, 4, 6, 3, 5, 4].map((h, i) => (
-                  <span
-                    key={i}
-                    className="w-0.5 bg-red-400 rounded-full animate-pulse"
-                    style={{ height: `${h * 3}px`, animationDelay: `${i * 100}ms` }}
-                  />
-                ))}
-              </div>
-              <span className="text-xs text-red-500 font-medium tabular-nums">{recordingSecs}s — Solte para enviar</span>
+            <div
+              className="flex-1 flex items-center gap-2 transition-transform duration-75"
+              style={{ transform: `translateX(${Math.max(micDragX * 0.4, -48)}px)` }}
+            >
+              {micCanceling ? (
+                <span className="text-xs text-gray-400 font-medium">Solte para cancelar</span>
+              ) : (
+                <>
+                  <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse flex-shrink-0" />
+                  <div className="flex gap-0.5 items-center">
+                    {[3, 5, 4, 6, 3, 5, 4].map((h, i) => (
+                      <span
+                        key={i}
+                        className="w-0.5 bg-red-400 rounded-full animate-pulse"
+                        style={{ height: `${h * 3}px`, animationDelay: `${i * 100}ms` }}
+                      />
+                    ))}
+                  </div>
+                  <span className="text-xs text-red-500 font-medium tabular-nums">{recordingSecs}s</span>
+                  <span className="text-[10px] text-mt-muted ml-auto">← deslize para cancelar</span>
+                </>
+              )}
             </div>
           ) : (
           <input
@@ -836,11 +890,14 @@ export function ChatScreen({ chat, onBack, onOpenProfile }: ChatScreenProps) {
                   : 'Segurar para gravar áudio'
                 }
                 onPointerDown={handleMicPointerDown}
+                onPointerMove={handleMicPointerMove}
                 onPointerUp={handleMicPointerUp}
                 onPointerCancel={handleMicPointerCancel}
                 disabled={isUploadingAudio || isUploadingPhoto}
                 className={`w-8 h-8 flex items-center justify-center rounded-full transition-all flex-shrink-0 select-none touch-none ${
-                  micState === 'recording'
+                  micState === 'recording' && micCanceling
+                    ? 'text-gray-400 bg-gray-200 scale-90'
+                    : micState === 'recording'
                     ? 'text-white bg-red-500 scale-110'
                     : micState === 'preparing'
                     ? 'text-mt-rose bg-mt-rose/10 scale-105'

@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+﻿import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence, useAnimate } from 'framer-motion';
 import { ChevronLeft, Heart, MessageCircle, Share2, Repeat2, Send, X } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -229,7 +229,7 @@ export function PostDetailScreen({ post, onBack, onOpenProfile }: PostDetailScre
     <motion.div
       ref={scope}
       initial={{ x: '100%' }}
-      className="flex flex-col w-full h-full sm:w-[390px] sm:h-[844px] bg-mt-cream sm:rounded-[44px] sm:shadow-2xl overflow-hidden relative"
+      className="flex flex-col w-full h-full bg-mt-cream overflow-hidden relative"
     >
       <div className="flex flex-col flex-1 overflow-hidden">
       <div className="flex items-center justify-between gap-3 px-4 pt-6 pb-4 border-b border-mt-linen/60 flex-shrink-0">

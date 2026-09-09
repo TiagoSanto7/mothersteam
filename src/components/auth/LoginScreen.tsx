@@ -14,7 +14,7 @@ import tagline from '../../assets/brand/tagline-mt-rose.svg';
 
 export function LoginScreen() {
   const setAuth = useAppStore((s) => s.setAuth);
-  const [email, setEmail] = useState('');
+  const [identifier, setIdentifier] = useState('');
   const [password, setPassword] = useState('');
   const [showRegister, setShowRegister] = useState(false);
 
@@ -22,7 +22,7 @@ export function LoginScreen() {
     mutationFn: () =>
       apiFetch<{ accessToken: string; refreshToken: string; user: ApiUser }>('/auth/login', {
         method: 'POST',
-        body: JSON.stringify({ email: email.trim(), password }),
+        body: JSON.stringify({ identifier: identifier.trim(), password }),
       }),
     onSuccess: ({ accessToken, refreshToken, user }) => {
       setAuth(accessToken, user, refreshToken);
@@ -71,13 +71,13 @@ export function LoginScreen() {
             {/* Form */}
             <form onSubmit={handleSubmit} className="w-full flex flex-col gap-3">
               <MtInput
-                id="email"
-                label="E-mail"
-                type="email"
-                autoComplete="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="seu@email.com"
+                id="identifier"
+                label="E-mail ou usuário"
+                type="text"
+                autoComplete="username"
+                value={identifier}
+                onChange={(e) => setIdentifier(e.target.value)}
+                placeholder="seu@email.com ou seunome"
               />
 
               <MtInput
@@ -99,7 +99,7 @@ export function LoginScreen() {
               <MtPillButton
                 type="submit"
                 variant="primary"
-                disabled={!email || !password || isPending}
+                disabled={!identifier || !password || isPending}
                 className="w-full mt-1"
               >
                 {isPending ? 'Entrando…' : 'Entrar'}

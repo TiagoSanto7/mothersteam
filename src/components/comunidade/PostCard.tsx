@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { MessageCircle, Heart, Repeat2, Share2 } from 'lucide-react';
+import { MessageCircle, Heart, Repeat2, Share2, BadgeCheck } from 'lucide-react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAppStore } from '../../store/useAppStore';
@@ -90,8 +90,11 @@ export function PostCard({ post, onOpen, onOpenProfile, onOpenUser, onOpenCommun
               />
             </div>
             <div className="flex flex-col gap-0.5">
-              <div className="flex items-baseline gap-1.5">
+              <div className="flex items-center gap-1">
                 <p className="text-sm font-semibold text-mt-charcoal">{post.author}</p>
+                {post.authorRole === 'OFFICIAL' && (
+                  <BadgeCheck size={14} className="text-mt-rose shrink-0" />
+                )}
                 {post.authorUsername && (
                   <span className="text-xs text-mt-muted/70">@{post.authorUsername}</span>
                 )}

@@ -248,8 +248,14 @@ export default function App() {
       </WebLayout>
 
       {showSettings && (
-        <div className="fixed inset-0 z-50 sm:bg-black/40 sm:flex sm:items-center sm:justify-center">
-          <div className="w-full h-full sm:w-[390px] sm:h-[844px] bg-gradient-to-b from-[#F5EDE0] via-[#EAD8C8] to-[#D9C4AF] sm:rounded-[44px] sm:shadow-2xl overflow-hidden flex flex-col">
+        <div
+          className="fixed inset-0 z-50 bg-black/40 flex items-end md:items-center justify-center"
+          onClick={() => setShowSettings(false)}
+        >
+          <div
+            className="w-full h-[96vh] md:w-[480px] md:h-[85vh] md:rounded-3xl overflow-hidden flex flex-col bg-gradient-to-b from-[#F5EDE0] via-[#EAD8C8] to-[#D9C4AF]"
+            onClick={(e) => e.stopPropagation()}
+          >
             <SettingsScreen
               onBack={() => setShowSettings(false)}
               onClose={() => setShowSettings(false)}
@@ -259,78 +265,130 @@ export default function App() {
       )}
 
       {showNotifications && (
-        <div className="fixed inset-0 z-50 sm:bg-black/40 sm:flex sm:items-center sm:justify-center">
-          <NotificationsScreen
-            onBack={() => setShowNotifications(false)}
-            onOpenPost={(postId) => { setShowNotifications(false); setPendingPostId(postId); }}
-            onOpenUser={(userId) => { setShowNotifications(false); setProfileUserId(userId); }}
-            onOpenCommunity={(communityId) => { setShowNotifications(false); setOpenCommunityId(communityId); }}
-          />
+        <div
+          className="fixed inset-0 z-50 bg-black/40 flex items-end md:items-center justify-center"
+          onClick={() => setShowNotifications(false)}
+        >
+          <div
+            className="w-full h-[96vh] md:w-[480px] md:h-[85vh] md:rounded-3xl overflow-hidden"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <NotificationsScreen
+              onBack={() => setShowNotifications(false)}
+              onOpenPost={(postId) => { setShowNotifications(false); setPendingPostId(postId); }}
+              onOpenUser={(userId) => { setShowNotifications(false); setProfileUserId(userId); }}
+              onOpenCommunity={(communityId) => { setShowNotifications(false); setOpenCommunityId(communityId); }}
+            />
+          </div>
         </div>
       )}
 
       {showChat && (
-        <div className="fixed inset-0 z-50 sm:bg-black/40 sm:flex sm:items-center sm:justify-center">
-          <ChatListScreen
-            onBack={() => { setShowChat(false); setChatTargetUserId(null); }}
-            onOpenProfile={(id) => { setShowChat(false); setChatTargetUserId(null); setProfileUserId(id); }}
-            initialChatUserId={chatTargetUserId ?? undefined}
-          />
+        <div
+          className="fixed inset-0 z-50 bg-black/40 flex items-end md:items-center justify-center"
+          onClick={() => { setShowChat(false); setChatTargetUserId(null); }}
+        >
+          <div
+            className="w-full h-[96vh] md:w-[480px] md:h-[85vh] md:rounded-3xl overflow-hidden"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <ChatListScreen
+              onBack={() => { setShowChat(false); setChatTargetUserId(null); }}
+              onOpenProfile={(id) => { setShowChat(false); setChatTargetUserId(null); setProfileUserId(id); }}
+              initialChatUserId={chatTargetUserId ?? undefined}
+            />
+          </div>
         </div>
       )}
 
       {showSearch && (
-        <div className="fixed inset-0 z-50 sm:bg-black/40 sm:flex sm:items-center sm:justify-center">
-          <SearchScreen
-            onBack={() => setShowSearch(false)}
-            onOpenUser={(id) => { setShowSearch(false); setProfileUserId(id); }}
-            onOpenCommunity={(id) => { setShowSearch(false); setOpenCommunityId(id); }}
-          />
+        <div
+          className="fixed inset-0 z-50 bg-black/40 flex items-end md:items-center justify-center"
+          onClick={() => setShowSearch(false)}
+        >
+          <div
+            className="w-full h-[96vh] md:w-[480px] md:h-[85vh] md:rounded-3xl overflow-hidden"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <SearchScreen
+              onBack={() => setShowSearch(false)}
+              onOpenUser={(id) => { setShowSearch(false); setProfileUserId(id); }}
+              onOpenCommunity={(id) => { setShowSearch(false); setOpenCommunityId(id); }}
+            />
+          </div>
         </div>
       )}
 
       {profileUserId && (
-        <div className="fixed inset-0 z-50 sm:bg-black/40 sm:flex sm:items-center sm:justify-center">
-          <ProfileScreen
-            key={profileUserId}
-            userId={profileUserId}
-            onClose={() => setProfileUserId(null)}
-            onOpenProfile={(id) => setProfileUserId(id)}
-            onMessage={(uid) => { setProfileUserId(null); setChatTargetUserId(uid); setShowChat(true); }}
-          />
+        <div
+          className="fixed inset-0 z-50 bg-black/40 flex items-end md:items-center justify-center"
+          onClick={() => setProfileUserId(null)}
+        >
+          <div
+            className="w-full h-[96vh] md:w-[480px] md:h-[85vh] md:rounded-3xl overflow-hidden"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <ProfileScreen
+              key={profileUserId}
+              userId={profileUserId}
+              onClose={() => setProfileUserId(null)}
+              onOpenProfile={(id) => setProfileUserId(id)}
+              onMessage={(uid) => { setProfileUserId(null); setChatTargetUserId(uid); setShowChat(true); }}
+            />
+          </div>
         </div>
       )}
 
       {openCommunityId && (
-        <div className="fixed inset-0 z-50 sm:bg-black/40 sm:flex sm:items-center sm:justify-center">
-          <CommunityDetailScreen
-            key={openCommunityId}
-            communityId={openCommunityId}
-            onBack={() => setOpenCommunityId(null)}
-            onOpenProfile={(id) => { setOpenCommunityId(null); setProfileUserId(id); }}
-          />
+        <div
+          className="fixed inset-0 z-50 bg-black/40 flex items-end md:items-center justify-center"
+          onClick={() => setOpenCommunityId(null)}
+        >
+          <div
+            className="w-full h-[96vh] md:w-[480px] md:h-[85vh] md:rounded-3xl overflow-hidden"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <CommunityDetailScreen
+              key={openCommunityId}
+              communityId={openCommunityId}
+              onBack={() => setOpenCommunityId(null)}
+              onOpenProfile={(id) => { setOpenCommunityId(null); setProfileUserId(id); }}
+            />
+          </div>
         </div>
       )}
 
       {pendingPost && (
-        <div className="fixed inset-0 z-50 sm:bg-black/40 sm:flex sm:items-center sm:justify-center">
-          <div className="w-full h-full sm:w-[390px] sm:h-[844px] bg-gradient-to-b from-[#F5EDE0] via-[#EAD8C8] to-[#D9C4AF] sm:rounded-[44px] sm:shadow-2xl overflow-hidden">
+        <div
+          className="fixed inset-0 z-50 bg-black/40 flex items-end md:items-center justify-center"
+          onClick={() => setPendingPostId(null)}
+        >
+          <div
+            className="w-full h-[96vh] md:w-[480px] md:h-[85vh] md:rounded-3xl overflow-hidden bg-gradient-to-b from-[#F5EDE0] via-[#EAD8C8] to-[#D9C4AF]"
+            onClick={(e) => e.stopPropagation()}
+          >
             <PostDetailScreen post={pendingPost} onBack={() => setPendingPostId(null)} />
           </div>
         </div>
       )}
 
       {isLoggedIn && onboardingDone && !socialOnboardingDone && (
-        <div className="fixed inset-0 z-50 sm:bg-black/40 sm:flex sm:items-center sm:justify-center">
-          <div className="w-full h-full sm:w-[390px] sm:h-[844px] bg-gradient-to-b from-[#F5EDE0] via-[#EAD8C8] to-[#D9C4AF] sm:rounded-[44px] sm:shadow-2xl overflow-hidden">
+        <div className="fixed inset-0 z-50 bg-black/40 flex items-end md:items-center justify-center">
+          <div className="w-full h-[96vh] md:w-[480px] md:h-[85vh] md:rounded-3xl overflow-hidden bg-gradient-to-b from-[#F5EDE0] via-[#EAD8C8] to-[#D9C4AF]">
             <SocialOnboardingScreen onDone={completeSocialOnboarding} />
           </div>
         </div>
       )}
 
       {pendingShareContent !== null && (
-        <div className="fixed inset-0 z-50 sm:bg-black/40 sm:flex sm:items-center sm:justify-center">
-          <div className="w-full h-full sm:w-[390px] sm:h-[844px] bg-gradient-to-b from-[#F5EDE0] via-[#EAD8C8] to-[#D9C4AF] sm:rounded-[44px] sm:shadow-2xl overflow-hidden">
+        <div
+          className="fixed inset-0 z-50 bg-black/40 flex items-end md:items-center justify-center"
+          onClick={() => setPendingShareContent(null)}
+        >
+          <div
+            className="w-full h-[96vh] md:w-[480px] md:h-[85vh] md:rounded-3xl overflow-hidden bg-gradient-to-b from-[#F5EDE0] via-[#EAD8C8] to-[#D9C4AF]"
+            onClick={(e) => e.stopPropagation()}
+          >
             <CreatePostScreen
               onBack={() => setPendingShareContent(null)}
               initialContent={pendingShareContent}
@@ -340,8 +398,14 @@ export default function App() {
       )}
 
       {openProduct && (
-        <div className="fixed inset-0 z-50 sm:bg-black/40 sm:flex sm:items-center sm:justify-center">
-          <div className="w-full h-full sm:w-[390px] sm:h-[844px] bg-gradient-to-b from-[#F5EDE0] via-[#EAD8C8] to-[#D9C4AF] sm:rounded-[44px] sm:shadow-2xl overflow-hidden">
+        <div
+          className="fixed inset-0 z-50 bg-black/40 flex items-end md:items-center justify-center"
+          onClick={() => setOpenProduct(null)}
+        >
+          <div
+            className="w-full h-[96vh] md:w-[480px] md:h-[85vh] md:rounded-3xl overflow-hidden bg-gradient-to-b from-[#F5EDE0] via-[#EAD8C8] to-[#D9C4AF]"
+            onClick={(e) => e.stopPropagation()}
+          >
             <ProductDetailScreen
               key={openProduct}
               productId={openProduct}
@@ -354,8 +418,14 @@ export default function App() {
       )}
 
       {openReviews && (
-        <div className="fixed inset-0 z-[55] sm:bg-black/40 sm:flex sm:items-center sm:justify-center">
-          <div className="w-full h-full sm:w-[390px] sm:h-[844px] bg-gradient-to-b from-[#F5EDE0] via-[#EAD8C8] to-[#D9C4AF] sm:rounded-[44px] sm:shadow-2xl overflow-hidden">
+        <div
+          className="fixed inset-0 z-[55] bg-black/40 flex items-end md:items-center justify-center"
+          onClick={() => setOpenReviews(null)}
+        >
+          <div
+            className="w-full h-[96vh] md:w-[480px] md:h-[85vh] md:rounded-3xl overflow-hidden bg-gradient-to-b from-[#F5EDE0] via-[#EAD8C8] to-[#D9C4AF]"
+            onClick={(e) => e.stopPropagation()}
+          >
             <ReviewsScreen
               productType="affiliate"
               productId={openReviews.id}

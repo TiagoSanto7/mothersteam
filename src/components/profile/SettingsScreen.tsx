@@ -62,18 +62,11 @@ export function SettingsScreen({ onBack, onClose }: SettingsScreenProps) {
                 <p className="text-xs text-mt-muted">Nome</p>
                 <p className="text-sm font-medium text-mt-charcoal">{motherName}</p>
               </div>
-              <span className="text-[10px] text-mt-muted bg-gray-100 rounded-full px-2 py-0.5">em breve</span>
             </div>
             <div className="flex items-center justify-between px-4 py-3">
               <div>
                 <p className="text-xs text-mt-muted">E-mail</p>
                 <p className="text-sm font-medium text-mt-charcoal">{email}</p>
-              </div>
-            </div>
-            <div className="flex items-center justify-between px-4 py-3">
-              <div>
-                <p className="text-xs text-mt-muted">Plano</p>
-                <p className="text-sm font-medium text-mt-charcoal">Gratuito</p>
               </div>
             </div>
           </div>
