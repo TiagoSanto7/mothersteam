@@ -167,10 +167,10 @@ export function DashboardScreen() {
           </p>
           <button
             onClick={() => setActiveTab('maeIA')}
-            aria-label="Conversar com a MãeIA"
+            aria-label="Conversar com a Sara"
             className="mt-3 self-start bg-white/25 backdrop-blur-sm text-white text-[11px] font-semibold px-3 py-1.5 rounded-mt-pill hover:bg-white/35 transition-colors"
           >
-            Conversar com a MãeIA →
+            Conversar com a Sara →
           </button>
         </div>
 
@@ -222,7 +222,7 @@ export function DashboardScreen() {
       {/* MãeIA FAB — estrelinha com fundo rose gradient */}
       <button
         onClick={() => setShowMaeIA(true)}
-        aria-label="Conversar com a MãeIA"
+        aria-label="Conversar com a Sara"
         className="fixed bottom-[92px] right-4 w-14 h-14 rounded-full bg-mt-gradient text-white shadow-mt-lg flex items-center justify-center active:scale-95 transition-transform z-30"
       >
         <Sparkles size={24} fill="currentColor" strokeWidth={0} />
@@ -230,8 +230,14 @@ export function DashboardScreen() {
 
       {/* MãeIA overlay */}
       {showMaeIA && (
-        <div className="fixed inset-0 z-50 sm:bg-black/40 sm:flex sm:items-center sm:justify-center">
-          <div className="w-full h-full sm:w-[390px] sm:h-[844px] bg-mt-cream sm:rounded-[44px] sm:shadow-2xl overflow-hidden">
+        <div
+          className="fixed inset-0 z-50 bg-black/40 flex items-end md:items-center justify-center"
+          onClick={() => setShowMaeIA(false)}
+        >
+          <div
+            className="w-full h-[96vh] md:w-[480px] md:h-[85vh] md:rounded-3xl overflow-hidden bg-mt-cream"
+            onClick={(e) => e.stopPropagation()}
+          >
             <MaeIAScreen onBack={() => setShowMaeIA(false)} />
           </div>
         </div>

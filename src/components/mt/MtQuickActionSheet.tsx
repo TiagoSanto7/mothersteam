@@ -53,7 +53,7 @@ export function MtQuickActionSheet({
   const actions: ActionSpec[] = [
     {
       key: 'maeIA',
-      label: 'Falar com a MãeIA',
+      label: 'Falar com a Sara',
       description: 'Tire uma dúvida agora',
       Icon: MessageSquare,
       onClick: wrap(onMaeIA),
