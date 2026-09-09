@@ -1,10 +1,17 @@
 import type { FastifyInstance } from 'fastify'
+import { GoogleGenAI } from '@google/genai'
 import { z } from 'zod'
 import { buildSaraSystemPrompt, buildSaraContextBlock } from '../utils/sara-context'
 
 const ELEVENLABS_API_KEY = process.env.ELEVENLABS_API_KEY
 const ELEVENLABS_AGENT_ID = process.env.ELEVENLABS_AGENT_ID
-const OPENAI_API_KEY = process.env.OPENAI_API_KEY
+const GEMINI_API_KEY = process.env.GEMINI_API_KEY
+
+let _gemini: GoogleGenAI | null = null
+function getGemini(): GoogleGenAI {
+  _gemini ??= new GoogleGenAI({ apiKey: GEMINI_API_KEY! })
+  return _gemini
+}
 
 const chatBodySchema = z.object({
   messages: z
@@ -26,7 +33,7 @@ export default async function maeIARoutes(fastify: FastifyInstance) {
     '/chat',
     { config: { rateLimit: { max: 20, timeWindow: '1 minute' } } },
     async (request, reply) => {
-      if (!OPENAI_API_KEY) {
+      if (!GEMINI_API_KEY) {
         return reply.status(503).send({ error: 'Sara não configurada' })
       }
 
@@ -74,51 +81,29 @@ export default async function maeIARoutes(fastify: FastifyInstance) {
       reply.raw.flushHeaders()
 
       try {
-        const res = await fetch('https://api.openai.com/v1/chat/completions', {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${OPENAI_API_KEY}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            model: 'gpt-4o',
-            stream: true,
-            messages: [
-              { role: 'system', content: systemPrompt },
-              ...messages.map((m) => ({ role: m.role, content: m.content })),
-            ],
-          }),
+        const history = messages.slice(0, -1).map((m) => ({
+          role: m.role === 'assistant' ? 'model' : 'user',
+          parts: [{ text: m.content }],
+        }))
+        const lastMessage = messages[messages.length - 1].content
+
+        const chat = getGemini().chats.create({
+          model: 'gemini-3.6-flash',
+          config: { systemInstruction: systemPrompt },
+          history,
         })
 
-        if (!res.ok || !res.body) {
-          throw new Error(`OpenAI error: ${res.status}`)
-        }
+        const stream = await chat.sendMessageStream({ message: lastMessage })
 
-        const reader = res.body.getReader()
-        const decoder = new TextDecoder()
-        let buf = ''
-
-        while (true) {
-          const { done, value } = await reader.read()
-          if (done) break
-          buf += decoder.decode(value, { stream: true })
-          const lines = buf.split('\n')
-          buf = lines.pop() ?? ''
-          for (const line of lines) {
-            if (!line.startsWith('data: ')) continue
-            const data = line.slice(6).trim()
-            if (data === '[DONE]') break
-            try {
-              const parsed = JSON.parse(data)
-              const text = parsed.choices?.[0]?.delta?.content
-              if (text && !reply.raw.destroyed) {
-                reply.raw.write(`data: ${JSON.stringify({ text })}\n\n`)
-              }
-            } catch { /* incomplete frame */ }
+        for await (const chunk of stream) {
+          if (reply.raw.destroyed) break
+          const text = chunk.text
+          if (text) {
+            reply.raw.write(`data: ${JSON.stringify({ text })}\n\n`)
           }
         }
       } catch (err) {
-        fastify.log.error(`OpenAI stream error: ${err}`)
+        fastify.log.error(`Gemini stream error: ${err}`)
         reply.raw.write(`data: ${JSON.stringify({ error: 'Erro ao conectar com a Sara. Tente novamente.' })}\n\n`)
         reply.raw.end()
         return
