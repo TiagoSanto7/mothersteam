@@ -49,11 +49,11 @@ export default async function postsRoutes(fastify: FastifyInstance) {
       const communityIds = memberships.map((m) => m.communityId)
 
       const postInclude = {
-        author: { select: { id: true, name: true, username: true, archetypeKey: true, avatarUrl: true } },
+        author: { select: { id: true, name: true, username: true, archetypeKey: true, avatarUrl: true, role: true } },
         community: { select: { name: true } },
         _count: { select: { likes: true, comments: true, reposts: true } },
         likes: { where: { userId: request.userId }, select: { userId: true } },
-        repostFrom: { include: { author: { select: { id: true, name: true, username: true, archetypeKey: true, avatarUrl: true } } } },
+        repostFrom: { include: { author: { select: { id: true, name: true, username: true, archetypeKey: true, avatarUrl: true, role: true } } } },
       } as const
 
       function mapRow<T extends { likes: { userId: string }[]; community: { name: string } | null }>(
@@ -129,7 +129,7 @@ export default async function postsRoutes(fastify: FastifyInstance) {
     const post = await fastify.prisma.post.create({
       data: { ...body.data, authorId: request.userId },
       include: {
-        author: { select: { id: true, name: true, username: true, archetypeKey: true, avatarUrl: true } },
+        author: { select: { id: true, name: true, username: true, archetypeKey: true, avatarUrl: true, role: true } },
         _count: { select: { likes: true, comments: true } },
       },
     })
@@ -172,10 +172,10 @@ export default async function postsRoutes(fastify: FastifyInstance) {
     const post = await fastify.prisma.post.findUnique({
       where: { id: request.params.id },
       include: {
-        author: { select: { id: true, name: true, username: true, archetypeKey: true, avatarUrl: true } },
+        author: { select: { id: true, name: true, username: true, archetypeKey: true, avatarUrl: true, role: true } },
         _count: { select: { likes: true, comments: true, reposts: true } },
         likes: { where: { userId: request.userId }, select: { userId: true } },
-        repostFrom: { include: { author: { select: { id: true, name: true, username: true, archetypeKey: true, avatarUrl: true } } } },
+        repostFrom: { include: { author: { select: { id: true, name: true, username: true, archetypeKey: true, avatarUrl: true, role: true } } } },
       },
     })
     if (!post) return reply.status(404).send({ error: 'Post not found' })
@@ -359,9 +359,9 @@ export default async function postsRoutes(fastify: FastifyInstance) {
         communityId: original.communityId,
       },
       include: {
-        author: { select: { id: true, name: true, username: true, archetypeKey: true, avatarUrl: true } },
+        author: { select: { id: true, name: true, username: true, archetypeKey: true, avatarUrl: true, role: true } },
         _count: { select: { likes: true, comments: true, reposts: true } },
-        repostFrom: { include: { author: { select: { id: true, name: true, username: true, archetypeKey: true, avatarUrl: true } } } },
+        repostFrom: { include: { author: { select: { id: true, name: true, username: true, archetypeKey: true, avatarUrl: true, role: true } } } },
       },
     })
     reply.status(201).send({ ...repost, likedByCurrentUser: false })
