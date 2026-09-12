@@ -53,6 +53,13 @@ server/dist/
 *-firebase-adminsdk-*.json
 *.firebase-b64.tmp
 
+# Certificados e chaves de distribuição iOS (nunca commitar)
+*.key
+*.csr
+*.cer
+*.p12
+*.mobileprovision
+
 # Arquivos temporários locais
 presentation.html
 check-logs.py
