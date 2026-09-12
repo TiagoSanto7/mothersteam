@@ -48,3 +48,15 @@ server/dist/
 
 # ElevenLabs migration workspace (contains API keys hardcoded)
 .migrate-tmp/
+
+# Credenciais Firebase Admin SDK (chave privada — nunca commitar)
+*-firebase-adminsdk-*.json
+*.firebase-b64.tmp
+
+# Arquivos temporários locais
+presentation.html
+check-logs.py
+image.png
+Screenshot_*.png
+feature-graphic-1024x500.png
+icon-playstore-512.png
