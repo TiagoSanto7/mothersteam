@@ -121,7 +121,7 @@ export function AddRoutineModal({ onClose, defaultDate, editEntry }: AddRoutineM
               type="time"
               value={time}
               onChange={(e) => setTime(e.target.value)}
-              className="w-full px-3 py-3 rounded-2xl bg-white border border-mt-linen text-sm text-mt-charcoal focus:outline-none focus:border-mt-rose"
+              className="w-full h-[46px] px-3 rounded-2xl bg-white border border-mt-linen text-sm text-mt-charcoal focus:outline-none focus:border-mt-rose text-center"
             />
           </div>
           <div className="flex flex-col gap-1 flex-1 min-w-0">

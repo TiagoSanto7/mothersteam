@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Calendar as CalendarIcon, X } from 'lucide-react';
+import { X } from 'lucide-react';
 import { DayPicker } from 'react-day-picker';
 import { ptBR } from 'date-fns/locale';
 import { format, parse, isValid } from 'date-fns';
@@ -47,12 +47,11 @@ export function DateField({ id, value, onChange, min, max }: DateFieldProps) {
         id={id}
         type="button"
         onClick={() => setOpen(true)}
-        className="w-full px-3 py-3 rounded-2xl bg-white border border-mt-linen text-sm text-mt-charcoal focus:outline-none focus:border-mt-rose flex items-center justify-between gap-2"
+        className={`w-full h-[46px] px-3 rounded-2xl bg-white border border-mt-linen text-sm focus:outline-none focus:border-mt-rose text-center ${
+          display ? 'text-mt-charcoal' : 'text-mt-muted'
+        }`}
       >
-        <span className={display ? 'text-mt-charcoal' : 'text-mt-muted'}>
-          {display || 'Selecione'}
-        </span>
-        <CalendarIcon size={16} className="text-mt-muted flex-shrink-0" strokeWidth={1.8} />
+        {display || 'Selecione'}
       </button>
 
       {open && createPortal(
