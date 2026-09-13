@@ -106,7 +106,6 @@ export function AddRoutineModal({ onClose, defaultDate, editEntry }: AddRoutineM
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             placeholder="Ex: Tomar vitamina D"
-            autoFocus
             className="w-full px-4 py-3 rounded-2xl bg-white border border-mt-linen text-sm text-mt-charcoal placeholder:text-mt-muted focus:outline-none focus:border-mt-rose"
           />
         </div>

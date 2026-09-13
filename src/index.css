@@ -6,7 +6,8 @@
   body {
     background-color: #EDE6DC;
     color: #3D342E;
-    font-family: 'Inter', system-ui, -apple-system, 'Apple Color Emoji', 'Segoe UI Emoji', 'Noto Color Emoji', sans-serif;
+    font-family: 'Inter', 'Apple Color Emoji', 'Segoe UI Emoji', 'Noto Color Emoji', system-ui, -apple-system, sans-serif;
+    font-variant-emoji: emoji;
     -webkit-font-smoothing: antialiased;
   }
 
