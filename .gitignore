@@ -57,6 +57,7 @@ server/dist/
 *.key
 *.csr
 *.cer
+*.pem
 *.p12
 *.mobileprovision
 
