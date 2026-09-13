@@ -21,7 +21,13 @@ export function AppHeader({ onOpenDrawer, rightSlot }: AppHeaderProps) {
   const activeTab = useAppStore((s) => s.activeTab);
 
   return (
-    <div className="flex items-center h-14 px-4 flex-shrink-0 bg-gradient-to-r from-[#F5EDE0] to-[#EAD8C8] border-b border-white/30">
+    <div
+      className="flex items-center h-14 px-4 flex-shrink-0 bg-gradient-to-r from-[#F5EDE0] to-[#EAD8C8] border-b border-white/30"
+      style={{
+        paddingTop: 'env(safe-area-inset-top)',
+        height: 'calc(3.5rem + env(safe-area-inset-top))',
+      }}
+    >
       <button
         onClick={onOpenDrawer}
         aria-label="Abrir menu"

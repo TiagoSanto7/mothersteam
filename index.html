@@ -7,7 +7,15 @@
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
     <link rel="manifest" href="/manifest.json" />
     <meta name="theme-color" content="#db958b" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+    <style>
+      /* iOS: prevent input focus zoom (font-size must be >= 16px) */
+      input, textarea, select {
+        font-size: 16px !important;
+      }
+      /* Ensure safe-area env() is available */
+      html, body { -webkit-text-size-adjust: 100%; }
+    </style>
     <title>Mother's Team</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>

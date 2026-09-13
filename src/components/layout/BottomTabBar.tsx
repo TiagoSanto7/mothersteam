@@ -61,6 +61,10 @@ export function BottomTabBar() {
     <nav
       data-testid="bottom-tab-bar"
       className="flex-shrink-0 bg-white/95 backdrop-blur-md border-t border-mt-linen flex items-end justify-around px-2 pt-2 pb-2 h-[72px]"
+      style={{
+        paddingBottom: 'calc(0.5rem + env(safe-area-inset-bottom))',
+        height: 'calc(72px + env(safe-area-inset-bottom))',
+      }}
     >
       {LEFT_TABS.map(renderTab)}
 
