@@ -85,33 +85,35 @@ export function DateField({ id, value, onChange, min, max }: DateFieldProps) {
                   <X size={14} className="text-mt-muted" strokeWidth={2} />
                 </button>
               </div>
-              <DayPicker
-                mode="single"
-                selected={selected}
-                onSelect={handleSelect}
-                locale={ptBR}
-                showOutsideDays
-                disabled={[
-                  ...(min ? [{ before: toDate(min)! }] : []),
-                  ...(max ? [{ after: toDate(max)! }] : []),
-                ]}
-                classNames={{
-                  root: 'mt-datepicker',
-                  month_caption: 'flex justify-center py-2 mb-2 font-serif text-mt-charcoal capitalize',
-                  nav: 'flex items-center justify-between absolute inset-x-0 top-1 px-2',
-                  button_previous: 'w-8 h-8 rounded-full bg-white flex items-center justify-center text-mt-muted',
-                  button_next: 'w-8 h-8 rounded-full bg-white flex items-center justify-center text-mt-muted',
-                  month_grid: 'w-full',
-                  weekdays: 'text-mt-muted',
-                  weekday: 'text-xs font-medium py-2 text-center',
-                  day: 'text-center p-0',
-                  day_button: 'w-10 h-10 rounded-full text-sm text-mt-charcoal hover:bg-white transition-colors',
-                  selected: '[&_button]:bg-mt-rose [&_button]:text-white [&_button]:hover:bg-mt-rose-dark',
-                  today: '[&_button]:font-bold [&_button]:text-mt-rose-dark',
-                  outside: 'text-mt-muted/50',
-                  disabled: 'opacity-30 pointer-events-none',
-                }}
-              />
+              <div className="flex justify-center">
+                <DayPicker
+                  mode="single"
+                  selected={selected}
+                  onSelect={handleSelect}
+                  locale={ptBR}
+                  showOutsideDays
+                  disabled={[
+                    ...(min ? [{ before: toDate(min)! }] : []),
+                    ...(max ? [{ after: toDate(max)! }] : []),
+                  ]}
+                  classNames={{
+                    root: 'mt-datepicker mx-auto',
+                    month_caption: 'flex justify-center py-2 mb-2 font-serif text-mt-charcoal capitalize',
+                    nav: 'flex items-center justify-between absolute inset-x-0 top-1 px-2',
+                    button_previous: 'w-8 h-8 rounded-full bg-white flex items-center justify-center text-mt-muted',
+                    button_next: 'w-8 h-8 rounded-full bg-white flex items-center justify-center text-mt-muted',
+                    month_grid: 'w-full border-collapse',
+                    weekdays: 'text-mt-muted',
+                    weekday: 'text-xs font-medium py-2 text-center w-10',
+                    day: 'text-center p-0 w-10',
+                    day_button: 'w-10 h-10 rounded-full text-sm text-mt-charcoal hover:bg-white transition-colors',
+                    selected: '[&_button]:bg-mt-rose [&_button]:text-white [&_button]:hover:bg-mt-rose-dark',
+                    today: '[&_button]:font-bold [&_button]:text-mt-rose-dark',
+                    outside: 'text-mt-muted/50',
+                    disabled: 'opacity-30 pointer-events-none',
+                  }}
+                />
+              </div>
             </motion.div>
           </motion.div>
         </AnimatePresence>,

@@ -111,8 +111,8 @@ export function AddRoutineModal({ onClose, defaultDate, editEntry }: AddRoutineM
           />
         </div>
 
-        <div className="flex gap-3">
-          <div className="flex flex-col gap-1 flex-1 min-w-0">
+        <div className="grid grid-cols-2 gap-3">
+          <div className="flex flex-col gap-1 min-w-0">
             <label className="text-xs font-medium text-mt-muted" htmlFor="routine-time">
               Horário
             </label>
@@ -121,10 +121,10 @@ export function AddRoutineModal({ onClose, defaultDate, editEntry }: AddRoutineM
               type="time"
               value={time}
               onChange={(e) => setTime(e.target.value)}
-              className="w-full h-[46px] px-3 rounded-2xl bg-white border border-mt-linen text-sm text-mt-charcoal focus:outline-none focus:border-mt-rose text-center"
+              className="w-full h-[46px] px-3 rounded-2xl bg-white border border-mt-linen text-sm text-mt-charcoal focus:outline-none focus:border-mt-rose text-center box-border"
             />
           </div>
-          <div className="flex flex-col gap-1 flex-1 min-w-0">
+          <div className="flex flex-col gap-1 min-w-0">
             <label className="text-xs font-medium text-mt-muted" htmlFor="routine-date">
               Data
             </label>
