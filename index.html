@@ -7,14 +7,17 @@
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
     <link rel="manifest" href="/manifest.json" />
     <meta name="theme-color" content="#db958b" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
     <style>
-      /* iOS: prevent input focus zoom (font-size must be >= 16px) */
-      input, textarea, select {
-        font-size: 16px !important;
-      }
-      /* Ensure safe-area env() is available */
+      /* iOS: prevent input focus zoom — computed font-size MUST be >= 16px.
+         Using 17px because some iOS versions still zoom at exactly 16px. */
       html, body { -webkit-text-size-adjust: 100%; }
+      input:not([type="checkbox"]):not([type="radio"]),
+      textarea,
+      select {
+        font-size: 17px !important;
+      }
     </style>
     <title>Mother's Team</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
