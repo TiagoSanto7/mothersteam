@@ -23,7 +23,7 @@ export const mensagensDeDeus: Record<FaseUsuaria, MensagemDeDeus> = {
   trimester2: {
     versiculo: "Ele te deu força como a de um guerreiro. Levanta-te e age, não te atemorizes.",
     referencia: "1 Crônicas 28:20",
-    mensagem: "Seu bebê cresce, e você também. A cada semana que passa, você se torna mais da mãe que sempre foi chamada a ser.",
+    mensagem: "Seu bebê cresce e você também. A cada semana que passa, você se torna mais da mãe que sempre foi chamada a ser.",
   },
   trimester3: {
     versiculo: "Serei com ela na angústia; livrarei-a e a glorificarei.",
