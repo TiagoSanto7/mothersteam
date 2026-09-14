@@ -1,7 +1,7 @@
 import type { FastifyInstance } from 'fastify'
 import { GoogleGenAI } from '@google/genai'
 import { z } from 'zod'
-import { buildSaraSystemPrompt, buildSaraContextBlock } from '../utils/sara-context'
+import { buildSaraSystemPrompt } from '../utils/sara-context'
 
 const ELEVENLABS_API_KEY = process.env.ELEVENLABS_API_KEY
 const ELEVENLABS_AGENT_ID = process.env.ELEVENLABS_AGENT_ID
@@ -137,10 +137,14 @@ export default async function maeIARoutes(fastify: FastifyInstance) {
       },
     })
 
-    const contextBlock = user ? buildSaraContextBlock(user) : null
+    // Full Sara persona (free open-ended chat) + user context — overrides the agent's default prompt
+    const systemPrompt = user ? buildSaraSystemPrompt(user) : null
+    const firstMessage = user?.name
+      ? `Oi ${user.name.split(' ')[0]}, tô aqui. Sobre o que você quer conversar hoje?`
+      : 'Oi, tô aqui. Sobre o que você quer conversar hoje?'
 
-    // Try POST /v1/convai/conversations with context_override (returns signed_url directly)
-    if (contextBlock) {
+    // Try POST /v1/convai/conversations with prompt override (returns signed_url directly)
+    if (systemPrompt) {
       try {
         const controller = new AbortController()
         const timeout = setTimeout(() => controller.abort(), 10_000)
@@ -155,7 +159,11 @@ export default async function maeIARoutes(fastify: FastifyInstance) {
             body: JSON.stringify({
               agent_id: ELEVENLABS_AGENT_ID,
               conversation_config_override: {
-                agent: { prompt: { prompt: contextBlock } },
+                agent: {
+                  prompt: { prompt: systemPrompt },
+                  first_message: firstMessage,
+                  language: 'pt',
+                },
               },
             }),
             signal: controller.signal,
