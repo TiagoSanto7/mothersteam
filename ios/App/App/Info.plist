@@ -64,5 +64,7 @@
 		<string>remote-notification</string>
 		<string>fetch</string>
 	</array>
+    <key>UIRequiresFullScreen</key>
+    <true/>
 </dict>
 </plist>
