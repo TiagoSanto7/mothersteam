@@ -3,22 +3,29 @@ import { render, screen, fireEvent } from '@testing-library/react'
 import { StepObjetivo } from './StepObjetivo'
 
 describe('StepObjetivo', () => {
-  it('renders 4 goal + 4 concern options', () => {
-    render(<StepObjetivo value={{ goal: null, concern: null }} onChange={vi.fn()} />)
-    expect(screen.getAllByRole('radio')).toHaveLength(8)
+  it('renders 4 goal + 4 concern options (all checkboxes for multi-select)', () => {
+    render(<StepObjetivo value={{ goals: [], concerns: [] }} onChange={vi.fn()} />)
+    expect(screen.getAllByRole('checkbox')).toHaveLength(8)
   })
 
-  it('emits goal change', () => {
+  it('emits goals change (adds to array)', () => {
     const onChange = vi.fn()
-    render(<StepObjetivo value={{ goal: null, concern: null }} onChange={onChange} />)
-    fireEvent.click(screen.getByRole('radio', { name: /melhorar o sono/i }))
-    expect(onChange).toHaveBeenCalledWith({ goal: 'C', concern: null })
+    render(<StepObjetivo value={{ goals: [], concerns: [] }} onChange={onChange} />)
+    fireEvent.click(screen.getByRole('checkbox', { name: /melhorar o sono/i }))
+    expect(onChange).toHaveBeenCalledWith({ goals: ['C'], concerns: [] })
   })
 
-  it('emits concern change', () => {
+  it('emits concerns change (preserves existing goals)', () => {
     const onChange = vi.fn()
-    render(<StepObjetivo value={{ goal: 'A', concern: null }} onChange={onChange} />)
-    fireEvent.click(screen.getByRole('radio', { name: /amamentação/i }))
-    expect(onChange).toHaveBeenCalledWith({ goal: 'A', concern: 'C' })
+    render(<StepObjetivo value={{ goals: ['A'], concerns: [] }} onChange={onChange} />)
+    fireEvent.click(screen.getByRole('checkbox', { name: /amamentação/i }))
+    expect(onChange).toHaveBeenCalledWith({ goals: ['A'], concerns: ['C'] })
+  })
+
+  it('unchecking removes from array', () => {
+    const onChange = vi.fn()
+    render(<StepObjetivo value={{ goals: ['C', 'D'], concerns: [] }} onChange={onChange} />)
+    fireEvent.click(screen.getByRole('checkbox', { name: /melhorar o sono/i }))
+    expect(onChange).toHaveBeenCalledWith({ goals: ['D'], concerns: [] })
   })
 })

@@ -51,8 +51,13 @@ const registerSchema = z.object({
   otherChildren: z.array(otherChildInputSchema).max(10).optional(),
   mood: answerLetter.optional(),
   supportNetwork: z.enum(['A', 'B', 'C']).optional(),
+  // Legacy single-select fields (still accepted for backward compat)
   goal: answerLetter.optional(),
   concern: answerLetter.optional(),
+  // New multi-select fields (preferred). First element is stored in the Char(1) column
+  // for scoring; the full array is persisted in onboardingAnswers JSON.
+  goals: z.array(answerLetter).min(1).max(4).optional(),
+  concerns: z.array(answerLetter).min(1).max(4).optional(),
 })
 
 const loginSchema = z.object({
@@ -94,19 +99,27 @@ export default async function authRoutes(fastify: FastifyInstance) {
     const passwordHash = await bcrypt.hash(body.data.password, 12)
     const parseDate = (s?: string) => s ? new Date(s) : undefined
 
+    // Normalize goal/concern (accept single-select legacy or multi-select array; scoring uses first item)
+    const primaryGoal = body.data.goals?.[0] ?? body.data.goal
+    const primaryConcern = body.data.concerns?.[0] ?? body.data.concern
+    const allGoals = body.data.goals ?? (body.data.goal ? [body.data.goal] : undefined)
+    const allConcerns = body.data.concerns ?? (body.data.concern ? [body.data.concern] : undefined)
+
     // Compute profile BEFORE insert so the create is atomic (no risk of user existing with profileKey=null)
     let profileFields: { profileKey: string; archetypeKey: string; onboardingAnswers: any } | null = null
-    if (body.data.mood && body.data.supportNetwork && body.data.goal && body.data.concern) {
+    if (body.data.mood && body.data.supportNetwork && primaryGoal && primaryConcern) {
       const profile = computeProfileFromLetters({
         stage: body.data.pregnancyStage,
         week: body.data.pregnancyWeek,
         ageInDays: body.data.babyAgeInDays,
         mood: body.data.mood,
         supportNetwork: body.data.supportNetwork,
-        goal: body.data.goal,
-        concern: body.data.concern,
+        goal: primaryGoal,
+        concern: primaryConcern,
       })
-      profileFields = { profileKey: profile.profileKey, archetypeKey: profile.archetypeKey, onboardingAnswers: profile.answers as any }
+      // Persist multi-select arrays inside onboardingAnswers so we don't lose the extra choices
+      const answersWithMulti = { ...(profile.answers as any), goals: allGoals, concerns: allConcerns }
+      profileFields = { profileKey: profile.profileKey, archetypeKey: profile.archetypeKey, onboardingAnswers: answersWithMulti }
     }
 
     const user = await fastify.prisma.user.create({
@@ -126,8 +139,8 @@ export default async function authRoutes(fastify: FastifyInstance) {
         hasMultiples: body.data.hasMultiples ?? false,
         mood: body.data.mood ?? null,
         supportNetwork: body.data.supportNetwork ?? null,
-        goal: body.data.goal ?? null,
-        concern: body.data.concern ?? null,
+        goal: primaryGoal ?? null,
+        concern: primaryConcern ?? null,
         ...(profileFields ?? {}),
         babies: body.data.babies?.length
           ? {

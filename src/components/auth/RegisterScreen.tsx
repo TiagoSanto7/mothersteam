@@ -42,7 +42,7 @@ export function RegisterScreen({ onBack }: RegisterScreenProps) {
   });
   const [outrosFilhos, setOutrosFilhos] = useState<OtherChild[]>([]);
   const [humorState, setHumorState] = useState<StepHumorValue>({ mood: null, supportNetwork: null });
-  const [objetivoState, setObjetivoState] = useState<StepObjetivoValue>({ goal: null, concern: null });
+  const [objetivoState, setObjetivoState] = useState<StepObjetivoValue>({ goals: [], concerns: [] });
 
   // Debounced username availability check
   useEffect(() => {
@@ -88,7 +88,7 @@ export function RegisterScreen({ onBack }: RegisterScreenProps) {
   const step4Valid = humorState.mood !== null && humorState.supportNetwork !== null;
 
   const step5Valid =
-    objetivoState.goal !== null && objetivoState.concern !== null && acceptedTerms;
+    objetivoState.goals.length > 0 && objetivoState.concerns.length > 0 && acceptedTerms;
 
   const { mutate, isPending, isError, error } = useMutation({
     mutationFn: () => {
@@ -119,8 +119,8 @@ export function RegisterScreen({ onBack }: RegisterScreenProps) {
             .map((c) => ({ name: c.name.trim(), birthDate: c.birthDate })),
           mood: humorState.mood ?? undefined,
           supportNetwork: humorState.supportNetwork ?? undefined,
-          goal: objetivoState.goal ?? undefined,
-          concern: objetivoState.concern ?? undefined,
+          goals: objetivoState.goals.length > 0 ? objetivoState.goals : undefined,
+          concerns: objetivoState.concerns.length > 0 ? objetivoState.concerns : undefined,
         }),
       });
     },

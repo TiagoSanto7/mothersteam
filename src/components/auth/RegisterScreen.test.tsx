@@ -131,8 +131,8 @@ describe('RegisterScreen', () => {
       hasMultiples: false,
       mood: 'B',
       supportNetwork: 'B',
-      goal: 'C',
-      concern: 'B',
+      goals: ['C'],
+      concerns: ['B'],
     });
     expect(body.otherChildren).toEqual([]);
   });
