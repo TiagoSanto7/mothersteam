@@ -44,6 +44,7 @@ interface AppState {
   prayersByUser: Record<string, Record<string, string>>;
   // UI — NOT persisted
   pendingShareContent: string | null;
+  pendingShareCommunityId: string | null;
   pendingChatUserId: string | null;
   tabRefreshTick: number;
   closeOverlaysTick: number;
@@ -71,6 +72,7 @@ interface AppState {
   saveVerse: (ref: string) => void;
   unsaveVerse: (ref: string) => void;
   setPendingShareContent: (content: string | null) => void;
+  setPendingShare: (content: string | null, communityId?: string | null) => void;
   openChatWith: (userId: string) => void;
   clearPendingChat: () => void;
   savePrayer: (ref: string, text: string) => void;
@@ -180,6 +182,7 @@ export const useAppStore = create<AppState>()(
       versesByUser: {},
       prayersByUser: {},
       pendingShareContent: null,
+      pendingShareCommunityId: null,
       pendingChatUserId: null,
       tabRefreshTick: 0,
       closeOverlaysTick: 0,
@@ -313,7 +316,8 @@ export const useAppStore = create<AppState>()(
           }
           return { versesByUser: { ...s.versesByUser, [uid]: current.filter((r) => r !== ref) } };
         }),
-      setPendingShareContent: (content) => set({ pendingShareContent: content }),
+      setPendingShareContent: (content) => set({ pendingShareContent: content, pendingShareCommunityId: null }),
+      setPendingShare: (content, communityId) => set({ pendingShareContent: content, pendingShareCommunityId: communityId ?? null }),
       openChatWith: (userId) => set({ pendingChatUserId: userId }),
       clearPendingChat: () => set({ pendingChatUserId: null }),
       savePrayer: (ref, text) =>

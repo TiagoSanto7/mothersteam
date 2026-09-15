@@ -42,6 +42,7 @@ export default function App() {
   const setAccessToken          = useAppStore((s) => s.setAccessToken);
   const completeSocialOnboarding = useAppStore((s) => s.completeSocialOnboarding);
   const pendingShareContent = useAppStore((s) => s.pendingShareContent)
+  const pendingShareCommunityId = useAppStore((s) => s.pendingShareCommunityId)
   const setPendingShareContent = useAppStore((s) => s.setPendingShareContent)
   const pendingChatUserId = useAppStore((s) => s.pendingChatUserId)
   const clearPendingChat = useAppStore((s) => s.clearPendingChat)
@@ -392,6 +393,7 @@ export default function App() {
             <CreatePostScreen
               onBack={() => setPendingShareContent(null)}
               initialContent={pendingShareContent}
+              initialCommunityId={pendingShareCommunityId ?? undefined}
             />
           </div>
         </div>

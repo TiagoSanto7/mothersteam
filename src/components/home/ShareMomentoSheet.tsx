@@ -1,5 +1,7 @@
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
+import { ShareVerseToFriendsSheet } from './ShareVerseToFriendsSheet'
+import { ShareVerseToCommunitySheet } from './ShareVerseToCommunitySheet'
 
 interface Props {
   open: boolean
@@ -8,11 +10,13 @@ interface Props {
   referencia: string
   oracao: string
   onShareToFeed: (content: string) => void
-  onShareToCommunity: (content: string) => void
+  onShareToCommunity: (content: string, communityId: string) => void
 }
 
 export function ShareMomentoSheet({ open, onClose, verso, referencia, oracao, onShareToFeed, onShareToCommunity }: Props) {
   const [incluirOracao, setIncluirOracao] = useState(true)
+  const [friendsOpen, setFriendsOpen] = useState(false)
+  const [communityOpen, setCommunityOpen] = useState(false)
 
   function buildText() {
     const base = `"${verso}" — ${referencia}`
@@ -20,13 +24,7 @@ export function ShareMomentoSheet({ open, onClose, verso, referencia, oracao, on
   }
 
   function handleAmigos() {
-    const text = buildText()
-    if (navigator.share) {
-      navigator.share({ text }).catch(() => {})
-    } else {
-      navigator.clipboard.writeText(text).catch(() => {})
-    }
-    onClose()
+    setFriendsOpen(true)
   }
 
   function handleFeed() {
@@ -35,8 +33,7 @@ export function ShareMomentoSheet({ open, onClose, verso, referencia, oracao, on
   }
 
   function handleComunidade() {
-    onShareToCommunity(buildText())
-    onClose()
+    setCommunityOpen(true)
   }
 
   return (
@@ -126,6 +123,22 @@ export function ShareMomentoSheet({ open, onClose, verso, referencia, oracao, on
             </div>
           </motion.div>
         </>
+      )}
+      {friendsOpen && (
+        <ShareVerseToFriendsSheet
+          verseText={buildText()}
+          onClose={() => { setFriendsOpen(false); onClose(); }}
+        />
+      )}
+      {communityOpen && (
+        <ShareVerseToCommunitySheet
+          onClose={() => setCommunityOpen(false)}
+          onSelect={(communityId) => {
+            setCommunityOpen(false);
+            onShareToCommunity(buildText(), communityId);
+            onClose();
+          }}
+        />
       )}
     </AnimatePresence>
   )

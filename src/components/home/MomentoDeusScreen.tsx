@@ -19,6 +19,7 @@ export function MomentoDeusScreen({ open, onClose }: Props) {
   const saveVerse = useAppStore((s) => s.saveVerse)
   const unsaveVerse = useAppStore((s) => s.unsaveVerse)
   const setPendingShareContent = useAppStore((s) => s.setPendingShareContent)
+  const setPendingShare = useAppStore((s) => s.setPendingShare)
   const isSaved = savedVerses.includes(momento.referencia)
 
   return (
@@ -155,10 +156,10 @@ export function MomentoDeusScreen({ open, onClose }: Props) {
         onClose()
         setPendingShareContent(content)
       }}
-      onShareToCommunity={(content) => {
+      onShareToCommunity={(content, communityId) => {
         setShareOpen(false)
         onClose()
-        setPendingShareContent(content)
+        setPendingShare(content, communityId)
       }}
     />
   </>
