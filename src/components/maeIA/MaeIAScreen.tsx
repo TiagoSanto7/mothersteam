@@ -107,9 +107,31 @@ export function MaeIAScreen({ onBack }: MaeIAScreenProps = {}) {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
-  useEffect(() => {
-    return () => { convRef.current?.endSession().catch(() => {}); };
+  const stopVoice = useCallback(async () => {
+    const conv = convRef.current;
+    convRef.current = null;
+    setIsMuted(false);
+    setStatus('idle');
+    if (conv) {
+      try { await conv.endSession(); } catch {}
+    }
   }, []);
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => { void stopVoice(); };
+  }, [stopVoice]);
+
+  // Encerra chamada se app vai pra background (usuário sai do app ou troca de janela)
+  useEffect(() => {
+    const onVisibility = () => {
+      if (document.visibilityState === 'hidden' && convRef.current) {
+        void stopVoice();
+      }
+    };
+    document.addEventListener('visibilitychange', onVisibility);
+    return () => document.removeEventListener('visibilitychange', onVisibility);
+  }, [stopVoice]);
 
   const addMessage = useCallback((role: 'user' | 'assistant', text: string) => {
     setMessages((prev) => [
@@ -160,8 +182,13 @@ export function MaeIAScreen({ onBack }: MaeIAScreenProps = {}) {
         },
         onModeChange: ({ mode }) => {
           if (!convRef.current) return;
-          if (mode === 'listening') setStatus('listening');
-          else if (mode === 'speaking') setStatus('speaking');
+          const m = mode as string;
+          console.debug('[Sara voice] mode:', m);
+          // Aceita variações que o SDK do ElevenLabs pode enviar. Nunca deixa cair pra idle
+          // enquanto a sessão está viva (idle é reservado pra desconexão explícita).
+          if (m === 'listening' || m === 'user_speaking') setStatus('listening');
+          else if (m === 'speaking' || m === 'agent_speaking') setStatus('speaking');
+          else if (m === 'thinking' || m === 'processing') setStatus('processing');
         },
         onMessage: ({ message, source }) => {
           if (source === 'user') addMessage('user', message);
@@ -182,12 +209,12 @@ export function MaeIAScreen({ onBack }: MaeIAScreenProps = {}) {
     }
   }
 
-  async function disconnectVoice() {
-    await convRef.current?.endSession().catch(() => {});
-    convRef.current = null;
-    setIsMuted(false);
-    setStatus('idle');
-  }
+  const disconnectVoice = stopVoice;
+
+  const handleBack = useCallback(async () => {
+    await stopVoice();
+    onBack?.();
+  }, [stopVoice, onBack]);
 
   function toggleMute() {
     if (!convRef.current) return;
@@ -254,7 +281,7 @@ export function MaeIAScreen({ onBack }: MaeIAScreenProps = {}) {
       <div className="relative px-4 pt-4 pb-3 border-b border-mt-linen/60 bg-mt-cream/80 backdrop-blur-sm">
         {onBack && (
           <button
-            onClick={onBack}
+            onClick={handleBack}
             aria-label="Voltar"
             className="absolute top-4 left-4 w-8 h-8 rounded-full bg-white/20 flex items-center justify-center z-10"
           >
