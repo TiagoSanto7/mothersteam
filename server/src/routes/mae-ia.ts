@@ -137,52 +137,14 @@ export default async function maeIARoutes(fastify: FastifyInstance) {
       },
     })
 
-    // Full Sara persona (free open-ended chat) + user context — overrides the agent's default prompt
+    // Full Sara persona (free open-ended chat) + user context.
+    // These are returned to the client so it can pass them as `overrides` to
+    // Conversation.startSession — this replaces the agent's default (reception) prompt per session.
     const systemPrompt = user ? buildSaraSystemPrompt(user) : null
     const firstMessage = user?.name
       ? `Oi ${user.name.split(' ')[0]}, tô aqui. Sobre o que você quer conversar hoje?`
       : 'Oi, tô aqui. Sobre o que você quer conversar hoje?'
 
-    // Try POST /v1/convai/conversations with prompt override (returns signed_url directly)
-    if (systemPrompt) {
-      try {
-        const controller = new AbortController()
-        const timeout = setTimeout(() => controller.abort(), 10_000)
-        const res = await fetch(
-          'https://api.elevenlabs.io/v1/convai/conversations',
-          {
-            method: 'POST',
-            headers: {
-              'xi-api-key': ELEVENLABS_API_KEY,
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              agent_id: ELEVENLABS_AGENT_ID,
-              conversation_config_override: {
-                agent: {
-                  prompt: { prompt: systemPrompt },
-                  first_message: firstMessage,
-                  language: 'pt',
-                },
-              },
-            }),
-            signal: controller.signal,
-          }
-        )
-        clearTimeout(timeout)
-        if (res.ok) {
-          const data = (await res.json()) as { signed_url?: string }
-          if (data.signed_url) {
-            return reply.send({ signedUrl: data.signed_url })
-          }
-        }
-        fastify.log.warn(`ElevenLabs conversations endpoint failed: ${res.status} — falling back to get_signed_url`)
-      } catch (err) {
-        fastify.log.warn(`ElevenLabs conversations fetch error: ${err} — falling back to get_signed_url`)
-      }
-    }
-
-    // Fallback: original GET (no context_override)
     const controller = new AbortController()
     const timeout = setTimeout(() => controller.abort(), 10_000)
 
@@ -212,6 +174,10 @@ export default async function maeIARoutes(fastify: FastifyInstance) {
     }
 
     const { signed_url } = (await res.json()) as { signed_url: string }
-    reply.send({ signedUrl: signed_url })
+    reply.send({
+      signedUrl: signed_url,
+      // Client passes these as `overrides` to Conversation.startSession — free chat persona per session
+      override: systemPrompt ? { prompt: systemPrompt, firstMessage, language: 'pt' } : null,
+    })
   })
 }

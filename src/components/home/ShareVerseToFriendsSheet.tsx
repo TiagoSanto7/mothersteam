@@ -9,10 +9,12 @@ import type { ApiChat, ApiFollowUser, PaginatedResult } from '../../lib/types';
 interface ShareVerseToFriendsSheetProps {
   verseText: string;
   onClose: () => void;
+  /** Called after messages are dispatched (used by parent to also close outer sheet). */
+  onSent?: () => void;
 }
 
 /** Envia um versículo como mensagem de chat para amigos selecionados. */
-export function ShareVerseToFriendsSheet({ verseText, onClose }: ShareVerseToFriendsSheetProps) {
+export function ShareVerseToFriendsSheet({ verseText, onClose, onSent }: ShareVerseToFriendsSheetProps) {
   const isLoggedIn    = useAppStore((s) => s.isLoggedIn);
   const currentUserId = useAppStore((s) => s.currentUserId) ?? '';
   const queryClient   = useQueryClient();
@@ -70,7 +72,7 @@ export function ShareVerseToFriendsSheet({ verseText, onClose }: ShareVerseToFri
       const r = recipients.find((x) => x.id === id);
       if (r) sendMutation.mutate({ recipientId: r.id, chatId: r.chatId });
     });
-    onClose();
+    (onSent ?? onClose)();
   }
 
   return (

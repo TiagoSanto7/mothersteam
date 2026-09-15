@@ -37,6 +37,7 @@ export function ShareMomentoSheet({ open, onClose, verso, referencia, oracao, on
   }
 
   return (
+    <>
     <AnimatePresence>
       {open && (
         <>
@@ -90,10 +91,10 @@ export function ShareMomentoSheet({ open, onClose, verso, referencia, oracao, on
                 aria-label="Compartilhar com amigos"
                 className="flex items-center gap-3 p-3.5 bg-mt-linen rounded-xl active:scale-[0.98] transition-transform"
               >
-                <span className="text-xl">📱</span>
+                <span className="text-xl">💬</span>
                 <div className="text-left">
                   <p className="text-[13px] font-semibold text-mt-charcoal">Compartilhar com amigos</p>
-                  <p className="text-[11px] text-mt-muted">WhatsApp, Instagram, e-mail…</p>
+                  <p className="text-[11px] text-mt-muted">Envia por chat direto no app</p>
                 </div>
               </button>
 
@@ -117,29 +118,31 @@ export function ShareMomentoSheet({ open, onClose, verso, referencia, oracao, on
                 <span className="text-xl">👥</span>
                 <div className="text-left">
                   <p className="text-[13px] font-semibold text-mt-charcoal">Compartilhar em comunidade</p>
-                  <p className="text-[11px] text-mt-muted">Escolhe a comunidade no post</p>
+                  <p className="text-[11px] text-mt-muted">Post numa comunidade que você participa</p>
                 </div>
               </button>
             </div>
           </motion.div>
         </>
       )}
-      {friendsOpen && (
-        <ShareVerseToFriendsSheet
-          verseText={buildText()}
-          onClose={() => { setFriendsOpen(false); onClose(); }}
-        />
-      )}
-      {communityOpen && (
-        <ShareVerseToCommunitySheet
-          onClose={() => setCommunityOpen(false)}
-          onSelect={(communityId) => {
-            setCommunityOpen(false);
-            onShareToCommunity(buildText(), communityId);
-            onClose();
-          }}
-        />
-      )}
     </AnimatePresence>
+    {friendsOpen && (
+      <ShareVerseToFriendsSheet
+        verseText={buildText()}
+        onClose={() => setFriendsOpen(false)}
+        onSent={() => { setFriendsOpen(false); onClose(); }}
+      />
+    )}
+    {communityOpen && (
+      <ShareVerseToCommunitySheet
+        onClose={() => setCommunityOpen(false)}
+        onSelect={(communityId) => {
+          setCommunityOpen(false);
+          onShareToCommunity(buildText(), communityId);
+          onClose();
+        }}
+      />
+    )}
+    </>
   )
 }

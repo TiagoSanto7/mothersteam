@@ -1,20 +1,15 @@
 import { render, screen, fireEvent } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { ShareMomentoSheet } from './ShareMomentoSheet'
 import { useAppStore } from '../../store/useAppStore'
 
-const mockNavigatorShare = vi.fn()
-const mockClipboard = vi.fn()
+vi.mock('../../lib/api', () => ({
+  apiFetch: vi.fn(async () => []),
+}))
 
 beforeEach(() => {
-  useAppStore.setState({ pendingShareContent: null })
-  Object.defineProperty(navigator, 'share', { value: mockNavigatorShare, configurable: true })
-  Object.defineProperty(navigator, 'clipboard', {
-    value: { writeText: mockClipboard },
-    configurable: true,
-  })
-  mockNavigatorShare.mockResolvedValue(undefined)
-  mockClipboard.mockResolvedValue(undefined)
+  useAppStore.setState({ pendingShareContent: null, isLoggedIn: true, currentUserId: 'u1' })
 })
 
 const defaultProps = {
@@ -27,49 +22,51 @@ const defaultProps = {
   onShareToCommunity: vi.fn(),
 }
 
+function renderWithQC(ui: React.ReactElement) {
+  const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+  return render(<QueryClientProvider client={qc}>{ui}</QueryClientProvider>)
+}
+
 describe('ShareMomentoSheet', () => {
   it('does not render when open is false', () => {
-    render(<ShareMomentoSheet {...defaultProps} open={false} />)
+    renderWithQC(<ShareMomentoSheet {...defaultProps} open={false} />)
     expect(screen.queryByText(/compartilhar versículo/i)).toBeNull()
   })
 
   it('renders toggle and 3 action buttons when open', () => {
-    render(<ShareMomentoSheet {...defaultProps} />)
+    renderWithQC(<ShareMomentoSheet {...defaultProps} />)
     expect(screen.getByRole('button', { name: /com oração/i })).toBeTruthy()
     expect(screen.getByRole('button', { name: /compartilhar com amigos/i })).toBeTruthy()
     expect(screen.getByRole('button', { name: /publicar no feed/i })).toBeTruthy()
     expect(screen.getByRole('button', { name: /compartilhar em comunidade/i })).toBeTruthy()
   })
 
-  it('"Compartilhar com amigos" calls navigator.share with verse + oração when toggle is on', async () => {
-    render(<ShareMomentoSheet {...defaultProps} />)
+  it('"Compartilhar com amigos" opens the friend picker sub-sheet', () => {
+    renderWithQC(<ShareMomentoSheet {...defaultProps} />)
     fireEvent.click(screen.getByRole('button', { name: /compartilhar com amigos/i }))
-    expect(mockNavigatorShare).toHaveBeenCalledWith(
-      expect.objectContaining({ text: expect.stringContaining('Senhor, eu chego') })
-    )
+    // Sub-sheet renders header "Enviar para"
+    expect(screen.getByText(/enviar para/i)).toBeTruthy()
   })
 
-  it('"Publicar no feed" calls onShareToFeed with the text content', () => {
+  it('"Publicar no feed" calls onShareToFeed with the text content (includes oração by default)', () => {
     const onShareToFeed = vi.fn()
-    render(<ShareMomentoSheet {...defaultProps} onShareToFeed={onShareToFeed} />)
+    renderWithQC(<ShareMomentoSheet {...defaultProps} onShareToFeed={onShareToFeed} />)
     fireEvent.click(screen.getByRole('button', { name: /publicar no feed/i }))
     expect(onShareToFeed).toHaveBeenCalledWith(expect.stringContaining('Mateus 11:28'))
+    expect(onShareToFeed).toHaveBeenCalledWith(expect.stringContaining('Senhor, eu chego'))
   })
 
-  it('"Compartilhar em comunidade" calls onShareToCommunity', () => {
-    const onShareToCommunity = vi.fn()
-    render(<ShareMomentoSheet {...defaultProps} onShareToCommunity={onShareToCommunity} />)
+  it('"Compartilhar em comunidade" opens the community picker sub-sheet', () => {
+    renderWithQC(<ShareMomentoSheet {...defaultProps} />)
     fireEvent.click(screen.getByRole('button', { name: /compartilhar em comunidade/i }))
-    expect(onShareToCommunity).toHaveBeenCalled()
+    expect(screen.getByText(/escolha a comunidade/i)).toBeTruthy()
   })
 
-  it('toggle switches between com/sem oração', () => {
-    render(<ShareMomentoSheet {...defaultProps} />)
-    const semOracao = screen.getByRole('button', { name: /só o versículo/i })
-    fireEvent.click(semOracao)
-    fireEvent.click(screen.getByRole('button', { name: /compartilhar com amigos/i }))
-    expect(mockNavigatorShare).toHaveBeenCalledWith(
-      expect.objectContaining({ text: expect.not.stringContaining('Senhor, eu chego') })
-    )
+  it('toggle "só o versículo" removes oração from the shared text', () => {
+    const onShareToFeed = vi.fn()
+    renderWithQC(<ShareMomentoSheet {...defaultProps} onShareToFeed={onShareToFeed} />)
+    fireEvent.click(screen.getByRole('button', { name: /só o versículo/i }))
+    fireEvent.click(screen.getByRole('button', { name: /publicar no feed/i }))
+    expect(onShareToFeed).toHaveBeenCalledWith(expect.not.stringContaining('Senhor, eu chego'))
   })
 })

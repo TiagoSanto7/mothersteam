@@ -164,9 +164,12 @@ export function MaeIAScreen({ onBack }: MaeIAScreenProps = {}) {
     }
 
     try {
-      const { signedUrl } = await apiFetch<{ signedUrl: string }>('/mae-ia/token', { method: 'POST' });
+      const { signedUrl, override } = await apiFetch<{
+        signedUrl: string;
+        override: { prompt: string; firstMessage: string; language: string } | null;
+      }>('/mae-ia/token', { method: 'POST' });
 
-      const conv = await Conversation.startSession({
+      const startOptions: Parameters<typeof Conversation.startSession>[0] = {
         signedUrl,
         onConnect: () => setStatus('listening'),
         onDisconnect: () => {
@@ -194,7 +197,20 @@ export function MaeIAScreen({ onBack }: MaeIAScreenProps = {}) {
           if (source === 'user') addMessage('user', message);
           else if (source === 'ai') addMessage('assistant', message);
         },
-      });
+      };
+
+      if (override) {
+        // Cast because the SDK's PartialOptions type doesn't publicly expose `overrides`
+        (startOptions as unknown as { overrides: unknown }).overrides = {
+          agent: {
+            prompt: { prompt: override.prompt },
+            firstMessage: override.firstMessage,
+            language: override.language,
+          },
+        };
+      }
+
+      const conv = await Conversation.startSession(startOptions);
 
       convRef.current = conv;
     } catch (err) {
