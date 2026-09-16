@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { render, screen, fireEvent, waitFor } from '@testing-library/react'
+import { render, screen, fireEvent, waitFor, act } from '@testing-library/react'
 import { MaeIAScreen } from './MaeIAScreen'
+import { Conversation } from '@elevenlabs/client'
 
 // ---------- mocks de módulo ----------
 
@@ -278,5 +279,211 @@ describe('MaeIAScreen — histórico de sessão', () => {
 
     const msgs = (mockApiStream.mock.calls[0][1] as { messages: { content: string }[] }).messages
     expect(msgs.some((m) => /Sou a Sara/i.test(m.content))).toBe(false)
+  })
+})
+
+describe('MaeIAScreen — chat de voz (onDisconnect)', () => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let capturedStartOptions: any
+
+  beforeEach(() => {
+    capturedStartOptions = undefined
+
+    Object.defineProperty(navigator, 'mediaDevices', {
+      configurable: true,
+      value: {
+        getUserMedia: vi.fn().mockResolvedValue({
+          getTracks: () => [{ stop: vi.fn() }],
+        }),
+      },
+    })
+
+    mockApiFetch.mockResolvedValue({ signedUrl: 'wss://fake-signed-url', override: null })
+
+    vi.mocked(Conversation.startSession).mockImplementation((opts) => {
+      capturedStartOptions = opts
+      return Promise.resolve({ endSession: vi.fn(), setMicMuted: vi.fn() }) as never
+    })
+  })
+
+  async function startVoiceConnection() {
+    const btn = screen.getByRole('button', { name: /iniciar conversa por voz/i })
+    fireEvent.click(btn)
+    await waitFor(() => expect(capturedStartOptions).toBeDefined())
+  }
+
+  it('mostra mensagem de erro quando a desconexão é anormal (reason error)', async () => {
+    renderScreen()
+    await startVoiceConnection()
+
+    act(() => {
+      capturedStartOptions.onDisconnect({ reason: 'error', message: 'boom', context: { type: 'error' } })
+    })
+
+    await waitFor(() =>
+      expect(screen.getByText(/a conexão com a sara caiu/i)).toBeInTheDocument(),
+    )
+  })
+
+  it('não mostra erro quando a desconexão é por limite de duração da conversa', async () => {
+    renderScreen()
+    await startVoiceConnection()
+
+    act(() => {
+      capturedStartOptions.onDisconnect({
+        reason: 'error',
+        message: 'max duration exceeded',
+        context: { type: 'max_duration_exceeded' },
+      })
+    })
+
+    expect(screen.queryByText(/a conexão com a sara caiu/i)).not.toBeInTheDocument()
+  })
+
+  it('não mostra erro quando a usuária encerra a conversa normalmente', async () => {
+    renderScreen()
+    await startVoiceConnection()
+
+    act(() => {
+      capturedStartOptions.onDisconnect({ reason: 'user' })
+    })
+
+    expect(screen.queryByText(/a conexão com a sara caiu/i)).not.toBeInTheDocument()
+  })
+})
+
+describe('MaeIAScreen — chat de voz (streaming de texto)', () => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let capturedStartOptions: any
+
+  beforeEach(() => {
+    capturedStartOptions = undefined
+
+    Object.defineProperty(navigator, 'mediaDevices', {
+      configurable: true,
+      value: {
+        getUserMedia: vi.fn().mockResolvedValue({
+          getTracks: () => [{ stop: vi.fn() }],
+        }),
+      },
+    })
+
+    mockApiFetch.mockResolvedValue({ signedUrl: 'wss://fake-signed-url', override: null })
+
+    vi.mocked(Conversation.startSession).mockImplementation((opts) => {
+      capturedStartOptions = opts
+      return Promise.resolve({ endSession: vi.fn(), setMicMuted: vi.fn() }) as never
+    })
+  })
+
+  async function startVoiceConnection() {
+    const btn = screen.getByRole('button', { name: /iniciar conversa por voz/i })
+    fireEvent.click(btn)
+    await waitFor(() => expect(capturedStartOptions).toBeDefined())
+  }
+
+  // O texto agora é revelado por um timer (1 caractere a cada VOICE_REVEAL_INTERVAL_MS),
+  // desacoplado da chegada dos deltas — ver comentário em MaeIAScreen.tsx. Os testes
+  // avançam esse timer explicitamente com fake timers em vez de esperar o delta aplicar
+  // o texto na hora.
+  const REVEAL_MS = 55
+
+  it('mostra o texto da Sara progressivamente, não tudo de uma vez ao chegar o delta', async () => {
+    renderScreen()
+    await startVoiceConnection()
+    vi.useFakeTimers()
+
+    act(() => {
+      capturedStartOptions.onAgentChatResponsePart({ type: 'start', text: '', event_id: 1 })
+    })
+    act(() => {
+      capturedStartOptions.onAgentChatResponsePart({ type: 'delta', text: 'Oi, tudo bem?', event_id: 1 })
+    })
+    // O delta já chegou inteiro, mas a tela só revelou 2 caracteres até agora.
+    act(() => {
+      vi.advanceTimersByTime(REVEAL_MS * 2)
+    })
+    expect(screen.getByText('Oi')).toBeInTheDocument()
+    expect(screen.queryByText('Oi, tudo bem?')).not.toBeInTheDocument()
+
+    act(() => {
+      vi.advanceTimersByTime(REVEAL_MS * 20)
+    })
+    expect(screen.getByText('Oi, tudo bem?')).toBeInTheDocument()
+
+    vi.useRealTimers()
+  })
+
+  it('finaliza a bolha depois do stop, ao alcançar o fim do texto revelado, e remove tags de emoção', async () => {
+    renderScreen()
+    await startVoiceConnection()
+    vi.useFakeTimers()
+
+    act(() => {
+      capturedStartOptions.onAgentChatResponsePart({ type: 'start', text: '', event_id: 2 })
+    })
+    act(() => {
+      capturedStartOptions.onAgentChatResponsePart({ type: 'delta', text: '[Com carinho]Oi', event_id: 2 })
+    })
+    act(() => {
+      capturedStartOptions.onAgentChatResponsePart({ type: 'stop', text: '', event_id: 2 })
+    })
+    act(() => {
+      vi.advanceTimersByTime(REVEAL_MS * 10)
+    })
+
+    expect(screen.getByText('Oi')).toBeInTheDocument()
+    expect(screen.queryByText(/Com carinho/)).not.toBeInTheDocument()
+
+    vi.useRealTimers()
+  })
+
+  it('não duplica a mensagem quando o agent_response completo chega depois do stream', async () => {
+    renderScreen()
+    await startVoiceConnection()
+    vi.useFakeTimers()
+
+    act(() => {
+      capturedStartOptions.onAgentChatResponsePart({ type: 'start', text: '', event_id: 3 })
+    })
+    act(() => {
+      capturedStartOptions.onAgentChatResponsePart({ type: 'delta', text: 'Tudo certo por aqui.', event_id: 3 })
+    })
+    act(() => {
+      capturedStartOptions.onAgentChatResponsePart({ type: 'stop', text: '', event_id: 3 })
+    })
+    act(() => {
+      vi.advanceTimersByTime(REVEAL_MS * 30)
+    })
+    act(() => {
+      capturedStartOptions.onMessage({ source: 'ai', message: 'Tudo certo por aqui.', event_id: 3 })
+    })
+
+    expect(screen.getAllByText('Tudo certo por aqui.')).toHaveLength(1)
+
+    vi.useRealTimers()
+  })
+
+  it('remove a bolha se o texto final ficar vazio (turno que era só tag)', async () => {
+    renderScreen()
+    await startVoiceConnection()
+    vi.useFakeTimers()
+
+    act(() => {
+      capturedStartOptions.onAgentChatResponsePart({ type: 'start', text: '', event_id: 4 })
+    })
+    act(() => {
+      capturedStartOptions.onAgentChatResponsePart({ type: 'delta', text: '[Pausa]', event_id: 4 })
+    })
+    act(() => {
+      capturedStartOptions.onAgentChatResponsePart({ type: 'stop', text: '', event_id: 4 })
+    })
+    act(() => {
+      vi.advanceTimersByTime(REVEAL_MS * 10)
+    })
+
+    expect(screen.queryByText(/Pausa/)).not.toBeInTheDocument()
+
+    vi.useRealTimers()
   })
 })

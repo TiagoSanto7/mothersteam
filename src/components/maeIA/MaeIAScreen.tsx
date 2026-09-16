@@ -3,6 +3,14 @@ import { motion } from 'framer-motion';
 import { Send, ChevronLeft, Mic, MicOff, Phone, PhoneOff } from 'lucide-react';
 import { Conversation } from '@elevenlabs/client';
 import { apiFetch, apiStream } from '../../lib/api';
+import { stripAudioTags, stripAudioTagsPartial } from './stripAudioTags';
+
+// Os deltas de texto da ElevenLabs chegam quase de uma vez (o LLM gera rápido) — bem
+// mais rápido do que a voz leva pra falar. Sem isso, o texto "vaza" inteiro na tela antes
+// da fala terminar. Por isso a exibição é desacoplada da rede: os deltas só alimentam um
+// buffer, e um timer revela o texto no ritmo de fala (~1 caractere a cada 55ms, compatível
+// com o speed 1.2 configurado no agente).
+const VOICE_REVEAL_INTERVAL_MS = 55;
 
 interface Message {
   id: string;
@@ -99,6 +107,17 @@ export function MaeIAScreen({ onBack }: MaeIAScreenProps = {}) {
   const bottomRef = useRef<HTMLDivElement>(null);
   const convRef = useRef<Conversation | null>(null);
   const messagesRef = useRef<Message[]>(messages);
+  // Streaming da fala da Sara por voz (agent_chat_response_part): id da bolha em
+  // construção, e quais event_id já foram exibidos via streaming — pra quando o
+  // agent_response (texto completo) chegar depois, não duplicar a mensagem.
+  const streamingVoiceMsgIdRef = useRef<string | null>(null);
+  const streamedVoiceEventIdsRef = useRef<Set<number>>(new Set());
+  // Buffer bruto acumulado dos deltas e cursor de quanto já foi revelado na tela —
+  // ver VOICE_REVEAL_INTERVAL_MS acima pro porquê da revelação ser pausada, não instantânea.
+  const voiceRawTextRef = useRef('');
+  const voiceRevealedLenRef = useRef(0);
+  const voiceStreamDoneRef = useRef(false);
+  const voiceRevealTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const isConnected = status !== 'idle' && status !== 'error' && status !== 'connecting';
 
   useEffect(() => { messagesRef.current = messages; }, [messages]);
@@ -107,15 +126,40 @@ export function MaeIAScreen({ onBack }: MaeIAScreenProps = {}) {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
+  // Encerra o timer de revelação e, se havia uma bolha de fala em construção,
+  // fecha ela com o que já tinha sido revelado (em vez de deixar "digitando..." pra sempre
+  // ou perder o que já tinha chegado). Usado tanto num encerramento normal quanto ao
+  // começar um novo turno de fala (por segurança, caso o 'stop' anterior nunca tenha vindo).
+  const finalizeOrDropVoiceStream = useCallback(() => {
+    if (voiceRevealTimerRef.current) {
+      clearInterval(voiceRevealTimerRef.current);
+      voiceRevealTimerRef.current = null;
+    }
+    const id = streamingVoiceMsgIdRef.current;
+    if (id) {
+      setMessages((prev) => {
+        const msg = prev.find((m) => m.id === id);
+        const finalText = msg ? stripAudioTags(msg.text) : '';
+        if (!finalText) return prev.filter((m) => m.id !== id);
+        return prev.map((m) => (m.id === id ? { ...m, text: finalText, isStreaming: false, isNew: true } : m));
+      });
+    }
+    streamingVoiceMsgIdRef.current = null;
+    voiceRawTextRef.current = '';
+    voiceRevealedLenRef.current = 0;
+    voiceStreamDoneRef.current = false;
+  }, []);
+
   const stopVoice = useCallback(async () => {
     const conv = convRef.current;
     convRef.current = null;
     setIsMuted(false);
     setStatus('idle');
+    finalizeOrDropVoiceStream();
     if (conv) {
       try { await conv.endSession(); } catch {}
     }
-  }, []);
+  }, [finalizeOrDropVoiceStream]);
 
   // Cleanup on unmount
   useEffect(() => {
@@ -166,16 +210,34 @@ export function MaeIAScreen({ onBack }: MaeIAScreenProps = {}) {
     try {
       const { signedUrl, override } = await apiFetch<{
         signedUrl: string;
-        override: { prompt: string; firstMessage: string; language: string } | null;
+        override: { prompt: string; firstMessage: string } | null;
       }>('/mae-ia/token', { method: 'POST' });
 
       const startOptions: Parameters<typeof Conversation.startSession>[0] = {
         signedUrl,
         onConnect: () => setStatus('listening'),
-        onDisconnect: () => {
+        onDisconnect: (details) => {
+          // O SDK dispara só onDisconnect (nunca onError) mesmo quando a causa é um
+          // fechamento anormal do socket (details.reason === 'error') — sem isso, a
+          // sessão cai silenciosamente e a usuária não vê nenhuma explicação.
+          // max_duration_exceeded também vem com reason 'error' apesar de ser um
+          // encerramento normal (limite de duração da conversa) — não é falha real,
+          // não mostra a mensagem de "conexão caiu".
+          console.error('[Sara] desconectado:', details);
           convRef.current = null;
           setIsMuted(false);
-          setStatus('idle');
+          finalizeOrDropVoiceStream();
+          const isRealError = details.reason === 'error' && details.context.type !== 'max_duration_exceeded';
+          if (isRealError) {
+            setStatus('error');
+            setMessages((prev) => [
+              ...prev,
+              { id: `${Date.now()}-err`, role: 'assistant', text: 'A conexão com a Sara caiu. Tente de novo.', isError: true },
+            ]);
+            setTimeout(() => setStatus('idle'), 3000);
+          } else {
+            setStatus('idle');
+          }
         },
         onError: (error) => {
           console.error('[Sara] erro de sessão:', error);
@@ -193,19 +255,66 @@ export function MaeIAScreen({ onBack }: MaeIAScreenProps = {}) {
           else if (m === 'speaking' || m === 'agent_speaking') setStatus('speaking');
           else if (m === 'thinking' || m === 'processing') setStatus('processing');
         },
-        onMessage: ({ message, source }) => {
+        onMessage: ({ message, source, event_id }) => {
           if (source === 'user') addMessage('user', message);
-          else if (source === 'ai') addMessage('assistant', message);
+          else if (source === 'ai') {
+            // Se esse turno já foi exibido via streaming (onAgentChatResponsePart),
+            // o agent_response completo que chega depois é a mesma fala de novo —
+            // só descarta em vez de duplicar a bolha.
+            if (event_id !== undefined && streamedVoiceEventIdsRef.current.has(event_id)) {
+              streamedVoiceEventIdsRef.current.delete(event_id);
+              return;
+            }
+            const stripped = stripAudioTags(message);
+            if (stripped) addMessage('assistant', stripped);
+          }
+        },
+        onAgentChatResponsePart: ({ text, type, event_id }) => {
+          if (type === 'start') {
+            finalizeOrDropVoiceStream(); // por segurança, se um 'stop' anterior nunca chegou
+            const id = `${Date.now()}-voice-stream`;
+            streamingVoiceMsgIdRef.current = id;
+            setMessages((prev) => [
+              ...prev,
+              { id, role: 'assistant', text: '', isStreaming: true },
+            ]);
+            // Revela o buffer aos poucos, no ritmo da fala, em vez de aplicar cada
+            // delta assim que chega da rede — ver comentário de VOICE_REVEAL_INTERVAL_MS.
+            voiceRevealTimerRef.current = setInterval(() => {
+              const cleanSoFar = stripAudioTagsPartial(voiceRawTextRef.current);
+              if (voiceRevealedLenRef.current < cleanSoFar.length) {
+                voiceRevealedLenRef.current += 1;
+              }
+              const revealed = cleanSoFar.slice(0, voiceRevealedLenRef.current);
+              setMessages((prev) =>
+                prev.map((m) => (m.id === id ? { ...m, text: revealed } : m))
+              );
+              const caughtUp = voiceRevealedLenRef.current >= cleanSoFar.length;
+              if (voiceStreamDoneRef.current && caughtUp) {
+                finalizeOrDropVoiceStream();
+              }
+            }, VOICE_REVEAL_INTERVAL_MS);
+          } else if (type === 'delta') {
+            if (!streamingVoiceMsgIdRef.current) return;
+            voiceRawTextRef.current += text;
+          } else if (type === 'stop') {
+            if (!streamingVoiceMsgIdRef.current) return;
+            streamedVoiceEventIdsRef.current.add(event_id);
+            voiceStreamDoneRef.current = true;
+          }
         },
       };
 
       if (override) {
-        // Cast because the SDK's PartialOptions type doesn't publicly expose `overrides`
+        // Cast because the SDK's PartialOptions type doesn't publicly expose `overrides`.
+        // No `language` field: the agent's config rejects that override with a hard
+        // WebSocket close (code 1008, "Override for field 'language' is not allowed by
+        // config") — this was the actual root cause of TIA-8's "Conectando..." hang on
+        // Android. The agent is already pt-br by default, so it isn't needed anyway.
         (startOptions as unknown as { overrides: unknown }).overrides = {
           agent: {
             prompt: { prompt: override.prompt },
             firstMessage: override.firstMessage,
-            language: override.language,
           },
         };
       }
