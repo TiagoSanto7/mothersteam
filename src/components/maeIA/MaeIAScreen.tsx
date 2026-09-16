@@ -177,10 +177,14 @@ export function MaeIAScreen({ onBack }: MaeIAScreenProps = {}) {
           // O SDK dispara só onDisconnect (nunca onError) mesmo quando a causa é um
           // fechamento anormal do socket (details.reason === 'error') — sem isso, a
           // sessão cai silenciosamente e a usuária não vê nenhuma explicação.
+          // max_duration_exceeded também vem com reason 'error' apesar de ser um
+          // encerramento normal (limite de duração da conversa) — não é falha real,
+          // não mostra a mensagem de "conexão caiu".
           console.error('[Sara] desconectado:', details);
           convRef.current = null;
           setIsMuted(false);
-          if (details?.reason === 'error') {
+          const isRealError = details.reason === 'error' && details.context.type !== 'max_duration_exceeded';
+          if (isRealError) {
             setStatus('error');
             setMessages((prev) => [
               ...prev,
