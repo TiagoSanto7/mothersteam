@@ -216,6 +216,7 @@ model RoutineEntry {
   date      String
   title     String
   category  String
+  notes     String?  @db.VarChar(300)
   done      Boolean  @default(false)
   userId    String
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
