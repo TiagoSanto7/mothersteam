@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { Send, ChevronLeft, Mic, MicOff, Phone, PhoneOff } from 'lucide-react';
 import { Conversation } from '@elevenlabs/client';
 import { apiFetch, apiStream } from '../../lib/api';
+import { stripAudioTags } from './stripAudioTags';
 
 interface Message {
   id: string;
@@ -195,7 +196,7 @@ export function MaeIAScreen({ onBack }: MaeIAScreenProps = {}) {
         },
         onMessage: ({ message, source }) => {
           if (source === 'user') addMessage('user', message);
-          else if (source === 'ai') addMessage('assistant', message);
+          else if (source === 'ai') addMessage('assistant', stripAudioTags(message));
         },
       };
 
