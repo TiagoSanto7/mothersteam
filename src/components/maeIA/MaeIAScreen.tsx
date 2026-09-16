@@ -173,10 +173,23 @@ export function MaeIAScreen({ onBack }: MaeIAScreenProps = {}) {
       const startOptions: Parameters<typeof Conversation.startSession>[0] = {
         signedUrl,
         onConnect: () => setStatus('listening'),
-        onDisconnect: () => {
+        onDisconnect: (details) => {
+          // O SDK dispara só onDisconnect (nunca onError) mesmo quando a causa é um
+          // fechamento anormal do socket (details.reason === 'error') — sem isso, a
+          // sessão cai silenciosamente e a usuária não vê nenhuma explicação.
+          console.error('[Sara] desconectado:', details);
           convRef.current = null;
           setIsMuted(false);
-          setStatus('idle');
+          if (details?.reason === 'error') {
+            setStatus('error');
+            setMessages((prev) => [
+              ...prev,
+              { id: `${Date.now()}-err`, role: 'assistant', text: 'A conexão com a Sara caiu. Tente de novo.', isError: true },
+            ]);
+            setTimeout(() => setStatus('idle'), 3000);
+          } else {
+            setStatus('idle');
+          }
         },
         onError: (error) => {
           console.error('[Sara] erro de sessão:', error);
