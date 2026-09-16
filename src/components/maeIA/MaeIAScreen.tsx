@@ -167,7 +167,7 @@ export function MaeIAScreen({ onBack }: MaeIAScreenProps = {}) {
     try {
       const { signedUrl, override } = await apiFetch<{
         signedUrl: string;
-        override: { prompt: string; firstMessage: string; language: string } | null;
+        override: { prompt: string; firstMessage: string } | null;
       }>('/mae-ia/token', { method: 'POST' });
 
       const startOptions: Parameters<typeof Conversation.startSession>[0] = {
@@ -221,12 +221,15 @@ export function MaeIAScreen({ onBack }: MaeIAScreenProps = {}) {
       };
 
       if (override) {
-        // Cast because the SDK's PartialOptions type doesn't publicly expose `overrides`
+        // Cast because the SDK's PartialOptions type doesn't publicly expose `overrides`.
+        // No `language` field: the agent's config rejects that override with a hard
+        // WebSocket close (code 1008, "Override for field 'language' is not allowed by
+        // config") — this was the actual root cause of TIA-8's "Conectando..." hang on
+        // Android. The agent is already pt-br by default, so it isn't needed anyway.
         (startOptions as unknown as { overrides: unknown }).overrides = {
           agent: {
             prompt: { prompt: override.prompt },
             firstMessage: override.firstMessage,
-            language: override.language,
           },
         };
       }

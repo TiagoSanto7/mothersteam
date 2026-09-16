@@ -176,8 +176,10 @@ export default async function maeIARoutes(fastify: FastifyInstance) {
     const { signed_url } = (await res.json()) as { signed_url: string }
     reply.send({
       signedUrl: signed_url,
-      // Client passes these as `overrides` to Conversation.startSession — free chat persona per session
-      override: systemPrompt ? { prompt: systemPrompt, firstMessage, language: 'pt' } : null,
+      // Client passes these as `overrides` to Conversation.startSession — free chat persona per session.
+      // No `language` here: the agent's override config doesn't allow overriding it (closeCode 1008,
+      // "Override for field 'language' is not allowed by config") and the agent is already pt-br by default.
+      override: systemPrompt ? { prompt: systemPrompt, firstMessage } : null,
     })
   })
 }
