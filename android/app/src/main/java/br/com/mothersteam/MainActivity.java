@@ -1,6 +1,8 @@
 package br.com.mothersteam;
 
+import android.content.Context;
 import android.content.pm.PackageManager;
+import android.media.AudioManager;
 import android.os.Bundle;
 import android.webkit.PermissionRequest;
 
@@ -51,6 +53,10 @@ public class MainActivity extends BridgeActivity {
                     }
                 }
 
+                if (needsAudio) {
+                    forceSpeakerphoneRouting();
+                }
+
                 boolean audioAlreadyGranted = ContextCompat.checkSelfPermission(
                     MainActivity.this,
                     android.Manifest.permission.RECORD_AUDIO
@@ -66,5 +72,22 @@ public class MainActivity extends BridgeActivity {
                 super.onPermissionRequest(request);
             }
         });
+    }
+
+    /**
+     * O Chromium/WebRTC do WebView muda o {@link AudioManager} pra
+     * {@code MODE_IN_COMMUNICATION} quando o {@code getUserMedia({audio:true})}
+     * da Sara está ativo, e nesse modo o Android costuma rotear a saída de
+     * áudio pro fone de ouvido (earpiece) em vez do alto-falante — a voz da
+     * Sara sai baixíssima, quase inaudível. {@code MODIFY_AUDIO_SETTINGS} já
+     * está declarada no manifesto; usamos ela aqui pra forçar o roteamento
+     * pro alto-falante assim que a captura de microfone é solicitada.
+     */
+    private void forceSpeakerphoneRouting() {
+        AudioManager audioManager = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
+        if (audioManager != null) {
+            audioManager.setMode(AudioManager.MODE_NORMAL);
+            audioManager.setSpeakerphoneOn(true);
+        }
     }
 }
