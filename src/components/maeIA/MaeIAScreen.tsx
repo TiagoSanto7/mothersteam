@@ -196,7 +196,10 @@ export function MaeIAScreen({ onBack }: MaeIAScreenProps = {}) {
         },
         onMessage: ({ message, source }) => {
           if (source === 'user') addMessage('user', message);
-          else if (source === 'ai') addMessage('assistant', stripAudioTags(message));
+          else if (source === 'ai') {
+            const stripped = stripAudioTags(message);
+            if (stripped) addMessage('assistant', stripped);
+          }
         },
       };
 

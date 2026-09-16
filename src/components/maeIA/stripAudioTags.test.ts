@@ -29,4 +29,8 @@ describe('stripAudioTags', () => {
   it('removes a tag with no trailing whitespace before adjacent text', () => {
     expect(stripAudioTags('[tag]texto')).toBe('texto');
   });
+
+  it('returns an empty string when the message is only a tag', () => {
+    expect(stripAudioTags('[Pausa]')).toBe('');
+  });
 });
