@@ -42,7 +42,10 @@ Backend: trocar `ELEVENLABS_AGENT_ID` (env var, usada em `/mae-ia/token`) pro no
 
 ## Fora de escopo aqui
 
-- Bug de conexão no Android (TIA-8 original, reaberto): "Conectando..." nunca completa, volta pro idle. Investigação em andamento separadamente (hipótese: `connectionType` não especificado no `Conversation.startSession`, SDK pode estar tentando WebRTC com um `signedUrl` pensado pra WebSocket). Não depende de nada deste documento.
+- Bug de conexão no Android (TIA-8 original, reaberto): "Conectando..." nunca completa, volta pro idle. **Ainda em aberto** — status atualizado:
+  - Hipótese do `connectionType`/WebRTC-vs-WebSocket **descartada**: lendo o código-fonte do SDK (`node_modules/@elevenlabs/client/dist/utils/ConnectionFactory.js`), quando `signedUrl` é passado sem `connectionType` explícito, o SDK já resolve corretamente pra `"websocket"` sozinho — forçar isso não mudaria nada.
+  - Nova pista encontrada lendo `BaseConversation.js`: o SDK dispara **só `onDisconnect`, nunca `onError`**, mesmo quando a causa é um fechamento anormal do socket (`details.reason === 'error'`). Nosso `onDisconnect` descartava esses detalhes e resetava pro idle em silêncio — batendo exatamente com o sintoma relatado (sem erro nenhum na tela). Corrigido em `8788d94`/`38e1117` (loga os detalhes e mostra erro, exceto pra `max_duration_exceeded` que também usa `reason:'error'` mas é encerramento normal).
+  - **Isso NÃO está confirmado como a causa raiz** — é uma correção bem fundamentada no código-fonte do SDK, mas nunca foi validada contra uma reprodução ao vivo do bug real (tentativa de reproduzir no emulador Android foi abandonada — o toque sintético via ADB parou de funcionar na barra de navegação inferior). Precisa de teste em device real com esse logging novo em produção pra fechar de vez.
 - Migração completa pra "Gemini como cérebro + ElevenLabs só como voz": avaliado e descartado por ora — o ElevenLabs Conversational AI já entrega turn-taking/interrupção/latência que seria caro reconstruir, e as causas encontradas aqui são de configuração, não de limitação de plataforma.
 
 ## Testes
