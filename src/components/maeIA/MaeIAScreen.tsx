@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { Send, ChevronLeft, Mic, MicOff, Phone, PhoneOff } from 'lucide-react';
 import { Conversation } from '@elevenlabs/client';
 import { apiFetch, apiStream } from '../../lib/api';
+import { stripAudioTags } from './stripAudioTags';
 
 interface Message {
   id: string;
@@ -172,10 +173,27 @@ export function MaeIAScreen({ onBack }: MaeIAScreenProps = {}) {
       const startOptions: Parameters<typeof Conversation.startSession>[0] = {
         signedUrl,
         onConnect: () => setStatus('listening'),
-        onDisconnect: () => {
+        onDisconnect: (details) => {
+          // O SDK dispara só onDisconnect (nunca onError) mesmo quando a causa é um
+          // fechamento anormal do socket (details.reason === 'error') — sem isso, a
+          // sessão cai silenciosamente e a usuária não vê nenhuma explicação.
+          // max_duration_exceeded também vem com reason 'error' apesar de ser um
+          // encerramento normal (limite de duração da conversa) — não é falha real,
+          // não mostra a mensagem de "conexão caiu".
+          console.error('[Sara] desconectado:', details);
           convRef.current = null;
           setIsMuted(false);
-          setStatus('idle');
+          const isRealError = details.reason === 'error' && details.context.type !== 'max_duration_exceeded';
+          if (isRealError) {
+            setStatus('error');
+            setMessages((prev) => [
+              ...prev,
+              { id: `${Date.now()}-err`, role: 'assistant', text: 'A conexão com a Sara caiu. Tente de novo.', isError: true },
+            ]);
+            setTimeout(() => setStatus('idle'), 3000);
+          } else {
+            setStatus('idle');
+          }
         },
         onError: (error) => {
           console.error('[Sara] erro de sessão:', error);
@@ -195,7 +213,10 @@ export function MaeIAScreen({ onBack }: MaeIAScreenProps = {}) {
         },
         onMessage: ({ message, source }) => {
           if (source === 'user') addMessage('user', message);
-          else if (source === 'ai') addMessage('assistant', message);
+          else if (source === 'ai') {
+            const stripped = stripAudioTags(message);
+            if (stripped) addMessage('assistant', stripped);
+          }
         },
       };
 

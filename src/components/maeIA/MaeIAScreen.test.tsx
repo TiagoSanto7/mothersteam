@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { render, screen, fireEvent, waitFor } from '@testing-library/react'
+import { render, screen, fireEvent, waitFor, act } from '@testing-library/react'
 import { MaeIAScreen } from './MaeIAScreen'
+import { Conversation } from '@elevenlabs/client'
 
 // ---------- mocks de módulo ----------
 
@@ -278,5 +279,75 @@ describe('MaeIAScreen — histórico de sessão', () => {
 
     const msgs = (mockApiStream.mock.calls[0][1] as { messages: { content: string }[] }).messages
     expect(msgs.some((m) => /Sou a Sara/i.test(m.content))).toBe(false)
+  })
+})
+
+describe('MaeIAScreen — chat de voz (onDisconnect)', () => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let capturedStartOptions: any
+
+  beforeEach(() => {
+    capturedStartOptions = undefined
+
+    Object.defineProperty(navigator, 'mediaDevices', {
+      configurable: true,
+      value: {
+        getUserMedia: vi.fn().mockResolvedValue({
+          getTracks: () => [{ stop: vi.fn() }],
+        }),
+      },
+    })
+
+    mockApiFetch.mockResolvedValue({ signedUrl: 'wss://fake-signed-url', override: null })
+
+    vi.mocked(Conversation.startSession).mockImplementation((opts) => {
+      capturedStartOptions = opts
+      return Promise.resolve({ endSession: vi.fn(), setMicMuted: vi.fn() }) as never
+    })
+  })
+
+  async function startVoiceConnection() {
+    const btn = screen.getByRole('button', { name: /iniciar conversa por voz/i })
+    fireEvent.click(btn)
+    await waitFor(() => expect(capturedStartOptions).toBeDefined())
+  }
+
+  it('mostra mensagem de erro quando a desconexão é anormal (reason error)', async () => {
+    renderScreen()
+    await startVoiceConnection()
+
+    act(() => {
+      capturedStartOptions.onDisconnect({ reason: 'error', message: 'boom', context: { type: 'error' } })
+    })
+
+    await waitFor(() =>
+      expect(screen.getByText(/a conexão com a sara caiu/i)).toBeInTheDocument(),
+    )
+  })
+
+  it('não mostra erro quando a desconexão é por limite de duração da conversa', async () => {
+    renderScreen()
+    await startVoiceConnection()
+
+    act(() => {
+      capturedStartOptions.onDisconnect({
+        reason: 'error',
+        message: 'max duration exceeded',
+        context: { type: 'max_duration_exceeded' },
+      })
+    })
+
+    expect(screen.queryByText(/a conexão com a sara caiu/i)).not.toBeInTheDocument()
+  })
+
+  it('não mostra erro quando a usuária encerra a conversa normalmente', async () => {
+    renderScreen()
+    await startVoiceConnection()
+
+    act(() => {
+      capturedStartOptions.onDisconnect({ reason: 'user' })
+    })
+
+    expect(screen.queryByText(/a conexão com a sara caiu/i)).not.toBeInTheDocument()
   })
 })
