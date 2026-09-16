@@ -351,3 +351,107 @@ describe('MaeIAScreen — chat de voz (onDisconnect)', () => {
     expect(screen.queryByText(/a conexão com a sara caiu/i)).not.toBeInTheDocument()
   })
 })
+
+describe('MaeIAScreen — chat de voz (streaming de texto)', () => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let capturedStartOptions: any
+
+  beforeEach(() => {
+    capturedStartOptions = undefined
+
+    Object.defineProperty(navigator, 'mediaDevices', {
+      configurable: true,
+      value: {
+        getUserMedia: vi.fn().mockResolvedValue({
+          getTracks: () => [{ stop: vi.fn() }],
+        }),
+      },
+    })
+
+    mockApiFetch.mockResolvedValue({ signedUrl: 'wss://fake-signed-url', override: null })
+
+    vi.mocked(Conversation.startSession).mockImplementation((opts) => {
+      capturedStartOptions = opts
+      return Promise.resolve({ endSession: vi.fn(), setMicMuted: vi.fn() }) as never
+    })
+  })
+
+  async function startVoiceConnection() {
+    const btn = screen.getByRole('button', { name: /iniciar conversa por voz/i })
+    fireEvent.click(btn)
+    await waitFor(() => expect(capturedStartOptions).toBeDefined())
+  }
+
+  it('mostra o texto da Sara progressivamente conforme os deltas chegam', async () => {
+    renderScreen()
+    await startVoiceConnection()
+
+    act(() => {
+      capturedStartOptions.onAgentChatResponsePart({ type: 'start', text: '', event_id: 1 })
+    })
+    act(() => {
+      capturedStartOptions.onAgentChatResponsePart({ type: 'delta', text: 'Oi', event_id: 1 })
+    })
+    expect(screen.getByText('Oi')).toBeInTheDocument()
+
+    act(() => {
+      capturedStartOptions.onAgentChatResponsePart({ type: 'delta', text: ', tudo bem?', event_id: 1 })
+    })
+    expect(screen.getByText('Oi, tudo bem?')).toBeInTheDocument()
+  })
+
+  it('finaliza a bolha no evento stop e remove tags de emoção do texto acumulado', async () => {
+    renderScreen()
+    await startVoiceConnection()
+
+    act(() => {
+      capturedStartOptions.onAgentChatResponsePart({ type: 'start', text: '', event_id: 2 })
+    })
+    act(() => {
+      capturedStartOptions.onAgentChatResponsePart({ type: 'delta', text: '[Com carinho]Oi', event_id: 2 })
+    })
+    act(() => {
+      capturedStartOptions.onAgentChatResponsePart({ type: 'stop', text: '', event_id: 2 })
+    })
+
+    expect(screen.getByText('Oi')).toBeInTheDocument()
+    expect(screen.queryByText(/Com carinho/)).not.toBeInTheDocument()
+  })
+
+  it('não duplica a mensagem quando o agent_response completo chega depois do stream', async () => {
+    renderScreen()
+    await startVoiceConnection()
+
+    act(() => {
+      capturedStartOptions.onAgentChatResponsePart({ type: 'start', text: '', event_id: 3 })
+    })
+    act(() => {
+      capturedStartOptions.onAgentChatResponsePart({ type: 'delta', text: 'Tudo certo por aqui.', event_id: 3 })
+    })
+    act(() => {
+      capturedStartOptions.onAgentChatResponsePart({ type: 'stop', text: '', event_id: 3 })
+    })
+    act(() => {
+      capturedStartOptions.onMessage({ source: 'ai', message: 'Tudo certo por aqui.', event_id: 3 })
+    })
+
+    expect(screen.getAllByText('Tudo certo por aqui.')).toHaveLength(1)
+  })
+
+  it('remove a bolha se o texto final ficar vazio (turno que era só tag)', async () => {
+    renderScreen()
+    await startVoiceConnection()
+
+    act(() => {
+      capturedStartOptions.onAgentChatResponsePart({ type: 'start', text: '', event_id: 4 })
+    })
+    act(() => {
+      capturedStartOptions.onAgentChatResponsePart({ type: 'delta', text: '[Pausa]', event_id: 4 })
+    })
+    act(() => {
+      capturedStartOptions.onAgentChatResponsePart({ type: 'stop', text: '', event_id: 4 })
+    })
+
+    expect(screen.queryByText(/Pausa/)).not.toBeInTheDocument()
+  })
+})

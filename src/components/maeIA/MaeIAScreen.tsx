@@ -100,6 +100,11 @@ export function MaeIAScreen({ onBack }: MaeIAScreenProps = {}) {
   const bottomRef = useRef<HTMLDivElement>(null);
   const convRef = useRef<Conversation | null>(null);
   const messagesRef = useRef<Message[]>(messages);
+  // Streaming da fala da Sara por voz (agent_chat_response_part): id da bolha em
+  // construção, e quais event_id já foram exibidos via streaming — pra quando o
+  // agent_response (texto completo) chegar depois, não duplicar a mensagem.
+  const streamingVoiceMsgIdRef = useRef<string | null>(null);
+  const streamedVoiceEventIdsRef = useRef<Set<number>>(new Set());
   const isConnected = status !== 'idle' && status !== 'error' && status !== 'connecting';
 
   useEffect(() => { messagesRef.current = messages; }, [messages]);
@@ -211,11 +216,47 @@ export function MaeIAScreen({ onBack }: MaeIAScreenProps = {}) {
           else if (m === 'speaking' || m === 'agent_speaking') setStatus('speaking');
           else if (m === 'thinking' || m === 'processing') setStatus('processing');
         },
-        onMessage: ({ message, source }) => {
+        onMessage: ({ message, source, event_id }) => {
           if (source === 'user') addMessage('user', message);
           else if (source === 'ai') {
+            // Se esse turno já foi exibido via streaming (onAgentChatResponsePart),
+            // o agent_response completo que chega depois é a mesma fala de novo —
+            // só descarta em vez de duplicar a bolha.
+            if (event_id !== undefined && streamedVoiceEventIdsRef.current.has(event_id)) {
+              streamedVoiceEventIdsRef.current.delete(event_id);
+              return;
+            }
             const stripped = stripAudioTags(message);
             if (stripped) addMessage('assistant', stripped);
+          }
+        },
+        onAgentChatResponsePart: ({ text, type, event_id }) => {
+          if (type === 'start') {
+            const id = `${Date.now()}-voice-stream`;
+            streamingVoiceMsgIdRef.current = id;
+            setMessages((prev) => [
+              ...prev,
+              { id, role: 'assistant', text: '', isStreaming: true },
+            ]);
+          } else if (type === 'delta') {
+            const id = streamingVoiceMsgIdRef.current;
+            if (!id) return;
+            setMessages((prev) =>
+              prev.map((m) => (m.id === id ? { ...m, text: m.text + text } : m))
+            );
+          } else if (type === 'stop') {
+            const id = streamingVoiceMsgIdRef.current;
+            streamingVoiceMsgIdRef.current = null;
+            if (!id) return;
+            streamedVoiceEventIdsRef.current.add(event_id);
+            setMessages((prev) => {
+              const msg = prev.find((m) => m.id === id);
+              const finalText = msg ? stripAudioTags(msg.text) : '';
+              if (!finalText) return prev.filter((m) => m.id !== id);
+              return prev.map((m) =>
+                m.id === id ? { ...m, text: finalText, isStreaming: false, isNew: true } : m
+              );
+            });
           }
         },
       };
