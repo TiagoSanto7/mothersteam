@@ -20,6 +20,8 @@ O agente atual (onboarding) fica intocado — continua funcionando como está, q
 
 Backend: trocar `ELEVENLABS_AGENT_ID` (env var, usada em `/mae-ia/token`) pro novo agent_id. **Isso é uma env var na VPS, não vai pro git** — precisa editar `deploy/.env.production` na VPS e reiniciar o container `api` (não basta merge/deploy automático).
 
+> Você mesmo incluirá isso como etapa de execução pois possui acesso à VPS.
+
 ---
 
 ## 2 — Áudio "parece ligação telefônica"
