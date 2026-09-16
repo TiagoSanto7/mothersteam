@@ -19,7 +19,7 @@ Spec: `docs/superpowers/specs/2026-09-16-sara-voice-chat-quality-design.md`
 - Test: `src/components/maeIA/stripAudioTags.test.ts`
 - Modify: `src/components/maeIA/MaeIAScreen.tsx:196-199`
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 ```ts
 // src/components/maeIA/stripAudioTags.test.ts
@@ -49,12 +49,12 @@ describe('stripAudioTags', () => {
 });
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `npm run test -- stripAudioTags --run`
 Expected: FAIL — `Cannot find module './stripAudioTags'` (o arquivo ainda não existe)
 
-- [ ] **Step 3: Write minimal implementation**
+- [x] **Step 3: Write minimal implementation**
 
 ```ts
 // src/components/maeIA/stripAudioTags.ts
@@ -70,12 +70,12 @@ export function stripAudioTags(text: string): string {
 }
 ```
 
-- [ ] **Step 4: Run test to verify it passes**
+- [x] **Step 4: Run test to verify it passes**
 
 Run: `npm run test -- stripAudioTags --run`
 Expected: PASS — 5 passed
 
-- [ ] **Step 5: Wire into MaeIAScreen.tsx**
+- [x] **Step 5: Wire into MaeIAScreen.tsx**
 
 Read current state first — `src/components/maeIA/MaeIAScreen.tsx:196-199` today is:
 
@@ -101,12 +101,12 @@ Add the import near the top of the file (after the `apiFetch, apiStream` import,
 import { stripAudioTags } from './stripAudioTags';
 ```
 
-- [ ] **Step 6: Run the full test suite to confirm no regressions**
+- [x] **Step 6: Run the full test suite to confirm no regressions**
 
 Run: `npm run test -- --run`
 Expected: all tests pass (baseline was 561 passed before this change; expect 566 now — 561 + 5 new)
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add src/components/maeIA/stripAudioTags.ts src/components/maeIA/stripAudioTags.test.ts src/components/maeIA/MaeIAScreen.tsx
@@ -121,7 +121,7 @@ Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>"
 
 Sem código — chamadas de ferramenta MCP (`mcp__<elevenlabs-uuid>__agents_*`) contra a API real da ElevenLabs. Execute na ordem, conferindo a saída de cada uma antes de seguir.
 
-- [ ] **Step 1: Duplicar o agente atual**
+- [x] **Step 1: Duplicar o agente atual**
 
 Chamar `agents_duplicate` com:
 - `agent_id`: `agent_7801m0v3npg3efa9hs4qj0fpcg9k`
@@ -130,13 +130,13 @@ Chamar `agents_duplicate` com:
 
 Expected: resposta com um novo `agent_id` (anotar esse valor — vamos chamá-lo de `NOVO_AGENT_ID` no resto deste plano).
 
-- [ ] **Step 2: Confirmar que a duplicata herdou a config esperada**
+- [x] **Step 2: Confirmar que a duplicata herdou a config esperada**
 
 Chamar `agents_get` com `agent_id: NOVO_AGENT_ID`, `context: "Confirmar config herdada antes de ajustar"`.
 
 Expected: mesma estrutura vista no agente original (voice_id `7eUAxNOneHxqfyRS77mW`, `tts.model_id: eleven_v3_conversational`, `agent.temperature: 0`, `agent.prompt.tool_ids: ["tool_1001m0vasfksfrxb30nzw5m9s0tv"]` — vamos mudar esses dois últimos no próximo task).
 
-- [ ] **Step 3: Commit não se aplica** (mudança é só na ElevenLabs, não no repo) — seguir direto pro Task 3.
+- [x] **Step 3: Commit não se aplica** (mudança é só na ElevenLabs, não no repo) — seguir direto pro Task 3.
 
 ---
 
@@ -144,7 +144,7 @@ Expected: mesma estrutura vista no agente original (voice_id `7eUAxNOneHxqfyRS77
 
 **Depende de:** Task 2 (precisa do `NOVO_AGENT_ID`).
 
-- [ ] **Step 1: Atualizar prompt base e first_message via campos de topo**
+- [x] **Step 1: Atualizar prompt base e first_message via campos de topo**
 
 Chamar `agents_update` com:
 - `agent_id`: `NOVO_AGENT_ID`
@@ -171,7 +171,7 @@ Não faça promessas de resultado como "isso vai curar" ou "certamente vai funci
 
 Expected: resposta 200 confirmando a atualização.
 
-- [ ] **Step 2: Ajustar temperatura e remover o tool de encerramento do onboarding**
+- [x] **Step 2: Ajustar temperatura e remover o tool de encerramento do onboarding**
 
 Chamar `agents_update` com:
 - `agent_id`: `NOVO_AGENT_ID`
@@ -182,7 +182,7 @@ Se a API rejeitar esse formato de `body`, chamar `agents_get` de novo pra confer
 
 Expected: resposta 200 confirmando a atualização.
 
-- [ ] **Step 3: Verificar**
+- [x] **Step 3: Verificar**
 
 Chamar `agents_get` com `agent_id: NOVO_AGENT_ID`, `context: "Confirmar prompt/temperatura/tools atualizados"`.
 
@@ -198,7 +198,7 @@ Expected:
 
 **Depende de:** Task 2.
 
-- [ ] **Step 1: Atualizar formato de saída e latência**
+- [x] **Step 1: Atualizar formato de saída e latência**
 
 Chamar `agents_update` com:
 - `agent_id`: `NOVO_AGENT_ID`
@@ -207,7 +207,7 @@ Chamar `agents_update` com:
 
 Se `pcm_24000` for rejeitado pela API (plano/modelo pode não suportar), tentar `pcm_22050` como fallback, e se esse também falhar, manter `pcm_16000` e anotar no Linear que a conta não suporta upgrade de taxa de amostragem.
 
-- [ ] **Step 2: Verificar**
+- [x] **Step 2: Verificar**
 
 Chamar `agents_get` com `agent_id: NOVO_AGENT_ID`, `context: "Confirmar qualidade de áudio atualizada"`.
 
@@ -221,7 +221,7 @@ Expected: `tts.agent_output_audio_format` != `pcm_16000` (idealmente `pcm_24000`
 
 **Files:** nenhum arquivo do repo — `ELEVENLABS_AGENT_ID` vive só em `deploy/.env.production` na VPS, não está no git.
 
-- [ ] **Step 1: Confirmar o valor atual na VPS**
+- [x] **Step 1: Confirmar o valor atual na VPS**
 
 SSH na VPS dos donos (179.198.97.83, usuário root, senha em `VPS_PWD` no `.env` local) e rodar:
 
@@ -231,7 +231,9 @@ grep ELEVENLABS_AGENT_ID /opt/mothersteam/deploy/.env.production
 
 Expected: mostra o `agent_id` antigo (`agent_7801m0v3npg3efa9hs4qj0fpcg9k`).
 
-- [ ] **Step 2: Trocar pro novo agent_id**
+> **Desvio descoberto na execução:** `deploy/.env` não era o symlink pra `.env.production` que a memória do projeto documentava — era uma cópia regular desatualizada (14/09). `docker compose` lê `.env`, não `.env.production`, então o primeiro `up -d --force-recreate api` recriou o container mas com o agent_id *antigo* (veio da cópia velha). Corrigido com aprovação explícita do Tiago: `cp -f .env.production .env` (sobrescreve, não apaga nada) + `--force-recreate` de novo. Confirmado via `docker exec mothersteam-api printenv ELEVENLABS_AGENT_ID` = `agent_9001m2n5y24rf0m8ms7c8jcj743b`, container healthy, `/health` HTTP 200. Memória do projeto atualizada pra refletir isso.
+
+- [x] **Step 2: Trocar pro novo agent_id**
 
 ```bash
 sed -i "s/^ELEVENLABS_AGENT_ID=.*/ELEVENLABS_AGENT_ID=<NOVO_AGENT_ID>/" /opt/mothersteam/deploy/.env.production
@@ -240,7 +242,7 @@ grep ELEVENLABS_AGENT_ID /opt/mothersteam/deploy/.env.production
 
 Expected: mostra o `NOVO_AGENT_ID` anotado no Task 2.
 
-- [ ] **Step 3: Reiniciar o container da API pra pegar a nova env var**
+- [x] **Step 3: Reiniciar o container da API pra pegar a nova env var**
 
 ```bash
 cd /opt/mothersteam/deploy && docker compose -f docker-compose.prod.yml up -d api
@@ -249,7 +251,7 @@ docker ps --filter name=mothersteam-api --format '{{.Names}}\t{{.Status}}'
 
 Expected: `mothersteam-api` com status `Up ... (healthy)` e uptime baixo (acabou de reiniciar).
 
-- [ ] **Step 4: Smoke test do endpoint**
+- [x] **Step 4: Smoke test do endpoint**
 
 ```bash
 curl -s -o /dev/null -w 'HTTP %{http_code}\n' https://srv1944647.hstgr.cloud/health
