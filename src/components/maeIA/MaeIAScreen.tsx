@@ -3,7 +3,14 @@ import { motion } from 'framer-motion';
 import { Send, ChevronLeft, Mic, MicOff, Phone, PhoneOff } from 'lucide-react';
 import { Conversation } from '@elevenlabs/client';
 import { apiFetch, apiStream } from '../../lib/api';
-import { stripAudioTags } from './stripAudioTags';
+import { stripAudioTags, stripAudioTagsPartial } from './stripAudioTags';
+
+// Os deltas de texto da ElevenLabs chegam quase de uma vez (o LLM gera rápido) — bem
+// mais rápido do que a voz leva pra falar. Sem isso, o texto "vaza" inteiro na tela antes
+// da fala terminar. Por isso a exibição é desacoplada da rede: os deltas só alimentam um
+// buffer, e um timer revela o texto no ritmo de fala (~1 caractere a cada 55ms, compatível
+// com o speed 1.2 configurado no agente).
+const VOICE_REVEAL_INTERVAL_MS = 55;
 
 interface Message {
   id: string;
@@ -105,6 +112,12 @@ export function MaeIAScreen({ onBack }: MaeIAScreenProps = {}) {
   // agent_response (texto completo) chegar depois, não duplicar a mensagem.
   const streamingVoiceMsgIdRef = useRef<string | null>(null);
   const streamedVoiceEventIdsRef = useRef<Set<number>>(new Set());
+  // Buffer bruto acumulado dos deltas e cursor de quanto já foi revelado na tela —
+  // ver VOICE_REVEAL_INTERVAL_MS acima pro porquê da revelação ser pausada, não instantânea.
+  const voiceRawTextRef = useRef('');
+  const voiceRevealedLenRef = useRef(0);
+  const voiceStreamDoneRef = useRef(false);
+  const voiceRevealTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const isConnected = status !== 'idle' && status !== 'error' && status !== 'connecting';
 
   useEffect(() => { messagesRef.current = messages; }, [messages]);
@@ -113,15 +126,40 @@ export function MaeIAScreen({ onBack }: MaeIAScreenProps = {}) {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
+  // Encerra o timer de revelação e, se havia uma bolha de fala em construção,
+  // fecha ela com o que já tinha sido revelado (em vez de deixar "digitando..." pra sempre
+  // ou perder o que já tinha chegado). Usado tanto num encerramento normal quanto ao
+  // começar um novo turno de fala (por segurança, caso o 'stop' anterior nunca tenha vindo).
+  const finalizeOrDropVoiceStream = useCallback(() => {
+    if (voiceRevealTimerRef.current) {
+      clearInterval(voiceRevealTimerRef.current);
+      voiceRevealTimerRef.current = null;
+    }
+    const id = streamingVoiceMsgIdRef.current;
+    if (id) {
+      setMessages((prev) => {
+        const msg = prev.find((m) => m.id === id);
+        const finalText = msg ? stripAudioTags(msg.text) : '';
+        if (!finalText) return prev.filter((m) => m.id !== id);
+        return prev.map((m) => (m.id === id ? { ...m, text: finalText, isStreaming: false, isNew: true } : m));
+      });
+    }
+    streamingVoiceMsgIdRef.current = null;
+    voiceRawTextRef.current = '';
+    voiceRevealedLenRef.current = 0;
+    voiceStreamDoneRef.current = false;
+  }, []);
+
   const stopVoice = useCallback(async () => {
     const conv = convRef.current;
     convRef.current = null;
     setIsMuted(false);
     setStatus('idle');
+    finalizeOrDropVoiceStream();
     if (conv) {
       try { await conv.endSession(); } catch {}
     }
-  }, []);
+  }, [finalizeOrDropVoiceStream]);
 
   // Cleanup on unmount
   useEffect(() => {
@@ -188,6 +226,7 @@ export function MaeIAScreen({ onBack }: MaeIAScreenProps = {}) {
           console.error('[Sara] desconectado:', details);
           convRef.current = null;
           setIsMuted(false);
+          finalizeOrDropVoiceStream();
           const isRealError = details.reason === 'error' && details.context.type !== 'max_duration_exceeded';
           if (isRealError) {
             setStatus('error');
@@ -232,31 +271,36 @@ export function MaeIAScreen({ onBack }: MaeIAScreenProps = {}) {
         },
         onAgentChatResponsePart: ({ text, type, event_id }) => {
           if (type === 'start') {
+            finalizeOrDropVoiceStream(); // por segurança, se um 'stop' anterior nunca chegou
             const id = `${Date.now()}-voice-stream`;
             streamingVoiceMsgIdRef.current = id;
             setMessages((prev) => [
               ...prev,
               { id, role: 'assistant', text: '', isStreaming: true },
             ]);
-          } else if (type === 'delta') {
-            const id = streamingVoiceMsgIdRef.current;
-            if (!id) return;
-            setMessages((prev) =>
-              prev.map((m) => (m.id === id ? { ...m, text: m.text + text } : m))
-            );
-          } else if (type === 'stop') {
-            const id = streamingVoiceMsgIdRef.current;
-            streamingVoiceMsgIdRef.current = null;
-            if (!id) return;
-            streamedVoiceEventIdsRef.current.add(event_id);
-            setMessages((prev) => {
-              const msg = prev.find((m) => m.id === id);
-              const finalText = msg ? stripAudioTags(msg.text) : '';
-              if (!finalText) return prev.filter((m) => m.id !== id);
-              return prev.map((m) =>
-                m.id === id ? { ...m, text: finalText, isStreaming: false, isNew: true } : m
+            // Revela o buffer aos poucos, no ritmo da fala, em vez de aplicar cada
+            // delta assim que chega da rede — ver comentário de VOICE_REVEAL_INTERVAL_MS.
+            voiceRevealTimerRef.current = setInterval(() => {
+              const cleanSoFar = stripAudioTagsPartial(voiceRawTextRef.current);
+              if (voiceRevealedLenRef.current < cleanSoFar.length) {
+                voiceRevealedLenRef.current += 1;
+              }
+              const revealed = cleanSoFar.slice(0, voiceRevealedLenRef.current);
+              setMessages((prev) =>
+                prev.map((m) => (m.id === id ? { ...m, text: revealed } : m))
               );
-            });
+              const caughtUp = voiceRevealedLenRef.current >= cleanSoFar.length;
+              if (voiceStreamDoneRef.current && caughtUp) {
+                finalizeOrDropVoiceStream();
+              }
+            }, VOICE_REVEAL_INTERVAL_MS);
+          } else if (type === 'delta') {
+            if (!streamingVoiceMsgIdRef.current) return;
+            voiceRawTextRef.current += text;
+          } else if (type === 'stop') {
+            if (!streamingVoiceMsgIdRef.current) return;
+            streamedVoiceEventIdsRef.current.add(event_id);
+            voiceStreamDoneRef.current = true;
           }
         },
       };

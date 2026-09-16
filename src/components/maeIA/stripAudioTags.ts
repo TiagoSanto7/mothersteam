@@ -12,3 +12,15 @@ export function stripAudioTags(text: string): string {
   } while (result !== previous);
   return result.replace(/[ \t]{2,}/g, ' ').trim();
 }
+
+// Mesma limpeza, mas pensada pra texto ainda chegando aos pedaços (streaming): além das
+// tags completas, corta um "[" final ainda sem "]" correspondente — senão, enquanto os
+// próximos deltas não chegam, a tag incompleta ("[Com carin") fica piscando na tela.
+export function stripAudioTagsPartial(text: string): string {
+  const stripped = stripAudioTags(text);
+  const lastOpen = stripped.lastIndexOf('[');
+  if (lastOpen !== -1 && !stripped.includes(']', lastOpen)) {
+    return stripped.slice(0, lastOpen).trimEnd();
+  }
+  return stripped;
+}

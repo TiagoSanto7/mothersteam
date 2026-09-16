@@ -382,27 +382,42 @@ describe('MaeIAScreen — chat de voz (streaming de texto)', () => {
     await waitFor(() => expect(capturedStartOptions).toBeDefined())
   }
 
-  it('mostra o texto da Sara progressivamente conforme os deltas chegam', async () => {
+  // O texto agora é revelado por um timer (1 caractere a cada VOICE_REVEAL_INTERVAL_MS),
+  // desacoplado da chegada dos deltas — ver comentário em MaeIAScreen.tsx. Os testes
+  // avançam esse timer explicitamente com fake timers em vez de esperar o delta aplicar
+  // o texto na hora.
+  const REVEAL_MS = 55
+
+  it('mostra o texto da Sara progressivamente, não tudo de uma vez ao chegar o delta', async () => {
     renderScreen()
     await startVoiceConnection()
+    vi.useFakeTimers()
 
     act(() => {
       capturedStartOptions.onAgentChatResponsePart({ type: 'start', text: '', event_id: 1 })
     })
     act(() => {
-      capturedStartOptions.onAgentChatResponsePart({ type: 'delta', text: 'Oi', event_id: 1 })
+      capturedStartOptions.onAgentChatResponsePart({ type: 'delta', text: 'Oi, tudo bem?', event_id: 1 })
+    })
+    // O delta já chegou inteiro, mas a tela só revelou 2 caracteres até agora.
+    act(() => {
+      vi.advanceTimersByTime(REVEAL_MS * 2)
     })
     expect(screen.getByText('Oi')).toBeInTheDocument()
+    expect(screen.queryByText('Oi, tudo bem?')).not.toBeInTheDocument()
 
     act(() => {
-      capturedStartOptions.onAgentChatResponsePart({ type: 'delta', text: ', tudo bem?', event_id: 1 })
+      vi.advanceTimersByTime(REVEAL_MS * 20)
     })
     expect(screen.getByText('Oi, tudo bem?')).toBeInTheDocument()
+
+    vi.useRealTimers()
   })
 
-  it('finaliza a bolha no evento stop e remove tags de emoção do texto acumulado', async () => {
+  it('finaliza a bolha depois do stop, ao alcançar o fim do texto revelado, e remove tags de emoção', async () => {
     renderScreen()
     await startVoiceConnection()
+    vi.useFakeTimers()
 
     act(() => {
       capturedStartOptions.onAgentChatResponsePart({ type: 'start', text: '', event_id: 2 })
@@ -413,14 +428,20 @@ describe('MaeIAScreen — chat de voz (streaming de texto)', () => {
     act(() => {
       capturedStartOptions.onAgentChatResponsePart({ type: 'stop', text: '', event_id: 2 })
     })
+    act(() => {
+      vi.advanceTimersByTime(REVEAL_MS * 10)
+    })
 
     expect(screen.getByText('Oi')).toBeInTheDocument()
     expect(screen.queryByText(/Com carinho/)).not.toBeInTheDocument()
+
+    vi.useRealTimers()
   })
 
   it('não duplica a mensagem quando o agent_response completo chega depois do stream', async () => {
     renderScreen()
     await startVoiceConnection()
+    vi.useFakeTimers()
 
     act(() => {
       capturedStartOptions.onAgentChatResponsePart({ type: 'start', text: '', event_id: 3 })
@@ -432,15 +453,21 @@ describe('MaeIAScreen — chat de voz (streaming de texto)', () => {
       capturedStartOptions.onAgentChatResponsePart({ type: 'stop', text: '', event_id: 3 })
     })
     act(() => {
+      vi.advanceTimersByTime(REVEAL_MS * 30)
+    })
+    act(() => {
       capturedStartOptions.onMessage({ source: 'ai', message: 'Tudo certo por aqui.', event_id: 3 })
     })
 
     expect(screen.getAllByText('Tudo certo por aqui.')).toHaveLength(1)
+
+    vi.useRealTimers()
   })
 
   it('remove a bolha se o texto final ficar vazio (turno que era só tag)', async () => {
     renderScreen()
     await startVoiceConnection()
+    vi.useFakeTimers()
 
     act(() => {
       capturedStartOptions.onAgentChatResponsePart({ type: 'start', text: '', event_id: 4 })
@@ -451,7 +478,12 @@ describe('MaeIAScreen — chat de voz (streaming de texto)', () => {
     act(() => {
       capturedStartOptions.onAgentChatResponsePart({ type: 'stop', text: '', event_id: 4 })
     })
+    act(() => {
+      vi.advanceTimersByTime(REVEAL_MS * 10)
+    })
 
     expect(screen.queryByText(/Pausa/)).not.toBeInTheDocument()
+
+    vi.useRealTimers()
   })
 })
