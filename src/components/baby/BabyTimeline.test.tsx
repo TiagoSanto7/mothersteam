@@ -1,9 +1,10 @@
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor, within } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { BabyTimeline } from './BabyTimeline';
 import { useAppStore } from '../../store/useAppStore';
-import { localDayRange, shiftISODate, todayISO } from '../../lib/dateUtils';
+import { format } from 'date-fns';
+import { formatShortDate, localDayRange, parseLocalDate, shiftISODate, todayISO } from '../../lib/dateUtils';
 import type { ApiBabyEntry } from '../../lib/types';
 
 const { mockApiFetch } = vi.hoisted(() => ({ mockApiFetch: vi.fn() }));
@@ -35,10 +36,12 @@ beforeEach(() => {
   });
 });
 
+const dayLabel = () => screen.getByTestId('timeline-day-label');
+
 describe('BabyTimeline', () => {
   it('mostra só os registros de hoje por padrão', async () => {
     render(<BabyTimeline />, { wrapper });
-    expect(screen.getByText('Timeline de hoje')).toBeInTheDocument();
+    expect(dayLabel()).toHaveTextContent('Hoje');
     expect(await screen.findByText('Fralda de hoje')).toBeInTheDocument();
     expect(screen.queryByText('Fralda de ontem')).not.toBeInTheDocument();
     expect(mockApiFetch).toHaveBeenCalledWith(urlFor(todayISO()));
@@ -54,13 +57,13 @@ describe('BabyTimeline', () => {
     await screen.findByText('Fralda de hoje');
 
     fireEvent.click(screen.getByLabelText('Dia anterior'));
-    expect(screen.getByText('Timeline de ontem')).toBeInTheDocument();
+    expect(dayLabel()).toHaveTextContent('Ontem');
     expect(await screen.findByText('Fralda de ontem')).toBeInTheDocument();
     expect(screen.queryByText('Fralda de hoje')).not.toBeInTheDocument();
     expect(screen.getByLabelText('Próximo dia')).toBeEnabled();
 
     fireEvent.click(screen.getByLabelText('Próximo dia'));
-    expect(screen.getByText('Timeline de hoje')).toBeInTheDocument();
+    expect(dayLabel()).toHaveTextContent('Hoje');
     await waitFor(() => expect(screen.getByText('Fralda de hoje')).toBeInTheDocument());
   });
 
@@ -69,25 +72,35 @@ describe('BabyTimeline', () => {
     expect(screen.queryByLabelText('Voltar para hoje')).not.toBeInTheDocument();
 
     for (let i = 0; i < 10; i++) fireEvent.click(screen.getByLabelText('Dia anterior'));
-    expect(screen.getByText(/^Timeline · /)).toBeInTheDocument();
+    expect(dayLabel()).toHaveTextContent(formatShortDate(shiftISODate(todayISO(), -10)));
 
     fireEvent.click(screen.getByLabelText('Voltar para hoje'));
-    expect(screen.getByText('Timeline de hoje')).toBeInTheDocument();
+    expect(dayLabel()).toHaveTextContent('Hoje');
     expect(screen.queryByLabelText('Voltar para hoje')).not.toBeInTheDocument();
     expect(await screen.findByText('Fralda de hoje')).toBeInTheDocument();
   });
 
-  it('seletor de data pula para o dia escolhido e não aceita datas futuras', async () => {
+  it('tocar na data abre o calendário do app e escolher um dia pula para ele', async () => {
     render(<BabyTimeline />, { wrapper });
-    const picker = screen.getByLabelText('Escolher data') as HTMLInputElement;
-    expect(picker.max).toBe(todayISO());
+    fireEvent.click(screen.getByRole('button', { name: /escolher data/i }));
+    const calendar = screen.getByRole('dialog', { name: 'Selecionar data' });
 
-    fireEvent.change(picker, { target: { value: shiftISODate(todayISO(), -1) } });
-    expect(screen.getByText('Timeline de ontem')).toBeInTheDocument();
+    const yesterday = parseLocalDate(shiftISODate(todayISO(), -1));
+    const tomorrow = parseLocalDate(shiftISODate(todayISO(), 1));
+    const dayButton = (d: Date) =>
+      within(calendar).queryAllByRole('button').find((b) => b.closest('[data-day]')?.getAttribute('data-day') === format(d, 'yyyy-MM-dd'));
+
+    // Future days are not selectable.
+    const future = dayButton(tomorrow);
+    if (future) expect(future).toBeDisabled();
+
+    // Yesterday may sit in the previous month page; go back if needed.
+    if (!dayButton(yesterday)) fireEvent.click(within(calendar).getAllByRole('button', { name: /anterior|previous/i })[0]);
+    fireEvent.click(dayButton(yesterday)!);
+
+    expect(screen.queryByRole('dialog', { name: 'Selecionar data' })).not.toBeInTheDocument();
+    expect(dayLabel()).toHaveTextContent('Ontem');
     expect(await screen.findByText('Fralda de ontem')).toBeInTheDocument();
-
-    fireEvent.change(picker, { target: { value: shiftISODate(todayISO(), 5) } });
-    expect(screen.getByText('Timeline de hoje')).toBeInTheDocument();
   });
 
   it('tocar num registro abre a edição dele', async () => {
@@ -96,11 +109,11 @@ describe('BabyTimeline', () => {
     expect(screen.getByRole('dialog', { name: 'Editar fralda' })).toBeInTheDocument();
   });
 
-  it('mostra a data no título para dias mais antigos', async () => {
+  it('mostra a data para dias mais antigos', async () => {
     render(<BabyTimeline />, { wrapper });
     fireEvent.click(screen.getByLabelText('Dia anterior'));
     fireEvent.click(screen.getByLabelText('Dia anterior'));
-    expect(screen.getByText(/^Timeline · /)).toBeInTheDocument();
+    expect(dayLabel()).toHaveTextContent(formatShortDate(shiftISODate(todayISO(), -2)));
     expect(await screen.findByText('Nenhuma atividade registrada neste dia')).toBeInTheDocument();
   });
 });

@@ -1,33 +1,36 @@
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useState } from 'react';
 import { motion } from 'framer-motion';
-import { CalendarDays, ChevronLeft, ChevronRight, Pencil } from 'lucide-react';
+import { ChevronDown, ChevronLeft, ChevronRight, Pencil } from 'lucide-react';
 import { formatShortDate, shiftISODate, todayISO } from '../../lib/dateUtils';
 import { useBabyDayEntries } from './useBabyDayEntries';
 import { BabyEntryEditSheet } from './BabyEntryEditSheet';
+import { DatePickerSheet } from '../mt/DateField';
 import type { ApiBabyEntry } from '../../lib/types';
 
 const TYPE_EMOJI: Record<ApiBabyEntry['type'], string> = { sleep: '😴', feed: '🤱', diaper: '🧷' };
 const TYPE_LABEL: Record<ApiBabyEntry['type'], string> = { sleep: 'Sono', feed: 'Amamentação', diaper: 'Fralda' };
 
-function dayTitle(day: string, today: string): string {
-  if (day === today) return 'Timeline de hoje';
-  if (day === shiftISODate(today, -1)) return 'Timeline de ontem';
-  return `Timeline · ${formatShortDate(day)}`;
+function dayLabel(day: string, today: string): string {
+  if (day === today) return 'Hoje';
+  if (day === shiftISODate(today, -1)) return 'Ontem';
+  return formatShortDate(day);
 }
 
 export function BabyTimeline() {
   const today = todayISO();
   const [day, setDay] = useState(today);
-  const dateInputRef = useRef<HTMLInputElement>(null);
+  const [pickerOpen, setPickerOpen] = useState(false);
+  const closePicker = useCallback(() => setPickerOpen(false), []);
   const [editing, setEditing] = useState<ApiBabyEntry | null>(null);
   const closeEdit = useCallback(() => setEditing(null), []);
   const entries = useBabyDayEntries(day);
   const isToday = day >= today;
+  const label = dayLabel(day, today);
 
   return (
     <div className="flex flex-col gap-2 px-4">
       <div className="flex items-center justify-between gap-2">
-        <h3 className="text-sm font-semibold font-serif text-mt-charcoal truncate min-w-0">{dayTitle(day, today)}</h3>
+        <h3 className="text-sm font-semibold font-serif text-mt-charcoal">Timeline</h3>
         <div className="flex items-center gap-1 flex-shrink-0">
           {!isToday && (
             <button
@@ -47,31 +50,17 @@ export function BabyTimeline() {
           >
             <ChevronLeft size={16} strokeWidth={2.2} />
           </button>
-          {/* Native date picker: the transparent input sits on top of the icon so a tap opens the OS picker. */}
-          <label
-            className="relative w-8 h-8 rounded-full bg-white/70 flex items-center justify-center text-mt-rose active:scale-95 transition-transform"
+          {/* Tapping the date opens the app calendar (same sheet as "Adicionar à rotina"). */}
+          <button
+            type="button"
+            onClick={() => setPickerOpen(true)}
+            aria-label={`Escolher data (${label})`}
+            aria-haspopup="dialog"
+            className="h-8 pl-3 pr-2 rounded-full bg-white/70 flex items-center gap-1 text-[12px] font-semibold text-mt-charcoal active:scale-95 transition-transform"
           >
-            <CalendarDays size={15} strokeWidth={2} aria-hidden="true" />
-            <input
-              ref={dateInputRef}
-              type="date"
-              value={day}
-              max={today}
-              aria-label="Escolher data"
-              onClick={() => {
-                try {
-                  dateInputRef.current?.showPicker();
-                } catch {
-                  // Older WebViews without showPicker still open the picker via the native tap.
-                }
-              }}
-              onChange={(e) => {
-                const picked = e.target.value;
-                if (picked) setDay(picked > today ? today : picked);
-              }}
-              className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-            />
-          </label>
+            <span data-testid="timeline-day-label" className="whitespace-nowrap">{label}</span>
+            <ChevronDown size={14} strokeWidth={2.2} className="text-mt-rose" aria-hidden="true" />
+          </button>
           <button
             type="button"
             onClick={() => setDay((d) => shiftISODate(d, 1))}
@@ -115,6 +104,7 @@ export function BabyTimeline() {
         ))
       )}
       <BabyEntryEditSheet entry={editing} onClose={closeEdit} />
+      <DatePickerSheet open={pickerOpen} onClose={closePicker} value={day} onSelect={setDay} max={today} />
     </div>
   );
 }
