@@ -389,6 +389,92 @@ git commit -m "fix(keyboard): hide bottom tab bar while the keyboard is open"
 
 ---
 
+## CORREÇÃO DE ROTA (após a revisão de código, 2026-09-16)
+
+A revisão com Opus derrubou duas premissas do plano original. **Ambas confirmadas no código.**
+
+**Erro 1 — a análise dizia que havia só dois containers de altura travada. Há 11.** O `App.tsx` tem 10 overlays com o mesmo pai (`fixed inset-0 z-50 bg-black/40 flex items-end md:items-center justify-center`) e filhos `h-[96vh]`. Só a MãeIA (dentro do `MobileShell`) foi realmente corrigida.
+
+**Erro 2 — a Task 3 aplicou a var no lugar errado, virando no-op.** O pai do overlay é `fixed inset-0`, ou seja, o **viewport de layout**, que o teclado não encolhe — essa é a premissa do bug. Com `items-end`, reduzir a altura do filho desce o **topo** dele e mantém a base colada no fim da tela: o input continua sob o teclado e ainda se perde conteúdo no topo.
+
+**Correção:** o desconto vai no **pai** (`padding-bottom`), e o filho ganha `max-h-full` para caber no espaço restante.
+
+**Erro 3 — risco de subtração dupla no Android ≤14.** Sem `windowSoftInputMode`, versões antigas resolvem para `adjustResize` e a WebView encolhe sozinha; a CSS var subtrairia de novo. O device de teste (Motorola one fusion) é Android 11 — cai exatamente nesse caso.
+
+---
+
+### Task 8: Corrigir os overlays do `App.tsx`
+
+**Files:**
+- Modify: `src/App.tsx` (10 pais de overlay + 11 filhos)
+
+- [ ] **Step 1: Adicionar o desconto no pai**
+
+Em **todas as 10** ocorrências (linhas ~255, 272, 291, 309, 327, 347, 366, 379, 388, 406), acrescentar a classe de padding ao final:
+```tsx
+// antes
+className="fixed inset-0 z-50 bg-black/40 flex items-end md:items-center justify-center"
+// depois
+className="fixed inset-0 z-50 bg-black/40 flex items-end md:items-center justify-center pb-[var(--keyboard-height,0px)]"
+```
+
+- [ ] **Step 2: Deixar o filho caber no espaço restante**
+
+Em **todas as 11** ocorrências de filho (linhas ~259, 276, 295, 313, 331, 351, 370, 380, 392, 410, 430), acrescentar `max-h-full` logo após `h-[96vh]`:
+```tsx
+// antes
+className="w-full h-[96vh] md:w-[480px] md:h-[85vh] ..."
+// depois
+className="w-full h-[96vh] max-h-full md:w-[480px] md:h-[85vh] ..."
+```
+
+**A linha 370 é a exceção:** ela recebeu a alteração equivocada da Task 3 e precisa voltar ao padrão:
+```tsx
+// antes
+className="w-full h-[calc(96vh-var(--keyboard-height,0px))] md:w-[480px] md:h-[85vh] md:rounded-3xl overflow-hidden bg-gradient-to-b from-[#F5EDE0] via-[#EAD8C8] to-[#D9C4AF]"
+// depois
+className="w-full h-[96vh] max-h-full md:w-[480px] md:h-[85vh] md:rounded-3xl overflow-hidden bg-gradient-to-b from-[#F5EDE0] via-[#EAD8C8] to-[#D9C4AF]"
+```
+
+**Por que funciona:** o pai continua com 100vh, mas seu *content box* passa a ser `100vh - keyboardHeight`. Com `items-end`, o filho é empurrado para cima do teclado; `max-h-full` (=100% do content box) o impede de estourar, já que `96vh` seria maior que o espaço restante.
+
+- [ ] **Step 3: Rodar a suíte**
+
+Rodar: `npx vitest run`
+Esperado: PASS, sem regressão (587 antes desta task)
+
+- [ ] **Step 4: Commit**
+
+```bash
+git add src/App.tsx
+git commit -m "fix(keyboard): inset overlay parents instead of resizing their children"
+```
+
+---
+
+### Task 9: Tornar o Android determinístico
+
+**Files:**
+- Modify: `android/app/src/main/AndroidManifest.xml`
+
+- [ ] **Step 1: Declarar `adjustNothing` na MainActivity**
+
+Adicionar o atributo junto de `android:name=".MainActivity"`:
+```xml
+android:windowSoftInputMode="adjustNothing"
+```
+
+**Por quê:** iguala o comportamento ao do iOS (`resize: 'none'`) em **todas** as versões do Android. Sem isso, Android ≤14 redimensiona a WebView sozinho e a CSS var subtrai a altura uma segunda vez. O plugin continua reportando `keyboardHeight` normalmente, porque lê `WindowInsets.Type.ime()` — que independe do modo de ajuste.
+
+- [ ] **Step 2: Commit**
+
+```bash
+git add android/app/src/main/AndroidManifest.xml
+git commit -m "fix(keyboard): make Android never resize the WebView, matching iOS"
+```
+
+---
+
 ### Task 7: Verificação em device (manual, com o Tiago)
 
 Não delegável — exige device físico.
