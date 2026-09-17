@@ -49,4 +49,10 @@
       radial-gradient(ellipse at bottom left,  #e7c8c9 0%, rgba(231, 200, 201, 0) 65%),
       radial-gradient(ellipse at bottom right, #dee5ed 0%, rgba(222, 229, 237, 0) 65%);
   }
+  /* Altura de viewport que desconta o teclado. A var é publicada por useKeyboardInset —
+     nem o iOS (resize: 'none') nem o Android 15+ (edge-to-edge) encolhem a WebView sozinhos. */
+  .app-viewport {
+    height: calc(100vh - var(--keyboard-height, 0px));
+    height: calc(100dvh - var(--keyboard-height, 0px));
+  }
 }

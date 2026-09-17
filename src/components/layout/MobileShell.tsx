@@ -43,6 +43,7 @@ export function MobileShell({
   const babySheetMode = useAppStore((s) => s.babySheetMode);
   const openBabySheet = useAppStore((s) => s.openBabySheet);
   const closeBabySheet = useAppStore((s) => s.closeBabySheet);
+  const keyboardOpen = useAppStore((s) => s.keyboardOpen);
   const prevTabRef = useRef<string>(activeTab);
 
   const currentIndex = TABS.indexOf(activeTab);
@@ -54,7 +55,7 @@ export function MobileShell({
   }, [activeTab]);
 
   return (
-    <div className="md:hidden w-full h-screen">
+    <div className="md:hidden w-full app-viewport">
       <div className="relative w-full h-full bg-mt-cream overflow-hidden flex flex-col">
         <div aria-hidden="true" className="hidden" />
         <AppHeader onOpenDrawer={onOpenDrawer} rightSlot={headerRightSlot} />
@@ -74,7 +75,7 @@ export function MobileShell({
             </motion.div>
           </AnimatePresence>
         </main>
-        <BottomTabBar />
+        {!keyboardOpen && <BottomTabBar />}
         <SideDrawer
           isOpen={drawerOpen}
           onClose={onCloseDrawer}

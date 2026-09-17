@@ -1,15 +1,16 @@
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, within, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { WeekCalendar } from './WeekCalendar';
+import { WeekCalendar, pageAfterSwipe } from './WeekCalendar';
 import { useAppStore } from '../../store/useAppStore';
 
-// Fix "today" to a known Saturday so rolling window is predictable.
-// 2026-06-27 is a Saturday; last 7 days = Sun 2026-06-21 … Sat 2026-06-27.
-const FIXED_TODAY = '2026-06-27';
+// 2026-09-17 is a Thursday; its week (Dom–Sáb) is 2026-09-13 … 2026-09-19.
+const FIXED_TODAY = '2026-09-17';
+
+const dayButtons = () => screen.getAllByRole('button').filter((b) => b.hasAttribute('aria-pressed'));
 
 beforeEach(() => {
-  vi.useFakeTimers();
-  vi.setSystemTime(new Date(`${FIXED_TODAY}T12:00:00`));
+  vi.useFakeTimers({ toFake: ['Date'] });
+  vi.setSystemTime(new Date(2026, 8, 17, 12, 0));
   useAppStore.setState({ selectedDate: FIXED_TODAY });
 });
 
@@ -17,79 +18,92 @@ afterEach(() => {
   vi.useRealTimers();
 });
 
-describe('WeekCalendar — rolling 7-day window', () => {
-  it('renders exactly 7 day buttons', () => {
+describe('WeekCalendar — semana deslizável', () => {
+  it('mostra os 7 dias de domingo a sábado da semana selecionada', () => {
     render(<WeekCalendar />);
-    const dayButtons = screen.getAllByRole('button').filter(
-      (b) => b.hasAttribute('aria-pressed'),
-    );
-    expect(dayButtons).toHaveLength(7);
+    const days = dayButtons();
+    expect(days).toHaveLength(7);
+    expect(days[0]).toHaveTextContent('Dom');
+    expect(days[0]).toHaveTextContent('13');
+    expect(days[6]).toHaveTextContent('Sáb');
+    expect(days[6]).toHaveTextContent('19');
   });
 
-  it('does NOT render prev/next navigation buttons', () => {
+  it('marca só o dia selecionado', () => {
     render(<WeekCalendar />);
-    expect(screen.queryByLabelText('Semana anterior')).toBeNull();
-    expect(screen.queryByLabelText('Próxima semana')).toBeNull();
-  });
-
-  it('today is the last (rightmost) day — date 27', () => {
-    render(<WeekCalendar />);
-    const dayButtons = screen
-      .getAllByRole('button')
-      .filter((b) => b.hasAttribute('aria-pressed'));
-    const lastButton = dayButtons[dayButtons.length - 1];
-    expect(lastButton.textContent).toContain('27');
-  });
-
-  it('first day of the window is 6 days ago — date 21', () => {
-    render(<WeekCalendar />);
-    const dayButtons = screen
-      .getAllByRole('button')
-      .filter((b) => b.hasAttribute('aria-pressed'));
-    expect(dayButtons[0].textContent).toContain('21');
-  });
-
-  it('highlights the selected date with aria-pressed=true', () => {
-    render(<WeekCalendar />);
-    const selected = screen
-      .getAllByRole('button')
-      .filter((b) => b.getAttribute('aria-pressed') === 'true');
+    const selected = dayButtons().filter((b) => b.getAttribute('aria-pressed') === 'true');
     expect(selected).toHaveLength(1);
+    expect(selected[0]).toHaveTextContent('17');
   });
 
-  it('clicking a day updates selectedDate in store', () => {
+  it('tocar num dia atualiza a data no store, inclusive dias futuros', () => {
     render(<WeekCalendar />);
-    const dayButtons = screen
+    fireEvent.click(dayButtons()[6]);
+    expect(useAppStore.getState().selectedDate).toBe('2026-09-19');
+  });
+
+  it('mostra o mês e ano da data selecionada', () => {
+    render(<WeekCalendar />);
+    expect(screen.getByTestId('week-month-label')).toHaveTextContent(/setembro de 2026/i);
+  });
+
+  it('botão Hoje só aparece fora de hoje e volta para hoje', () => {
+    render(<WeekCalendar />);
+    expect(screen.queryByLabelText('Voltar para hoje')).not.toBeInTheDocument();
+
+    fireEvent.click(dayButtons()[0]);
+    fireEvent.click(screen.getByLabelText('Voltar para hoje'));
+    expect(useAppStore.getState().selectedDate).toBe(FIXED_TODAY);
+  });
+
+  it('a semana acompanha a data escolhida', () => {
+    useAppStore.setState({ selectedDate: '2026-10-02' });
+    render(<WeekCalendar />);
+    const days = dayButtons();
+    expect(days[0]).toHaveTextContent('27'); // domingo 27/09
+    expect(days[6]).toHaveTextContent('3'); // sábado 03/10
+    expect(screen.getByTestId('week-month-label')).toHaveTextContent(/outubro de 2026/i);
+  });
+
+  it('"ver outras datas" (o mês) abre o calendário do app e permite escolher data futura', async () => {
+    render(<WeekCalendar />);
+    fireEvent.click(screen.getByRole('button', { name: /ver outras datas/i }));
+    const calendar = screen.getByRole('dialog', { name: 'Selecionar data' });
+
+    const target = within(calendar)
       .getAllByRole('button')
-      .filter((b) => b.hasAttribute('aria-pressed'));
-    fireEvent.click(dayButtons[0]);
-    expect(useAppStore.getState().selectedDate).toBe('2026-06-21');
+      .find((b) => b.closest('[data-day]')?.getAttribute('data-day') === '2026-09-25');
+    expect(target).toBeDefined();
+    expect(target).toBeEnabled();
+    fireEvent.click(target!);
+
+    expect(screen.queryByRole('dialog', { name: 'Selecionar data' })).not.toBeInTheDocument();
+    // Next week is adjacent: it pages over with the spring, then commits.
+    await waitFor(() => expect(useAppStore.getState().selectedDate).toBe('2026-09-25'));
+  });
+});
+
+describe('pageAfterSwipe', () => {
+  const W = 360;
+
+  it('arrastar mais da metade para a esquerda vai para a próxima semana', () => {
+    expect(pageAfterSwipe(-200, 0, W)).toBe(1);
   });
 
-  it('renders "ver outras datas" link', () => {
-    render(<WeekCalendar />);
-    expect(screen.getByText('ver outras datas')).toBeInTheDocument();
+  it('arrastar mais da metade para a direita volta uma semana', () => {
+    expect(pageAfterSwipe(200, 0, W)).toBe(-1);
   });
 
-  it('hidden date input is rendered for the picker', () => {
-    render(<WeekCalendar />);
-    const input = screen.getByLabelText('Selecionar data');
-    expect(input).toBeInTheDocument();
-    expect((input as HTMLInputElement).type).toBe('date');
+  it('um peteleco rápido troca a semana mesmo com arrasto curto (velocidade projetada)', () => {
+    expect(pageAfterSwipe(-60, -1200, W)).toBe(1);
+    expect(pageAfterSwipe(60, 1200, W)).toBe(-1);
   });
 
-  it('changing the hidden date input updates selectedDate', () => {
-    render(<WeekCalendar />);
-    const input = screen.getByLabelText('Selecionar data') as HTMLInputElement;
-    fireEvent.change(input, { target: { value: '2026-07-15' } });
-    expect(useAppStore.getState().selectedDate).toBe('2026-07-15');
+  it('arrasto curto e lento volta para a mesma semana', () => {
+    expect(pageAfterSwipe(-80, -100, W)).toBe(0);
   });
 
-  it('shows day names in Portuguese', () => {
-    render(<WeekCalendar />);
-    // 2026-06-21 is a Sunday → first visible day label is "Dom"
-    expect(screen.getByText('Dom')).toBeInTheDocument();
-    // 2026-06-27 is a Saturday → last visible day label is "Sáb"
-    expect(screen.getByText('Sáb')).toBeInTheDocument();
+  it('peteleco contra a direção do arrasto não troca a semana', () => {
+    expect(pageAfterSwipe(-150, 900, W)).toBe(0);
   });
 });

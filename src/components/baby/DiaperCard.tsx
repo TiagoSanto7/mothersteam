@@ -1,18 +1,13 @@
 import { Plus } from 'lucide-react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiFetch } from '../../lib/api';
-import { useAppStore } from '../../store/useAppStore';
+import { todayISO } from '../../lib/dateUtils';
+import { useBabyDayEntries } from './useBabyDayEntries';
 import type { ApiBabyEntry } from '../../lib/types';
 
 export function DiaperCard() {
-  const isLoggedIn = useAppStore((s) => s.isLoggedIn);
   const queryClient = useQueryClient();
-
-  const { data: entries = [] } = useQuery({
-    queryKey: ['baby'],
-    queryFn: () => apiFetch<ApiBabyEntry[]>('/baby'),
-    enabled: isLoggedIn,
-  });
+  const entries = useBabyDayEntries(todayISO());
 
   const diaperCount = entries.filter((e) => e.type === 'diaper').length;
 

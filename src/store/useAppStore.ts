@@ -5,6 +5,7 @@ import { computeProfile } from '../utils/onboardingScoring';
 import type { ApiUser } from '../lib/types';
 import { apiFetch } from '../lib/api';
 import { buildPhase } from '../lib/helpers';
+import { todayISO } from '../lib/dateUtils';
 
 // Stable empty references — used by initial state, setAuth, and migration.
 // CLAUDE.md rule: never use `[]` literals as fallbacks — new refs cause React #185.
@@ -49,6 +50,7 @@ interface AppState {
   tabRefreshTick: number;
   closeOverlaysTick: number;
   quickActionsOpen: boolean;
+  keyboardOpen: boolean;
   /** Cross-screen bridge for the +CTA sheet: the screen that consumes it must call consumeQuickAction() after acting. */
   pendingQuickAction: 'newPost' | 'addRoutine' | null;
   /** null = sheet closed; string = which tab the QuickRegisterSheet should open on. */
@@ -80,6 +82,7 @@ interface AppState {
   closeAllOverlays: () => void;
   openQuickActions: () => void;
   closeQuickActions: () => void;
+  setKeyboardOpen: (open: boolean) => void;
   requestQuickAction: (action: 'newPost' | 'addRoutine') => void;
   consumeQuickAction: () => void;
   openBabySheet: (mode: 'amamentacao' | 'sono' | 'fralda') => void;
@@ -176,7 +179,7 @@ export const useAppStore = create<AppState>()(
       concern: null,
       // UI
       activeTab: 'hoje',
-      selectedDate: new Date().toISOString().split('T')[0],
+      selectedDate: todayISO(),
       lastFeedSide: 'left',
       savedVerses: [],
       versesByUser: {},
@@ -187,6 +190,7 @@ export const useAppStore = create<AppState>()(
       tabRefreshTick: 0,
       closeOverlaysTick: 0,
       quickActionsOpen: false,
+      keyboardOpen: false,
       pendingQuickAction: null,
       babySheetMode: null,
       // Auth actions
@@ -264,6 +268,7 @@ export const useAppStore = create<AppState>()(
       closeAllOverlays: () => set((s) => ({ closeOverlaysTick: s.closeOverlaysTick + 1, quickActionsOpen: false })),
       openQuickActions: () => set({ quickActionsOpen: true }),
       closeQuickActions: () => set({ quickActionsOpen: false }),
+      setKeyboardOpen: (open) => set({ keyboardOpen: open }),
       requestQuickAction: (action) => set({ pendingQuickAction: action }),
       consumeQuickAction: () => set({ pendingQuickAction: null }),
       openBabySheet: (mode) => set({ babySheetMode: mode }),

@@ -1,13 +1,14 @@
 import { useCallback } from 'react'
 import { Trash2, Plus } from 'lucide-react'
 import type { OtherChild } from '../../../types'
+import { todayISO } from '../../../lib/dateUtils'
 
 interface Props {
   value: OtherChild[]
   onChange: (v: OtherChild[]) => void
 }
 
-const today = new Date().toISOString().split('T')[0]
+const today = todayISO()
 
 export function StepOutrosFilhos({ value, onChange }: Props) {
   const add = useCallback(() => {

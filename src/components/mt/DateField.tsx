@@ -29,18 +29,6 @@ export function DateField({ id, value, onChange, min, max }: DateFieldProps) {
   const selected = toDate(value);
   const display = selected ? format(selected, DISPLAY) : '';
 
-  useEffect(() => {
-    if (!open) return;
-    document.body.style.overflow = 'hidden';
-    return () => { document.body.style.overflow = ''; };
-  }, [open]);
-
-  const handleSelect = (d: Date | undefined) => {
-    if (!d) return;
-    onChange(format(d, ISO));
-    setOpen(false);
-  };
-
   return (
     <>
       <button
@@ -54,6 +42,53 @@ export function DateField({ id, value, onChange, min, max }: DateFieldProps) {
         {display || 'Selecione'}
       </button>
 
+      <DatePickerSheet
+        open={open}
+        onClose={() => setOpen(false)}
+        value={value}
+        onSelect={onChange}
+        min={min}
+        max={max}
+      />
+    </>
+  );
+}
+
+interface DatePickerSheetProps {
+  open: boolean;
+  onClose: () => void;
+  value: string;
+  /** Receives the picked day as YYYY-MM-DD; the sheet closes itself afterwards. */
+  onSelect: (isoDate: string) => void;
+  min?: string;
+  max?: string;
+}
+
+/** The app's branded calendar sheet, usable from any trigger (DateField, timeline date chip, …). */
+export function DatePickerSheet({ open, onClose, value, onSelect, min, max }: DatePickerSheetProps) {
+  const selected = toDate(value);
+
+  useEffect(() => {
+    if (!open) return;
+    document.body.style.overflow = 'hidden';
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
+    document.addEventListener('keydown', onKey);
+    return () => {
+      document.body.style.overflow = '';
+      document.removeEventListener('keydown', onKey);
+    };
+  }, [open, onClose]);
+
+  const handleSelect = (d: Date | undefined) => {
+    if (!d) return;
+    onSelect(format(d, ISO));
+    onClose();
+  };
+
+  return (
+    <>
       {open && createPortal(
         <AnimatePresence>
           <motion.div
@@ -62,9 +97,12 @@ export function DateField({ id, value, onChange, min, max }: DateFieldProps) {
             exit={{ opacity: 0 }}
             transition={{ duration: 0.15 }}
             className="fixed inset-0 z-[100] bg-black/50 flex items-end sm:items-center justify-center"
-            onClick={() => setOpen(false)}
+            onClick={onClose}
           >
             <motion.div
+              role="dialog"
+              aria-modal="true"
+              aria-label="Selecionar data"
               initial={{ y: 40, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
               exit={{ y: 40, opacity: 0 }}
@@ -78,7 +116,7 @@ export function DateField({ id, value, onChange, min, max }: DateFieldProps) {
                   Selecionar data
                 </h3>
                 <button
-                  onClick={() => setOpen(false)}
+                  onClick={onClose}
                   aria-label="Fechar"
                   className="w-8 h-8 rounded-full bg-white flex items-center justify-center"
                 >
@@ -89,6 +127,7 @@ export function DateField({ id, value, onChange, min, max }: DateFieldProps) {
                 <DayPicker
                   mode="single"
                   selected={selected}
+                  defaultMonth={selected}
                   onSelect={handleSelect}
                   locale={ptBR}
                   showOutsideDays

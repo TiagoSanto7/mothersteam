@@ -4,7 +4,7 @@ import { X, ChevronLeft } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { apiFetch } from '../../lib/api';
 import { useAppStore } from '../../store/useAppStore';
-import { formatDateHeading } from '../../lib/dateUtils';
+import { formatDateHeading, todayISO } from '../../lib/dateUtils';
 import type { ApiRoutineEntry } from '../../lib/types';
 import { EventDetailModal } from './EventDetailModal';
 
@@ -30,7 +30,7 @@ export function AllFutureEventsScreen({ onClose }: AllFutureEventsScreenProps) {
   });
 
   // Exclude today — show only strictly future events grouped by date
-  const today = new Date().toISOString().split('T')[0];
+  const today = todayISO();
   const upcoming = futureEvents.filter((e) => e.date > today);
 
   // Group by date
