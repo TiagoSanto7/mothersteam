@@ -54,7 +54,7 @@ export function MobileShell({
   }, [activeTab]);
 
   return (
-    <div className="md:hidden w-full h-screen">
+    <div className="md:hidden w-full app-viewport">
       <div className="relative w-full h-full bg-mt-cream overflow-hidden flex flex-col">
         <div aria-hidden="true" className="hidden" />
         <AppHeader onOpenDrawer={onOpenDrawer} rightSlot={headerRightSlot} />

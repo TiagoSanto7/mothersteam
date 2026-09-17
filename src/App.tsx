@@ -30,6 +30,7 @@ import { SavedVersesScreen } from './components/home/SavedVersesScreen'
 import { ReviewsScreen } from './components/shopping/ReviewsScreen'
 import { CreatePostScreen } from './components/comunidade/CreatePostScreen'
 import { useSSE } from './lib/useSSE';
+import { useKeyboardInset } from './hooks/useKeyboardInset';
 import { PushNotifications } from '@capacitor/push-notifications'
 import { Capacitor } from '@capacitor/core'
 
@@ -49,6 +50,7 @@ export default function App() {
   const closeOverlaysTick = useAppStore((s) => s.closeOverlaysTick)
 
   useSSE();
+  useKeyboardInset();
 
   useEffect(() => {
     if (!isLoggedIn || !Capacitor.isNativePlatform()) return
@@ -365,7 +367,7 @@ export default function App() {
           onClick={() => setPendingPostId(null)}
         >
           <div
-            className="w-full h-[96vh] md:w-[480px] md:h-[85vh] md:rounded-3xl overflow-hidden bg-gradient-to-b from-[#F5EDE0] via-[#EAD8C8] to-[#D9C4AF]"
+            className="w-full h-[calc(96vh-var(--keyboard-height,0px))] md:w-[480px] md:h-[85vh] md:rounded-3xl overflow-hidden bg-gradient-to-b from-[#F5EDE0] via-[#EAD8C8] to-[#D9C4AF]"
             onClick={(e) => e.stopPropagation()}
           >
             <PostDetailScreen post={pendingPost} onBack={() => setPendingPostId(null)} />
