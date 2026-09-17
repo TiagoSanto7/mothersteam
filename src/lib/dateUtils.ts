@@ -38,6 +38,22 @@ export function formatDateCompact(iso: string): string {
   return `${d.getDate()} ${MONTHS_PT[d.getMonth()]}`;
 }
 
+/** Moves a YYYY-MM-DD date by `days` (negative = past), in local time. */
+export function shiftISODate(iso: string, days: number): string {
+  const d = parseLocalDate(iso);
+  d.setDate(d.getDate() + days);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+
+/** Local-midnight bounds of a YYYY-MM-DD day as UTC ISO strings: [from, to). */
+export function localDayRange(iso: string): { from: string; to: string } {
+  const [year, month, day] = iso.split('-').map(Number);
+  return {
+    from: new Date(year, month - 1, day).toISOString(),
+    to: new Date(year, month - 1, day + 1).toISOString(),
+  };
+}
+
 /** Returns today as YYYY-MM-DD local time. */
 export function todayISO(): string {
   const now = new Date();

@@ -1,8 +1,7 @@
 import { Moon, Plus } from 'lucide-react';
-import { useQuery } from '@tanstack/react-query';
-import { apiFetch } from '../../lib/api';
+import { todayISO } from '../../lib/dateUtils';
 import { useAppStore } from '../../store/useAppStore';
-import type { ApiBabyEntry } from '../../lib/types';
+import { useBabyDayEntries } from './useBabyDayEntries';
 
 /**
  * SleepCard — acumulador + "+".
@@ -12,14 +11,8 @@ import type { ApiBabyEntry } from '../../lib/types';
  * campos livres (h + m) para a mãe digitar o tempo total sem passos rígidos.
  */
 export function SleepCard() {
-  const isLoggedIn    = useAppStore((s) => s.isLoggedIn);
   const openBabySheet = useAppStore((s) => s.openBabySheet);
-
-  const { data: entries = [] } = useQuery({
-    queryKey: ['baby'],
-    queryFn: () => apiFetch<ApiBabyEntry[]>('/baby'),
-    enabled: isLoggedIn,
-  });
+  const entries       = useBabyDayEntries(todayISO());
 
   const totalToday = entries
     .filter((e) => e.type === 'sleep')

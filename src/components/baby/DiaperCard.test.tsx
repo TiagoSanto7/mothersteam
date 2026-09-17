@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { DiaperCard } from './DiaperCard';
 import { useAppStore } from '../../store/useAppStore';
+import { todayISO } from '../../lib/dateUtils';
 import type { ApiBabyEntry } from '../../lib/types';
 
 const { mockApiFetch } = vi.hoisted(() => ({ mockApiFetch: vi.fn() }));
@@ -16,7 +17,7 @@ const DIAPER_ENTRY: ApiBabyEntry = {
 function makeWrapper(initialEntries: ApiBabyEntry[] = []) {
   return function Wrapper({ children }: { children: React.ReactNode }) {
     const qc = new QueryClient({ defaultOptions: { queries: { retry: false }, mutations: { retry: false } } });
-    qc.setQueryData<ApiBabyEntry[]>(['baby'], initialEntries);
+    qc.setQueryData<ApiBabyEntry[]>(['baby', 'day', todayISO()], initialEntries);
     return <QueryClientProvider client={qc}>{children}</QueryClientProvider>;
   };
 }

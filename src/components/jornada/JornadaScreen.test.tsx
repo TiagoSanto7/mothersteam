@@ -31,7 +31,7 @@ beforeEach(() => {
 describe('JornadaScreen', () => {
   it('renders three segment tabs', () => {
     render(<JornadaScreen />, { wrapper });
-    expect(screen.getByRole('button', { name: /hoje/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Hoje' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /planejamento/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /evolução/i })).toBeInTheDocument();
   });
