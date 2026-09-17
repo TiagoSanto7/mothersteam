@@ -13,7 +13,6 @@ import { BabyDevCard } from './BabyDevCard'
 import { BabyDevScreen } from './BabyDevScreen'
 import { MomentoDeusCard } from './MomentoDeusCard'
 import { MomentoDeusScreen } from './MomentoDeusScreen'
-import { MaeIAScreen } from '../maeIA/MaeIAScreen'
 import { AddRoutineModal } from './AddRoutineModal'
 import { MtCard } from '../mt/MtCard'
 
@@ -67,7 +66,6 @@ export function DashboardScreen() {
   }, [tabRefreshTick]);
   const [babyDevOpen, setBabyDevOpen] = useState(false)
   const [momentoDeusOpen, setMomentoDeusOpen] = useState(false)
-  const [showMaeIA, setShowMaeIA] = useState(false)
   const [addRoutineOpen, setAddRoutineOpen] = useState(false)
 
   // Bridge from MtQuickActionSheet: M-CTA "Adicionar rotina" opens AddRoutineModal here.
@@ -221,27 +219,12 @@ export function DashboardScreen() {
 
       {/* MãeIA FAB — estrelinha com fundo rose gradient */}
       <button
-        onClick={() => setShowMaeIA(true)}
+        onClick={() => setActiveTab('maeIA')}
         aria-label="Conversar com a Sara"
         className="fixed bottom-[92px] right-4 w-14 h-14 rounded-full bg-mt-gradient text-white shadow-mt-lg flex items-center justify-center active:scale-95 transition-transform z-30"
       >
         <Sparkles size={24} fill="currentColor" strokeWidth={0} />
       </button>
-
-      {/* MãeIA overlay */}
-      {showMaeIA && (
-        <div
-          className="fixed inset-0 z-50 bg-black/40 flex items-end md:items-center justify-center"
-          onClick={() => setShowMaeIA(false)}
-        >
-          <div
-            className="w-full h-[96vh] md:w-[480px] md:h-[85vh] md:rounded-3xl overflow-hidden bg-mt-cream"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <MaeIAScreen onBack={() => setShowMaeIA(false)} />
-          </div>
-        </div>
-      )}
 
       <BabyDevScreen open={babyDevOpen} onClose={() => setBabyDevOpen(false)} />
       <MomentoDeusScreen open={momentoDeusOpen} onClose={() => setMomentoDeusOpen(false)} />

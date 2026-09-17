@@ -159,17 +159,14 @@ describe('DashboardScreen — Sara hero CTA', () => {
     expect(saraButtons.length).toBeGreaterThan(0)
   })
 
-  it('Sara FAB opens MaeIA overlay with back button', () => {
+  it('Sara FAB navigates to maeIA tab without opening a local overlay', () => {
+    useAppStore.setState({ activeTab: 'hoje' })
     render(<DashboardScreen />, { wrapper: makeWrapper() })
-    // The FAB has aria-label="Conversar com a Sara" and is type="button"
     // Click the last button matching (the FAB, not the card link)
     const saraButtons = screen.getAllByRole('button', { name: /conversar com a sara/i })
     fireEvent.click(saraButtons[saraButtons.length - 1])
-    // MaeIAScreen should now be visible with a back button (aria-label="Voltar")
-    // Use getAllByRole because "Quando voltar à academia?" chip also matches /voltar/i
-    const voltarButtons = screen.getAllByRole('button', { name: /voltar/i })
-    const backButton = voltarButtons.find((btn) => btn.getAttribute('aria-label') === 'Voltar')
-    expect(backButton).toBeInTheDocument()
+    expect(useAppStore.getState().activeTab).toBe('maeIA')
+    expect(screen.queryByRole('button', { name: /^Voltar$/ })).not.toBeInTheDocument()
   })
 })
 
