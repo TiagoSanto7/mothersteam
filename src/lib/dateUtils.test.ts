@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { localDayRange, shiftISODate, todayISO } from './dateUtils';
+import { localDayRange, shiftISODate, startOfWeekISO, todayISO } from './dateUtils';
 
 describe('shiftISODate', () => {
   it('volta e avança dias atravessando mês e ano', () => {
@@ -24,5 +24,13 @@ describe('todayISO', () => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date(2026, 8, 17, 23, 30));
     expect(todayISO()).toBe('2026-09-17');
+  });
+});
+
+describe('startOfWeekISO', () => {
+  it('volta para o domingo da semana, atravessando mês', () => {
+    expect(startOfWeekISO('2026-09-17')).toBe('2026-09-13'); // quinta → domingo
+    expect(startOfWeekISO('2026-09-13')).toBe('2026-09-13'); // domingo → ele mesmo
+    expect(startOfWeekISO('2026-10-02')).toBe('2026-09-27'); // sexta de outubro → domingo de setembro
   });
 });
