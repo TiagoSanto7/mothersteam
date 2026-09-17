@@ -109,6 +109,53 @@ describe('BabyTimeline', () => {
     expect(screen.getByRole('dialog', { name: 'Editar fralda' })).toBeInTheDocument();
   });
 
+  it('salvar atualiza a lista na hora, antes da resposta da API', async () => {
+    let resolvePatch!: (v: unknown) => void;
+    const base = mockApiFetch.getMockImplementation()!;
+    mockApiFetch.mockImplementation((url: string, opts?: RequestInit) =>
+      opts?.method === 'PATCH' ? new Promise((r) => { resolvePatch = r; }) : base(url, opts),
+    );
+    render(<BabyTimeline />, { wrapper });
+    fireEvent.click(await screen.findByRole('button', { name: 'Editar Fralda das 10:00' }));
+    fireEvent.click(screen.getByRole('button', { name: /ambos/i }));
+    fireEvent.click(screen.getByRole('button', { name: 'Salvar alterações' }));
+
+    // API still pending: the sheet is closing and the row already shows the new detail.
+    expect(screen.getByRole('button', { name: 'Editar Fralda das 10:00' })).toHaveTextContent('Ambos');
+    await waitFor(() => expect(screen.queryByRole('dialog', { name: 'Editar fralda' })).not.toBeInTheDocument());
+    resolvePatch({ ok: true });
+  });
+
+  it('se a API falhar, o registro volta como estava e aparece um aviso', async () => {
+    const base = mockApiFetch.getMockImplementation()!;
+    mockApiFetch.mockImplementation((url: string, opts?: RequestInit) =>
+      opts?.method === 'PATCH' ? Promise.reject(new Error('offline')) : base(url, opts),
+    );
+    render(<BabyTimeline />, { wrapper });
+    fireEvent.click(await screen.findByRole('button', { name: 'Editar Fralda das 10:00' }));
+    fireEvent.click(screen.getByRole('button', { name: /ambos/i }));
+    fireEvent.click(screen.getByRole('button', { name: 'Salvar alterações' }));
+
+    expect(await screen.findByRole('alert')).toHaveTextContent('Não foi possível salvar');
+    expect(await screen.findByText('Fralda de hoje')).toBeInTheDocument();
+    expect(screen.queryByText('Ambos')).not.toBeInTheDocument();
+  });
+
+  it('excluir tira o registro da lista na hora', async () => {
+    const base = mockApiFetch.getMockImplementation()!;
+    mockApiFetch.mockImplementation((url: string, opts?: RequestInit) =>
+      opts?.method === 'DELETE' ? new Promise(() => {}) : base(url, opts),
+    );
+    render(<BabyTimeline />, { wrapper });
+    fireEvent.click(await screen.findByRole('button', { name: 'Editar Fralda das 10:00' }));
+    fireEvent.click(screen.getByLabelText('Excluir registro'));
+    fireEvent.click(screen.getByRole('button', { name: 'Sim, excluir' }));
+
+    await waitFor(() => expect(screen.queryByText('Fralda de hoje')).not.toBeInTheDocument());
+    expect(await screen.findByText('Nenhuma atividade registrada')).toBeInTheDocument();
+    expect(mockApiFetch).toHaveBeenCalledWith('/baby/t1', { method: 'DELETE' });
+  });
+
   it('mostra a data para dias mais antigos', async () => {
     render(<BabyTimeline />, { wrapper });
     fireEvent.click(screen.getByLabelText('Dia anterior'));

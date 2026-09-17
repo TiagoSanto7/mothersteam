@@ -1,11 +1,10 @@
 import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { AnimatePresence, motion } from 'framer-motion';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Trash2 } from 'lucide-react';
-import { apiFetch } from '../../lib/api';
 import { TimeField } from '../home/QuickRegisterSheet';
 import type { ApiBabyEntry } from '../../lib/types';
+import type { BabyEntryChanges } from './useBabyDayEntries';
 
 type Side = 'Esquerdo' | 'Direito';
 type DiaperKind = 'Xixi' | 'Coco' | 'Ambos';
@@ -49,9 +48,12 @@ function createdAtWithTime(originalIso: string, time: string): string {
 interface BabyEntryEditSheetProps {
   entry: ApiBabyEntry | null;
   onClose: () => void;
+  /** Called on save; the sheet closes right away (the caller updates the list optimistically). */
+  onSave: (id: string, changes: BabyEntryChanges) => void;
+  onDelete: (id: string) => void;
 }
 
-export function BabyEntryEditSheet({ entry, onClose }: BabyEntryEditSheetProps) {
+export function BabyEntryEditSheet({ entry, onClose, onSave, onDelete }: BabyEntryEditSheetProps) {
   useEffect(() => {
     if (!entry) return;
     const onKey = (e: KeyboardEvent) => {
@@ -91,7 +93,7 @@ export function BabyEntryEditSheet({ entry, onClose }: BabyEntryEditSheetProps) 
           >
             <div className="mx-auto w-12 h-1.5 bg-mt-linen rounded-full mt-3 mb-3" />
             {/* key remounts the form so its state always starts from the tapped entry */}
-            <EditForm key={entry.id} entry={entry} onDone={onClose} />
+            <EditForm key={entry.id} entry={entry} onDone={onClose} onSave={onSave} onDelete={onDelete} />
           </motion.div>
         </>
       )}
@@ -100,8 +102,14 @@ export function BabyEntryEditSheet({ entry, onClose }: BabyEntryEditSheetProps) 
   );
 }
 
-function EditForm({ entry, onDone }: { entry: ApiBabyEntry; onDone: () => void }) {
-  const queryClient = useQueryClient();
+interface EditFormProps {
+  entry: ApiBabyEntry;
+  onDone: () => void;
+  onSave: (id: string, changes: BabyEntryChanges) => void;
+  onDelete: (id: string) => void;
+}
+
+function EditForm({ entry, onDone, onSave, onDelete }: EditFormProps) {
   const initialMinutes = parseSleepMinutes(entry.detail);
 
   const [time, setTime] = useState(entry.time);
@@ -124,7 +132,7 @@ function EditForm({ entry, onDone }: { entry: ApiBabyEntry; onDone: () => void }
 
   const detail = nextDetail();
   const timeValid = /^([01]\d|2[0-3]):[0-5]\d$/.test(time);
-  const changes: { time?: string; createdAt?: string; detail?: string } = {};
+  const changes: BabyEntryChanges = {};
   if (timeValid && time !== entry.time) {
     changes.time = time;
     changes.createdAt = createdAtWithTime(entry.createdAt, time);
@@ -132,27 +140,20 @@ function EditForm({ entry, onDone }: { entry: ApiBabyEntry; onDone: () => void }
   if (detail && detail !== entry.detail) changes.detail = detail;
   const canSave = timeValid && Object.keys(changes).length > 0 && (entry.type !== 'sleep' || totalMinutes > 0);
 
-  const done = () => {
-    queryClient.invalidateQueries({ queryKey: ['baby'] });
+  const save = () => {
+    onSave(entry.id, changes);
     onDone();
   };
 
-  const save = useMutation({
-    mutationFn: () => apiFetch(`/baby/${entry.id}`, { method: 'PATCH', body: JSON.stringify(changes) }),
-    onSuccess: done,
-  });
-
-  const remove = useMutation({
-    mutationFn: () => apiFetch(`/baby/${entry.id}`, { method: 'DELETE' }),
-    onSuccess: done,
-  });
+  const remove = () => {
+    onDelete(entry.id);
+    onDone();
+  };
 
   const bump = (field: 'h' | 'm', dir: 1 | -1) => {
     if (field === 'h') setHours(String(Math.max(0, Math.min(23, (parseInt(hours || '0', 10) || 0) + dir))));
     else setMinutes(String(Math.max(0, Math.min(59, (parseInt(minutes || '0', 10) || 0) + dir))));
   };
-
-  const busy = save.isPending || remove.isPending;
 
   return (
     <div className="px-5 pb-2 flex flex-col gap-4">
@@ -222,18 +223,16 @@ function EditForm({ entry, onDone }: { entry: ApiBabyEntry; onDone: () => void }
             <button
               type="button"
               onClick={() => setConfirmDelete(false)}
-              disabled={busy}
-              className="flex-1 py-3 rounded-mt-pill bg-mt-linen text-mt-muted text-[14px] font-semibold disabled:opacity-60"
+              className="flex-1 py-3 rounded-mt-pill bg-mt-linen text-mt-muted text-[14px] font-semibold"
             >
               Cancelar
             </button>
             <button
               type="button"
-              onClick={() => remove.mutate()}
-              disabled={busy}
-              className="flex-1 py-3 rounded-mt-pill bg-mt-rose-dark text-white text-[14px] font-bold disabled:opacity-60"
+              onClick={remove}
+              className="flex-1 py-3 rounded-mt-pill bg-mt-rose-dark text-white text-[14px] font-bold"
             >
-              {remove.isPending ? 'Excluindo…' : 'Sim, excluir'}
+              Sim, excluir
             </button>
           </div>
         </div>
@@ -242,28 +241,22 @@ function EditForm({ entry, onDone }: { entry: ApiBabyEntry; onDone: () => void }
           <button
             type="button"
             onClick={() => setConfirmDelete(true)}
-            disabled={busy}
             aria-label="Excluir registro"
-            className="w-12 h-12 flex-shrink-0 rounded-full bg-mt-linen text-mt-rose-dark flex items-center justify-center disabled:opacity-60"
+            className="w-12 h-12 flex-shrink-0 rounded-full bg-mt-linen text-mt-rose-dark flex items-center justify-center"
           >
             <Trash2 size={18} strokeWidth={2} />
           </button>
           <button
             type="button"
-            onClick={() => save.mutate()}
-            disabled={!canSave || busy}
+            onClick={save}
+            disabled={!canSave}
             className="flex-1 py-3 rounded-mt-pill bg-mt-gradient text-white text-[14px] font-bold shadow-mt disabled:opacity-40"
           >
-            {save.isPending ? 'Salvando…' : 'Salvar alterações'}
+            Salvar alterações
           </button>
         </div>
       )}
 
-      {(save.isError || remove.isError) && (
-        <p role="alert" className="text-[11px] text-red-500 text-center">
-          Não foi possível salvar. Tente de novo.
-        </p>
-      )}
     </div>
   );
 }
