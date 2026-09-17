@@ -87,10 +87,12 @@ export function JornadaScreen() {
         )}
       </div>
 
-      {/* FAB — opens quick-register sheet (defaults to amamentação) */}
+      {/* FAB — follows the active segment: Planejamento adds a routine item, others open quick-register (amamentação) */}
       <button
-        onClick={() => openBabySheet('amamentacao')}
-        aria-label="Registrar"
+        onClick={() =>
+          segment === 'planejamento' ? setAddModalOpen(true) : openBabySheet('amamentacao')
+        }
+        aria-label={segment === 'planejamento' ? 'Adicionar rotina' : 'Registrar'}
         className="fixed bottom-[84px] right-4 w-14 h-14 rounded-full bg-mt-rose-dark text-white shadow-lg shadow-mt-rose-dark/30 flex items-center justify-center active:scale-95 transition-transform z-30"
       >
         <Plus size={24} />
