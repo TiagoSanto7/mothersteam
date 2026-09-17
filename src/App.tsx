@@ -252,11 +252,11 @@ export default function App() {
 
       {showSettings && (
         <div
-          className="fixed inset-0 z-50 bg-black/40 flex items-end md:items-center justify-center"
+          className="fixed inset-0 z-50 bg-black/40 flex items-end md:items-center justify-center pb-[var(--keyboard-height,0px)]"
           onClick={() => setShowSettings(false)}
         >
           <div
-            className="w-full h-[96vh] md:w-[480px] md:h-[85vh] md:rounded-3xl overflow-hidden flex flex-col bg-gradient-to-b from-[#F5EDE0] via-[#EAD8C8] to-[#D9C4AF]"
+            className="w-full h-[96vh] max-h-full md:w-[480px] md:h-[85vh] md:rounded-3xl overflow-hidden flex flex-col bg-gradient-to-b from-[#F5EDE0] via-[#EAD8C8] to-[#D9C4AF]"
             onClick={(e) => e.stopPropagation()}
           >
             <SettingsScreen
@@ -269,11 +269,11 @@ export default function App() {
 
       {showNotifications && (
         <div
-          className="fixed inset-0 z-50 bg-black/40 flex items-end md:items-center justify-center"
+          className="fixed inset-0 z-50 bg-black/40 flex items-end md:items-center justify-center pb-[var(--keyboard-height,0px)]"
           onClick={() => setShowNotifications(false)}
         >
           <div
-            className="w-full h-[96vh] md:w-[480px] md:h-[85vh] md:rounded-3xl overflow-hidden"
+            className="w-full h-[96vh] max-h-full md:w-[480px] md:h-[85vh] md:rounded-3xl overflow-hidden"
             onClick={(e) => e.stopPropagation()}
           >
             <NotificationsScreen
@@ -288,11 +288,11 @@ export default function App() {
 
       {showChat && (
         <div
-          className="fixed inset-0 z-50 bg-black/40 flex items-end md:items-center justify-center"
+          className="fixed inset-0 z-50 bg-black/40 flex items-end md:items-center justify-center pb-[var(--keyboard-height,0px)]"
           onClick={() => { setShowChat(false); setChatTargetUserId(null); }}
         >
           <div
-            className="w-full h-[96vh] md:w-[480px] md:h-[85vh] md:rounded-3xl overflow-hidden"
+            className="w-full h-[96vh] max-h-full md:w-[480px] md:h-[85vh] md:rounded-3xl overflow-hidden"
             onClick={(e) => e.stopPropagation()}
           >
             <ChatListScreen
@@ -306,11 +306,11 @@ export default function App() {
 
       {showSearch && (
         <div
-          className="fixed inset-0 z-50 bg-black/40 flex items-end md:items-center justify-center"
+          className="fixed inset-0 z-50 bg-black/40 flex items-end md:items-center justify-center pb-[var(--keyboard-height,0px)]"
           onClick={() => setShowSearch(false)}
         >
           <div
-            className="w-full h-[96vh] md:w-[480px] md:h-[85vh] md:rounded-3xl overflow-hidden"
+            className="w-full h-[96vh] max-h-full md:w-[480px] md:h-[85vh] md:rounded-3xl overflow-hidden"
             onClick={(e) => e.stopPropagation()}
           >
             <SearchScreen
@@ -324,11 +324,11 @@ export default function App() {
 
       {profileUserId && (
         <div
-          className="fixed inset-0 z-50 bg-black/40 flex items-end md:items-center justify-center"
+          className="fixed inset-0 z-50 bg-black/40 flex items-end md:items-center justify-center pb-[var(--keyboard-height,0px)]"
           onClick={() => setProfileUserId(null)}
         >
           <div
-            className="w-full h-[96vh] md:w-[480px] md:h-[85vh] md:rounded-3xl overflow-hidden"
+            className="w-full h-[96vh] max-h-full md:w-[480px] md:h-[85vh] md:rounded-3xl overflow-hidden"
             onClick={(e) => e.stopPropagation()}
           >
             <ProfileScreen
@@ -344,11 +344,11 @@ export default function App() {
 
       {openCommunityId && (
         <div
-          className="fixed inset-0 z-50 bg-black/40 flex items-end md:items-center justify-center"
+          className="fixed inset-0 z-50 bg-black/40 flex items-end md:items-center justify-center pb-[var(--keyboard-height,0px)]"
           onClick={() => setOpenCommunityId(null)}
         >
           <div
-            className="w-full h-[96vh] md:w-[480px] md:h-[85vh] md:rounded-3xl overflow-hidden"
+            className="w-full h-[96vh] max-h-full md:w-[480px] md:h-[85vh] md:rounded-3xl overflow-hidden"
             onClick={(e) => e.stopPropagation()}
           >
             <CommunityDetailScreen
@@ -363,11 +363,11 @@ export default function App() {
 
       {pendingPost && (
         <div
-          className="fixed inset-0 z-50 bg-black/40 flex items-end md:items-center justify-center"
+          className="fixed inset-0 z-50 bg-black/40 flex items-end md:items-center justify-center pb-[var(--keyboard-height,0px)]"
           onClick={() => setPendingPostId(null)}
         >
           <div
-            className="w-full h-[calc(96vh-var(--keyboard-height,0px))] md:w-[480px] md:h-[85vh] md:rounded-3xl overflow-hidden bg-gradient-to-b from-[#F5EDE0] via-[#EAD8C8] to-[#D9C4AF]"
+            className="w-full h-[96vh] max-h-full md:w-[480px] md:h-[85vh] md:rounded-3xl overflow-hidden bg-gradient-to-b from-[#F5EDE0] via-[#EAD8C8] to-[#D9C4AF]"
             onClick={(e) => e.stopPropagation()}
           >
             <PostDetailScreen post={pendingPost} onBack={() => setPendingPostId(null)} />
@@ -376,8 +376,8 @@ export default function App() {
       )}
 
       {isLoggedIn && onboardingDone && !socialOnboardingDone && (
-        <div className="fixed inset-0 z-50 bg-black/40 flex items-end md:items-center justify-center">
-          <div className="w-full h-[96vh] md:w-[480px] md:h-[85vh] md:rounded-3xl overflow-hidden bg-gradient-to-b from-[#F5EDE0] via-[#EAD8C8] to-[#D9C4AF]">
+        <div className="fixed inset-0 z-50 bg-black/40 flex items-end md:items-center justify-center pb-[var(--keyboard-height,0px)]">
+          <div className="w-full h-[96vh] max-h-full md:w-[480px] md:h-[85vh] md:rounded-3xl overflow-hidden bg-gradient-to-b from-[#F5EDE0] via-[#EAD8C8] to-[#D9C4AF]">
             <SocialOnboardingScreen onDone={completeSocialOnboarding} />
           </div>
         </div>
@@ -385,11 +385,11 @@ export default function App() {
 
       {pendingShareContent !== null && (
         <div
-          className="fixed inset-0 z-50 bg-black/40 flex items-end md:items-center justify-center"
+          className="fixed inset-0 z-50 bg-black/40 flex items-end md:items-center justify-center pb-[var(--keyboard-height,0px)]"
           onClick={() => setPendingShareContent(null)}
         >
           <div
-            className="w-full h-[96vh] md:w-[480px] md:h-[85vh] md:rounded-3xl overflow-hidden bg-gradient-to-b from-[#F5EDE0] via-[#EAD8C8] to-[#D9C4AF]"
+            className="w-full h-[96vh] max-h-full md:w-[480px] md:h-[85vh] md:rounded-3xl overflow-hidden bg-gradient-to-b from-[#F5EDE0] via-[#EAD8C8] to-[#D9C4AF]"
             onClick={(e) => e.stopPropagation()}
           >
             <CreatePostScreen
@@ -403,11 +403,11 @@ export default function App() {
 
       {openProduct && (
         <div
-          className="fixed inset-0 z-50 bg-black/40 flex items-end md:items-center justify-center"
+          className="fixed inset-0 z-50 bg-black/40 flex items-end md:items-center justify-center pb-[var(--keyboard-height,0px)]"
           onClick={() => setOpenProduct(null)}
         >
           <div
-            className="w-full h-[96vh] md:w-[480px] md:h-[85vh] md:rounded-3xl overflow-hidden bg-gradient-to-b from-[#F5EDE0] via-[#EAD8C8] to-[#D9C4AF]"
+            className="w-full h-[96vh] max-h-full md:w-[480px] md:h-[85vh] md:rounded-3xl overflow-hidden bg-gradient-to-b from-[#F5EDE0] via-[#EAD8C8] to-[#D9C4AF]"
             onClick={(e) => e.stopPropagation()}
           >
             <ProductDetailScreen
@@ -427,7 +427,7 @@ export default function App() {
           onClick={() => setOpenReviews(null)}
         >
           <div
-            className="w-full h-[96vh] md:w-[480px] md:h-[85vh] md:rounded-3xl overflow-hidden bg-gradient-to-b from-[#F5EDE0] via-[#EAD8C8] to-[#D9C4AF]"
+            className="w-full h-[96vh] max-h-full md:w-[480px] md:h-[85vh] md:rounded-3xl overflow-hidden bg-gradient-to-b from-[#F5EDE0] via-[#EAD8C8] to-[#D9C4AF]"
             onClick={(e) => e.stopPropagation()}
           >
             <ReviewsScreen
