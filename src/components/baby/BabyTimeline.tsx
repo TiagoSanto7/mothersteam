@@ -1,8 +1,9 @@
-import { useRef, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
-import { CalendarDays, ChevronLeft, ChevronRight } from 'lucide-react';
+import { CalendarDays, ChevronLeft, ChevronRight, Pencil } from 'lucide-react';
 import { formatShortDate, shiftISODate, todayISO } from '../../lib/dateUtils';
 import { useBabyDayEntries } from './useBabyDayEntries';
+import { BabyEntryEditSheet } from './BabyEntryEditSheet';
 import type { ApiBabyEntry } from '../../lib/types';
 
 const TYPE_EMOJI: Record<ApiBabyEntry['type'], string> = { sleep: '😴', feed: '🤱', diaper: '🧷' };
@@ -18,6 +19,8 @@ export function BabyTimeline() {
   const today = todayISO();
   const [day, setDay] = useState(today);
   const dateInputRef = useRef<HTMLInputElement>(null);
+  const [editing, setEditing] = useState<ApiBabyEntry | null>(null);
+  const closeEdit = useCallback(() => setEditing(null), []);
   const entries = useBabyDayEntries(day);
   const isToday = day >= today;
 
@@ -89,12 +92,15 @@ export function BabyTimeline() {
         </div>
       ) : (
         entries.map((entry, index) => (
-          <motion.div
+          <motion.button
             key={entry.id}
+            type="button"
+            onClick={() => setEditing(entry)}
+            aria-label={`Editar ${TYPE_LABEL[entry.type]} das ${entry.time}`}
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: index * 0.06, duration: 0.3 }}
-            className="flex items-center gap-3 bg-white/70 backdrop-blur-sm border border-white/50 rounded-2xl p-3"
+            className="w-full text-left flex items-center gap-3 bg-white/70 backdrop-blur-sm border border-white/50 rounded-2xl p-3 active:scale-[0.99] transition-transform"
           >
             <div className="w-8 h-8 rounded-xl bg-mt-linen flex items-center justify-center text-lg flex-shrink-0">
               {TYPE_EMOJI[entry.type]}
@@ -104,9 +110,11 @@ export function BabyTimeline() {
               <p className="text-sm font-medium text-mt-charcoal truncate">{entry.detail}</p>
             </div>
             <span className="text-xs text-mt-muted flex-shrink-0">{entry.time}</span>
-          </motion.div>
+            <Pencil size={13} className="text-mt-muted/70 flex-shrink-0" strokeWidth={2} aria-hidden="true" />
+          </motion.button>
         ))
       )}
+      <BabyEntryEditSheet entry={editing} onClose={closeEdit} />
     </div>
   );
 }

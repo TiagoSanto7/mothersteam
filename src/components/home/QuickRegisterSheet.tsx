@@ -250,7 +250,7 @@ interface TimeFieldProps {
   label: string
 }
 
-const TimeField = forwardRef<HTMLInputElement, TimeFieldProps>(function TimeField(
+export const TimeField = forwardRef<HTMLInputElement, TimeFieldProps>(function TimeField(
   { value, onChange, onBump, max, label },
   ref,
 ) {

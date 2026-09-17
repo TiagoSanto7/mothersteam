@@ -7,6 +7,16 @@ const createSchema = z.object({
   detail: z.string().min(1),
 })
 
+// createdAt is sent by the client when the time is edited, so the entry keeps its day
+// and the timeline ordering follows the corrected time.
+const updateSchema = z
+  .object({
+    time: z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/).optional(),
+    detail: z.string().min(1).optional(),
+    createdAt: z.string().datetime({ offset: true }).optional(),
+  })
+  .refine((b) => Object.keys(b).length > 0, { message: 'nothing to update' })
+
 // Day window computed by the client in the user's local timezone (from inclusive, to exclusive).
 const rangeSchema = z
   .object({
@@ -47,5 +57,25 @@ export default async function babyRoutes(fastify: FastifyInstance) {
     if (!body.success) return reply.status(400).send({ error: body.error.flatten() })
     const entry = await fastify.prisma.babyEntry.create({ data: { ...body.data, userId: request.userId } })
     reply.status(201).send(entry)
+  })
+
+  fastify.patch<{ Params: { id: string } }>('/:id', async (request, reply) => {
+    const body = updateSchema.safeParse(request.body)
+    if (!body.success) return reply.status(400).send({ error: body.error.flatten() })
+    const { createdAt, ...rest } = body.data
+    const updated = await fastify.prisma.babyEntry.updateMany({
+      where: { id: request.params.id, userId: request.userId },
+      data: { ...rest, ...(createdAt ? { createdAt: new Date(createdAt) } : {}) },
+    })
+    if (updated.count === 0) return reply.status(404).send({ error: 'Not found' })
+    reply.send({ ok: true })
+  })
+
+  fastify.delete<{ Params: { id: string } }>('/:id', async (request, reply) => {
+    const deleted = await fastify.prisma.babyEntry.deleteMany({
+      where: { id: request.params.id, userId: request.userId },
+    })
+    if (deleted.count === 0) return reply.status(404).send({ error: 'Not found' })
+    reply.send({ ok: true })
   })
 }

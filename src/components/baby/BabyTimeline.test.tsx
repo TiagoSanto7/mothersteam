@@ -90,6 +90,12 @@ describe('BabyTimeline', () => {
     expect(screen.getByText('Timeline de hoje')).toBeInTheDocument();
   });
 
+  it('tocar num registro abre a edição dele', async () => {
+    render(<BabyTimeline />, { wrapper });
+    fireEvent.click(await screen.findByRole('button', { name: 'Editar Fralda das 10:00' }));
+    expect(screen.getByRole('dialog', { name: 'Editar fralda' })).toBeInTheDocument();
+  });
+
   it('mostra a data no título para dias mais antigos', async () => {
     render(<BabyTimeline />, { wrapper });
     fireEvent.click(screen.getByLabelText('Dia anterior'));
