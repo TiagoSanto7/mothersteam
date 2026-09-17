@@ -45,6 +45,11 @@ export function shiftISODate(iso: string, days: number): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 }
 
+/** Sunday that starts the week (Dom–Sáb) containing a YYYY-MM-DD date. */
+export function startOfWeekISO(iso: string): string {
+  return shiftISODate(iso, -parseLocalDate(iso).getDay());
+}
+
 /** Local-midnight bounds of a YYYY-MM-DD day as UTC ISO strings: [from, to). */
 export function localDayRange(iso: string): { from: string; to: string } {
   const [year, month, day] = iso.split('-').map(Number);

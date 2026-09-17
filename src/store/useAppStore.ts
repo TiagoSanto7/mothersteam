@@ -5,6 +5,7 @@ import { computeProfile } from '../utils/onboardingScoring';
 import type { ApiUser } from '../lib/types';
 import { apiFetch } from '../lib/api';
 import { buildPhase } from '../lib/helpers';
+import { todayISO } from '../lib/dateUtils';
 
 // Stable empty references — used by initial state, setAuth, and migration.
 // CLAUDE.md rule: never use `[]` literals as fallbacks — new refs cause React #185.
@@ -178,7 +179,7 @@ export const useAppStore = create<AppState>()(
       concern: null,
       // UI
       activeTab: 'hoje',
-      selectedDate: new Date().toISOString().split('T')[0],
+      selectedDate: todayISO(),
       lastFeedSide: 'left',
       savedVerses: [],
       versesByUser: {},
