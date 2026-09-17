@@ -4,6 +4,7 @@ import { useMutation } from '@tanstack/react-query';
 import { apiFetch, ApiError } from '../../lib/api';
 import { useAppStore } from '../../store/useAppStore';
 import type { ApiUser } from '../../lib/types';
+import { shiftISODate, todayISO } from '../../lib/dateUtils';
 import { StepBebes, type StepBebesValue } from './steps/StepBebes';
 import { StepOutrosFilhos } from './steps/StepOutrosFilhos';
 import { StepHumor, type StepHumorValue } from './steps/StepHumor';
@@ -70,9 +71,9 @@ export function RegisterScreen({ onBack }: RegisterScreenProps) {
     password.length >= 8 &&
     usernameOk;
 
-  const today = new Date().toISOString().split('T')[0];
-  const minExpected = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
-  const maxExpected = new Date(Date.now() + 42 * 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+  const today = todayISO();
+  const minExpected = shiftISODate(today, -7);
+  const maxExpected = shiftISODate(today, 42 * 7);
 
   const dadosGestacionaisValid =
     pregnancyStage === 'pregnant'

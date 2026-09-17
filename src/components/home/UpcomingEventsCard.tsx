@@ -3,7 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { ChevronRight } from 'lucide-react';
 import { apiFetch } from '../../lib/api';
 import { useAppStore } from '../../store/useAppStore';
-import { formatDateCompact } from '../../lib/dateUtils';
+import { formatDateCompact, todayISO } from '../../lib/dateUtils';
 import type { ApiRoutineEntry } from '../../lib/types';
 import { EventDetailModal } from './EventDetailModal';
 import { AllFutureEventsScreen } from './AllFutureEventsScreen';
@@ -27,7 +27,7 @@ export function UpcomingEventsCard() {
   });
 
   // Exclude today from "upcoming" — show only strictly future events
-  const today = new Date().toISOString().split('T')[0];
+  const today = todayISO();
   const upcoming = futureEvents.filter((e) => e.date > today).slice(0, 2);
 
   if (upcoming.length === 0) return null;

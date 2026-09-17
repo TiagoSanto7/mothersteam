@@ -2,7 +2,7 @@ import { useRef } from 'react';
 import { motion } from 'framer-motion';
 import { X } from 'lucide-react';
 import { useAppStore } from '../../store/useAppStore';
-import { DAYS_PT, MONTHS_PT } from '../../lib/dateUtils';
+import { DAYS_PT, MONTHS_PT, todayISO } from '../../lib/dateUtils';
 
 /** Returns the last 7 days ending today (index 6 = today). */
 function getRollingWeek(): Date[] {
@@ -16,7 +16,7 @@ function getRollingWeek(): Date[] {
 }
 
 function toISO(date: Date): string {
-  return date.toISOString().split('T')[0];
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
 }
 
 /** Formats an ISO date string as "Qua, 30 jul" in PT-BR. */
@@ -32,7 +32,7 @@ export function WeekCalendar({ referenceDate: _referenceDate }: { referenceDate?
   const setSelectedDate = useAppStore((s) => s.setSelectedDate);
   const dateInputRef = useRef<HTMLInputElement>(null);
   const days = getRollingWeek();
-  const today = toISO(new Date());
+  const today = todayISO();
 
   // Whether the selected date falls outside the rolling 7-day window
   const windowISOs = new Set(days.map(toISO));
