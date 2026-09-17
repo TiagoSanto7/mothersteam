@@ -1,6 +1,6 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { motion } from 'framer-motion';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { CalendarDays, ChevronLeft, ChevronRight } from 'lucide-react';
 import { formatShortDate, shiftISODate, todayISO } from '../../lib/dateUtils';
 import { useBabyDayEntries } from './useBabyDayEntries';
 import type { ApiBabyEntry } from '../../lib/types';
@@ -17,14 +17,25 @@ function dayTitle(day: string, today: string): string {
 export function BabyTimeline() {
   const today = todayISO();
   const [day, setDay] = useState(today);
+  const dateInputRef = useRef<HTMLInputElement>(null);
   const entries = useBabyDayEntries(day);
   const isToday = day >= today;
 
   return (
     <div className="flex flex-col gap-2 px-4">
       <div className="flex items-center justify-between gap-2">
-        <h3 className="text-sm font-semibold font-serif text-mt-charcoal">{dayTitle(day, today)}</h3>
-        <div className="flex items-center gap-1">
+        <h3 className="text-sm font-semibold font-serif text-mt-charcoal truncate min-w-0">{dayTitle(day, today)}</h3>
+        <div className="flex items-center gap-1 flex-shrink-0">
+          {!isToday && (
+            <button
+              type="button"
+              onClick={() => setDay(today)}
+              aria-label="Voltar para hoje"
+              className="h-8 px-3 mr-1 rounded-full bg-mt-rose text-white text-[11px] font-semibold shadow-sm active:scale-95 transition-transform"
+            >
+              Hoje
+            </button>
+          )}
           <button
             type="button"
             onClick={() => setDay((d) => shiftISODate(d, -1))}
@@ -33,6 +44,31 @@ export function BabyTimeline() {
           >
             <ChevronLeft size={16} strokeWidth={2.2} />
           </button>
+          {/* Native date picker: the transparent input sits on top of the icon so a tap opens the OS picker. */}
+          <label
+            className="relative w-8 h-8 rounded-full bg-white/70 flex items-center justify-center text-mt-rose active:scale-95 transition-transform"
+          >
+            <CalendarDays size={15} strokeWidth={2} aria-hidden="true" />
+            <input
+              ref={dateInputRef}
+              type="date"
+              value={day}
+              max={today}
+              aria-label="Escolher data"
+              onClick={() => {
+                try {
+                  dateInputRef.current?.showPicker();
+                } catch {
+                  // Older WebViews without showPicker still open the picker via the native tap.
+                }
+              }}
+              onChange={(e) => {
+                const picked = e.target.value;
+                if (picked) setDay(picked > today ? today : picked);
+              }}
+              className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+            />
+          </label>
           <button
             type="button"
             onClick={() => setDay((d) => shiftISODate(d, 1))}

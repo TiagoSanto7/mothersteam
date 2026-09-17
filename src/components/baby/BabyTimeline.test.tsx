@@ -64,6 +64,32 @@ describe('BabyTimeline', () => {
     await waitFor(() => expect(screen.getByText('Fralda de hoje')).toBeInTheDocument());
   });
 
+  it('botão Hoje só aparece fora de hoje e volta direto para hoje', async () => {
+    render(<BabyTimeline />, { wrapper });
+    expect(screen.queryByLabelText('Voltar para hoje')).not.toBeInTheDocument();
+
+    for (let i = 0; i < 10; i++) fireEvent.click(screen.getByLabelText('Dia anterior'));
+    expect(screen.getByText(/^Timeline · /)).toBeInTheDocument();
+
+    fireEvent.click(screen.getByLabelText('Voltar para hoje'));
+    expect(screen.getByText('Timeline de hoje')).toBeInTheDocument();
+    expect(screen.queryByLabelText('Voltar para hoje')).not.toBeInTheDocument();
+    expect(await screen.findByText('Fralda de hoje')).toBeInTheDocument();
+  });
+
+  it('seletor de data pula para o dia escolhido e não aceita datas futuras', async () => {
+    render(<BabyTimeline />, { wrapper });
+    const picker = screen.getByLabelText('Escolher data') as HTMLInputElement;
+    expect(picker.max).toBe(todayISO());
+
+    fireEvent.change(picker, { target: { value: shiftISODate(todayISO(), -1) } });
+    expect(screen.getByText('Timeline de ontem')).toBeInTheDocument();
+    expect(await screen.findByText('Fralda de ontem')).toBeInTheDocument();
+
+    fireEvent.change(picker, { target: { value: shiftISODate(todayISO(), 5) } });
+    expect(screen.getByText('Timeline de hoje')).toBeInTheDocument();
+  });
+
   it('mostra a data no título para dias mais antigos', async () => {
     render(<BabyTimeline />, { wrapper });
     fireEvent.click(screen.getByLabelText('Dia anterior'));
