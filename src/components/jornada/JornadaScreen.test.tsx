@@ -15,9 +15,12 @@ function wrapper({ children }: { children: React.ReactNode }) {
   return <QueryClientProvider client={qc}>{children}</QueryClientProvider>;
 }
 
+const originalOpenBabySheet = useAppStore.getState().openBabySheet;
+
 beforeEach(() => {
   mockApiFetch.mockResolvedValue([]);
   useAppStore.setState({
+    openBabySheet: originalOpenBabySheet,
     isLoggedIn: true,
     motherName: 'Ana',
     phase: { stage: 'postpartum', ageInDays: 30 },
@@ -54,5 +57,25 @@ describe('JornadaScreen', () => {
   it('renders FAB Registrar button', () => {
     render(<JornadaScreen />, { wrapper });
     expect(screen.getByLabelText('Registrar')).toBeInTheDocument();
+  });
+
+  it('FAB opens the baby quick-register sheet on Hoje', () => {
+    const openBabySheet = vi.fn();
+    useAppStore.setState({ openBabySheet });
+    render(<JornadaScreen />, { wrapper });
+    fireEvent.click(screen.getByLabelText('Registrar'));
+    expect(openBabySheet).toHaveBeenCalledWith('amamentacao');
+    expect(screen.queryByRole('dialog', { name: 'Adicionar à rotina' })).not.toBeInTheDocument();
+  });
+
+  it('FAB opens AddRoutineModal on Planejamento instead of the baby sheet', () => {
+    const openBabySheet = vi.fn();
+    useAppStore.setState({ openBabySheet });
+    render(<JornadaScreen />, { wrapper });
+    fireEvent.click(screen.getByRole('button', { name: /planejamento/i }));
+    expect(screen.queryByLabelText('Registrar')).not.toBeInTheDocument();
+    fireEvent.click(screen.getByLabelText('Adicionar rotina'));
+    expect(screen.getByRole('dialog', { name: 'Adicionar à rotina' })).toBeInTheDocument();
+    expect(openBabySheet).not.toHaveBeenCalled();
   });
 });
