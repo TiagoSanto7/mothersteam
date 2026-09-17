@@ -423,7 +423,7 @@ export default function App() {
 
       {openReviews && (
         <div
-          className="fixed inset-0 z-[55] bg-black/40 flex items-end md:items-center justify-center"
+          className="fixed inset-0 z-[55] bg-black/40 flex items-end md:items-center justify-center pb-[var(--keyboard-height,0px)]"
           onClick={() => setOpenReviews(null)}
         >
           <div
