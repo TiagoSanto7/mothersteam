@@ -80,5 +80,20 @@ describe('MtInput', () => {
       fireEvent.click(screen.getByRole('button', { name: /mostrar senha/i }))
       expect(input.value).toBe('segredo123')
     })
+
+    it('mascara com pontos menores enquanto oculta, e desliga a máscara ao revelar', () => {
+      // -webkit-text-security mascara o campo independente do `type` — se a classe
+      // continuasse ativa com type="text", o botão de revelar pareceria não fazer nada.
+      render(<MtInput type="password" placeholder="p" />)
+      const input = screen.getByPlaceholderText('p')
+
+      expect(input.className).toMatch(/mt-password-mask/)
+
+      fireEvent.click(screen.getByRole('button', { name: /mostrar senha/i }))
+      expect(input.className).not.toMatch(/mt-password-mask/)
+
+      fireEvent.click(screen.getByRole('button', { name: /ocultar senha/i }))
+      expect(input.className).toMatch(/mt-password-mask/)
+    })
   })
 })
