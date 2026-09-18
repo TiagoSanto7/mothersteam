@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect, useLayoutEffect } from 'react';
 import { ArrowUp, Plus } from 'lucide-react';
 import { SaraPullIndicator } from '../shared/SaraPullIndicator';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import { useInfiniteQuery, useQuery, useQueryClient } from '@tanstack/react-query';
 import { usePullToRefresh } from '../../lib/usePullToRefresh';
 import { useAppStore } from '../../store/useAppStore';
@@ -38,6 +38,73 @@ function screenKey(screen: Screen, index: number): string {
   return `${index}-${screen.type}-${id}`;
 }
 
+type FeedMode = 'foryou' | 'following';
+
+function dedupeById<T extends { id: string }>(list: T[]): T[] {
+  const seen = new Set<string>();
+  return list.filter((item) => (seen.has(item.id) ? false : (seen.add(item.id), true)));
+}
+
+const FEED_MODES: { id: FeedMode; label: string }[] = [
+  { id: 'foryou', label: 'Para você' },
+  { id: 'following', label: 'Seguindo' },
+];
+
+// iOS-like spring: quick, settles without a visible bounce.
+const THUMB_SPRING = { type: 'spring', stiffness: 380, damping: 32, mass: 0.8 } as const;
+
+/**
+ * "Para você | Seguindo": an iOS-style segmented control under the top tabs. Equal-width segments
+ * and a single white thumb that slides between them; the feed gets a second mode without adding a
+ * third top tab.
+ */
+function FeedModeSelector({ mode, onChange }: { mode: FeedMode; onChange: (mode: FeedMode) => void }) {
+  return (
+    <div className="flex justify-center px-4 -mb-1">
+      <div
+        role="radiogroup"
+        aria-label="Tipo de feed"
+        className="relative grid grid-cols-2 p-1 rounded-full bg-mt-linen/70"
+      >
+        {FEED_MODES.map((opt) => {
+          const active = opt.id === mode;
+          return (
+            <motion.button
+              key={opt.id}
+              type="button"
+              role="radio"
+              aria-checked={active}
+              onClick={() => onChange(opt.id)}
+              whileTap={{ scale: 0.96 }}
+              transition={THUMB_SPRING}
+              className="relative h-8 min-w-[104px] px-4 rounded-full text-[12px] font-semibold"
+            >
+              {active && (
+                <motion.span
+                  layoutId="feed-mode-thumb"
+                  className="absolute inset-0 rounded-full bg-white shadow-[0_1px_3px_rgba(0,0,0,0.08),0_1px_1px_rgba(0,0,0,0.04)]"
+                  transition={THUMB_SPRING}
+                />
+              )}
+              <span className={`relative transition-colors duration-200 ${active ? 'text-mt-charcoal' : 'text-mt-muted'}`}>
+                {opt.label}
+              </span>
+            </motion.button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+// The feed list slides a little in the direction of the chosen segment while it fades, like
+// switching pages in iOS: transform/opacity only, short enough to never feel like waiting.
+const feedSlide = {
+  enter: (dir: number) => ({ x: dir * 28, opacity: 0 }),
+  center: { x: 0, opacity: 1 },
+  exit: (dir: number) => ({ x: dir * -28, opacity: 0 }),
+};
+
 // How often the feed quietly checks for newer posts from others.
 const NEW_POSTS_POLL_MS = 45_000;
 
@@ -56,6 +123,9 @@ export function ComunidadeScreen() {
     await queryClient.invalidateQueries({ queryKey: ['posts'] });
   });
 
+  const [feedMode, setFeedMode] = useState<FeedMode>('foryou');
+  const [feedDirection, setFeedDirection] = useState(0);
+  const reduceMotion = useReducedMotion();
   const {
     data: postsPages,
     isLoading,
@@ -63,17 +133,20 @@ export function ComunidadeScreen() {
     hasNextPage,
     isFetchingNextPage,
   } = useInfiniteQuery({
-    queryKey: ['posts'],
+    // One cache per mode, so switching between "Para você" and "Seguindo" is instant after the
+    // first load. Everything stays under ['posts'], so existing invalidations cover both.
+    queryKey: ['posts', feedMode],
     queryFn: ({ pageParam }) =>
       apiFetch<{ items: ApiPost[]; hasMore: boolean; nextCursor?: string }>(
-        `/posts?cursor=${encodeURIComponent(pageParam ?? '')}&limit=20`,
+        `/posts?mode=${feedMode}&cursor=${encodeURIComponent(pageParam ?? '')}&limit=20`,
       ),
     initialPageParam: '',
     getNextPageParam: (lastPage) => (lastPage.hasMore ? lastPage.nextCursor : undefined),
     enabled: isLoggedIn,
   });
 
-  const communityPosts = postsPages?.pages.flatMap((p) => p.items.map(apiPostToCommunityPost)) ?? [];
+  // A ranked page can overlap the next one if engagement changed in between: keep the first copy.
+  const communityPosts = dedupeById(postsPages?.pages.flatMap((p) => p.items.map(apiPostToCommunityPost)) ?? []);
 
   const pendingPosts = usePendingPosts();
   const justPublished = useJustPublishedIds();
@@ -179,7 +252,11 @@ export function ComunidadeScreen() {
     liveScrollTop.current = scroller.scrollTop;
   }, [depth]);
 
-  const isFirstLoad = isLoading && communityPosts.length === 0;
+  // Full-screen spinner only for the very first load; switching feed modes keeps the tab
+  // (tabs, selector, composer) on screen and shows loading inside the list instead.
+  const everLoaded = useRef(false);
+  if (postsPages) everLoaded.current = true;
+  const isFirstLoad = isLoading && !everLoaded.current;
 
   // A freshly published post appears at the top: bring the feed up to it.
   const pendingCount = pendingPosts.length;
@@ -194,22 +271,36 @@ export function ComunidadeScreen() {
 
   // "Novos posts ↑": check quietly for newer posts from others instead of shifting the feed
   // under her while she reads. Only while the feed itself is on screen.
-  const topItem = postsPages?.pages[0]?.items[0];
+  const newestLoaded = postsPages?.pages
+    .flatMap((p) => p.items)
+    .reduce<string | null>((max, i) => (max === null || i.createdAt > max ? i.createdAt : max), null);
   const { data: head } = useQuery({
-    queryKey: ['posts-head'],
-    queryFn: () => apiFetch<{ items: { id: string; authorId: string; createdAt: string }[] }>('/posts?limit=10'),
-    enabled: isLoggedIn && !!topItem && !hasOverlay && topTab === 'para-voce',
+    queryKey: ['posts-head', feedMode],
+    queryFn: () =>
+      apiFetch<{ items: { id: string; authorId: string; createdAt: string }[] }>(
+        feedMode === 'following' ? '/posts?mode=following&limit=10' : '/posts?limit=10',
+      ),
+    enabled: isLoggedIn && !!newestLoaded && !hasOverlay && topTab === 'para-voce',
     refetchInterval: NEW_POSTS_POLL_MS,
     refetchIntervalInBackground: false,
   });
   const loadedIds = new Set(communityPosts.map((p) => p.id));
-  const newPostsCount = topItem && head
-    ? head.items.filter((i) => i.authorId !== currentUserId && i.createdAt > topItem.createdAt && !loadedIds.has(i.id)).length
+  const newPostsCount = newestLoaded && head
+    ? head.items.filter((i) => i.authorId !== currentUserId && i.createdAt > newestLoaded && !loadedIds.has(i.id)).length
     : 0;
   function showNewPosts() {
     const scroller = scrollRef.current ? scrollParent(scrollRef.current) : null;
     scroller?.scrollTo({ top: 0, behavior: 'smooth' });
-    void queryClient.invalidateQueries({ queryKey: ['posts'] });
+    void queryClient.invalidateQueries({ queryKey: ['posts', feedMode] });
+  }
+
+  function changeFeedMode(mode: FeedMode) {
+    if (mode === feedMode) return;
+    const order = FEED_MODES.map((m) => m.id);
+    setFeedDirection(order.indexOf(mode) > order.indexOf(feedMode) ? 1 : -1);
+    setFeedMode(mode);
+    const scroller = scrollRef.current ? scrollParent(scrollRef.current) : null;
+    if (scroller) scroller.scrollTop = 0;
   }
 
   const filtered = activeCategory === 'todos'
@@ -263,6 +354,8 @@ export function ComunidadeScreen() {
 
         {topTab === 'para-voce' ? (
           <>
+            <FeedModeSelector mode={feedMode} onChange={changeFeedMode} />
+
             <ComposerBar
               onOpen={() => setShowCreate(true)}
               onOpenWithImage={() => { setShowCreateWithImage(true); setShowCreate(true); }}
@@ -311,12 +404,43 @@ export function ComunidadeScreen() {
               )}
             </AnimatePresence>
 
-            <div className="flex flex-col gap-3 px-4">
+            <div className="flex flex-col gap-3 px-4 overflow-x-clip">
+              <AnimatePresence mode="popLayout" initial={false} custom={feedDirection}>
+              <motion.div
+                key={feedMode}
+                custom={feedDirection}
+                variants={reduceMotion ? undefined : feedSlide}
+                initial={reduceMotion ? { opacity: 0 } : 'enter'}
+                animate={reduceMotion ? { opacity: 1 } : 'center'}
+                exit={reduceMotion ? { opacity: 0 } : 'exit'}
+                transition={{ x: THUMB_SPRING, opacity: { duration: 0.18, ease: 'easeOut' } }}
+                className="flex flex-col gap-3"
+              >
               <AnimatePresence initial={false}>
                 {pendingPosts.map((pending) => (
                   <PendingPostCard key={pending.tempId} pending={pending} onRetry={retry} onDiscard={discard} />
                 ))}
               </AnimatePresence>
+              {isLoading && everLoaded.current && (
+                <div className="flex justify-center py-10">
+                  <div className="w-6 h-6 rounded-full border-2 border-mt-rose border-t-transparent animate-spin" />
+                </div>
+              )}
+              {feedMode === 'following' && !isLoading && communityPosts.length === 0 && pendingPosts.length === 0 && (
+                <div className="flex flex-col items-center text-center gap-2 py-12 px-6">
+                  <p className="text-sm font-semibold text-mt-charcoal">Seu "Seguindo" ainda está vazio</p>
+                  <p className="text-xs text-mt-muted">
+                    Siga outras mães ou entre em comunidades para ver as publicações delas aqui.
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => changeFeedMode('foryou')}
+                    className="mt-2 h-9 px-4 rounded-full bg-mt-rose text-white text-[12px] font-semibold shadow-sm active:scale-95 transition-transform"
+                  >
+                    Ver "Para você"
+                  </button>
+                </div>
+              )}
               {filtered.map((post) => (
                 <JustPublishedHighlight key={post.id} active={justPublished.includes(post.id)}>
                 <PostCard
@@ -328,6 +452,9 @@ export function ComunidadeScreen() {
                 />
                 </JustPublishedHighlight>
               ))}
+              </motion.div>
+              </AnimatePresence>
+              {/* Outside the animated list: one sentinel for both modes keeps infinite scroll attached. */}
               <div ref={sentinelRef} className="h-4" />
               {isFetchingNextPage && (
                 <p className="text-center text-xs text-mt-muted py-2">Carregando...</p>

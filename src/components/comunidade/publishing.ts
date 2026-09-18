@@ -71,10 +71,13 @@ function patchPending(qc: QueryClient, tempId: string, patch: Partial<PendingPos
   setPending(qc, (list) => list.map((p) => (p.tempId === tempId ? { ...p, ...patch } : p)));
 }
 
-/** Puts the confirmed post at the top of a cached infinite list, without refetching it. */
+/**
+ * Puts the confirmed post at the top of every cached infinite list under `key` (e.g. both
+ * feed modes under ['posts']), without refetching. Non-list entries (post details) are skipped.
+ */
 function prependToFeed(qc: QueryClient, key: readonly unknown[], post: ApiPost) {
-  qc.setQueryData<InfiniteData<FeedPage>>(key, (old) => {
-    if (!old || old.pages.length === 0) return old;
+  qc.setQueriesData<InfiniteData<FeedPage>>({ queryKey: key }, (old) => {
+    if (!old || !Array.isArray(old.pages) || old.pages.length === 0) return old;
     const [first, ...rest] = old.pages;
     return { ...old, pages: [{ ...first, items: [post, ...first.items.filter((i) => i.id !== post.id)] }, ...rest] };
   });
