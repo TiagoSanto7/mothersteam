@@ -76,11 +76,13 @@ Deve mostrar `Server listening at http://0.0.0.0:3001`.
 
 ## Fase 4 — Criar schema no MySQL
 
-Só na primeira vez (ou depois de mudanças no schema):
+Só na primeira vez:
 
 ```bash
-docker compose -f docker-compose.prod.yml exec api npx prisma db push
+docker compose -f docker-compose.prod.yml exec api npx prisma migrate deploy
 ```
+
+**Não usar `prisma db push` em produção.** Desde 2026-09-18 o banco tem histórico real de migrations (`_prisma_migrations`, baseline feito na TIA-39) — `db push` não fica registrado nesse histórico e desincroniza o banco em relação às migrations do repo. Toda mudança de schema, daqui pra frente, é: `npx prisma migrate dev --name <descrição>` local (gera o arquivo de migration) → commitar → `npx prisma migrate deploy` na VPS.
 
 Opcional — popular com dados de exemplo (mariana, fernanda, comunidades):
 
@@ -168,6 +170,6 @@ cd /opt/mothersteam/deploy
 docker compose -f docker-compose.prod.yml build api
 docker compose -f docker-compose.prod.yml up -d api
 
-# Se mudou o schema Prisma
-docker compose -f docker-compose.prod.yml exec api npx prisma db push
+# Se mudou o schema Prisma (gere a migration local antes: npx prisma migrate dev --name <descrição>)
+docker compose -f docker-compose.prod.yml exec api npx prisma migrate deploy
 ```
