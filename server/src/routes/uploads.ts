@@ -1,8 +1,10 @@
 import type { FastifyInstance } from 'fastify'
 import { createWriteStream, mkdirSync, unlinkSync } from 'fs'
+import { writeFile, rename } from 'fs/promises'
 import { join } from 'path'
 import { pipeline } from 'stream/promises'
 import { randomUUID } from 'crypto'
+import sharp from 'sharp'
 import { transcodeAudioToM4a } from '../lib/transcodeAudio'
 
 const ALLOWED_MIMES = new Map([
@@ -19,6 +21,45 @@ const ALLOWED_MIMES = new Map([
 const UPLOADS_DIR = join(process.cwd(), 'uploads')
 
 mkdirSync(UPLOADS_DIR, { recursive: true })
+
+// Teto de dimensão — nada na UI precisa de mais que isso; existe só pra
+// segunda camada de proteção não deixar passar um bitmap gigante (câmeras
+// Android modernas chegam a 8000x6000+). O cliente já entrega imagens bem
+// menores (crop de perfil é ~280x280), então isso raramente dispara — é
+// rede de segurança, não o redimensionamento principal.
+const MAX_IMAGE_DIMENSION = 2048
+
+/**
+ * Confirma que o arquivo é uma imagem de verdade (o mimetype declarado no
+ * multipart não prova nada — é só o que o cliente disse que é) e normaliza
+ * orientação EXIF + teto de dimensão. GIF fica de fora do reprocessamento:
+ * sharp só mantém o 1º frame sem a opção `animated`, e reencodar mataria
+ * qualquer GIF animado — só valida que abre, não reprocessa.
+ *
+ * Lança se o arquivo não for uma imagem decodificável.
+ */
+async function validateAndNormalizeImage(filepath: string, baseMime: string): Promise<void> {
+  const img = sharp(filepath, { failOn: 'error' })
+  const meta = await img.metadata()
+  if (!meta.width || !meta.height) throw new Error('Image has no readable dimensions')
+
+  if (baseMime === 'image/gif') return
+
+  img.rotate() // bake EXIF orientation into pixels
+  if (meta.width > MAX_IMAGE_DIMENSION || meta.height > MAX_IMAGE_DIMENSION) {
+    img.resize(MAX_IMAGE_DIMENSION, MAX_IMAGE_DIMENSION, { fit: 'inside', withoutEnlargement: true })
+  }
+  const buffer = await img.toBuffer()
+
+  // Escreve em arquivo temporário + rename em vez de sobrescrever o path
+  // original direto: sharp pode ainda segurar um handle de leitura aberto
+  // nesse mesmo arquivo (mais visível no Windows, onde não dá pra abrir pra
+  // escrita um arquivo já aberto pra leitura) — rename é atômico e não
+  // conflita com isso em nenhum SO.
+  const tmpPath = `${filepath}.tmp`
+  await writeFile(tmpPath, buffer)
+  await rename(tmpPath, filepath)
+}
 
 export async function uploadsRoutes(fastify: FastifyInstance) {
   fastify.addHook('preHandler', fastify.authenticate)
@@ -41,6 +82,17 @@ export async function uploadsRoutes(fastify: FastifyInstance) {
     if (data.file.truncated) {
       unlinkSync(filepath)
       return reply.status(413).send({ error: 'File too large' })
+    }
+
+    if (baseMime.startsWith('image/')) {
+      try {
+        await validateAndNormalizeImage(filepath, baseMime)
+      } catch (err) {
+        fastify.log.error(`Image validation failed: ${err}`)
+        unlinkSync(filepath)
+        return reply.status(422).send({ error: 'Invalid image' })
+      }
+      return { url: `/uploads/${filename}` }
     }
 
     // Áudio de chat precisa tocar em qualquer combinação de aparelhos — ver

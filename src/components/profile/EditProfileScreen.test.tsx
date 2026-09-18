@@ -1,15 +1,44 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { describe, it, expect, vi, beforeEach, beforeAll } from 'vitest';
+import { render, screen, waitFor, fireEvent } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { EditProfileScreen } from './EditProfileScreen';
 import { useAppStore } from '../../store/useAppStore';
 import * as api from '../../lib/api';
 
+const { mockUploadImage, mockResizeImage } = vi.hoisted(() => ({
+  mockUploadImage: vi.fn(),
+  mockResizeImage: vi.fn(async (file: File) => file),
+}));
+
 vi.mock('../../lib/api', async () => ({
   ...(await vi.importActual('../../lib/api')),
   apiFetch: vi.fn(),
+  uploadImage: mockUploadImage,
 }));
+
+vi.mock('../../lib/imageUtils', () => ({
+  resizeImage: mockResizeImage,
+}));
+
+// ImageCropModal has its own test suite (image decode, canvas). Here we only
+// care what EditProfileScreen does with the blob/error it hands back.
+vi.mock('../shared/ImageCropModal', () => ({
+  ImageCropModal: ({ onConfirm, onError }: { onConfirm: (b: Blob) => void; onError?: () => void }) => (
+    <div>
+      <button onClick={() => onConfirm(new Blob(['fake-jpeg-bytes'], { type: 'image/jpeg' }))}>
+        mock-confirm-crop
+      </button>
+      <button onClick={() => onError?.()}>mock-crop-error</button>
+    </div>
+  ),
+}));
+
+beforeAll(() => {
+  // jsdom doesn't implement the Blob URL registry
+  URL.createObjectURL = vi.fn(() => 'blob:http://localhost/fake');
+  URL.revokeObjectURL = vi.fn();
+});
 
 function renderScreen(onBack = vi.fn()) {
   const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
@@ -102,5 +131,97 @@ describe('EditProfileScreen', () => {
     await vi.waitFor(() => {
       expect(screen.getByLabelText(/Bio/i)).toHaveValue('Bio existente');
     });
+  });
+});
+
+function makeFile(name: string, sizeBytes: number, type: string): File {
+  return new File([new Uint8Array(sizeBytes)], name, { type });
+}
+
+describe('EditProfileScreen — foto de perfil (TIA-56)', () => {
+  it('rejects a file over 20MB before ever opening the crop modal', async () => {
+    const user = userEvent.setup();
+    renderScreen();
+    const tooBig = makeFile('foto.jpg', 21 * 1024 * 1024, 'image/jpeg');
+    await user.upload(screen.getByLabelText('Selecionar foto da galeria'), tooBig);
+
+    expect(screen.getByRole('alert')).toHaveTextContent(/muito grande/i);
+    expect(screen.queryByText('mock-confirm-crop')).not.toBeInTheDocument();
+  });
+
+  it('rejects a non-image file before opening the crop modal', async () => {
+    renderScreen();
+    const notImage = makeFile('curriculo.pdf', 1024, 'application/pdf');
+    // userEvent.upload() enforces the input's accept="image/*" itself (a real OS
+    // picker mostly does too) — fireEvent bypasses that to exercise the JS-level
+    // safety net directly, since not every picker/WebView honors `accept`.
+    fireEvent.change(screen.getByLabelText('Selecionar foto da galeria'), { target: { files: [notImage] } });
+
+    expect(screen.getByRole('alert')).toHaveTextContent(/não é uma imagem/i);
+    expect(screen.queryByText('mock-confirm-crop')).not.toBeInTheDocument();
+  });
+
+  it('opens the crop modal for a valid small image', async () => {
+    const user = userEvent.setup();
+    renderScreen();
+    const small = makeFile('foto.jpg', 500 * 1024, 'image/jpeg');
+    await user.upload(screen.getByLabelText('Selecionar foto da galeria'), small);
+
+    expect(screen.getByText('mock-confirm-crop')).toBeInTheDocument();
+  });
+
+  it('shows a specific message when the crop modal fails to decode the image', async () => {
+    const user = userEvent.setup();
+    renderScreen();
+    const small = makeFile('foto.jpg', 500 * 1024, 'image/jpeg');
+    await user.upload(screen.getByLabelText('Selecionar foto da galeria'), small);
+    await user.click(screen.getByText('mock-crop-error'));
+
+    expect(screen.getByRole('alert')).toHaveTextContent(/não foi possível abrir essa imagem/i);
+    expect(mockUploadImage).not.toHaveBeenCalled();
+  });
+
+  it('surfaces the real server reason when upload rejects with a structured error', async () => {
+    mockUploadImage.mockRejectedValueOnce(new Error('Upload failed: {"error":"File too large"}'));
+    const user = userEvent.setup();
+    renderScreen();
+    const small = makeFile('foto.jpg', 500 * 1024, 'image/jpeg');
+    await user.upload(screen.getByLabelText('Selecionar foto da galeria'), small);
+    await user.click(screen.getByText('mock-confirm-crop'));
+
+    await waitFor(() => {
+      expect(screen.getByRole('alert')).toHaveTextContent(/muito grande/i);
+    });
+  });
+
+  it('shows a network-specific message when the upload fetch itself fails', async () => {
+    mockUploadImage.mockRejectedValueOnce(new TypeError('Failed to fetch'));
+    const user = userEvent.setup();
+    renderScreen();
+    const small = makeFile('foto.jpg', 500 * 1024, 'image/jpeg');
+    await user.upload(screen.getByLabelText('Selecionar foto da galeria'), small);
+    await user.click(screen.getByText('mock-confirm-crop'));
+
+    await waitFor(() => {
+      expect(screen.getByRole('alert')).toHaveTextContent(/sem conexão/i);
+    });
+  });
+
+  it('completes crop → resize → upload → save on the happy path', async () => {
+    mockUploadImage.mockResolvedValueOnce('/uploads/new-avatar.jpg');
+    const user = userEvent.setup();
+    renderScreen();
+    const small = makeFile('foto.jpg', 500 * 1024, 'image/jpeg');
+    await user.upload(screen.getByLabelText('Selecionar foto da galeria'), small);
+    await user.click(screen.getByText('mock-confirm-crop'));
+
+    await waitFor(() => {
+      expect(api.apiFetch).toHaveBeenCalledWith(
+        '/users/me',
+        expect.objectContaining({ method: 'PATCH', body: JSON.stringify({ avatarUrl: '/uploads/new-avatar.jpg' }) })
+      );
+    });
+    expect(mockResizeImage).toHaveBeenCalled();
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
   });
 });
