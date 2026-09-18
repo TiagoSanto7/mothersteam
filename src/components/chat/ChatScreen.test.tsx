@@ -1,7 +1,7 @@
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor, within } from '@testing-library/react';
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { ChatScreen } from './ChatScreen';
+import { ChatScreen, replyExcerptFor } from './ChatScreen';
 import { useAppStore } from '../../store/useAppStore';
 import type { Chat } from '../../types';
 import type { ApiMessage, ApiPost, PaginatedResult } from '../../lib/types';
@@ -15,6 +15,18 @@ const SHARED_CHAT: Chat = { id: '2', with: 'Fernanda', withUserId: 'u2', withUse
 const PLAIN_MESSAGES: ApiMessage[] = [
   { id: '1', content: 'Olá!', chatId: '1', senderId: 'other', sender: { id: 'other', name: 'Ana' }, read: true, createdAt: '2024-01-01T10:00:00Z' },
   { id: '2', content: 'Oi!',  chatId: '1', senderId: 'u1',    sender: { id: 'u1',    name: 'Mariana' }, read: true, createdAt: '2024-01-01T10:01:00Z' },
+];
+
+const REPLY_MESSAGES: ApiMessage[] = [
+  {
+    id: 'm1', content: 'Oi, tudo bem?', chatId: '1', senderId: 'other',
+    sender: { id: 'other', name: 'Ana' }, read: true, createdAt: '2024-01-01T10:00:00Z',
+  },
+  {
+    id: 'm2', content: 'Tudo sim!', chatId: '1', senderId: 'u1',
+    sender: { id: 'u1', name: 'Mariana' }, read: true, createdAt: '2024-01-01T10:01:00Z',
+    replyToId: 'm1', replyToSenderName: 'Ana', replyToExcerpt: 'Oi, tudo bem?',
+  },
 ];
 
 const SHARED_MESSAGES: ApiMessage[] = [
@@ -52,6 +64,33 @@ beforeEach(() => {
     isLoggedIn: true,
   });
   mockApiFetch.mockResolvedValue(MOCK_POST);
+});
+
+describe('replyExcerptFor', () => {
+  it('mostra o texto da mensagem quando ela tem conteúdo', () => {
+    expect(replyExcerptFor({ content: 'Oi, tudo bem?', audioUrl: null, imageUrl: null, sharedPostId: null })).toBe('Oi, tudo bem?');
+  });
+
+  it('mostra "Áudio" para mensagem só de áudio (content chega como string vazia, não null)', () => {
+    expect(replyExcerptFor({ content: '', audioUrl: '/uploads/a.m4a', imageUrl: null, sharedPostId: null })).toBe('Áudio');
+  });
+
+  it('mostra "Foto" para mensagem só de imagem', () => {
+    expect(replyExcerptFor({ content: '', audioUrl: null, imageUrl: '/uploads/f.jpg', sharedPostId: null })).toBe('Foto');
+  });
+
+  it('mostra "Post compartilhado" para post sem comentário', () => {
+    expect(replyExcerptFor({ content: '', audioUrl: null, imageUrl: null, sharedPostId: 'p1' })).toBe('Post compartilhado');
+  });
+
+  it('prioriza o texto quando um post compartilhado tem comentário', () => {
+    expect(replyExcerptFor({ content: 'Olha isso!', audioUrl: null, imageUrl: null, sharedPostId: 'p1' })).toBe('Olha isso!');
+  });
+
+  it('corta em 80 caracteres', () => {
+    const long = 'a'.repeat(100);
+    expect(replyExcerptFor({ content: long, audioUrl: null, imageUrl: null, sharedPostId: null })).toHaveLength(80);
+  });
 });
 
 describe('ChatScreen', () => {
@@ -186,5 +225,75 @@ describe('ChatScreen — input bar UX', () => {
     fireEvent.change(input, { target: { value: 'olá' } });
     expect(screen.queryByRole('button', { name: /enviar foto/i })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /segurar para gravar/i })).not.toBeInTheDocument();
+  });
+});
+
+describe('ChatScreen — referência de resposta (TIA-39)', () => {
+  it('mostra a citação com nome e trecho, sem colar no texto da mensagem', () => {
+    render(<ChatScreen chat={PLAIN_CHAT} onBack={() => {}} />, { wrapper: makeWrapper('1', REPLY_MESSAGES) });
+    // Escopado dentro do bloco de citação — "Ana" também aparece solto no cabeçalho do chat.
+    const quoteBlock = screen.getByRole('button', { name: /ver mensagem original/i });
+    expect(within(quoteBlock).getByText('Ana')).toBeInTheDocument();
+    expect(within(quoteBlock).getByText('Oi, tudo bem?')).toBeInTheDocument();
+    // o corpo da mensagem não deve conter o texto colado do jeito antigo
+    expect(screen.queryByText(/↪ Ana:/)).not.toBeInTheDocument();
+  });
+
+  it('não mostra bloco de citação em mensagens que não são resposta a nada', () => {
+    render(<ChatScreen chat={PLAIN_CHAT} onBack={() => {}} />, { wrapper: makeWrapper('1', PLAIN_MESSAGES) });
+    expect(screen.queryByRole('button', { name: /ver mensagem original/i })).not.toBeInTheDocument();
+  });
+
+  it('toca na citação e rola até a mensagem original', () => {
+    render(<ChatScreen chat={PLAIN_CHAT} onBack={() => {}} />, { wrapper: makeWrapper('1', REPLY_MESSAGES) });
+    const original = document.getElementById('msg-m1');
+    expect(original).not.toBeNull();
+    const scrollIntoView = vi.fn();
+    original!.scrollIntoView = scrollIntoView;
+
+    fireEvent.click(screen.getByRole('button', { name: /ver mensagem original/i }));
+    expect(scrollIntoView).toHaveBeenCalled();
+  });
+
+  it('marcar uma mensagem para responder e enviar manda replyToId/replyToSenderName/replyToExcerpt, sem colar texto', async () => {
+    // O mock global resolve qualquer chamada como MOCK_POST — inofensivo nos testes síncronos,
+    // mas esse aqui espera tempo real (gesto de long-press), dando espaço pro refetch em
+    // background de /chats/1/messages completar e sobrescrever o cache com o formato errado
+    // (MOCK_POST não tem `.items`), esvaziando `messages` antes do clique em "Responder".
+    // Precisa responder certo por URL pra não corromper o próprio estado que o teste depende.
+    mockApiFetch.mockImplementation((url: string) => {
+      if (url === '/chats/1/messages') return Promise.resolve({ items: PLAIN_MESSAGES, hasMore: false });
+      return Promise.resolve(MOCK_POST);
+    });
+
+    render(<ChatScreen chat={PLAIN_CHAT} onBack={() => {}} />, { wrapper: makeWrapper('1', PLAIN_MESSAGES) });
+
+    // Long-press na mensagem da Ana pra abrir o menu (o gesto real usa pointer events + timer de 450ms).
+    // Timer real em vez de fake timers: a combinação de fake timers com a máquina de estado de
+    // gesto (pointer events + act() do React) mostrou-se instável nesta suíte.
+    const bubble = screen.getByText('Olá!').closest('[id^="msg-"]') as HTMLElement;
+    fireEvent.pointerDown(bubble, { clientX: 100, clientY: 100 });
+    await screen.findByRole('button', { name: /^Responder$/ }, { timeout: 1000 });
+
+    fireEvent.click(screen.getByRole('button', { name: /^Responder$/ }));
+    await screen.findByText(/Respondendo a Ana/i);
+
+    const input = screen.getByPlaceholderText(/escreva uma mensagem/i);
+    fireEvent.change(input, { target: { value: 'Oi de volta!' } });
+    fireEvent.click(screen.getByRole('button', { name: /enviar mensagem/i }));
+
+    await waitFor(() => {
+      const sendCall = mockApiFetch.mock.calls.find(
+        ([url, opts]) => url === '/chats/1/messages' && opts?.method === 'POST',
+      );
+      expect(sendCall).toBeDefined();
+      const payload = JSON.parse(sendCall![1].body);
+      expect(payload).toEqual(expect.objectContaining({
+        content: 'Oi de volta!',
+        replyToId: '1',
+        replyToSenderName: 'Ana',
+        replyToExcerpt: 'Olá!',
+      }));
+    });
   });
 });
