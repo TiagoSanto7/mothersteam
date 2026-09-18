@@ -3,6 +3,7 @@ import { createWriteStream, mkdirSync, unlinkSync } from 'fs'
 import { join } from 'path'
 import { pipeline } from 'stream/promises'
 import { randomUUID } from 'crypto'
+import { transcodeAudioToM4a } from '../lib/transcodeAudio'
 
 const ALLOWED_MIMES = new Map([
   ['image/jpeg', '.jpg'],
@@ -40,6 +41,22 @@ export async function uploadsRoutes(fastify: FastifyInstance) {
     if (data.file.truncated) {
       unlinkSync(filepath)
       return reply.status(413).send({ error: 'File too large' })
+    }
+
+    // Áudio de chat precisa tocar em qualquer combinação de aparelhos — ver
+    // transcodeAudio.ts pra causa raiz (webm do Android não toca no WebKit do iOS).
+    if (baseMime.startsWith('audio/')) {
+      const m4aFilename = `${filename.slice(0, -ext.length)}.m4a`
+      const m4aPath = join(UPLOADS_DIR, m4aFilename)
+      try {
+        await transcodeAudioToM4a(filepath, m4aPath)
+      } catch (err) {
+        fastify.log.error(`Audio transcode failed: ${err}`)
+        unlinkSync(filepath)
+        return reply.status(500).send({ error: 'Não foi possível processar o áudio' })
+      }
+      unlinkSync(filepath)
+      return { url: `/uploads/${m4aFilename}` }
     }
 
     return { url: `/uploads/${filename}` }

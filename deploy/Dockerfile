@@ -15,8 +15,10 @@ FROM node:20-slim
 
 WORKDIR /app
 
-# openssl é dependência runtime do Prisma query engine
-RUN apt-get update && apt-get install -y --no-install-recommends openssl \
+# openssl é dependência runtime do Prisma query engine.
+# ffmpeg: transcodifica áudio de chat pra M4A (TIA-19) — webm gravado no Android
+# não toca no WebKit do iOS, e não vem com duração no cabeçalho.
+RUN apt-get update && apt-get install -y --no-install-recommends openssl ffmpeg \
   && rm -rf /var/lib/apt/lists/*
 
 # Instala deps primeiro (aproveita cache do Docker se package.json não mudou)
