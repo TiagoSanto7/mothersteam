@@ -21,6 +21,7 @@ Este documento descreve o algoritmo **como está no código**. Ao mudar pesos, f
 | Rota do feed e os três modos | `server/src/routes/posts.ts` → `GET /posts` |
 | Pontuação, pesos, ordenação e cursor do "Para você" | `server/src/lib/feedRanking.ts` |
 | Quem pode ver qual post; cursor cronológico | `server/src/lib/postVisibility.ts` |
+| Índices do feed (migration `20260918150000_add_post_feed_indexes`) | `server/prisma/schema.prisma` → `model Post` |
 | Tela, seletor, cache por modo | `src/components/comunidade/ComunidadeScreen.tsx` |
 | Testes da pontuação | `server/src/lib/feedRanking.test.ts` |
 | Testes de integração (banco real) | `server/src/routes/posts.feedModes.test.ts`, `server/src/routes/posts.feed.test.ts` |
@@ -113,6 +114,18 @@ Cursor estável `(createdAt, id)` — `encodeFeedCursor` / `afterFeedCursor`. A 
 3. Quando acabam os posts da janela, o cursor passa a ser cronológico (`o~…`) e a rolagem continua pelos posts **mais antigos que a janela**, sem fim abrupto.
 4. Se o engajamento de um post mudar entre páginas, ele pode, raramente, aparecer duas vezes; o app descarta a segunda cópia (`dedupeById`).
 
+### Índices
+
+Três índices na tabela `Post` servem todas as consultas acima (verificado com `EXPLAIN`: a ordenação por data vem do próprio índice):
+
+| Índice | Consultas |
+|---|---|
+| `(createdAt, id)` | feed cronológico e cursor, janela de 14 dias do "Para você", aviso de novos posts |
+| `(authorId, createdAt)` | perfil, "Seguindo" (quem ela segue), próprios posts |
+| `(communityId, createdAt)` | tela da comunidade, "Seguindo" (comunidades dela) |
+
+Os dois compostos com `authorId`/`communityId` também sustentam as chaves estrangeiras; o MySQL remove os índices simples antigos dessas colunas automaticamente.
+
 ## 7. No app
 
 - Um cache por modo (`['posts', 'foryou']` e `['posts', 'following']`): alternar é instantâneo depois da primeira carga.
@@ -126,7 +139,7 @@ Cursor estável `(createdAt, id)` — `encodeFeedCursor` / `afterFeedCursor`. A 
 - **Sem sinal negativo:** não existe "não quero ver isso"; um tema que a incomoda só some se o engajamento cair.
 - **Afinidade grossa:** é binária (segue / não segue; membro / não membro). Não distingue quem ela lê sempre de quem ela seguiu uma vez.
 - **Fase por categoria:** só as 4 categorias de post; não usa a semana da gestação nem a idade do bebê.
-- **Custo:** até 300 posts pontuados em memória por requisição. Adequado ao volume atual; com volume maior, entram índices no banco (`Post(createdAt, id)`, `Post(authorId, createdAt)`, `Post(communityId, createdAt)`) e, se necessário, pré-cálculo.
+- **Custo:** até 300 posts pontuados em memória por requisição. Adequado ao volume atual; com volume muito maior, considerar pré-cálculo da pontuação.
 - **Moderação:** posts removidos, bloqueios e suspensões ainda não existem; quando a TIA-16 criá-los, entram em `visiblePostWhere` e passam a valer em todos os modos.
 
 ## 9. Pontos de extensão para a TIA-52
