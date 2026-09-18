@@ -3,6 +3,7 @@ import { z } from 'zod'
 import { emitNotification } from '../sse'
 import { sendPush } from '../plugins/fcm'
 import { USER_SELECT } from '../lib/user-select'
+import { visiblePostWhere } from '../lib/postVisibility'
 
 const updateMeSchema = z.object({
   name: z.string().min(1).max(80).optional(),
@@ -90,8 +91,9 @@ export default async function usersRoutes(fastify: FastifyInstance) {
     '/:id/posts',
     async (request, reply) => {
       const limit = Math.min(Number(request.query.limit ?? 20), 50)
+      // Same visibility rule as the feed: her posts in private communities stay private.
       const rows = await fastify.prisma.post.findMany({
-        where: { authorId: request.params.id },
+        where: { AND: [{ authorId: request.params.id }, visiblePostWhere(request.userId)] },
         take: limit + 1,
         ...(request.query.cursor ? { cursor: { id: request.query.cursor }, skip: 1 } : {}),
         include: {

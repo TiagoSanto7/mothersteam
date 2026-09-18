@@ -110,6 +110,40 @@ export async function uploadImage(file: File, accessToken: string | null): Promi
 }
 
 /**
+ * Same as uploadImage, but reports upload progress (0–1) so the UI can show a real bar.
+ * Uses XMLHttpRequest because fetch has no upload-progress events.
+ */
+export function uploadImageWithProgress(
+  file: File,
+  accessToken: string | null,
+  onProgress: (fraction: number) => void,
+): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const xhr = new XMLHttpRequest()
+    xhr.open('POST', `${BASE}/uploads`)
+    if (accessToken) xhr.setRequestHeader('Authorization', `Bearer ${accessToken}`)
+    xhr.upload.onprogress = (e) => {
+      if (e.lengthComputable) onProgress(e.loaded / e.total)
+    }
+    xhr.onload = () => {
+      if (xhr.status < 200 || xhr.status >= 300) {
+        reject(new Error(`Upload failed: ${xhr.responseText || xhr.statusText}`))
+        return
+      }
+      try {
+        resolve((JSON.parse(xhr.responseText) as { url: string }).url)
+      } catch {
+        reject(new Error('Upload failed: invalid response'))
+      }
+    }
+    xhr.onerror = () => reject(new Error('Upload failed: network error'))
+    const formData = new FormData()
+    formData.append('file', file)
+    xhr.send(formData)
+  })
+}
+
+/**
  * Faz POST e consome a resposta como SSE stream.
  * Chama onChunk para cada token recebido, onDone quando termina, onError em falha.
  */

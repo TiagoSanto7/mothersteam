@@ -1,12 +1,12 @@
-import { useState, useRef, useEffect } from 'react';
-import { Plus } from 'lucide-react';
+import { useState, useRef, useEffect, useLayoutEffect } from 'react';
+import { ArrowUp, Plus } from 'lucide-react';
 import { SaraPullIndicator } from '../shared/SaraPullIndicator';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useInfiniteQuery, useQueryClient } from '@tanstack/react-query';
+import { useInfiniteQuery, useQuery, useQueryClient } from '@tanstack/react-query';
 import { usePullToRefresh } from '../../lib/usePullToRefresh';
 import { useAppStore } from '../../store/useAppStore';
 import { apiFetch } from '../../lib/api';
-import { useIntersection } from '../../lib/useIntersection';
+import { PREFETCH_MARGIN, scrollParent, useIntersection } from '../../lib/useIntersection';
 import type { ApiPost } from '../../lib/types';
 import { apiPostToCommunityPost } from '../../lib/helpers';
 import { CreatePostScreen } from './CreatePostScreen';
@@ -16,11 +16,30 @@ import { CommunityDetailScreen } from './CommunityDetailScreen';
 import { CreateCommunityScreen } from './CreateCommunityScreen';
 import { ComposerBar } from './ComposerBar';
 import { PostCard } from './PostCard';
+import { JustPublishedHighlight, PendingPostCard, PublishNotice } from './PendingPostCard';
+import { useJustPublishedIds, usePendingPosts, usePublishPost } from './publishing';
 import { ProfileScreen } from '../profile/ProfileScreen';
 import type { CommunityPost } from '../../types';
 
 type TopTab = 'para-voce' | 'comunidades';
 type Category = 'todos' | CommunityPost['category'];
+
+type Screen =
+  | { type: 'post'; post: CommunityPost }
+  | { type: 'profile'; userId: string }
+  | { type: 'community'; id: string }
+  | { type: 'createCommunity' };
+
+// Deep chains (profile → profile → …) keep only the most recent levels mounted.
+const MAX_STACK = 8;
+
+function screenKey(screen: Screen, index: number): string {
+  const id = screen.type === 'post' ? screen.post.id : screen.type === 'profile' ? screen.userId : screen.type === 'community' ? screen.id : '';
+  return `${index}-${screen.type}-${id}`;
+}
+
+// How often the feed quietly checks for newer posts from others.
+const NEW_POSTS_POLL_MS = 45_000;
 
 const CATEGORY_LABELS: Category[] = ['todos', 'gestação', 'pós-parto', 'amamentação', 'saúde mental'];
 
@@ -31,9 +50,8 @@ export function ComunidadeScreen() {
   const consumeQuickAction = useAppStore((s) => s.consumeQuickAction);
 
   const queryClient = useQueryClient();
-  const sentinelRef = useRef<HTMLDivElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
-  const isAtBottom = useIntersection(sentinelRef);
+  const [sentinelRef, isAtBottom] = useIntersection(PREFETCH_MARGIN);
   const { isPulling, pullY, isLoading: isPullLoading } = usePullToRefresh(scrollRef, async () => {
     await queryClient.invalidateQueries({ queryKey: ['posts'] });
   });
@@ -48,7 +66,7 @@ export function ComunidadeScreen() {
     queryKey: ['posts'],
     queryFn: ({ pageParam }) =>
       apiFetch<{ items: ApiPost[]; hasMore: boolean; nextCursor?: string }>(
-        `/posts?cursor=${pageParam ?? ''}&limit=20`,
+        `/posts?cursor=${encodeURIComponent(pageParam ?? '')}&limit=20`,
       ),
     initialPageParam: '',
     getNextPageParam: (lastPage) => (lastPage.hasMore ? lastPage.nextCursor : undefined),
@@ -56,6 +74,11 @@ export function ComunidadeScreen() {
   });
 
   const communityPosts = postsPages?.pages.flatMap((p) => p.items.map(apiPostToCommunityPost)) ?? [];
+
+  const pendingPosts = usePendingPosts();
+  const justPublished = useJustPublishedIds();
+  const { retry, discard } = usePublishPost();
+  const currentUserId = useAppStore((s) => s.currentUserId);
 
   useEffect(() => {
     if (isAtBottom && hasNextPage && !isFetchingNextPage) {
@@ -84,58 +107,109 @@ export function ComunidadeScreen() {
     setShowCreate(true);
     consumeQuickAction();
   }, [pendingQuickAction, consumeQuickAction]);
-  const [selectedPost, setSelectedPost] = useState<CommunityPost | null>(null);
-  const [profileUserId, setProfileUserId] = useState<string | null>(null);
-  const [openCommunityId, setOpenCommunityId] = useState<string | null>(null);
-  const [showCreateCommunity, setShowCreateCommunity] = useState(false);
+  // Stack navigation (like Instagram): each sub-screen is pushed on top of the previous one and
+  // "back" pops one level. Every level stays mounted underneath, so returning keeps its state
+  // (tab, sub-filter, loaded pages, typed comment) and its own scroll position.
+  const [stack, setStack] = useState<Screen[]>([]);
+  const push = (screen: Screen) => setStack((st) => [...st, screen].slice(-MAX_STACK));
+  const pop = () => setStack((st) => st.slice(0, -1));
 
-  if (showCreateCommunity) {
-    return (
-      <CreateCommunityScreen
-        onBack={() => setShowCreateCommunity(false)}
-        onCreated={(id) => { setShowCreateCommunity(false); setOpenCommunityId(id); }}
-      />
-    );
-  }
+  const renderScreen = (screen: Screen) => {
+    switch (screen.type) {
+      case 'createCommunity':
+        return (
+          <CreateCommunityScreen
+            onBack={pop}
+            onCreated={(id) => setStack((st) => [...st.slice(0, -1), { type: 'community', id }])}
+          />
+        );
+      case 'community':
+        return (
+          <CommunityDetailScreen
+            communityId={screen.id}
+            onBack={pop}
+            onOpenProfile={(id) => push({ type: 'profile', userId: id })}
+          />
+        );
+      case 'profile':
+        return (
+          <ProfileScreen
+            userId={screen.userId}
+            onClose={pop}
+            onOpenProfile={(id) => push({ type: 'profile', userId: id })}
+            onMessage={(uid) => { setStack([]); useAppStore.getState().openChatWith(uid); }}
+          />
+        );
+      case 'post':
+        return (
+          <PostDetailScreen
+            post={screen.post}
+            onBack={pop}
+            onOpenProfile={(userId) => push({ type: 'profile', userId })}
+          />
+        );
+    }
+  };
+  const depth = stack.length;
+  const hasOverlay = depth > 0;
 
-  if (openCommunityId) {
-    return (
-      <CommunityDetailScreen
-        communityId={openCommunityId}
-        onBack={() => setOpenCommunityId(null)}
-        onOpenProfile={(id) => { setOpenCommunityId(null); setProfileUserId(id); }}
-      />
-    );
-  }
+  // The tab scrolls in one shared container. Track its offset for the visible level, save it
+  // when a screen is pushed on top, and restore it when that level becomes visible again.
+  const liveScrollTop = useRef(0);
+  const savedScrollTops = useRef<number[]>([]);
+  const prevDepth = useRef(0);
+  useEffect(() => {
+    const scroller = scrollRef.current ? scrollParent(scrollRef.current) : null;
+    if (!scroller) return;
+    const onScroll = () => { liveScrollTop.current = scroller.scrollTop; };
+    scroller.addEventListener('scroll', onScroll, { passive: true });
+    return () => scroller.removeEventListener('scroll', onScroll);
+  }, []);
+  useLayoutEffect(() => {
+    const scroller = scrollRef.current ? scrollParent(scrollRef.current) : null;
+    const from = prevDepth.current;
+    prevDepth.current = depth;
+    if (!scroller || from === depth) return;
+    if (depth > from) {
+      savedScrollTops.current[from] = liveScrollTop.current;
+      scroller.scrollTop = 0;
+    } else {
+      scroller.scrollTop = savedScrollTops.current[depth] ?? 0;
+    }
+    liveScrollTop.current = scroller.scrollTop;
+  }, [depth]);
 
-  if (profileUserId) {
-    return (
-      <ProfileScreen
-        key={profileUserId}
-        userId={profileUserId}
-        onClose={() => setProfileUserId(null)}
-        onOpenProfile={(id) => setProfileUserId(id)}
-        onMessage={(uid) => { setProfileUserId(null); useAppStore.getState().openChatWith(uid); }}
-      />
-    );
-  }
+  const isFirstLoad = isLoading && communityPosts.length === 0;
 
-  if (selectedPost) {
-    return (
-      <PostDetailScreen
-        post={selectedPost}
-        onBack={() => setSelectedPost(null)}
-        onOpenProfile={(userId) => { setSelectedPost(null); setProfileUserId(userId); }}
-      />
-    );
-  }
+  // A freshly published post appears at the top: bring the feed up to it.
+  const pendingCount = pendingPosts.length;
+  const prevPendingCount = useRef(pendingCount);
+  useEffect(() => {
+    const grew = pendingCount > prevPendingCount.current;
+    prevPendingCount.current = pendingCount;
+    if (!grew || hasOverlay) return;
+    const scroller = scrollRef.current ? scrollParent(scrollRef.current) : null;
+    scroller?.scrollTo({ top: 0, behavior: 'smooth' });
+  }, [pendingCount, hasOverlay]);
 
-  if (isLoading && communityPosts.length === 0) {
-    return (
-      <div className="flex items-center justify-center py-20">
-        <div className="w-8 h-8 rounded-full border-2 border-mt-rose border-t-transparent animate-spin" />
-      </div>
-    );
+  // "Novos posts ↑": check quietly for newer posts from others instead of shifting the feed
+  // under her while she reads. Only while the feed itself is on screen.
+  const topItem = postsPages?.pages[0]?.items[0];
+  const { data: head } = useQuery({
+    queryKey: ['posts-head'],
+    queryFn: () => apiFetch<{ items: { id: string; authorId: string; createdAt: string }[] }>('/posts?limit=10'),
+    enabled: isLoggedIn && !!topItem && !hasOverlay && topTab === 'para-voce',
+    refetchInterval: NEW_POSTS_POLL_MS,
+    refetchIntervalInBackground: false,
+  });
+  const loadedIds = new Set(communityPosts.map((p) => p.id));
+  const newPostsCount = topItem && head
+    ? head.items.filter((i) => i.authorId !== currentUserId && i.createdAt > topItem.createdAt && !loadedIds.has(i.id)).length
+    : 0;
+  function showNewPosts() {
+    const scroller = scrollRef.current ? scrollParent(scrollRef.current) : null;
+    scroller?.scrollTo({ top: 0, behavior: 'smooth' });
+    void queryClient.invalidateQueries({ queryKey: ['posts'] });
   }
 
   const filtered = activeCategory === 'todos'
@@ -144,6 +218,19 @@ export function ComunidadeScreen() {
 
   return (
     <>
+      <PublishNotice />
+      {stack.map((screen, i) => (
+        // hidden (not just a CSS class) also removes lower levels from the accessibility tree.
+        <div key={screenKey(screen, i)} hidden={i !== depth - 1} className={i === depth - 1 ? 'contents' : undefined}>
+          {renderScreen(screen)}
+        </div>
+      ))}
+      {isFirstLoad && !hasOverlay && (
+        <div className="flex items-center justify-center py-20">
+          <div className="w-8 h-8 rounded-full border-2 border-mt-rose border-t-transparent animate-spin" />
+        </div>
+      )}
+      <div hidden={hasOverlay || isFirstLoad} className={hasOverlay || isFirstLoad ? undefined : 'contents'}>
       <div ref={scrollRef} className="flex flex-col gap-4 pb-6">
         {(isPulling || isPullLoading) && (
           <SaraPullIndicator pullY={pullY} isLoading={isPullLoading} />
@@ -202,16 +289,44 @@ export function ComunidadeScreen() {
               })}
             </div>
 
+            <AnimatePresence>
+              {newPostsCount > 0 && (
+                <motion.div
+                  key="new-posts"
+                  className="sticky top-2 z-20 flex justify-center -mb-2 pointer-events-none"
+                  initial={{ opacity: 0, y: -10, scale: 0.95 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, y: -10, scale: 0.95 }}
+                  transition={{ type: 'spring', stiffness: 500, damping: 34 }}
+                >
+                  <button
+                    type="button"
+                    onClick={showNewPosts}
+                    className="pointer-events-auto flex items-center gap-1.5 px-3.5 py-2 rounded-full bg-mt-rose text-white text-[12px] font-semibold shadow-lg active:scale-95 transition-transform"
+                  >
+                    <ArrowUp size={14} strokeWidth={2.6} aria-hidden="true" />
+                    {newPostsCount === 1 ? '1 novo post' : `${newPostsCount} novos posts`}
+                  </button>
+                </motion.div>
+              )}
+            </AnimatePresence>
+
             <div className="flex flex-col gap-3 px-4">
+              <AnimatePresence initial={false}>
+                {pendingPosts.map((pending) => (
+                  <PendingPostCard key={pending.tempId} pending={pending} onRetry={retry} onDiscard={discard} />
+                ))}
+              </AnimatePresence>
               {filtered.map((post) => (
+                <JustPublishedHighlight key={post.id} active={justPublished.includes(post.id)}>
                 <PostCard
-                  key={post.id}
                   post={post}
-                  onOpen={() => setSelectedPost(post)}
-                  onOpenProfile={() => post.authorId && setProfileUserId(post.authorId)}
-                  onOpenUser={(id) => setProfileUserId(id)}
-                  onOpenCommunity={(id) => setOpenCommunityId(id)}
+                  onOpen={() => push({ type: 'post', post })}
+                  onOpenProfile={() => post.authorId && push({ type: 'profile', userId: post.authorId })}
+                  onOpenUser={(id) => push({ type: 'profile', userId: id })}
+                  onOpenCommunity={(id) => push({ type: 'community', id })}
                 />
+                </JustPublishedHighlight>
               ))}
               <div ref={sentinelRef} className="h-4" />
               {isFetchingNextPage && (
@@ -233,8 +348,8 @@ export function ComunidadeScreen() {
           </>
         ) : (
           <ComunidadesScreen
-            onOpenCommunity={setOpenCommunityId}
-            onCreate={() => setShowCreateCommunity(true)}
+            onOpenCommunity={(id) => push({ type: 'community', id })}
+            onCreate={() => push({ type: 'createCommunity' })}
           />
         )}
       </div>
@@ -269,6 +384,7 @@ export function ComunidadeScreen() {
           </motion.div>
         )}
       </AnimatePresence>
+      </div>
     </>
   );
 }
