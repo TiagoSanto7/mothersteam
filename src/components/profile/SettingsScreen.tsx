@@ -1,9 +1,10 @@
 import { useState } from 'react';
-import { ChevronLeft } from 'lucide-react';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAppStore } from '../../store/useAppStore';
 import { apiFetch } from '../../lib/api';
 import type { ApiUserProfile } from '../../lib/types';
+import { LegalDocScreen, type LegalDoc } from '../shared/LegalDocScreen';
 
 // NOTE: old AdminPanel removed — use /admin route instead.
 
@@ -20,6 +21,7 @@ export function SettingsScreen({ onBack, onClose }: SettingsScreenProps) {
 
   const [notifLikes, setNotifLikes] = useState(true);
   const [notifPosts, setNotifPosts] = useState(false);
+  const [legalDoc, setLegalDoc] = useState<LegalDoc | null>(null);
 
   const queryClient = useQueryClient();
 
@@ -42,6 +44,10 @@ export function SettingsScreen({ onBack, onClose }: SettingsScreenProps) {
   function handleLogout() {
     logout();
     onClose();
+  }
+
+  if (legalDoc) {
+    return <LegalDocScreen doc={legalDoc} onBack={() => setLegalDoc(null)} />;
   }
 
   return (
@@ -124,6 +130,28 @@ export function SettingsScreen({ onBack, onClose }: SettingsScreenProps) {
                 <span className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${(profile?.versesPublic ?? false) ? 'translate-x-[18px]' : ''}`} />
               </button>
             </div>
+          </div>
+        </section>
+
+        <section>
+          <p className="text-[10px] font-semibold text-mt-muted uppercase tracking-wide mb-2 px-1">Legal</p>
+          <div className="bg-white rounded-2xl overflow-hidden divide-y divide-gray-100">
+            <button
+              type="button"
+              onClick={() => setLegalDoc('termos')}
+              className="w-full flex items-center justify-between px-4 py-3.5"
+            >
+              <p className="text-sm text-mt-charcoal">Termos de Uso</p>
+              <ChevronRight size={16} className="text-mt-muted" />
+            </button>
+            <button
+              type="button"
+              onClick={() => setLegalDoc('privacidade')}
+              className="w-full flex items-center justify-between px-4 py-3.5"
+            >
+              <p className="text-sm text-mt-charcoal">Política de Privacidade</p>
+              <ChevronRight size={16} className="text-mt-muted" />
+            </button>
           </div>
         </section>
 

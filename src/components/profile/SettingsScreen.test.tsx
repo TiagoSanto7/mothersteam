@@ -5,7 +5,10 @@ import { SettingsScreen } from './SettingsScreen';
 import { useAppStore } from '../../store/useAppStore';
 
 const { mockApiFetch } = vi.hoisted(() => ({ mockApiFetch: vi.fn() }));
-vi.mock('../../lib/api', () => ({ apiFetch: mockApiFetch, ApiError: class extends Error {} }));
+vi.mock('../../lib/api', () => ({
+  apiFetch: mockApiFetch,
+  ApiError: class extends Error {},
+}));
 
 function renderScreen() {
   const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
@@ -49,5 +52,29 @@ describe('SettingsScreen toggles', () => {
     expect(btn.className).toMatch(/bg-gray-200/);
     fireEvent.click(btn);
     expect(btn.className).toMatch(/bg-mt-rose/);
+  });
+});
+
+describe('SettingsScreen — seção Legal (TIA-49)', () => {
+  it('opens Termos de Uso in-app (iframe) and back returns to the settings list', () => {
+    renderScreen();
+    fireEvent.click(screen.getByRole('button', { name: /^termos de uso$/i }));
+
+    expect(screen.getByRole('heading', { name: /termos de uso/i })).toBeInTheDocument();
+    const frame = document.querySelector('iframe');
+    expect(frame).toHaveAttribute('src', '/termos.html');
+    expect(screen.queryByText(/configurações/i)).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: /voltar/i }));
+    expect(screen.getByText(/configurações/i)).toBeInTheDocument();
+  });
+
+  it('opens Política de Privacidade in-app (iframe)', () => {
+    renderScreen();
+    fireEvent.click(screen.getByRole('button', { name: /^política de privacidade$/i }));
+
+    expect(screen.getByRole('heading', { name: /política de privacidade/i })).toBeInTheDocument();
+    const frame = document.querySelector('iframe');
+    expect(frame).toHaveAttribute('src', '/privacidade.html');
   });
 });

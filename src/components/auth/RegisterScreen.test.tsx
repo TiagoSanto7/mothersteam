@@ -154,6 +154,29 @@ describe('RegisterScreen', () => {
     expect(submit).not.toBeDisabled();
   });
 
+  it('opens Termos de Uso in-app and going back returns to step 5 with data intact (TIA-49)', () => {
+    wrap(<RegisterScreen onBack={vi.fn()} />);
+    fillStep1();
+    fillStep2();
+    skipStep3();
+    fillStep4();
+    fireEvent.click(screen.getByLabelText(/melhorar o sono/i));
+
+    fireEvent.click(screen.getByRole('button', { name: /^termos de uso$/i }));
+
+    // Full-screen doc viewer replaces step 5 — an in-app iframe, never a new tab/window.
+    expect(screen.getByRole('heading', { name: /termos de uso/i })).toBeInTheDocument();
+    const frame = document.querySelector('iframe');
+    expect(frame).toHaveAttribute('src', '/termos.html');
+    expect(screen.queryByRole('heading', { name: /objetivos e termos/i })).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: /voltar/i }));
+
+    // Back on step 5, with the earlier goal selection preserved (no state was lost).
+    expect(screen.getByRole('heading', { name: /objetivos e termos/i })).toBeInTheDocument();
+    expect(screen.getByLabelText(/melhorar o sono/i)).toBeChecked();
+  });
+
   it('step 4 "Continuar" is disabled until both mood and support are chosen', () => {
     wrap(<RegisterScreen onBack={vi.fn()} />);
     fillStep1();
