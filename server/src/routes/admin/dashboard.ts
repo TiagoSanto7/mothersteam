@@ -2,7 +2,7 @@ import type { FastifyInstance } from 'fastify'
 import { requireRole } from '../../plugins/requireRole'
 
 export default async function adminDashboardRoutes(fastify: FastifyInstance) {
-  await fastify.register(requireRole('ADMIN', 'EDITOR'))
+  await fastify.register(requireRole('ADMIN', 'EDITOR', 'OFFICIAL'))
 
   fastify.get('/', async (_request, reply) => {
     const [totalProducts, activeProducts, totalCategories, totalClicks30d] = await Promise.all([

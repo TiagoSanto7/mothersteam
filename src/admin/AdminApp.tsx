@@ -140,7 +140,7 @@ export function AdminApp() {
     return <AdminLoginForm />;
   }
 
-  if (!me?.role || !['ADMIN', 'EDITOR'].includes(me.role)) {
+  if (!me?.role || !['ADMIN', 'EDITOR', 'OFFICIAL'].includes(me.role)) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
