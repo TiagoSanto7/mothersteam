@@ -6,6 +6,7 @@ import { apiFetch } from '../../lib/api'
 import { getMensagemParaFase } from '../../data/mensagemDeDeus'
 import { getContextualPhrase } from '../../lib/helpers'
 import { getAvatarColor } from '../../utils/avatar'
+import { localDayRange } from '../../lib/dateUtils'
 import type { ApiRoutineEntry, ApiBabyEntry } from '../../lib/types'
 import type { PregnancyPhase } from '../../types'
 import { Sparkles } from 'lucide-react'
@@ -110,8 +111,13 @@ export function DashboardScreen() {
       type: 'rotina' as const,
     }))
 
+    // `createdAt` é um instante UTC e `todayStr` é a data do relógio da mãe — comparar
+    // os dois por prefixo de texto perdia toda mamada registrada depois que o dia já
+    // virou em Greenwich (a partir das 20h em Cuiabá, 21h em São Paulo). Comparar por
+    // faixa resolve em qualquer fuso, sem offset fixo.
+    const { from, to } = localDayRange(todayStr)
     const lastFeedToday = babyEntries?.find(
-      (e) => e.type === 'feed' && e.createdAt.startsWith(todayStr)
+      (e) => e.type === 'feed' && e.createdAt >= from && e.createdAt < to
     ) ?? null
 
     const feedRow = lastFeedToday

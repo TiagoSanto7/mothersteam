@@ -6,23 +6,31 @@ import { DashboardScreen, formatPhase, relativeTimeFeed } from './DashboardScree
 import { useAppStore } from '../../store/useAppStore'
 import type { ApiRoutineEntry, ApiBabyEntry } from '../../lib/types'
 import type { PregnancyPhase } from '../../types'
+import { todayISO, shiftISODate } from '../../lib/dateUtils'
 
 const { mockApiFetch } = vi.hoisted(() => ({ mockApiFetch: vi.fn() }))
 vi.mock('../../lib/api', () => ({ apiFetch: mockApiFetch, ApiError: class extends Error {} }))
 
 const ROUTINE_ENTRY: ApiRoutineEntry = {
-  id: '1', title: 'Pediatra', time: '23:59', date: new Date().toISOString().split('T')[0],
+  id: '1', title: 'Pediatra', time: '23:59', date: todayISO(),
   category: 'appointment', done: false, userId: 'u1', createdAt: new Date().toISOString(),
 }
 
-// Anchor createdAt to today's UTC date so the "startsWith(todayStr)" filter in
-// DashboardScreen matches regardless of local timezone. Using Date.now() - 80min
-// would fall on yesterday (UTC) when the test runs late in the day in negative
-// UTC offsets, causing a deterministic-but-timezone-shaped failure.
+/**
+ * Builds the UTC instant for a wall-clock time on the local day `iso`.
+ * Never hardcodes an offset: the device's own timezone decides, which is the
+ * whole point — the same entry has a different UTC date in Cuiabá (-04) and
+ * São Paulo (-03), and the app must be right in both.
+ */
+function localTimeToUTC(iso: string, hour: number, minute = 0): string {
+  const [y, m, d] = iso.split('-').map(Number)
+  return new Date(y, m - 1, d, hour, minute).toISOString()
+}
+
 const FEED_ENTRY: ApiBabyEntry = {
   id: '1', time: '10:00', type: 'feed', detail: 'Esquerdo',
   userId: 'u1',
-  createdAt: `${new Date().toISOString().split('T')[0]}T10:00:00.000Z`,
+  createdAt: localTimeToUTC(todayISO(), 10),
 }
 
 function makeWrapper(
@@ -30,7 +38,7 @@ function makeWrapper(
   babyEntries: ApiBabyEntry[] = [],
 ) {
   return function Wrapper({ children }: { children: React.ReactNode }) {
-    const today = new Date().toISOString().split('T')[0]
+    const today = todayISO()
     const qc = new QueryClient({
       defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
     })
@@ -195,7 +203,7 @@ describe('DashboardScreen — bloco Hoje', () => {
       isLoggedIn: true,
       motherName: 'Ana',
       phase: { stage: 'postpartum', ageInDays: 60 },
-      selectedDate: new Date().toISOString().split('T')[0],
+      selectedDate: todayISO(),
     })
     render(<DashboardScreen />, { wrapper: makeWrapper([], [FEED_ENTRY]) })
     expect(screen.getByText('Amamentação')).toBeTruthy()
@@ -208,17 +216,52 @@ describe('DashboardScreen — bloco Hoje', () => {
     expect(buttons.length).toBeGreaterThan(0)
   })
 
-  it('does not show amamentação from yesterday feed entry', () => {
-    const yesterday = new Date(Date.now() - 24 * 60 * 60_000).toISOString().split('T')[0]
+  // O dia da mãe é o dia do relógio dela, não o de Greenwich. Uma mamada às 23h
+  // cai no dia UTC seguinte em qualquer fuso negativo (Brasil inteiro); uma às
+  // 00h30 cai no dia UTC anterior em qualquer fuso positivo. Os dois casos têm
+  // de aparecer como "hoje" — é o que quebrava quando a filtragem comparava a
+  // data local com o texto de um timestamp UTC.
+  it('mostra amamentação registrada no fim da noite (dia UTC seguinte em fusos negativos)', () => {
     useAppStore.setState({
       isLoggedIn: true,
       motherName: 'Ana',
       phase: { stage: 'postpartum', ageInDays: 60 },
-      selectedDate: new Date().toISOString().split('T')[0],
+      selectedDate: todayISO(),
+    })
+    const lateNightFeed: ApiBabyEntry = {
+      id: '3', time: '23:00', type: 'feed', detail: 'Esquerdo',
+      userId: 'u1', createdAt: localTimeToUTC(todayISO(), 23),
+    }
+    render(<DashboardScreen />, { wrapper: makeWrapper([], [lateNightFeed]) })
+    expect(screen.getByText('Amamentação')).toBeTruthy()
+  })
+
+  it('mostra amamentação registrada de madrugada (dia UTC anterior em fusos positivos)', () => {
+    useAppStore.setState({
+      isLoggedIn: true,
+      motherName: 'Ana',
+      phase: { stage: 'postpartum', ageInDays: 60 },
+      selectedDate: todayISO(),
+    })
+    const earlyMorningFeed: ApiBabyEntry = {
+      id: '4', time: '00:30', type: 'feed', detail: 'Esquerdo',
+      userId: 'u1', createdAt: localTimeToUTC(todayISO(), 0, 30),
+    }
+    render(<DashboardScreen />, { wrapper: makeWrapper([], [earlyMorningFeed]) })
+    expect(screen.getByText('Amamentação')).toBeTruthy()
+  })
+
+  it('does not show amamentação from yesterday feed entry', () => {
+    const yesterday = shiftISODate(todayISO(), -1)
+    useAppStore.setState({
+      isLoggedIn: true,
+      motherName: 'Ana',
+      phase: { stage: 'postpartum', ageInDays: 60 },
+      selectedDate: todayISO(),
     })
     const yesterdayFeed: ApiBabyEntry = {
       id: '2', time: '10:00', type: 'feed', detail: 'Esquerdo',
-      userId: 'u1', createdAt: `${yesterday}T10:00:00.000Z`,
+      userId: 'u1', createdAt: localTimeToUTC(yesterday, 10),
     }
     render(<DashboardScreen />, { wrapper: makeWrapper([], [yesterdayFeed]) })
     expect(screen.queryByText('Amamentação')).toBeNull()
