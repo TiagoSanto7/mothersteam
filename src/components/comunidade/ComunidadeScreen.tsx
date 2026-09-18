@@ -16,6 +16,8 @@ import { CommunityDetailScreen } from './CommunityDetailScreen';
 import { CreateCommunityScreen } from './CreateCommunityScreen';
 import { ComposerBar } from './ComposerBar';
 import { PostCard } from './PostCard';
+import { JustPublishedHighlight, PendingPostCard, PublishNotice } from './PendingPostCard';
+import { useJustPublishedIds, usePendingPosts, usePublishPost } from './publishing';
 import { ProfileScreen } from '../profile/ProfileScreen';
 import type { CommunityPost } from '../../types';
 
@@ -69,6 +71,10 @@ export function ComunidadeScreen() {
   });
 
   const communityPosts = postsPages?.pages.flatMap((p) => p.items.map(apiPostToCommunityPost)) ?? [];
+
+  const pendingPosts = usePendingPosts();
+  const justPublished = useJustPublishedIds();
+  const { retry, discard } = usePublishPost();
 
   useEffect(() => {
     if (isAtBottom && hasNextPage && !isFetchingNextPage) {
@@ -171,12 +177,25 @@ export function ComunidadeScreen() {
 
   const isFirstLoad = isLoading && communityPosts.length === 0;
 
+  // A freshly published post appears at the top: bring the feed up to it.
+  const pendingCount = pendingPosts.length;
+  const prevPendingCount = useRef(pendingCount);
+  useEffect(() => {
+    const grew = pendingCount > prevPendingCount.current;
+    prevPendingCount.current = pendingCount;
+    if (!grew || hasOverlay) return;
+    const scroller = scrollRef.current ? scrollParent(scrollRef.current) : null;
+    scroller?.scrollTo({ top: 0, behavior: 'smooth' });
+  }, [pendingCount, hasOverlay]);
+
+
   const filtered = activeCategory === 'todos'
     ? communityPosts
     : communityPosts.filter((p) => p.category === activeCategory);
 
   return (
     <>
+      <PublishNotice />
       {stack.map((screen, i) => (
         // hidden (not just a CSS class) also removes lower levels from the accessibility tree.
         <div key={screenKey(screen, i)} hidden={i !== depth - 1} className={i === depth - 1 ? 'contents' : undefined}>
@@ -248,15 +267,21 @@ export function ComunidadeScreen() {
             </div>
 
             <div className="flex flex-col gap-3 px-4">
+              <AnimatePresence initial={false}>
+                {pendingPosts.map((pending) => (
+                  <PendingPostCard key={pending.tempId} pending={pending} onRetry={retry} onDiscard={discard} />
+                ))}
+              </AnimatePresence>
               {filtered.map((post) => (
+                <JustPublishedHighlight key={post.id} active={justPublished.includes(post.id)}>
                 <PostCard
-                  key={post.id}
                   post={post}
                   onOpen={() => push({ type: 'post', post })}
                   onOpenProfile={() => post.authorId && push({ type: 'profile', userId: post.authorId })}
                   onOpenUser={(id) => push({ type: 'profile', userId: id })}
                   onOpenCommunity={(id) => push({ type: 'community', id })}
                 />
+                </JustPublishedHighlight>
               ))}
               <div ref={sentinelRef} className="h-4" />
               {isFetchingNextPage && (

@@ -103,13 +103,16 @@ export default async function postsRoutes(fastify: FastifyInstance) {
       return reply.status(403).send({ error: 'Só membros podem publicar nesta comunidade' })
     }
 
-    const post = await fastify.prisma.post.create({
+    const created = await fastify.prisma.post.create({
       data: { ...body.data, authorId: request.userId },
       include: {
         author: { select: { id: true, name: true, username: true, archetypeKey: true, avatarUrl: true, role: true } },
-        _count: { select: { likes: true, comments: true } },
+        community: { select: { name: true } },
+        _count: { select: { likes: true, comments: true, reposts: true } },
       },
     })
+    // Same shape as a feed item, so the app can drop it straight into the timeline.
+    const { community, ...post } = created
 
     // Notify @mentioned users (fire-and-forget — don't delay the response)
     const handles = [...body.data.content.matchAll(/@([a-z0-9_]+)/gi)].map((m) => m[1].toLowerCase())
@@ -142,7 +145,7 @@ export default async function postsRoutes(fastify: FastifyInstance) {
       }).catch(() => {})
     }
 
-    reply.status(201).send({ ...post, likedByCurrentUser: false })
+    reply.status(201).send({ ...post, communityName: community?.name ?? null, likedByCurrentUser: false, isSuggestion: false })
   })
 
   fastify.get<{ Params: { id: string } }>('/:id', async (request, reply) => {

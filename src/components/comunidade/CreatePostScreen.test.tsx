@@ -8,7 +8,7 @@ const mockApiFetch = vi.hoisted(() => vi.fn());
 const mockUploadImage = vi.hoisted(() => vi.fn());
 vi.mock('../../lib/api', () => ({
   apiFetch: mockApiFetch,
-  uploadImage: mockUploadImage,
+  uploadImageWithProgress: mockUploadImage,
   ApiError: class extends Error {},
 }));
 
@@ -89,9 +89,18 @@ describe('CreatePostScreen', () => {
     await act(async () => { fireEvent.change(input, { target: { files: [file] } }); });
     fireEvent.change(screen.getByRole('textbox'), { target: { value: 'Com imagem' } });
     await act(async () => { fireEvent.click(screen.getByRole('button', { name: /publicar/i })); });
-    expect(mockUploadImage).toHaveBeenCalledWith(file, 'token123');
+    expect(mockUploadImage).toHaveBeenCalledWith(file, 'token123', expect.any(Function));
     const body = JSON.parse(mockApiFetch.mock.calls[0][1].body);
     expect(body.imageUrl).toBe('https://cdn.example.com/uploaded.png');
+  });
+
+  it('fecha o compositor na hora ao publicar, sem esperar a API', async () => {
+    mockApiFetch.mockReturnValue(new Promise(() => {}));
+    const onBack = vi.fn();
+    render(<CreatePostScreen onBack={onBack} />, { wrapper });
+    fireEvent.change(screen.getByRole('textbox'), { target: { value: 'Sem espera' } });
+    fireEvent.click(screen.getByRole('button', { name: /publicar/i }));
+    expect(onBack).toHaveBeenCalled();
   });
 
   it('renders Cancelar button', () => {

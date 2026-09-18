@@ -253,6 +253,13 @@ describe('política de visibilidade nas outras rotas', () => {
     await a.close()
     expect(fora.statusCode).toBe(403)
     expect(dentro.statusCode).toBe(201)
+    // Created post comes back in feed shape, so the app can drop it straight into the timeline.
+    expect(dentro.json()).toMatchObject({
+      communityName: `Publica ${tag}`,
+      isSuggestion: false,
+      likedByCurrentUser: false,
+      _count: { likes: 0, comments: 0, reposts: 0 },
+    })
   })
 })
 

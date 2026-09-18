@@ -381,3 +381,60 @@ describe('ComunidadeScreen — pilha de telas', () => {
     expect(screen.queryByText('Publicação')).not.toBeInTheDocument();
   });
 });
+
+describe('ComunidadeScreen — publicar (Fase 2)', () => {
+  const MINE = {
+    ...API_POSTS[0], id: 'mine-1', content: 'Meu post novo', authorId: 'me',
+    author: { id: 'me', name: 'Fernanda' }, createdAt: new Date().toISOString(),
+    _count: { likes: 0, comments: 0, reposts: 0 },
+  };
+
+  beforeEach(() => {
+    mockApiFetch.mockReset();
+    useAppStore.setState({ isLoggedIn: true, currentUserId: 'me', motherName: 'Fernanda' });
+  });
+
+  async function publishFromComposer(text: string) {
+    render(<ComunidadeScreen />, { wrapper });
+    fireEvent.click(await screen.findByRole('button', { name: 'Criar post' }));
+    fireEvent.change(await screen.findByRole('textbox'), { target: { value: text } });
+    fireEvent.click(screen.getByRole('button', { name: /^publicar$/i }));
+  }
+
+  it('o post aparece na hora como "Publicando…" e vira o post real com realce e aviso "Publicado"', async () => {
+    let resolvePost!: (p: unknown) => void;
+    mockApiFetch.mockImplementation((url: string, opts?: RequestInit) => {
+      if (url === '/posts' && opts?.method === 'POST') return new Promise((r) => { resolvePost = r; });
+      if (url.startsWith('/posts?')) return Promise.resolve({ items: API_POSTS, hasMore: false });
+      return Promise.resolve([]);
+    });
+    await publishFromComposer('Meu post novo');
+
+    expect(await screen.findByText(/Publicando…/)).toBeInTheDocument();
+    expect(screen.getByTestId('pending-post')).toHaveTextContent('Meu post novo');
+
+    resolvePost(MINE);
+    await waitFor(() => expect(screen.queryByTestId('pending-post')).not.toBeInTheDocument());
+    expect(screen.getByTestId('just-published')).toHaveTextContent('Meu post novo');
+    expect(screen.getByText('Publicado')).toBeInTheDocument();
+  });
+
+  it('se falhar, mostra "Não publicado" com tentar de novo', async () => {
+    let attempts = 0;
+    mockApiFetch.mockImplementation((url: string, opts?: RequestInit) => {
+      if (url === '/posts' && opts?.method === 'POST') {
+        attempts++;
+        return attempts === 1 ? Promise.reject(new Error('offline')) : Promise.resolve(MINE);
+      }
+      if (url.startsWith('/posts?')) return Promise.resolve({ items: API_POSTS, hasMore: false });
+      return Promise.resolve([]);
+    });
+    await publishFromComposer('Meu post novo');
+
+    expect(await screen.findByText('Não publicado')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: /tentar de novo/i }));
+    await waitFor(() => expect(screen.queryByText('Não publicado')).not.toBeInTheDocument());
+    expect(await screen.findByTestId('just-published')).toHaveTextContent('Meu post novo');
+  });
+
+});

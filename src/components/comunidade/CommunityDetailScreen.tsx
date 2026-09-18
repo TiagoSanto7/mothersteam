@@ -11,6 +11,8 @@ import { UserAvatar } from '../shared/UserAvatar';
 import { PostDetailScreen } from '../post/PostDetailScreen';
 import { CreatePostScreen } from './CreatePostScreen';
 import { PostCard } from './PostCard';
+import { JustPublishedHighlight, PendingPostCard } from './PendingPostCard';
+import { useJustPublishedIds, usePendingPosts, usePublishPost } from './publishing';
 import type { CommunityPost } from '../../types';
 
 interface CommunityDetailScreenProps {
@@ -160,6 +162,9 @@ function CommunityMembersModal({
 const MEMBERS_PREVIEW_COUNT = 3;
 
 export function CommunityDetailScreen({ communityId, onBack, onOpenProfile }: CommunityDetailScreenProps) {
+  const pendingPosts = usePendingPosts(communityId);
+  const justPublished = useJustPublishedIds();
+  const { retry, discard } = usePublishPost();
   const accessToken = useAppStore((s) => s.accessToken);
   const queryClient = useQueryClient();
   const [selectedPost, setSelectedPost] = useState<CommunityPost | null>(null);
@@ -459,17 +464,21 @@ export function CommunityDetailScreen({ communityId, onBack, onOpenProfile }: Co
 
         {/* Posts section */}
         <p className="text-xs font-semibold text-mt-charcoal px-1">Publicações</p>
-        {posts.length === 0 ? (
+        {pendingPosts.map((pending) => (
+          <PendingPostCard key={pending.tempId} pending={pending} onRetry={retry} onDiscard={discard} />
+        ))}
+        {posts.length === 0 && pendingPosts.length === 0 ? (
           <p className="text-sm text-mt-muted text-center py-8">Nenhuma publicação ainda</p>
         ) : (
           posts.map((post) => (
-            <PostCard
-              key={post.id}
-              post={post}
-              onOpen={() => setSelectedPost(post)}
-              onOpenProfile={() => post.authorId && onOpenProfile?.(post.authorId)}
-              onOpenUser={(id) => onOpenProfile?.(id)}
-            />
+            <JustPublishedHighlight key={post.id} active={justPublished.includes(post.id)}>
+              <PostCard
+                post={post}
+                onOpen={() => setSelectedPost(post)}
+                onOpenProfile={() => post.authorId && onOpenProfile?.(post.authorId)}
+                onOpenUser={(id) => onOpenProfile?.(id)}
+              />
+            </JustPublishedHighlight>
           ))
         )}
         <div ref={sentinelRef} className="h-4" />
