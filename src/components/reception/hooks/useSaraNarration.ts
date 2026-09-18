@@ -26,6 +26,12 @@ interface ElevenLabsConversation {
   sendContextualUpdate?: (text: string) => void
 }
 
+// Tool calls fire mid-turn, before the agent's closing line has finished playing.
+// Ending the session right away cuts off that audio. We wait for the SDK to report
+// mode 'listening' (audio genuinely done) before hanging up — capped by this grace
+// period in case the mode event never arrives.
+const SPEECH_FINISH_GRACE_MS = 10_000
+
 export function useSaraNarration(): UseSaraNarrationReturn {
   const [state, setState] = useState<NarrationState>('idle')
   const [amplitude, setAmplitude] = useState(0)
@@ -35,10 +41,26 @@ export function useSaraNarration(): UseSaraNarrationReturn {
   const rafRef = useRef<number>(0)
   const pollingRef = useRef(false)
   const callIdRef = useRef<symbol | null>(null)
+  const modeRef = useRef<'speaking' | 'listening'>('listening')
+  const pendingCompletionRef = useRef<{ params: unknown } | null>(null)
+  const finishTimeoutRef = useRef<ReturnType<typeof setTimeout>>()
+
+  const finalize = useCallback((params: unknown) => {
+    pendingCompletionRef.current = null
+    clearTimeout(finishTimeoutRef.current)
+    pollingRef.current = false
+    cancelAnimationFrame(rafRef.current)
+    setCollectedFatos(params)
+    setState('done')
+    convRef.current?.endSession()
+    convRef.current = null
+  }, [])
 
   const stop = useCallback(() => {
     callIdRef.current = null
     pollingRef.current = false
+    pendingCompletionRef.current = null
+    clearTimeout(finishTimeoutRef.current)
     cancelAnimationFrame(rafRef.current)
     convRef.current?.endSession()
     convRef.current = null
@@ -56,6 +78,8 @@ export function useSaraNarration(): UseSaraNarrationReturn {
 
     const callId = Symbol()
     callIdRef.current = callId
+    modeRef.current = 'listening'
+    pendingCompletionRef.current = null
 
     try {
       const agentId = import.meta.env.VITE_ELEVENLABS_AGENT_ID as string
@@ -71,17 +95,25 @@ export function useSaraNarration(): UseSaraNarrationReturn {
           if (status === 'connected') setState((s) => (s === 'connecting' ? 'listening' : s))
           if (status === 'disconnected') setState((s) => (s === 'done' ? 'done' : 'idle'))
         },
+        onModeChange: ({ mode }: { mode: 'speaking' | 'listening' }) => {
+          modeRef.current = mode
+          if (mode === 'listening' && pendingCompletionRef.current) {
+            finalize(pendingCompletionRef.current.params)
+          }
+        },
         onError: (msg: string, _context?: unknown) => {
           setError(msg)
           setState('error')
         },
         clientTools: {
           [config.toolName]: async (params: unknown) => {
-            setCollectedFatos(params)
-            setState('done')
-            cancelAnimationFrame(rafRef.current)
-            convRef.current?.endSession()
-            convRef.current = null
+            if (modeRef.current === 'speaking') {
+              // Sara is still talking — wait for her to finish before hanging up.
+              pendingCompletionRef.current = { params }
+              finishTimeoutRef.current = setTimeout(() => finalize(params), SPEECH_FINISH_GRACE_MS)
+              return 'ok'
+            }
+            finalize(params)
             return 'ok'
           },
         },
@@ -153,6 +185,7 @@ export const WELCOME_CONFIG: CapituloConfig = {
     '',
     'Fluxo de fala (após ela responder):',
     '2. Reaja com 1-2 frases curtas que reconhecem o que ela sentiu (ex.: "Faz sentido, tem sido bastante coisa, né?"). Não julgue, não console demais.',
-    '3. Fale a linha de fechamento EXATA: "Aqui no Mother\'s Team você sempre será bem-vinda. E se precisar de mim, eu sempre estarei por perto." Depois chame finalizar_boas_vindas.',
+    '3. Fale a linha de fechamento EXATA: "Aqui no Mother\'s Team você sempre será bem-vinda. Antes de eu ir, quero deixar uma palavrinha com você — espero que ela encontre um lugar no seu coração hoje. E se precisar de mim, eu sempre estarei por perto." Depois chame finalizar_boas_vindas.',
+    '4. A tela seguinte já mostra essa palavrinha (um versículo) escrita — não repita nem antecipe o conteúdo dela, só avise que vai deixá-la.',
   ].join('\n'),
 }
