@@ -437,4 +437,27 @@ describe('ComunidadeScreen — publicar (Fase 2)', () => {
     expect(await screen.findByTestId('just-published')).toHaveTextContent('Meu post novo');
   });
 
+  it('avisa "novos posts" quando outra pessoa publica, e não conta os próprios', async () => {
+    const newer = new Date(Date.now() + 60_000).toISOString();
+    mockApiFetch.mockImplementation((url: string) => {
+      if (url === '/posts?limit=10') {
+        return Promise.resolve({
+          items: [
+            { id: 'n1', authorId: 'u9', createdAt: newer },
+            { id: 'n2', authorId: 'me', createdAt: newer },
+            ...API_POSTS,
+          ],
+        });
+      }
+      if (url.startsWith('/posts?')) return Promise.resolve({ items: API_POSTS, hasMore: false });
+      return Promise.resolve([]);
+    });
+    render(<ComunidadeScreen />, { wrapper });
+
+    const pill = await screen.findByRole('button', { name: /1 novo post/i });
+    fireEvent.click(pill);
+    await waitFor(() =>
+      expect(mockApiFetch.mock.calls.filter(([u]) => String(u).startsWith('/posts?cursor=')).length).toBeGreaterThan(1),
+    );
+  });
 });

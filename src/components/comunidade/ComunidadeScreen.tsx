@@ -1,8 +1,8 @@
 import { useState, useRef, useEffect, useLayoutEffect } from 'react';
-import { Plus } from 'lucide-react';
+import { ArrowUp, Plus } from 'lucide-react';
 import { SaraPullIndicator } from '../shared/SaraPullIndicator';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useInfiniteQuery, useQueryClient } from '@tanstack/react-query';
+import { useInfiniteQuery, useQuery, useQueryClient } from '@tanstack/react-query';
 import { usePullToRefresh } from '../../lib/usePullToRefresh';
 import { useAppStore } from '../../store/useAppStore';
 import { apiFetch } from '../../lib/api';
@@ -37,6 +37,9 @@ function screenKey(screen: Screen, index: number): string {
   const id = screen.type === 'post' ? screen.post.id : screen.type === 'profile' ? screen.userId : screen.type === 'community' ? screen.id : '';
   return `${index}-${screen.type}-${id}`;
 }
+
+// How often the feed quietly checks for newer posts from others.
+const NEW_POSTS_POLL_MS = 45_000;
 
 const CATEGORY_LABELS: Category[] = ['todos', 'gestação', 'pós-parto', 'amamentação', 'saúde mental'];
 
@@ -75,6 +78,7 @@ export function ComunidadeScreen() {
   const pendingPosts = usePendingPosts();
   const justPublished = useJustPublishedIds();
   const { retry, discard } = usePublishPost();
+  const currentUserId = useAppStore((s) => s.currentUserId);
 
   useEffect(() => {
     if (isAtBottom && hasNextPage && !isFetchingNextPage) {
@@ -188,6 +192,25 @@ export function ComunidadeScreen() {
     scroller?.scrollTo({ top: 0, behavior: 'smooth' });
   }, [pendingCount, hasOverlay]);
 
+  // "Novos posts ↑": check quietly for newer posts from others instead of shifting the feed
+  // under her while she reads. Only while the feed itself is on screen.
+  const topItem = postsPages?.pages[0]?.items[0];
+  const { data: head } = useQuery({
+    queryKey: ['posts-head'],
+    queryFn: () => apiFetch<{ items: { id: string; authorId: string; createdAt: string }[] }>('/posts?limit=10'),
+    enabled: isLoggedIn && !!topItem && !hasOverlay && topTab === 'para-voce',
+    refetchInterval: NEW_POSTS_POLL_MS,
+    refetchIntervalInBackground: false,
+  });
+  const loadedIds = new Set(communityPosts.map((p) => p.id));
+  const newPostsCount = topItem && head
+    ? head.items.filter((i) => i.authorId !== currentUserId && i.createdAt > topItem.createdAt && !loadedIds.has(i.id)).length
+    : 0;
+  function showNewPosts() {
+    const scroller = scrollRef.current ? scrollParent(scrollRef.current) : null;
+    scroller?.scrollTo({ top: 0, behavior: 'smooth' });
+    void queryClient.invalidateQueries({ queryKey: ['posts'] });
+  }
 
   const filtered = activeCategory === 'todos'
     ? communityPosts
@@ -265,6 +288,28 @@ export function ComunidadeScreen() {
                 );
               })}
             </div>
+
+            <AnimatePresence>
+              {newPostsCount > 0 && (
+                <motion.div
+                  key="new-posts"
+                  className="sticky top-2 z-20 flex justify-center -mb-2 pointer-events-none"
+                  initial={{ opacity: 0, y: -10, scale: 0.95 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, y: -10, scale: 0.95 }}
+                  transition={{ type: 'spring', stiffness: 500, damping: 34 }}
+                >
+                  <button
+                    type="button"
+                    onClick={showNewPosts}
+                    className="pointer-events-auto flex items-center gap-1.5 px-3.5 py-2 rounded-full bg-mt-rose text-white text-[12px] font-semibold shadow-lg active:scale-95 transition-transform"
+                  >
+                    <ArrowUp size={14} strokeWidth={2.6} aria-hidden="true" />
+                    {newPostsCount === 1 ? '1 novo post' : `${newPostsCount} novos posts`}
+                  </button>
+                </motion.div>
+              )}
+            </AnimatePresence>
 
             <div className="flex flex-col gap-3 px-4">
               <AnimatePresence initial={false}>
