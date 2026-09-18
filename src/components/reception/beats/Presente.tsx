@@ -1,8 +1,6 @@
 import { useEffect, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { SaraSays } from '../SaraSays'
 import { useAppStore } from '../../../store/useAppStore'
-import { SARA_FRASES } from '../../../data/reception/sara-frases'
 import { versiculoParaHumor } from '../../../data/reception/versiculos-presente'
 
 interface PresenteProps {
@@ -10,45 +8,30 @@ interface PresenteProps {
   onEnter: () => void
 }
 
-const VERSICULO_DELAY_MS = 2000
-const BOTAO_DELAY_MS = 600
-const FALLBACK_SPEECH_MS = 8000
+// Sara já avisou por voz, na conversa anterior, que ia deixar essa palavrinha —
+// aqui é só o texto, sem narração nova.
+const VERSICULO_DELAY_MS = 400
+const BOTAO_DELAY_MS = 3400
 
 export function Presente({ mood, onEnter }: PresenteProps) {
   const versiculo = versiculoParaHumor(mood)
   const [showVerso, setShowVerso] = useState(false)
-  const [speechEnded, setSpeechEnded] = useState(false)
   const [showBotao, setShowBotao] = useState(false)
 
-  // Versículo aparece DURANTE a fala — Sara continua narrando
   useEffect(() => {
     const t = setTimeout(() => setShowVerso(true), VERSICULO_DELAY_MS)
     return () => clearTimeout(t)
   }, [])
 
-  // Botão aparece 3s DEPOIS de ela terminar (silêncio contemplativo)
+  // Botão aparece depois de um silêncio contemplativo pra ler o versículo
   useEffect(() => {
-    if (!speechEnded) return
     const t = setTimeout(() => setShowBotao(true), BOTAO_DELAY_MS)
-    return () => clearTimeout(t)
-  }, [speechEnded])
-
-  // Fallback: se onSpeechEnd nunca disparar (falha TTS), força
-  useEffect(() => {
-    const t = setTimeout(() => setSpeechEnded(true), FALLBACK_SPEECH_MS)
     return () => clearTimeout(t)
   }, [])
 
   return (
     <div className="min-h-screen flex flex-col bg-mt-cream px-6 py-12">
       <div className="flex-1 flex flex-col items-center justify-center gap-10">
-        <SaraSays
-          message={SARA_FRASES.presenteIntro()}
-          tts
-          responseType="none"
-          onSpeechEnd={() => setSpeechEnded(true)}
-        />
-
         <AnimatePresence>
           {showVerso && (
             <motion.div

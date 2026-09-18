@@ -185,6 +185,7 @@ export const WELCOME_CONFIG: CapituloConfig = {
     '',
     'Fluxo de fala (após ela responder):',
     '2. Reaja com 1-2 frases curtas que reconhecem o que ela sentiu (ex.: "Faz sentido, tem sido bastante coisa, né?"). Não julgue, não console demais.',
-    '3. Fale a linha de fechamento EXATA: "Aqui no Mother\'s Team você sempre será bem-vinda. E se precisar de mim, eu sempre estarei por perto." Depois chame finalizar_boas_vindas.',
+    '3. Fale a linha de fechamento EXATA: "Aqui no Mother\'s Team você sempre será bem-vinda. Antes de eu ir, quero deixar uma palavrinha com você — espero que ela encontre um lugar no seu coração hoje. E se precisar de mim, eu sempre estarei por perto." Depois chame finalizar_boas_vindas.',
+    '4. A tela seguinte já mostra essa palavrinha (um versículo) escrita — não repita nem antecipe o conteúdo dela, só avise que vai deixá-la.',
   ].join('\n'),
 }
