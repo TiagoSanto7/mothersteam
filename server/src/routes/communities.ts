@@ -1,5 +1,6 @@
 import type { FastifyInstance } from 'fastify'
 import { z } from 'zod'
+import { visiblePostWhere } from '../lib/postVisibility'
 
 const createSchema = z.object({
   name: z.string().min(1),
@@ -87,14 +88,9 @@ export default async function communitiesRoutes(fastify: FastifyInstance) {
     '/:id/posts',
     async (request, reply) => {
       const limit = Math.min(Number(request.query.limit ?? 20), 50)
-      // Combine isPrivate check into the posts query to avoid an extra DB round-trip.
-      // The where clause filters posts to communities the user can access:
-      // public communities OR private communities where the user is a member.
+      // Shared visibility rule: public communities, or private ones where the user is a member.
       const rows = await fastify.prisma.post.findMany({
-        where: {
-          communityId: request.params.id,
-          community: { OR: [{ isPrivate: false }, { members: { some: { userId: request.userId } } }] },
-        },
+        where: { AND: [{ communityId: request.params.id }, visiblePostWhere(request.userId)] },
         take: limit + 1,
         ...(request.query.cursor ? { cursor: { id: request.query.cursor }, skip: 1 } : {}),
         include: {

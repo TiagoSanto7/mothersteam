@@ -188,7 +188,7 @@ export function CommunityDetailScreen({ communityId, onBack, onOpenProfile }: Co
     queryKey: ['communityPosts', communityId],
     queryFn: ({ pageParam }) =>
       apiFetch<{ items: ApiPost[]; hasMore: boolean; nextCursor?: string }>(
-        `/communities/${communityId}/posts?cursor=${pageParam ?? ''}&limit=20`
+        `/communities/${communityId}/posts?cursor=${encodeURIComponent(pageParam ?? '')}&limit=20`
       ),
     initialPageParam: '',
     getNextPageParam: (lastPage) => (lastPage.hasMore ? lastPage.nextCursor : undefined),

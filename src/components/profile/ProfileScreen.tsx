@@ -74,7 +74,7 @@ export function ProfileScreen({ onClose, userId, onOpenProfile, onMessage, isTab
     queryKey: ['userPosts', effectiveUserId],
     queryFn: ({ pageParam }) =>
       apiFetch<{ items: ApiPost[]; hasMore: boolean; nextCursor?: string }>(
-        `/users/${effectiveUserId}/posts?cursor=${pageParam ?? ''}&limit=20`
+        `/users/${effectiveUserId}/posts?cursor=${encodeURIComponent(pageParam ?? '')}&limit=20`
       ),
     initialPageParam: '',
     getNextPageParam: (lastPage) => (lastPage.hasMore ? lastPage.nextCursor : undefined),

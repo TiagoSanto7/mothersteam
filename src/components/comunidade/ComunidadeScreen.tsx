@@ -48,7 +48,7 @@ export function ComunidadeScreen() {
     queryKey: ['posts'],
     queryFn: ({ pageParam }) =>
       apiFetch<{ items: ApiPost[]; hasMore: boolean; nextCursor?: string }>(
-        `/posts?cursor=${pageParam ?? ''}&limit=20`,
+        `/posts?cursor=${encodeURIComponent(pageParam ?? '')}&limit=20`,
       ),
     initialPageParam: '',
     getNextPageParam: (lastPage) => (lastPage.hasMore ? lastPage.nextCursor : undefined),

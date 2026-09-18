@@ -2,6 +2,13 @@ import type { FastifyInstance } from 'fastify'
 import { z } from 'zod'
 import { emitNotification } from '../sse'
 import { sendPush } from '../plugins/fcm'
+import {
+  afterFeedCursor,
+  canPostInCommunity,
+  encodeFeedCursor,
+  findVisiblePost,
+  visiblePostWhere,
+} from '../lib/postVisibility'
 
 const createSchema = z.object({
   content: z.string().min(1),
@@ -14,6 +21,8 @@ const commentSchema = z.object({
   content: z.string().min(1),
   parentId: z.string().optional(),
 })
+
+const NOT_FOUND = { error: 'Post not found' }
 
 async function findCommentInPost(
   prisma: FastifyInstance['prisma'],
@@ -30,10 +39,13 @@ async function findCommentInPost(
 export default async function postsRoutes(fastify: FastifyInstance) {
   fastify.addHook('preHandler', fastify.authenticate)
 
+  // Feed: one reverse-chronological timeline of every post the viewer may see — her own,
+  // people she follows, her communities and public posts — paged by a stable (createdAt, id)
+  // cursor. Posts outside her network are flagged isSuggestion instead of queried apart.
   fastify.get<{ Querystring: { cursor?: string; limit?: string } }>(
     '/',
     async (request, reply) => {
-      const limit = Math.min(Number(request.query.limit ?? 20), 50)
+      const limit = Math.min(Math.max(Number(request.query.limit) || 20, 1), 50)
 
       const [following, memberships] = await Promise.all([
         fastify.prisma.follow.findMany({
@@ -45,86 +57,51 @@ export default async function postsRoutes(fastify: FastifyInstance) {
           select: { communityId: true },
         }),
       ])
-      const followingIds = following.map((f) => f.followingId)
-      const communityIds = memberships.map((m) => m.communityId)
+      const followingIds = new Set(following.map((f) => f.followingId))
+      const communityIds = new Set(memberships.map((m) => m.communityId))
 
-      const postInclude = {
-        author: { select: { id: true, name: true, username: true, archetypeKey: true, avatarUrl: true, role: true } },
-        community: { select: { name: true } },
-        _count: { select: { likes: true, comments: true, reposts: true } },
-        likes: { where: { userId: request.userId }, select: { userId: true } },
-        repostFrom: { include: { author: { select: { id: true, name: true, username: true, archetypeKey: true, avatarUrl: true, role: true } } } },
-      } as const
-
-      function mapRow<T extends { likes: { userId: string }[]; community: { name: string } | null }>(
-        isSuggestion: boolean,
-      ) {
-        return ({ likes, community, ...post }: T) => ({
-          ...post,
-          communityName: community?.name ?? null,
-          likedByCurrentUser: likes.length > 0,
-          isSuggestion,
-        })
+      // Older app builds page with a bare post id; translate it to the (createdAt, id) cursor.
+      let cursor = request.query.cursor
+      if (cursor && !cursor.includes('_')) {
+        const anchor = await fastify.prisma.post.findUnique({ where: { id: cursor }, select: { id: true, createdAt: true } })
+        cursor = anchor ? encodeFeedCursor(anchor) : undefined
       }
+      const after = afterFeedCursor(cursor)
+      const rows = await fastify.prisma.post.findMany({
+        where: { AND: [visiblePostWhere(request.userId), ...(after ? [after] : [])] },
+        orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
+        take: limit + 1,
+        include: {
+          author: { select: { id: true, name: true, username: true, archetypeKey: true, avatarUrl: true, role: true } },
+          community: { select: { name: true } },
+          _count: { select: { likes: true, comments: true, reposts: true } },
+          likes: { where: { userId: request.userId }, select: { userId: true } },
+          repostFrom: { include: { author: { select: { id: true, name: true, username: true, archetypeKey: true, avatarUrl: true, role: true } } } },
+        },
+      })
 
-      const hasPriority = followingIds.length > 0 || communityIds.length > 0
-
-      if (hasPriority) {
-        const [priorityRows, suggestionRows] = await Promise.all([
-          fastify.prisma.post.findMany({
-            where: {
-              isRepost: false,
-              OR: [
-                { authorId: { in: followingIds } },
-                ...(communityIds.length > 0 ? [{ communityId: { in: communityIds } }] : []),
-              ],
-            },
-            orderBy: { createdAt: 'desc' },
-            take: 20,
-            include: postInclude,
-          }),
-          fastify.prisma.post.findMany({
-            where: {
-              isRepost: false,
-              authorId: { notIn: [...followingIds, request.userId] },
-              ...(communityIds.length > 0 ? { communityId: { notIn: communityIds } } : {}),
-              OR: [{ communityId: null }, { community: { isPrivate: false } }],
-            },
-            orderBy: { createdAt: 'desc' },
-            take: 10,
-            include: postInclude,
-          }),
-        ])
-
-        const items = [
-          ...priorityRows.map(mapRow(false)),
-          ...suggestionRows.map(mapRow(true)),
-        ]
-        reply.send({ items, hasMore: false })
-      } else {
-        const rows = await fastify.prisma.post.findMany({
-          where: {
-            OR: [
-              { communityId: null },
-              { community: { isPrivate: false } },
-            ],
-          },
-          take: limit + 1,
-          ...(request.query.cursor ? { cursor: { id: request.query.cursor }, skip: 1 } : {}),
-          include: postInclude,
-          orderBy: { createdAt: 'desc' },
-        })
-        const hasMore = rows.length > limit
-        const items = rows.slice(0, limit).map(mapRow(false))
-        const nextCursor = items.length > 0 ? items[items.length - 1].id : undefined
-        reply.send({ items, hasMore, nextCursor })
-      }
+      const hasMore = rows.length > limit
+      const page = rows.slice(0, limit)
+      const items = page.map(({ likes, community, ...post }) => ({
+        ...post,
+        communityName: community?.name ?? null,
+        likedByCurrentUser: likes.length > 0,
+        isSuggestion:
+          post.authorId !== request.userId &&
+          !followingIds.has(post.authorId) &&
+          !(post.communityId !== null && communityIds.has(post.communityId)),
+      }))
+      const last = page[page.length - 1]
+      reply.send({ items, hasMore, nextCursor: hasMore && last ? encodeFeedCursor(last) : undefined })
     }
   )
 
   fastify.post('/', async (request, reply) => {
     const body = createSchema.safeParse(request.body)
     if (!body.success) return reply.status(400).send({ error: body.error.flatten() })
+    if (body.data.communityId && !(await canPostInCommunity(fastify.prisma, body.data.communityId, request.userId))) {
+      return reply.status(403).send({ error: 'Só membros podem publicar nesta comunidade' })
+    }
 
     const post = await fastify.prisma.post.create({
       data: { ...body.data, authorId: request.userId },
@@ -169,8 +146,8 @@ export default async function postsRoutes(fastify: FastifyInstance) {
   })
 
   fastify.get<{ Params: { id: string } }>('/:id', async (request, reply) => {
-    const post = await fastify.prisma.post.findUnique({
-      where: { id: request.params.id },
+    const post = await fastify.prisma.post.findFirst({
+      where: { AND: [{ id: request.params.id }, visiblePostWhere(request.userId)] },
       include: {
         author: { select: { id: true, name: true, username: true, archetypeKey: true, avatarUrl: true, role: true } },
         _count: { select: { likes: true, comments: true, reposts: true } },
@@ -193,6 +170,9 @@ export default async function postsRoutes(fastify: FastifyInstance) {
   })
 
   fastify.post<{ Params: { id: string } }>('/:id/like', async (request, reply) => {
+    if (!(await findVisiblePost(fastify.prisma, request.params.id, request.userId, { id: true }))) {
+      return reply.status(404).send(NOT_FOUND)
+    }
     await fastify.prisma.postLike.upsert({
       where: { userId_postId: { userId: request.userId, postId: request.params.id } },
       update: {},
@@ -245,6 +225,9 @@ export default async function postsRoutes(fastify: FastifyInstance) {
   fastify.post<{ Params: { id: string; commentId: string } }>(
     '/:id/comments/:commentId/like',
     async (request, reply) => {
+      if (!(await findVisiblePost(fastify.prisma, request.params.id, request.userId, { id: true }))) {
+        return reply.status(404).send(NOT_FOUND)
+      }
       // Verify comment exists and belongs to the given post; guards against
       // clients constructing arbitrary commentIds against unrelated posts.
       const comment = await findCommentInPost(fastify.prisma, request.params.commentId, request.params.id, { id: true, authorId: true, content: true })
@@ -341,8 +324,13 @@ export default async function postsRoutes(fastify: FastifyInstance) {
   )
 
   fastify.post<{ Params: { id: string } }>('/:id/repost', async (request, reply) => {
-    const original = await fastify.prisma.post.findUnique({ where: { id: request.params.id } })
-    if (!original) return reply.status(404).send({ error: 'Post not found' })
+    const original = await findVisiblePost(fastify.prisma, request.params.id, request.userId, {
+      id: true,
+      content: true,
+      category: true,
+      communityId: true,
+    })
+    if (!original) return reply.status(404).send(NOT_FOUND)
 
     // Optional quote comment — if provided this becomes a "quote repost"
     const quoteSchema = z.object({ content: z.string().optional() })
@@ -370,6 +358,9 @@ export default async function postsRoutes(fastify: FastifyInstance) {
   fastify.get<{ Params: { id: string }; Querystring: { cursor?: string; limit?: string } }>(
     '/:id/comments',
     async (request, reply) => {
+      if (!(await findVisiblePost(fastify.prisma, request.params.id, request.userId, { id: true }))) {
+        return reply.status(404).send(NOT_FOUND)
+      }
       const limit = Math.min(Number(request.query.limit ?? 20), 50)
       const comments = await fastify.prisma.comment.findMany({
         where: { postId: request.params.id, parentId: null },
@@ -404,6 +395,9 @@ export default async function postsRoutes(fastify: FastifyInstance) {
   fastify.post<{ Params: { id: string } }>('/:id/comments', async (request, reply) => {
     const body = commentSchema.safeParse(request.body)
     if (!body.success) return reply.status(400).send({ error: body.error.flatten() })
+    if (!(await findVisiblePost(fastify.prisma, request.params.id, request.userId, { id: true }))) {
+      return reply.status(404).send(NOT_FOUND)
+    }
 
     const comment = await fastify.prisma.comment.create({
       data: {
