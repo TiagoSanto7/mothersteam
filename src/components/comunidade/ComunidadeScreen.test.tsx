@@ -315,3 +315,69 @@ describe('ComunidadeScreen — self profile navigation', () => {
     });
   });
 });
+
+describe('ComunidadeScreen — navegação empilhada', () => {
+  const COMMUNITIES = [
+    { id: 'c-seg', name: 'Mães de primeira viagem', description: 'Aberta', category: 'gestação', colorKey: 'gold', isPrivate: false, isOpen: true, creatorId: 'u2', createdAt: new Date().toISOString(), _count: { members: 2 }, isMember: true },
+    { id: 'c-sug', name: 'Grupo privado da Mariana', description: 'Só membros', category: 'gestação', colorKey: 'terracotta', isPrivate: true, isOpen: false, creatorId: 'u2', createdAt: new Date().toISOString(), _count: { members: 1 }, isMember: false },
+  ];
+
+  beforeEach(() => {
+    mockApiFetch.mockReset();
+    mockApiFetch.mockImplementation((url: string) => {
+      if (url.startsWith('/posts')) return Promise.resolve({ items: API_POSTS, hasMore: false });
+      if (url.startsWith('/communities?')) return Promise.resolve(COMMUNITIES);
+      if (url.startsWith('/communities/c-sug/posts')) return Promise.resolve({ items: [], hasMore: false });
+      if (url.startsWith('/communities/c-sug/members')) return Promise.resolve([]);
+      if (url.startsWith('/communities/c-sug')) return Promise.resolve({ ...COMMUNITIES[1], members: [] });
+      return Promise.resolve([]);
+    });
+    useAppStore.setState({ isLoggedIn: true });
+  });
+
+  it('voltar de uma comunidade aberta em "Sugestões" mantém "Sugestões" selecionado', async () => {
+    render(<ComunidadeScreen />, { wrapper });
+    fireEvent.click(await screen.findByRole('button', { name: 'Comunidades' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'Sugestões' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'Ver comunidade Grupo privado da Mariana' }));
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Voltar' }));
+
+    expect(await screen.findByRole('button', { name: 'Sugestões' })).toHaveAttribute('aria-pressed', 'true');
+    expect(screen.getByRole('button', { name: 'Seguindo' })).toHaveAttribute('aria-pressed', 'false');
+  });
+});
+
+describe('ComunidadeScreen — pilha de telas', () => {
+  beforeEach(() => {
+    mockApiFetch.mockReset();
+    mockApiFetch.mockImplementation((url: string) => {
+      if (url.startsWith('/posts?')) return Promise.resolve({ items: API_POSTS, hasMore: false });
+      if (/^\/posts\/[^/]+\/comments/.test(url)) return Promise.resolve({ items: [], hasMore: false });
+      if (/^\/posts\/[^/?]+$/.test(url)) return Promise.resolve(API_POSTS[1]);
+      if (/^\/users\/[^/]+\/posts/.test(url)) return Promise.resolve({ items: [], hasMore: false });
+      if (/^\/users\/[^/?]+$/.test(url)) {
+        return Promise.resolve({ id: 'u2', name: 'Dra. Carla Lima', username: 'carla', _count: { posts: 0, followers: 0, following: 0 }, isFollowing: false });
+      }
+      return Promise.resolve([]);
+    });
+    useAppStore.setState({ isLoggedIn: true });
+  });
+
+  it('feed → post → perfil: voltar do perfil volta para o post, e depois para o feed', async () => {
+    render(<ComunidadeScreen />, { wrapper });
+    fireEvent.click(await screen.findByRole('button', { name: 'Ver post de Dra. Carla Lima' }));
+    expect(await screen.findByText('Publicação')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Ver perfil de Dra. Carla Lima' }));
+    // The profile is on top; the post stays mounted but hidden underneath.
+    await waitFor(() => expect(screen.getByText('Publicação')).not.toBeVisible());
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Voltar' }));
+    await waitFor(() => expect(screen.getByText('Publicação')).toBeVisible());
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Voltar' }));
+    expect(await screen.findByRole('button', { name: 'Criar post' })).toBeInTheDocument();
+    expect(screen.queryByText('Publicação')).not.toBeInTheDocument();
+  });
+});
