@@ -1,12 +1,9 @@
 import { useState, useRef, useEffect } from 'react';
 import { ImagePlus, X } from 'lucide-react';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { useAppStore } from '../../store/useAppStore';
-import { apiFetch, uploadImage } from '../../lib/api';
-import type { ApiPost } from '../../lib/types';
 import type { CommunityPost } from '../../types';
 import { MentionInput } from '../shared/MentionInput';
 import { ImageSourceSheet } from '../shared/ImageSourceSheet';
+import { usePublishPost } from './publishing';
 
 type PostCategory = CommunityPost['category'];
 
@@ -25,7 +22,6 @@ interface CreatePostScreenProps {
 }
 
 export function CreatePostScreen({ onBack, autoOpenImage, initialCommunityId, initialContent }: CreatePostScreenProps) {
-  const accessToken = useAppStore((s) => s.accessToken);
   const [content, setContent] = useState(initialContent ?? '');
   const [category, setCategory] = useState<PostCategory>('saúde mental');
   const [imageFile, setImageFile] = useState<File | null>(null);
@@ -33,7 +29,6 @@ export function CreatePostScreen({ onBack, autoOpenImage, initialCommunityId, in
   const [showImageSheet, setShowImageSheet] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
-  const queryClient = useQueryClient();
 
   useEffect(() => {
     if (autoOpenImage) {
@@ -48,30 +43,7 @@ export function CreatePostScreen({ onBack, autoOpenImage, initialCommunityId, in
     };
   }, [imagePreviewUrl]);
 
-  const { mutate: publish, isPending } = useMutation({
-    mutationFn: async () => {
-      let imageUrl: string | undefined;
-      if (imageFile) {
-        imageUrl = await uploadImage(imageFile, accessToken);
-      }
-      return apiFetch<ApiPost>('/posts', {
-        method: 'POST',
-        body: JSON.stringify({
-          content: content.trim(),
-          category,
-          imageUrl,
-          communityId: initialCommunityId,
-        }),
-      });
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['posts'] });
-      if (initialCommunityId) {
-        queryClient.invalidateQueries({ queryKey: ['communityPosts', initialCommunityId] });
-      }
-      onBack();
-    },
-  });
+  const { publish } = usePublishPost();
 
   function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0] ?? null;
@@ -87,9 +59,12 @@ export function CreatePostScreen({ onBack, autoOpenImage, initialCommunityId, in
     if (fileInputRef.current) fileInputRef.current.value = '';
   }
 
+  // Optimistic: hand the post to the publisher and close right away; the feed shows it at the
+  // top with its own "Publicando…" state, so the composer never makes her wait.
   function handlePublish() {
     if (!content.trim() && !imageFile) return;
-    publish();
+    publish({ content: content.trim(), category, communityId: initialCommunityId, imageFile });
+    onBack();
   }
 
   const canPublish = Boolean(content.trim() || imageFile);
@@ -106,7 +81,7 @@ export function CreatePostScreen({ onBack, autoOpenImage, initialCommunityId, in
         <h1 className="text-sm font-semibold text-mt-charcoal">Publicação</h1>
         <button
           onClick={handlePublish}
-          disabled={!canPublish || isPending}
+          disabled={!canPublish}
           className="text-sm font-semibold text-mt-rose disabled:opacity-40 px-1 py-1"
         >
           Publicar

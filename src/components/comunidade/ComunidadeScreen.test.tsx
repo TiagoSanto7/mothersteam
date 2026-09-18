@@ -315,3 +315,149 @@ describe('ComunidadeScreen — self profile navigation', () => {
     });
   });
 });
+
+describe('ComunidadeScreen — navegação empilhada', () => {
+  const COMMUNITIES = [
+    { id: 'c-seg', name: 'Mães de primeira viagem', description: 'Aberta', category: 'gestação', colorKey: 'gold', isPrivate: false, isOpen: true, creatorId: 'u2', createdAt: new Date().toISOString(), _count: { members: 2 }, isMember: true },
+    { id: 'c-sug', name: 'Grupo privado da Mariana', description: 'Só membros', category: 'gestação', colorKey: 'terracotta', isPrivate: true, isOpen: false, creatorId: 'u2', createdAt: new Date().toISOString(), _count: { members: 1 }, isMember: false },
+  ];
+
+  beforeEach(() => {
+    mockApiFetch.mockReset();
+    mockApiFetch.mockImplementation((url: string) => {
+      if (url.startsWith('/posts')) return Promise.resolve({ items: API_POSTS, hasMore: false });
+      if (url.startsWith('/communities?')) return Promise.resolve(COMMUNITIES);
+      if (url.startsWith('/communities/c-sug/posts')) return Promise.resolve({ items: [], hasMore: false });
+      if (url.startsWith('/communities/c-sug/members')) return Promise.resolve([]);
+      if (url.startsWith('/communities/c-sug')) return Promise.resolve({ ...COMMUNITIES[1], members: [] });
+      return Promise.resolve([]);
+    });
+    useAppStore.setState({ isLoggedIn: true });
+  });
+
+  it('voltar de uma comunidade aberta em "Sugestões" mantém "Sugestões" selecionado', async () => {
+    render(<ComunidadeScreen />, { wrapper });
+    fireEvent.click(await screen.findByRole('button', { name: 'Comunidades' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'Sugestões' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'Ver comunidade Grupo privado da Mariana' }));
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Voltar' }));
+
+    expect(await screen.findByRole('button', { name: 'Sugestões' })).toHaveAttribute('aria-pressed', 'true');
+    expect(screen.getByRole('button', { name: 'Seguindo' })).toHaveAttribute('aria-pressed', 'false');
+  });
+});
+
+describe('ComunidadeScreen — pilha de telas', () => {
+  beforeEach(() => {
+    mockApiFetch.mockReset();
+    mockApiFetch.mockImplementation((url: string) => {
+      if (url.startsWith('/posts?')) return Promise.resolve({ items: API_POSTS, hasMore: false });
+      if (/^\/posts\/[^/]+\/comments/.test(url)) return Promise.resolve({ items: [], hasMore: false });
+      if (/^\/posts\/[^/?]+$/.test(url)) return Promise.resolve(API_POSTS[1]);
+      if (/^\/users\/[^/]+\/posts/.test(url)) return Promise.resolve({ items: [], hasMore: false });
+      if (/^\/users\/[^/?]+$/.test(url)) {
+        return Promise.resolve({ id: 'u2', name: 'Dra. Carla Lima', username: 'carla', _count: { posts: 0, followers: 0, following: 0 }, isFollowing: false });
+      }
+      return Promise.resolve([]);
+    });
+    useAppStore.setState({ isLoggedIn: true });
+  });
+
+  it('feed → post → perfil: voltar do perfil volta para o post, e depois para o feed', async () => {
+    render(<ComunidadeScreen />, { wrapper });
+    fireEvent.click(await screen.findByRole('button', { name: 'Ver post de Dra. Carla Lima' }));
+    expect(await screen.findByText('Publicação')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Ver perfil de Dra. Carla Lima' }));
+    // The profile is on top; the post stays mounted but hidden underneath.
+    await waitFor(() => expect(screen.getByText('Publicação')).not.toBeVisible());
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Voltar' }));
+    await waitFor(() => expect(screen.getByText('Publicação')).toBeVisible());
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Voltar' }));
+    expect(await screen.findByRole('button', { name: 'Criar post' })).toBeInTheDocument();
+    expect(screen.queryByText('Publicação')).not.toBeInTheDocument();
+  });
+});
+
+describe('ComunidadeScreen — publicar (Fase 2)', () => {
+  const MINE = {
+    ...API_POSTS[0], id: 'mine-1', content: 'Meu post novo', authorId: 'me',
+    author: { id: 'me', name: 'Fernanda' }, createdAt: new Date().toISOString(),
+    _count: { likes: 0, comments: 0, reposts: 0 },
+  };
+
+  beforeEach(() => {
+    mockApiFetch.mockReset();
+    useAppStore.setState({ isLoggedIn: true, currentUserId: 'me', motherName: 'Fernanda' });
+  });
+
+  async function publishFromComposer(text: string) {
+    render(<ComunidadeScreen />, { wrapper });
+    fireEvent.click(await screen.findByRole('button', { name: 'Criar post' }));
+    fireEvent.change(await screen.findByRole('textbox'), { target: { value: text } });
+    fireEvent.click(screen.getByRole('button', { name: /^publicar$/i }));
+  }
+
+  it('o post aparece na hora como "Publicando…" e vira o post real com realce e aviso "Publicado"', async () => {
+    let resolvePost!: (p: unknown) => void;
+    mockApiFetch.mockImplementation((url: string, opts?: RequestInit) => {
+      if (url === '/posts' && opts?.method === 'POST') return new Promise((r) => { resolvePost = r; });
+      if (url.startsWith('/posts?')) return Promise.resolve({ items: API_POSTS, hasMore: false });
+      return Promise.resolve([]);
+    });
+    await publishFromComposer('Meu post novo');
+
+    expect(await screen.findByText(/Publicando…/)).toBeInTheDocument();
+    expect(screen.getByTestId('pending-post')).toHaveTextContent('Meu post novo');
+
+    resolvePost(MINE);
+    await waitFor(() => expect(screen.queryByTestId('pending-post')).not.toBeInTheDocument());
+    expect(screen.getByTestId('just-published')).toHaveTextContent('Meu post novo');
+    expect(screen.getByText('Publicado')).toBeInTheDocument();
+  });
+
+  it('se falhar, mostra "Não publicado" com tentar de novo', async () => {
+    let attempts = 0;
+    mockApiFetch.mockImplementation((url: string, opts?: RequestInit) => {
+      if (url === '/posts' && opts?.method === 'POST') {
+        attempts++;
+        return attempts === 1 ? Promise.reject(new Error('offline')) : Promise.resolve(MINE);
+      }
+      if (url.startsWith('/posts?')) return Promise.resolve({ items: API_POSTS, hasMore: false });
+      return Promise.resolve([]);
+    });
+    await publishFromComposer('Meu post novo');
+
+    expect(await screen.findByText('Não publicado')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: /tentar de novo/i }));
+    await waitFor(() => expect(screen.queryByText('Não publicado')).not.toBeInTheDocument());
+    expect(await screen.findByTestId('just-published')).toHaveTextContent('Meu post novo');
+  });
+
+  it('avisa "novos posts" quando outra pessoa publica, e não conta os próprios', async () => {
+    const newer = new Date(Date.now() + 60_000).toISOString();
+    mockApiFetch.mockImplementation((url: string) => {
+      if (url === '/posts?limit=10') {
+        return Promise.resolve({
+          items: [
+            { id: 'n1', authorId: 'u9', createdAt: newer },
+            { id: 'n2', authorId: 'me', createdAt: newer },
+            ...API_POSTS,
+          ],
+        });
+      }
+      if (url.startsWith('/posts?')) return Promise.resolve({ items: API_POSTS, hasMore: false });
+      return Promise.resolve([]);
+    });
+    render(<ComunidadeScreen />, { wrapper });
+
+    const pill = await screen.findByRole('button', { name: /1 novo post/i });
+    fireEvent.click(pill);
+    await waitFor(() =>
+      expect(mockApiFetch.mock.calls.filter(([u]) => String(u).startsWith('/posts?cursor=')).length).toBeGreaterThan(1),
+    );
+  });
+});
