@@ -55,4 +55,11 @@
     height: calc(100vh - var(--keyboard-height, 0px));
     height: calc(100dvh - var(--keyboard-height, 0px));
   }
+  /* Pontos menores no campo de senha, sem tocar em font-size (que precisa ficar em
+     17px pro iOS não dar zoom ao focar o input — ver comentário no index.html).
+     Propriedade dedicada do motor: não depende de a fonte ter o glifo do ponto,
+     diferente de tentar reduzir via troca de fonte. */
+  .mt-password-mask {
+    -webkit-text-security: circle;
+  }
 }

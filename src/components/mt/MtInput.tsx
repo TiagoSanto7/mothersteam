@@ -24,7 +24,7 @@ export const MtInput = forwardRef<HTMLInputElement, MtInputProps>(function MtInp
           ref={ref}
           id={id}
           type={isPassword && revealed ? 'text' : type}
-          className={`w-full rounded-mt-pill bg-mt-cream border-0 py-3 px-5 text-mt-charcoal placeholder-mt-muted focus:outline-none focus:ring-2 focus:ring-mt-rose ${isPassword ? 'pr-14' : ''} ${className}`}
+          className={`w-full rounded-mt-pill bg-mt-cream border-0 py-3 px-5 text-mt-charcoal placeholder-mt-muted focus:outline-none focus:ring-2 focus:ring-mt-rose ${isPassword ? 'pr-14' : ''} ${isPassword && !revealed ? 'mt-password-mask' : ''} ${className}`}
           {...rest}
         />
         {isPassword && (
