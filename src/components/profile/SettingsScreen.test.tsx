@@ -5,7 +5,11 @@ import { SettingsScreen } from './SettingsScreen';
 import { useAppStore } from '../../store/useAppStore';
 
 const { mockApiFetch } = vi.hoisted(() => ({ mockApiFetch: vi.fn() }));
-vi.mock('../../lib/api', () => ({ apiFetch: mockApiFetch, ApiError: class extends Error {} }));
+vi.mock('../../lib/api', () => ({
+  apiFetch: mockApiFetch,
+  resolveStaticUrl: (path: string) => path,
+  ApiError: class extends Error {},
+}));
 
 function renderScreen() {
   const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
@@ -49,5 +53,19 @@ describe('SettingsScreen toggles', () => {
     expect(btn.className).toMatch(/bg-gray-200/);
     fireEvent.click(btn);
     expect(btn.className).toMatch(/bg-mt-rose/);
+  });
+});
+
+describe('SettingsScreen — seção Legal (TIA-49)', () => {
+  it('shows Termos de Uso and Política de Privacidade as external links', () => {
+    renderScreen();
+    const termos = screen.getByRole('link', { name: /termos de uso/i });
+    const privacidade = screen.getByRole('link', { name: /política de privacidade/i });
+    for (const link of [termos, privacidade]) {
+      expect(link).toHaveAttribute('target', '_blank');
+      expect(link).toHaveAttribute('rel', expect.stringContaining('noopener'));
+    }
+    expect(termos.getAttribute('href')).toBe('/termos.html');
+    expect(privacidade.getAttribute('href')).toBe('/privacidade.html');
   });
 });

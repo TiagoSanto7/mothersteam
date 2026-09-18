@@ -1,8 +1,8 @@
 import { useState } from 'react';
-import { ChevronLeft } from 'lucide-react';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAppStore } from '../../store/useAppStore';
-import { apiFetch } from '../../lib/api';
+import { apiFetch, resolveStaticUrl } from '../../lib/api';
 import type { ApiUserProfile } from '../../lib/types';
 
 // NOTE: old AdminPanel removed — use /admin route instead.
@@ -124,6 +124,30 @@ export function SettingsScreen({ onBack, onClose }: SettingsScreenProps) {
                 <span className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${(profile?.versesPublic ?? false) ? 'translate-x-[18px]' : ''}`} />
               </button>
             </div>
+          </div>
+        </section>
+
+        <section>
+          <p className="text-[10px] font-semibold text-mt-muted uppercase tracking-wide mb-2 px-1">Legal</p>
+          <div className="bg-white rounded-2xl overflow-hidden divide-y divide-gray-100">
+            <a
+              href={resolveStaticUrl('/termos.html')}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center justify-between px-4 py-3.5"
+            >
+              <p className="text-sm text-mt-charcoal">Termos de Uso</p>
+              <ChevronRight size={16} className="text-mt-muted" />
+            </a>
+            <a
+              href={resolveStaticUrl('/privacidade.html')}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center justify-between px-4 py-3.5"
+            >
+              <p className="text-sm text-mt-charcoal">Política de Privacidade</p>
+              <ChevronRight size={16} className="text-mt-muted" />
+            </a>
           </div>
         </section>
 
