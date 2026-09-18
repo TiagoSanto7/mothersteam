@@ -222,31 +222,37 @@ export default async function authRoutes(fastify: FastifyInstance) {
 
     if (!token) return reply.status(401).send({ error: 'No refresh token' })
 
+    // Só a verificação do JWT é um motivo definitivo de 401 (token
+    // criptograficamente inválido/expirado). Erros do banco daqui em diante
+    // (findUnique, $transaction) propagam pro handler padrão do Fastify (500):
+    // a rotação é atômica, então um 500 aqui significa que ela não commitou
+    // e o refresh token antigo continua válido — seguro pro cliente tentar de novo.
+    let userId: string
     try {
-      const { userId } = verifyRefreshToken(token)
-
-      const stored = await fastify.prisma.refreshToken.findUnique({ where: { token } })
-      if (!stored || stored.expiresAt < new Date()) {
-        await fastify.prisma.refreshToken.deleteMany({ where: { token } })
-        return reply.status(401).send({ error: 'Invalid refresh token' })
-      }
-
-      // Rotation: delete old, issue new
-      const newRefreshToken = signRefreshToken(userId)
-      await fastify.prisma.$transaction([
-        fastify.prisma.refreshToken.delete({ where: { token } }),
-        fastify.prisma.refreshToken.create({
-          data: { token: newRefreshToken, userId, expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000) },
-        }),
-      ])
-
-      const accessToken = signAccessToken(userId)
-      reply
-        .setCookie(REFRESH_COOKIE, newRefreshToken, COOKIE_OPTS)
-        .send({ accessToken, refreshToken: newRefreshToken })
+      ;({ userId } = verifyRefreshToken(token))
     } catch {
-      reply.status(401).send({ error: 'Invalid refresh token' })
+      return reply.status(401).send({ error: 'Invalid refresh token' })
     }
+
+    const stored = await fastify.prisma.refreshToken.findUnique({ where: { token } })
+    if (!stored || stored.expiresAt < new Date()) {
+      await fastify.prisma.refreshToken.deleteMany({ where: { token } })
+      return reply.status(401).send({ error: 'Invalid refresh token' })
+    }
+
+    // Rotation: delete old, issue new
+    const newRefreshToken = signRefreshToken(userId)
+    await fastify.prisma.$transaction([
+      fastify.prisma.refreshToken.delete({ where: { token } }),
+      fastify.prisma.refreshToken.create({
+        data: { token: newRefreshToken, userId, expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000) },
+      }),
+    ])
+
+    const accessToken = signAccessToken(userId)
+    reply
+      .setCookie(REFRESH_COOKIE, newRefreshToken, COOKIE_OPTS)
+      .send({ accessToken, refreshToken: newRefreshToken })
   })
 
   fastify.get('/me', { preHandler: [fastify.authenticate] }, async (request, reply) => {
