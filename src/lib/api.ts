@@ -14,6 +14,19 @@ export function resolveApiUrl(path: string): string {
 }
 
 /**
+ * Resolve a URL de um arquivo estático do próprio front (ex.: termos.html).
+ * Em dev/web, o path relativo já funciona (Vite serve `public/*` na raiz).
+ * Em nativo, precisa ser absoluto: um `<a target="_blank">` para um path
+ * relativo aponta pro MESMO origin do WebView do Capacitor, então ele abre
+ * como popup same-origin sem nenhum chrome — sem botão de voltar, e empilha
+ * WebViews órfãs a cada clique. Absoluto faz o Capacitor tratar como link
+ * externo e abrir no navegador do sistema (com voltar/fechar nativos).
+ */
+export function resolveStaticUrl(path: string): string {
+  return API_ORIGIN ? `${API_ORIGIN}${path}` : path
+}
+
+/**
  * Resolve URLs de mídia (imagens de post, uploads etc.) — o backend retorna
  * paths relativos tipo `/uploads/xyz.png`. Em dev o Vite proxy resolve; em
  * produção precisamos prefixar com o origin da API.

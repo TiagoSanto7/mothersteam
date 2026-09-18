@@ -1,7 +1,7 @@
 import { useState, useEffect, type FormEvent } from 'react';
 import { Eye, EyeOff, ChevronLeft, Check, X } from 'lucide-react';
 import { useMutation } from '@tanstack/react-query';
-import { apiFetch, ApiError } from '../../lib/api';
+import { apiFetch, ApiError, resolveStaticUrl } from '../../lib/api';
 import { useAppStore } from '../../store/useAppStore';
 import type { ApiUser } from '../../lib/types';
 import { shiftISODate, todayISO } from '../../lib/dateUtils';
@@ -441,9 +441,9 @@ export function RegisterScreen({ onBack }: RegisterScreenProps) {
               </div>
               <p className="text-xs text-mt-muted leading-relaxed">
                 Li e aceito os{' '}
-                <a href="/termos.html" target="_blank" className="text-mt-rose underline underline-offset-2">Termos de Uso</a>
+                <a href={resolveStaticUrl('/termos.html')} target="_blank" rel="noopener noreferrer" className="text-mt-rose underline underline-offset-2">Termos de Uso</a>
                 {' '}e a{' '}
-                <a href="/privacidade.html" target="_blank" className="text-mt-rose underline underline-offset-2">Política de Privacidade</a>
+                <a href={resolveStaticUrl('/privacidade.html')} target="_blank" rel="noopener noreferrer" className="text-mt-rose underline underline-offset-2">Política de Privacidade</a>
                 {' '}(LGPD)
               </p>
             </label>

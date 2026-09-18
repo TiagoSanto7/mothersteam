@@ -7,6 +7,7 @@ import { useAppStore } from '../../store/useAppStore';
 const { mockApiFetch } = vi.hoisted(() => ({ mockApiFetch: vi.fn() }));
 vi.mock('../../lib/api', () => ({
   apiFetch: mockApiFetch,
+  resolveStaticUrl: (path: string) => path,
   ApiError: class extends Error {
     constructor(public status: number, public body: unknown) { super(`API ${status}`); }
   },
@@ -152,6 +153,23 @@ describe('RegisterScreen', () => {
     expect(submit).toBeDisabled();
     fireEvent.click(screen.getByLabelText(/li e aceito os termos/i));
     expect(submit).not.toBeDisabled();
+  });
+
+  it('terms/privacy links on step 5 open externally, not a same-origin popup (TIA-49)', () => {
+    wrap(<RegisterScreen onBack={vi.fn()} />);
+    fillStep1();
+    fillStep2();
+    skipStep3();
+    fillStep4();
+
+    const termos = screen.getByRole('link', { name: /termos de uso/i });
+    const privacidade = screen.getByRole('link', { name: /política de privacidade/i });
+    for (const link of [termos, privacidade]) {
+      expect(link).toHaveAttribute('target', '_blank');
+      expect(link).toHaveAttribute('rel', expect.stringContaining('noopener'));
+    }
+    expect(termos.getAttribute('href')).toBe('/termos.html');
+    expect(privacidade.getAttribute('href')).toBe('/privacidade.html');
   });
 
   it('step 4 "Continuar" is disabled until both mood and support are chosen', () => {
