@@ -59,8 +59,8 @@ git checkout main && git pull origin main
 cd deploy
 docker compose -f docker-compose.prod.yml up -d --build api
 
-# Se o schema do banco mudou (Prisma)
-docker compose -f docker-compose.prod.yml exec api npx prisma db push
+# Se o schema do banco mudou (Prisma) — gere a migration local antes: npx prisma migrate dev --name <descrição>
+docker compose -f docker-compose.prod.yml exec api npx prisma migrate deploy
 
 # Health check
 curl http://127.0.0.1:3001/health   # dentro do VPS
@@ -144,7 +144,7 @@ Veja seção 5 para o plano de integração com Gemini.
 | Nome do banco | `mothers_team` |
 | ORM | Prisma v5 |
 | Schema | `server/prisma/schema.prisma` |
-| Migrations | Via `npx prisma db push` (não usa migrate, usa push direto) |
+| Migrations | Via `npx prisma migrate deploy` em produção (histórico real desde 2026-09-18 — baseline das migrations antigas feito na TIA-39). Gere a migration local com `npx prisma migrate dev --name <descrição>` e commite o arquivo. **Não usar `db push`** — não fica registrado no histórico e desincroniza o banco. |
 
 **Modelos principais:**
 - `User`, `Profile` — usuários e perfis (13 arquétipos de mãe)
