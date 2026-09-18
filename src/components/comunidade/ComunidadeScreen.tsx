@@ -6,7 +6,7 @@ import { useInfiniteQuery, useQueryClient } from '@tanstack/react-query';
 import { usePullToRefresh } from '../../lib/usePullToRefresh';
 import { useAppStore } from '../../store/useAppStore';
 import { apiFetch } from '../../lib/api';
-import { useIntersection } from '../../lib/useIntersection';
+import { PREFETCH_MARGIN, useIntersection } from '../../lib/useIntersection';
 import type { ApiPost } from '../../lib/types';
 import { apiPostToCommunityPost } from '../../lib/helpers';
 import { CreatePostScreen } from './CreatePostScreen';
@@ -31,9 +31,8 @@ export function ComunidadeScreen() {
   const consumeQuickAction = useAppStore((s) => s.consumeQuickAction);
 
   const queryClient = useQueryClient();
-  const sentinelRef = useRef<HTMLDivElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
-  const isAtBottom = useIntersection(sentinelRef);
+  const [sentinelRef, isAtBottom] = useIntersection(PREFETCH_MARGIN);
   const { isPulling, pullY, isLoading: isPullLoading } = usePullToRefresh(scrollRef, async () => {
     await queryClient.invalidateQueries({ queryKey: ['posts'] });
   });

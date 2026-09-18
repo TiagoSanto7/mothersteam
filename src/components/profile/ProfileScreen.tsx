@@ -13,7 +13,7 @@ import { FollowListScreen } from './FollowListScreen';
 import { PostCard } from '../comunidade/PostCard';
 import { apiFetch, resolveMediaUrl } from '../../lib/api';
 import { apiPostToCommunityPost } from '../../lib/helpers';
-import { useIntersection } from '../../lib/useIntersection';
+import { PREFETCH_MARGIN, useIntersection } from '../../lib/useIntersection';
 import type { ApiPost, ApiUserProfile } from '../../lib/types';
 import type { CommunityPost } from '../../types';
 import { SavedVersesScreen } from '../home/SavedVersesScreen';
@@ -44,9 +44,8 @@ export function ProfileScreen({ onClose, userId, onOpenProfile, onMessage, isTab
   const [showOtherVerses, setShowOtherVerses] = useState(false);
   const [notifying, setNotifying] = useState(false);
 
-  const sentinelRef = useRef<HTMLDivElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
-  const isAtBottom = useIntersection(sentinelRef);
+  const [sentinelRef, isAtBottom] = useIntersection(PREFETCH_MARGIN);
   const { isPulling, pullY, isLoading } = usePullToRefresh(scrollRef, async () => {
     await queryClient.invalidateQueries({ queryKey: ['user', effectiveUserId] });
     await queryClient.invalidateQueries({ queryKey: ['userPosts', effectiveUserId] });

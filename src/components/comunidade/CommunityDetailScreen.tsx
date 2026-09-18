@@ -6,7 +6,7 @@ import { resizeImage } from '../../lib/imageUtils';
 import { useAppStore } from '../../store/useAppStore';
 import type { ApiCommunityDetail, ApiCommunityMember, ApiPost } from '../../lib/types';
 import { apiPostToCommunityPost } from '../../lib/helpers';
-import { useIntersection } from '../../lib/useIntersection';
+import { PREFETCH_MARGIN, useIntersection } from '../../lib/useIntersection';
 import { UserAvatar } from '../shared/UserAvatar';
 import { PostDetailScreen } from '../post/PostDetailScreen';
 import { CreatePostScreen } from './CreatePostScreen';
@@ -171,8 +171,7 @@ export function CommunityDetailScreen({ communityId, onBack, onOpenProfile }: Co
   const coverInputRef  = useRef<HTMLInputElement>(null);
   const avatarInputRef = useRef<HTMLInputElement>(null);
 
-  const sentinelRef = useRef<HTMLDivElement>(null);
-  const isAtBottom = useIntersection(sentinelRef);
+  const [sentinelRef, isAtBottom] = useIntersection(PREFETCH_MARGIN);
 
   const { data: community } = useQuery({
     queryKey: ['community', communityId],
