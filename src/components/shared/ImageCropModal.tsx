@@ -6,9 +6,10 @@ interface Props {
   aspectRatio: number
   onConfirm: (blob: Blob) => void
   onCancel: () => void
+  onError?: () => void
 }
 
-export function ImageCropModal({ imageSrc, aspectRatio, onConfirm, onCancel }: Props) {
+export function ImageCropModal({ imageSrc, aspectRatio, onConfirm, onCancel, onError }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const imgRef = useRef<HTMLImageElement | null>(null)
   const [offset, setOffset] = useState({ x: 0, y: 0 })
@@ -16,12 +17,15 @@ export function ImageCropModal({ imageSrc, aspectRatio, onConfirm, onCancel }: P
   const dragStart = useRef({ x: 0, y: 0, ox: 0, oy: 0 })
   const [scale, setScale] = useState(1)
   const [loaded, setLoaded] = useState(false)
+  const [failed, setFailed] = useState(false)
 
   const PREVIEW = 280
   const cropW = PREVIEW
   const cropH = Math.round(PREVIEW / aspectRatio)
 
   useEffect(() => {
+    setLoaded(false)
+    setFailed(false)
     const img = new Image()
     img.src = imageSrc
     img.onload = () => {
@@ -29,6 +33,11 @@ export function ImageCropModal({ imageSrc, aspectRatio, onConfirm, onCancel }: P
       setOffset({ x: 0, y: 0 })
       setLoaded(true)
     }
+    img.onerror = () => {
+      setFailed(true)
+      onError?.()
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [imageSrc])
 
   const draw = useCallback(() => {
@@ -61,16 +70,20 @@ export function ImageCropModal({ imageSrc, aspectRatio, onConfirm, onCancel }: P
   function handlePointerUp() { setDragging(false) }
 
   function handleConfirm() {
+    if (!loaded) return
     const canvas = canvasRef.current
-    if (!canvas) { onConfirm(new Blob()); return }
+    if (!canvas) { onError?.(); return }
     canvas.toBlob((blob) => {
-      onConfirm(blob ?? new Blob())
+      if (!blob) { onError?.(); return }
+      onConfirm(blob)
     }, 'image/jpeg', 0.9)
   }
 
   return (
     <div className="fixed inset-0 z-50 bg-black/90 flex flex-col items-center justify-center gap-6 p-6">
-      <p className="text-white text-sm font-semibold">Arraste para reposicionar</p>
+      <p className="text-white text-sm font-semibold">
+        {failed ? 'Não foi possível abrir essa imagem' : loaded ? 'Arraste para reposicionar' : 'Carregando imagem…'}
+      </p>
 
       <div
         className="relative overflow-hidden rounded-2xl border-2 border-mt-rose cursor-move"
@@ -115,7 +128,8 @@ export function ImageCropModal({ imageSrc, aspectRatio, onConfirm, onCancel }: P
         <button
           onClick={handleConfirm}
           aria-label="Confirmar"
-          className="flex-1 py-3 rounded-2xl bg-mt-rose text-white font-semibold text-sm"
+          disabled={!loaded}
+          className="flex-1 py-3 rounded-2xl bg-mt-rose text-white font-semibold text-sm disabled:opacity-40 disabled:cursor-wait"
         >
           Confirmar
         </button>

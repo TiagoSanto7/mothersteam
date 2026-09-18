@@ -14,6 +14,36 @@ interface EditProfileScreenProps {
   onBack: () => void;
 }
 
+// Checagem só pra não jogar um arquivo absurdo no decode <img> do crop modal —
+// não é o limite real de upload (esse continua sendo os 5MB do servidor,
+// que nunca chegam a ser testados na prática porque o crop já entrega ~280x280).
+const MAX_PHOTO_PICK_BYTES = 20 * 1024 * 1024;
+
+/** Traduz o erro de cada etapa do fluxo de foto pra uma mensagem curta e específica. */
+function describePhotoError(stage: 'resize' | 'upload' | 'save', err: unknown): string {
+  if (err instanceof TypeError) {
+    // fetch() lança TypeError puro pra falha de rede (sem conexão, DNS, CORS) —
+    // não tem status HTTP pra inspecionar nesse caso.
+    return 'Sem conexão com a internet. Verifique sua rede e tente de novo.';
+  }
+  if (stage === 'upload' && err instanceof Error) {
+    const match = err.message.match(/^Upload failed: ([\s\S]*)$/);
+    if (match) {
+      try {
+        const body = JSON.parse(match[1]) as { error?: string };
+        if (body.error === 'File too large') return 'Essa foto é muito grande. Tenta uma imagem menor.';
+        if (body.error === 'Unsupported file type') return 'Esse formato de imagem não é aceito.';
+        if (body.error) return 'Não foi possível processar essa imagem. Tenta outra foto.';
+      } catch {
+        // corpo não era JSON — cai no genérico de upload abaixo
+      }
+    }
+  }
+  if (stage === 'resize') return 'Não foi possível processar essa imagem. Tenta outra foto.';
+  if (stage === 'save') return 'A foto foi enviada, mas não deu pra salvar no perfil. Tente novamente.';
+  return 'Não foi possível enviar a foto. Tente novamente.';
+}
+
 export function EditProfileScreen({ onBack }: EditProfileScreenProps) {
   const currentUserId = useAppStore((s) => s.currentUserId);
   const motherName = useAppStore((s) => s.motherName);
@@ -78,10 +108,25 @@ export function EditProfileScreen({ onBack }: EditProfileScreenProps) {
 
   function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
+    if (e.target) e.target.value = '';
     if (!file) return;
+    if (!file.type.startsWith('image/')) {
+      setError('Esse arquivo não é uma imagem.');
+      return;
+    }
+    if (file.size > MAX_PHOTO_PICK_BYTES) {
+      setError('Essa foto é muito grande (máx. 20MB). Tenta outra ou tire uma foto nova.');
+      return;
+    }
+    setError(null);
     const url = URL.createObjectURL(file);
     setCropSrc(url);
-    if (e.target) e.target.value = '';
+  }
+
+  function handleCropError() {
+    if (cropSrc) URL.revokeObjectURL(cropSrc);
+    setCropSrc(null);
+    setError('Não foi possível abrir essa imagem. Tenta outra foto.');
   }
 
   async function handleCropConfirm(blob: Blob) {
@@ -89,23 +134,43 @@ export function EditProfileScreen({ onBack }: EditProfileScreenProps) {
     setCropSrc(null);
     setError(null);
     setIsUploading(true);
+
+    const file = new File([blob], 'avatar.jpg', { type: 'image/jpeg' });
+
+    let resized: File;
     try {
-      const file = new File([blob], 'avatar.jpg', { type: 'image/jpeg' });
-      const resized = await resizeImage(file, 400, 400, 0.9);
-      const url = await uploadImage(resized, accessToken);
+      resized = await resizeImage(file, 400, 400, 0.9);
+    } catch (err) {
+      setError(describePhotoError('resize', err));
+      setIsUploading(false);
+      return;
+    }
+
+    let url: string;
+    try {
+      url = await uploadImage(resized, accessToken);
+    } catch (err) {
+      setError(describePhotoError('upload', err));
+      setIsUploading(false);
+      return;
+    }
+
+    try {
       await apiFetch<ApiUser>('/users/me', {
         method: 'PATCH',
         body: JSON.stringify({ avatarUrl: url }),
       });
-      if (currentUserId) {
-        patchUserProfileInCaches(queryClient, currentUserId, { avatarUrl: url });
-        queryClient.invalidateQueries({ queryKey: ['user', currentUserId] });
-      }
-    } catch {
-      setError('Não foi possível enviar a foto. Tente novamente.');
-    } finally {
+    } catch (err) {
+      setError(describePhotoError('save', err));
       setIsUploading(false);
+      return;
     }
+
+    if (currentUserId) {
+      patchUserProfileInCaches(queryClient, currentUserId, { avatarUrl: url });
+      queryClient.invalidateQueries({ queryKey: ['user', currentUserId] });
+    }
+    setIsUploading(false);
   }
 
   return (
@@ -158,6 +223,7 @@ export function EditProfileScreen({ onBack }: EditProfileScreenProps) {
             ref={fileInputRef}
             type="file"
             accept="image/*"
+            aria-label="Selecionar foto da galeria"
             className="hidden"
             onChange={handleFileChange}
           />
@@ -166,6 +232,7 @@ export function EditProfileScreen({ onBack }: EditProfileScreenProps) {
             type="file"
             accept="image/*"
             capture="environment"
+            aria-label="Tirar foto"
             className="hidden"
             onChange={handleFileChange}
           />
@@ -232,6 +299,7 @@ export function EditProfileScreen({ onBack }: EditProfileScreenProps) {
           aspectRatio={1}
           onConfirm={handleCropConfirm}
           onCancel={() => { URL.revokeObjectURL(cropSrc!); setCropSrc(null); }}
+          onError={handleCropError}
         />
       )}
     </div>
