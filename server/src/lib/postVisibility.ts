@@ -60,7 +60,8 @@ export function afterFeedCursor(cursor: string | undefined): Prisma.PostWhereInp
   if (sep <= 0) return null
   const createdAt = new Date(cursor.slice(0, sep))
   const id = cursor.slice(sep + 1)
-  if (Number.isNaN(createdAt.getTime()) || !id) return null
+  // An empty id is allowed: it means "strictly before createdAt" (used as a time boundary).
+  if (Number.isNaN(createdAt.getTime())) return null
   return {
     OR: [{ createdAt: { lt: createdAt } }, { createdAt, id: { lt: id } }],
   }

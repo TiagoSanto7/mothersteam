@@ -12,7 +12,8 @@ vi.mock('./lib/useSSE', () => ({ useSSE: vi.fn() }));
 function makeWrapper() {
   return function Wrapper({ children }: { children: React.ReactNode }) {
     const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
-    qc.setQueryData(['posts'], {
+    // The feed caches one list per mode; the Comunidade tab opens on "Para você".
+    qc.setQueryData(['posts', 'foryou'], {
       pages: [{ items: [] as ApiPost[], hasMore: false }],
       pageParams: [''],
     });

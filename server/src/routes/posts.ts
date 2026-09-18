@@ -1,4 +1,5 @@
 import type { FastifyInstance } from 'fastify'
+import type { Prisma } from '@prisma/client'
 import { z } from 'zod'
 import { emitNotification } from '../sse'
 import { sendPush } from '../plugins/fcm'
@@ -9,6 +10,7 @@ import {
   findVisiblePost,
   visiblePostWhere,
 } from '../lib/postVisibility'
+import { RANKING, afterRankedCursor, decodeForYouCursor, encodeForYouCursor, phaseCategoriesFor, rankWithScores } from '../lib/feedRanking'
 
 const createSchema = z.object({
   content: z.string().min(1),
@@ -39,60 +41,146 @@ async function findCommentInPost(
 export default async function postsRoutes(fastify: FastifyInstance) {
   fastify.addHook('preHandler', fastify.authenticate)
 
-  // Feed: one reverse-chronological timeline of every post the viewer may see — her own,
-  // people she follows, her communities and public posts — paged by a stable (createdAt, id)
-  // cursor. Posts outside her network are flagged isSuggestion instead of queried apart.
-  fastify.get<{ Querystring: { cursor?: string; limit?: string } }>(
+  // Feed. Three modes, all limited to posts the viewer may see (postVisibility):
+  // - no mode (legacy, installed app builds): every visible post, newest first;
+  // - mode=following ("Seguindo"): only her network — own posts, people she follows, her communities;
+  // - mode=foryou ("Para você"): recent posts ranked by feedRanking, then older ones chronologically.
+  // Chronological pages use a stable (createdAt, id) cursor; posts outside her network are
+  // flagged isSuggestion.
+  fastify.get<{ Querystring: { cursor?: string; limit?: string; mode?: string } }>(
     '/',
     async (request, reply) => {
       const limit = Math.min(Math.max(Number(request.query.limit) || 20, 1), 50)
+      const mode = request.query.mode === 'following' || request.query.mode === 'foryou' ? request.query.mode : null
+      const viewerId = request.userId
 
-      const [following, memberships] = await Promise.all([
-        fastify.prisma.follow.findMany({
-          where: { followerId: request.userId },
-          select: { followingId: true },
-        }),
-        fastify.prisma.communityMember.findMany({
-          where: { userId: request.userId },
-          select: { communityId: true },
-        }),
+      const [following, memberships, viewer] = await Promise.all([
+        fastify.prisma.follow.findMany({ where: { followerId: viewerId }, select: { followingId: true } }),
+        fastify.prisma.communityMember.findMany({ where: { userId: viewerId }, select: { communityId: true } }),
+        mode === 'foryou'
+          ? fastify.prisma.user.findUnique({ where: { id: viewerId }, select: { pregnancyStage: true } })
+          : Promise.resolve(null),
       ])
       const followingIds = new Set(following.map((f) => f.followingId))
       const communityIds = new Set(memberships.map((m) => m.communityId))
 
-      // Older app builds page with a bare post id; translate it to the (createdAt, id) cursor.
+      const include = {
+        author: { select: { id: true, name: true, username: true, archetypeKey: true, avatarUrl: true, role: true } },
+        community: { select: { name: true } },
+        _count: { select: { likes: true, comments: true, reposts: true } },
+        likes: { where: { userId: viewerId }, select: { userId: true } },
+        repostFrom: { include: { author: { select: { id: true, name: true, username: true, archetypeKey: true, avatarUrl: true, role: true } } } },
+      } as const
+      type Row = Prisma.PostGetPayload<{ include: typeof include }>
+      const toItem = ({ likes, community, ...post }: Row) => ({
+        ...post,
+        communityName: community?.name ?? null,
+        likedByCurrentUser: likes.length > 0,
+        isSuggestion:
+          post.authorId !== viewerId &&
+          !followingIds.has(post.authorId) &&
+          !(post.communityId !== null && communityIds.has(post.communityId)),
+      })
+
+      const networkWhere: Prisma.PostWhereInput = {
+        OR: [
+          { authorId: viewerId },
+          ...(followingIds.size > 0 ? [{ authorId: { in: [...followingIds] } }] : []),
+          ...(communityIds.size > 0 ? [{ communityId: { in: [...communityIds] } }] : []),
+        ],
+      }
+
+      /** One chronological page below `cursor` (a (createdAt, id) cursor), within `scope`. */
+      async function chronological(scope: Prisma.PostWhereInput[], cursor: string | undefined) {
+        const after = afterFeedCursor(cursor)
+        const rows = await fastify.prisma.post.findMany({
+          where: { AND: [visiblePostWhere(viewerId), ...scope, ...(after ? [after] : [])] },
+          orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
+          take: limit + 1,
+          include,
+        })
+        const page = rows.slice(0, limit)
+        const last = page[page.length - 1]
+        return { page, hasMore: rows.length > limit, next: last ? encodeFeedCursor(last) : undefined }
+      }
+
+      if (mode === 'foryou') {
+        const decoded = decodeForYouCursor(request.query.cursor)
+        if (decoded?.kind === 'older') {
+          const { page, hasMore, next } = await chronological([], decoded.before)
+          return reply.send({
+            items: page.map(toItem),
+            hasMore,
+            nextCursor: hasMore && next ? encodeForYouCursor({ kind: 'older', before: next }) : undefined,
+          })
+        }
+
+        // Ranked window: every page re-ranks the same frozen snapshot, so the order holds.
+        const asOf = decoded?.asOf ?? new Date()
+        const windowStart = new Date(asOf.getTime() - RANKING.WINDOW_DAYS * 86_400_000)
+        const candidates = await fastify.prisma.post.findMany({
+          where: { AND: [visiblePostWhere(viewerId), { createdAt: { gte: windowStart, lte: asOf } }] },
+          orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
+          take: RANKING.MAX_CANDIDATES,
+          select: {
+            id: true, authorId: true, communityId: true, category: true, createdAt: true,
+            _count: { select: { likes: true, comments: true, reposts: true } },
+          },
+        })
+        const allRanked = rankWithScores(
+          candidates,
+          { viewerId, followingIds, communityIds, phaseCategories: phaseCategoriesFor(viewer?.pregnancyStage) },
+          asOf,
+        )
+        const remaining = decoded ? afterRankedCursor(allRanked, decoded) : allRanked
+        const pageRanked = remaining.slice(0, limit)
+        const pageIds = pageRanked.map((r) => r.post.id)
+        const rows = pageIds.length ? await fastify.prisma.post.findMany({ where: { id: { in: pageIds } }, include }) : []
+        const byId = new Map(rows.map((r) => [r.id, r]))
+        const items = pageIds.map((id) => byId.get(id)).filter((r): r is Row => r !== undefined).map(toItem)
+
+        const lastRanked = pageRanked[pageRanked.length - 1]
+        if (remaining.length > limit && lastRanked) {
+          return reply.send({
+            items,
+            hasMore: true,
+            nextCursor: encodeForYouCursor({
+              kind: 'ranked',
+              asOf,
+              score: lastRanked.score,
+              createdAt: lastRanked.post.createdAt.getTime(),
+              id: lastRanked.post.id,
+            }),
+          })
+        }
+        // Window exhausted: continue with everything older than the ranked candidates.
+        const oldest = candidates[candidates.length - 1]
+        const boundary =
+          candidates.length >= RANKING.MAX_CANDIDATES && oldest
+            ? encodeFeedCursor(oldest)
+            : encodeFeedCursor({ createdAt: windowStart, id: '' })
+        const olderWhere = afterFeedCursor(boundary)
+        const olderExists = olderWhere
+          ? await fastify.prisma.post.findFirst({
+              where: { AND: [visiblePostWhere(viewerId), olderWhere] },
+              select: { id: true },
+            })
+          : null
+        return reply.send({
+          items,
+          hasMore: olderExists !== null,
+          nextCursor: olderExists ? encodeForYouCursor({ kind: 'older', before: boundary }) : undefined,
+        })
+      }
+
+      // Legacy / "Seguindo": chronological. Older app builds page with a bare post id; translate it.
       let cursor = request.query.cursor
       if (cursor && !cursor.includes('_')) {
         const anchor = await fastify.prisma.post.findUnique({ where: { id: cursor }, select: { id: true, createdAt: true } })
         cursor = anchor ? encodeFeedCursor(anchor) : undefined
       }
-      const after = afterFeedCursor(cursor)
-      const rows = await fastify.prisma.post.findMany({
-        where: { AND: [visiblePostWhere(request.userId), ...(after ? [after] : [])] },
-        orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
-        take: limit + 1,
-        include: {
-          author: { select: { id: true, name: true, username: true, archetypeKey: true, avatarUrl: true, role: true } },
-          community: { select: { name: true } },
-          _count: { select: { likes: true, comments: true, reposts: true } },
-          likes: { where: { userId: request.userId }, select: { userId: true } },
-          repostFrom: { include: { author: { select: { id: true, name: true, username: true, archetypeKey: true, avatarUrl: true, role: true } } } },
-        },
-      })
-
-      const hasMore = rows.length > limit
-      const page = rows.slice(0, limit)
-      const items = page.map(({ likes, community, ...post }) => ({
-        ...post,
-        communityName: community?.name ?? null,
-        likedByCurrentUser: likes.length > 0,
-        isSuggestion:
-          post.authorId !== request.userId &&
-          !followingIds.has(post.authorId) &&
-          !(post.communityId !== null && communityIds.has(post.communityId)),
-      }))
-      const last = page[page.length - 1]
-      reply.send({ items, hasMore, nextCursor: hasMore && last ? encodeFeedCursor(last) : undefined })
+      const { page, hasMore, next } = await chronological(mode === 'following' ? [networkWhere] : [], cursor)
+      reply.send({ items: page.map(toItem), hasMore, nextCursor: hasMore ? next : undefined })
     }
   )
 

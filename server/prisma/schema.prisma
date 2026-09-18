@@ -141,6 +141,12 @@ model Post {
   likes        PostLike[]
   comments     Comment[]
   createdAt    DateTime   @default(now())
+
+  // Feed queries order and filter by date (TIA-44): timeline/cursor/"Para você" window,
+  // profile and "Seguindo" (by author), community screen and "Seguindo" (by community).
+  @@index([createdAt, id])
+  @@index([authorId, createdAt])
+  @@index([communityId, createdAt])
 }
 
 model PostLike {

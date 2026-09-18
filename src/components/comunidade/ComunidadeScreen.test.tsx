@@ -457,7 +457,51 @@ describe('ComunidadeScreen — publicar (Fase 2)', () => {
     const pill = await screen.findByRole('button', { name: /1 novo post/i });
     fireEvent.click(pill);
     await waitFor(() =>
-      expect(mockApiFetch.mock.calls.filter(([u]) => String(u).startsWith('/posts?cursor=')).length).toBeGreaterThan(1),
+      expect(mockApiFetch.mock.calls.filter(([u]) => String(u).includes('cursor=')).length).toBeGreaterThan(1),
     );
+  });
+});
+
+describe('ComunidadeScreen — Para você | Seguindo (TIA-44)', () => {
+  beforeEach(() => {
+    mockApiFetch.mockReset();
+    useAppStore.setState({ isLoggedIn: true, currentUserId: 'me' });
+  });
+
+  it('abre em "Para você" pedindo o feed ranqueado', async () => {
+    mockApiFetch.mockResolvedValue({ items: API_POSTS, hasMore: false });
+    render(<ComunidadeScreen />, { wrapper });
+    expect(await screen.findByRole('radio', { name: /para você/i })).toHaveAttribute('aria-checked', 'true');
+    expect(mockApiFetch.mock.calls.some(([u]) => String(u).startsWith('/posts?mode=foryou'))).toBe(true);
+  });
+
+  it('trocar para "Seguindo" pede o feed da rede e mantém o seletor na tela enquanto carrega', async () => {
+    let resolveFollowing!: (v: unknown) => void;
+    mockApiFetch.mockImplementation((url: string) => {
+      if (url.startsWith('/posts?mode=following&cursor=')) return new Promise((r) => { resolveFollowing = r; });
+      return Promise.resolve({ items: API_POSTS, hasMore: false });
+    });
+    render(<ComunidadeScreen />, { wrapper });
+    fireEvent.click(await screen.findByRole('radio', { name: /seguindo/i }));
+
+    // Still loading: selector stays, no full-screen spinner swap.
+    expect(screen.getByRole('radio', { name: /seguindo/i })).toHaveAttribute('aria-checked', 'true');
+    expect(screen.getByRole('button', { name: 'Criar post' })).toBeInTheDocument();
+
+    resolveFollowing({ items: [API_POSTS[1]], hasMore: false });
+    expect(await screen.findByText('Post de amamentação')).toBeInTheDocument();
+    expect(screen.queryByText('Post de gestação')).not.toBeInTheDocument();
+  });
+
+  it('"Seguindo" vazio convida a seguir e oferece voltar para "Para você"', async () => {
+    mockApiFetch.mockImplementation((url: string) =>
+      Promise.resolve(url.startsWith('/posts?mode=following') ? { items: [], hasMore: false } : { items: API_POSTS, hasMore: false }),
+    );
+    render(<ComunidadeScreen />, { wrapper });
+    fireEvent.click(await screen.findByRole('radio', { name: /seguindo/i }));
+
+    expect(await screen.findByText(/Seguindo" ainda está vazio/)).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: /ver "para você"/i }));
+    expect(screen.getByRole('radio', { name: /para você/i })).toHaveAttribute('aria-checked', 'true');
   });
 });
