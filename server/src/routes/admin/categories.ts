@@ -11,7 +11,7 @@ const categorySchema = z.object({
 })
 
 export default async function adminCategoriesRoutes(fastify: FastifyInstance) {
-  await fastify.register(requireRole('ADMIN', 'EDITOR'))
+  await fastify.register(requireRole('ADMIN', 'EDITOR', 'OFFICIAL'))
 
   // List all categories
   fastify.get('/', async (_request, reply) => {

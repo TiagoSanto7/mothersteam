@@ -41,7 +41,7 @@ const listQuerySchema = z.object({
 })
 
 export default async function adminProductsRoutes(fastify: FastifyInstance) {
-  await fastify.register(requireRole('ADMIN', 'EDITOR'))
+  await fastify.register(requireRole('ADMIN', 'EDITOR', 'OFFICIAL'))
 
   // List products
   fastify.get<{ Querystring: z.infer<typeof listQuerySchema> }>('/', async (request, reply) => {

@@ -2,7 +2,7 @@ import type { FastifyInstance } from 'fastify'
 import { requireRole } from '../../plugins/requireRole'
 
 export default async function adminAnalyticsRoutes(fastify: FastifyInstance) {
-  await fastify.register(requireRole('ADMIN', 'EDITOR'))
+  await fastify.register(requireRole('ADMIN', 'EDITOR', 'OFFICIAL'))
 
   fastify.get<{ Querystring: { days?: string } }>('/clicks', async (request, reply) => {
     const days = Math.min(Number(request.query.days ?? 30), 90)
