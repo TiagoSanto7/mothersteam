@@ -13,6 +13,22 @@ import type { ApiMessage, ApiPost, PaginatedResult } from '../../lib/types';
 import type { Chat } from '../../types';
 
 // ---------------------------------------------------------------------------
+// Trecho exibido ao marcar uma mensagem pra responder
+// ---------------------------------------------------------------------------
+/**
+ * `content` de mensagem só-de-áudio/foto/post chega como string vazia (não
+ * `undefined`/`null`) — o backend preenche com `.default('')`. `??` não cobre esse
+ * caso (só cai no fallback pra nullish), por isso o teste é de truthiness aqui.
+ */
+export function replyExcerptFor(msg: Pick<ApiMessage, 'content' | 'audioUrl' | 'imageUrl' | 'sharedPostId'>): string {
+  if (msg.content) return msg.content.slice(0, 80);
+  if (msg.audioUrl) return 'Áudio';
+  if (msg.imageUrl) return 'Foto';
+  if (msg.sharedPostId) return 'Post compartilhado';
+  return '';
+}
+
+// ---------------------------------------------------------------------------
 // Audio message player component
 // ---------------------------------------------------------------------------
 interface AudioPlayerProps {
@@ -502,7 +518,7 @@ export function ChatScreen({ chat, onBack, onOpenProfile }: ChatScreenProps) {
         setReplyingTo({
           id: msg.id,
           senderName: msg.senderId === currentUserId ? 'você' : (msg.sender?.name ?? 'Contato'),
-          excerpt: msg.content?.slice(0, 80) ?? (msg.audioUrl ? 'Áudio' : msg.imageUrl ? 'Foto' : ''),
+          excerpt: replyExcerptFor(msg),
         });
         if (typeof navigator !== 'undefined' && navigator.vibrate) navigator.vibrate(15);
       }
@@ -736,7 +752,7 @@ export function ChatScreen({ chat, onBack, onOpenProfile }: ChatScreenProps) {
                   setReplyingTo({
                     id: msg.id,
                     senderName: msg.senderId === currentUserId ? 'você' : (msg.sender?.name ?? 'Contato'),
-                    excerpt: msg.content?.slice(0, 80) ?? (msg.audioUrl ? 'Áudio' : msg.imageUrl ? 'Foto' : ''),
+                    excerpt: replyExcerptFor(msg),
                   });
                 }
                 setMessageMenu(null);

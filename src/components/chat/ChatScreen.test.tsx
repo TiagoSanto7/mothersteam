@@ -1,7 +1,7 @@
 import { render, screen, fireEvent, waitFor, within } from '@testing-library/react';
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { ChatScreen } from './ChatScreen';
+import { ChatScreen, replyExcerptFor } from './ChatScreen';
 import { useAppStore } from '../../store/useAppStore';
 import type { Chat } from '../../types';
 import type { ApiMessage, ApiPost, PaginatedResult } from '../../lib/types';
@@ -64,6 +64,33 @@ beforeEach(() => {
     isLoggedIn: true,
   });
   mockApiFetch.mockResolvedValue(MOCK_POST);
+});
+
+describe('replyExcerptFor', () => {
+  it('mostra o texto da mensagem quando ela tem conteúdo', () => {
+    expect(replyExcerptFor({ content: 'Oi, tudo bem?', audioUrl: null, imageUrl: null, sharedPostId: null })).toBe('Oi, tudo bem?');
+  });
+
+  it('mostra "Áudio" para mensagem só de áudio (content chega como string vazia, não null)', () => {
+    expect(replyExcerptFor({ content: '', audioUrl: '/uploads/a.m4a', imageUrl: null, sharedPostId: null })).toBe('Áudio');
+  });
+
+  it('mostra "Foto" para mensagem só de imagem', () => {
+    expect(replyExcerptFor({ content: '', audioUrl: null, imageUrl: '/uploads/f.jpg', sharedPostId: null })).toBe('Foto');
+  });
+
+  it('mostra "Post compartilhado" para post sem comentário', () => {
+    expect(replyExcerptFor({ content: '', audioUrl: null, imageUrl: null, sharedPostId: 'p1' })).toBe('Post compartilhado');
+  });
+
+  it('prioriza o texto quando um post compartilhado tem comentário', () => {
+    expect(replyExcerptFor({ content: 'Olha isso!', audioUrl: null, imageUrl: null, sharedPostId: 'p1' })).toBe('Olha isso!');
+  });
+
+  it('corta em 80 caracteres', () => {
+    const long = 'a'.repeat(100);
+    expect(replyExcerptFor({ content: long, audioUrl: null, imageUrl: null, sharedPostId: null })).toHaveLength(80);
+  });
 });
 
 describe('ChatScreen', () => {
