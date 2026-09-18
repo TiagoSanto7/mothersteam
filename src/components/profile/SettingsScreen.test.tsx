@@ -7,7 +7,6 @@ import { useAppStore } from '../../store/useAppStore';
 const { mockApiFetch } = vi.hoisted(() => ({ mockApiFetch: vi.fn() }));
 vi.mock('../../lib/api', () => ({
   apiFetch: mockApiFetch,
-  resolveStaticUrl: (path: string) => path,
   ApiError: class extends Error {},
 }));
 
@@ -57,15 +56,25 @@ describe('SettingsScreen toggles', () => {
 });
 
 describe('SettingsScreen — seção Legal (TIA-49)', () => {
-  it('shows Termos de Uso and Política de Privacidade as external links', () => {
+  it('opens Termos de Uso in-app (iframe) and back returns to the settings list', () => {
     renderScreen();
-    const termos = screen.getByRole('link', { name: /termos de uso/i });
-    const privacidade = screen.getByRole('link', { name: /política de privacidade/i });
-    for (const link of [termos, privacidade]) {
-      expect(link).toHaveAttribute('target', '_blank');
-      expect(link).toHaveAttribute('rel', expect.stringContaining('noopener'));
-    }
-    expect(termos.getAttribute('href')).toBe('/termos.html');
-    expect(privacidade.getAttribute('href')).toBe('/privacidade.html');
+    fireEvent.click(screen.getByRole('button', { name: /^termos de uso$/i }));
+
+    expect(screen.getByRole('heading', { name: /termos de uso/i })).toBeInTheDocument();
+    const frame = document.querySelector('iframe');
+    expect(frame).toHaveAttribute('src', '/termos.html');
+    expect(screen.queryByText(/configurações/i)).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: /voltar/i }));
+    expect(screen.getByText(/configurações/i)).toBeInTheDocument();
+  });
+
+  it('opens Política de Privacidade in-app (iframe)', () => {
+    renderScreen();
+    fireEvent.click(screen.getByRole('button', { name: /^política de privacidade$/i }));
+
+    expect(screen.getByRole('heading', { name: /política de privacidade/i })).toBeInTheDocument();
+    const frame = document.querySelector('iframe');
+    expect(frame).toHaveAttribute('src', '/privacidade.html');
   });
 });

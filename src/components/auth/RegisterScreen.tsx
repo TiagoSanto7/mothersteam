@@ -1,7 +1,8 @@
 import { useState, useEffect, type FormEvent } from 'react';
 import { Eye, EyeOff, ChevronLeft, Check, X } from 'lucide-react';
 import { useMutation } from '@tanstack/react-query';
-import { apiFetch, ApiError, resolveStaticUrl } from '../../lib/api';
+import { apiFetch, ApiError } from '../../lib/api';
+import { LegalDocScreen, type LegalDoc } from '../shared/LegalDocScreen';
 import { useAppStore } from '../../store/useAppStore';
 import type { ApiUser } from '../../lib/types';
 import { shiftISODate, todayISO } from '../../lib/dateUtils';
@@ -30,6 +31,7 @@ export function RegisterScreen({ onBack }: RegisterScreenProps) {
   const [showPassword, setShowPassword] = useState(false);
 
   const [acceptedTerms, setAcceptedTerms] = useState(false);
+  const [legalDoc, setLegalDoc] = useState<LegalDoc | null>(null);
   const [pregnancyStage, setPregnancyStage] = useState<'pregnant' | 'postpartum'>('pregnant');
   const [pregnancyWeek, setPregnancyWeek] = useState('');
   const [babyAgeInDays, setBabyAgeInDays] = useState('');
@@ -163,6 +165,10 @@ export function RegisterScreen({ onBack }: RegisterScreenProps) {
     : step === 3 ? 'Outros filhos'
     : step === 4 ? 'Como você está?'
     : 'Objetivos e termos';
+
+  if (legalDoc) {
+    return <LegalDocScreen doc={legalDoc} onBack={() => setLegalDoc(null)} />;
+  }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-mt-cream sm:bg-[#EDE6DC]">
@@ -427,26 +433,30 @@ export function RegisterScreen({ onBack }: RegisterScreenProps) {
           <form onSubmit={handleSubmit} className="flex flex-col gap-4">
             <StepObjetivo value={objetivoState} onChange={setObjetivoState} />
 
-            <label className="flex items-start gap-2 cursor-pointer">
-              <div className="mt-0.5 flex-shrink-0">
-                <input
-                  type="checkbox"
-                  checked={acceptedTerms}
-                  onChange={(e) => setAcceptedTerms(e.target.checked)}
-                  className="sr-only"
-                />
+            {/* Não é um <label> — teria um <button> (elemento labelable) aninhado junto do
+                checkbox, o que deixa ambígua a associação label→controle. O toggle vira um
+                <button role="checkbox">, identificável pelo mesmo aria-label nos testes. */}
+            <div className="flex items-start gap-2">
+              <button
+                type="button"
+                role="checkbox"
+                aria-checked={acceptedTerms}
+                aria-label="Li e aceito os Termos de Uso e a Política de Privacidade (LGPD)"
+                onClick={() => setAcceptedTerms(!acceptedTerms)}
+                className="mt-0.5 flex-shrink-0"
+              >
                 <div className={`w-4 h-4 rounded border-2 flex items-center justify-center transition-colors ${acceptedTerms ? 'bg-mt-rose border-mt-rose' : 'border-gray-300 bg-white'}`}>
                   {acceptedTerms && <Check size={10} className="text-white" strokeWidth={3} />}
                 </div>
-              </div>
+              </button>
               <p className="text-xs text-mt-muted leading-relaxed">
                 Li e aceito os{' '}
-                <a href={resolveStaticUrl('/termos.html')} target="_blank" rel="noopener noreferrer" className="text-mt-rose underline underline-offset-2">Termos de Uso</a>
+                <button type="button" onClick={() => setLegalDoc('termos')} className="text-mt-rose underline underline-offset-2">Termos de Uso</button>
                 {' '}e a{' '}
-                <a href={resolveStaticUrl('/privacidade.html')} target="_blank" rel="noopener noreferrer" className="text-mt-rose underline underline-offset-2">Política de Privacidade</a>
+                <button type="button" onClick={() => setLegalDoc('privacidade')} className="text-mt-rose underline underline-offset-2">Política de Privacidade</button>
                 {' '}(LGPD)
               </p>
-            </label>
+            </div>
 
             {errorMsg && (
               <p role="alert" className="text-xs text-mt-rose-dark text-center">{errorMsg}</p>
