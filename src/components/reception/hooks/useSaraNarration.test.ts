@@ -6,6 +6,7 @@ const endSession = vi.fn(() => Promise.resolve())
 const getOutputVolume = vi.fn(() => 0)
 let capturedHandlers: {
   onStatusChange?: (e: { status: string }) => void
+  onModeChange?: (e: { mode: 'speaking' | 'listening' }) => void
   onError?: (msg: string) => void
   clientTools?: Record<string, (params: unknown) => Promise<string>>
 } = {}
@@ -57,6 +58,71 @@ describe('useSaraNarration', () => {
     })
     expect(result.current.state).toBe('done')
     expect(result.current.collectedFatos).toEqual(payload)
+  })
+
+  it('waits for Sara to finish speaking before ending the session (TIA-24)', async () => {
+    const { result } = renderHook(() => useSaraNarration())
+    await act(async () => {
+      await result.current.startConversation(WELCOME_CONFIG)
+    })
+    act(() => {
+      capturedHandlers.onModeChange?.({ mode: 'speaking' })
+    })
+
+    const payload = { ok: true }
+    await act(async () => {
+      await capturedHandlers.clientTools?.[WELCOME_CONFIG.toolName](payload)
+    })
+    // Tool fired mid-speech: must not hang up or mark done yet.
+    expect(result.current.state).toBe('listening')
+    expect(result.current.collectedFatos).toBeNull()
+    expect(endSession).not.toHaveBeenCalled()
+
+    act(() => {
+      capturedHandlers.onModeChange?.({ mode: 'listening' })
+    })
+    expect(result.current.state).toBe('done')
+    expect(result.current.collectedFatos).toEqual(payload)
+    expect(endSession).toHaveBeenCalled()
+  })
+
+  it('finishes right away when the tool fires outside a speaking turn', async () => {
+    const { result } = renderHook(() => useSaraNarration())
+    await act(async () => {
+      await result.current.startConversation(WELCOME_CONFIG)
+    })
+    const payload = { ok: true }
+    await act(async () => {
+      await capturedHandlers.clientTools?.[WELCOME_CONFIG.toolName](payload)
+    })
+    expect(result.current.state).toBe('done')
+    expect(endSession).toHaveBeenCalled()
+  })
+
+  it('falls back to finishing if the mode never reports listening again', async () => {
+    vi.useFakeTimers()
+    try {
+      const { result } = renderHook(() => useSaraNarration())
+      await act(async () => {
+        await result.current.startConversation(WELCOME_CONFIG)
+      })
+      act(() => {
+        capturedHandlers.onModeChange?.({ mode: 'speaking' })
+      })
+      const payload = { ok: true }
+      await act(async () => {
+        await capturedHandlers.clientTools?.[WELCOME_CONFIG.toolName](payload)
+      })
+      expect(result.current.state).toBe('listening')
+
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(10_000)
+      })
+      expect(result.current.state).toBe('done')
+      expect(endSession).toHaveBeenCalled()
+    } finally {
+      vi.useRealTimers()
+    }
   })
 
   it('stop() sets state to idle and endSession is called', async () => {
