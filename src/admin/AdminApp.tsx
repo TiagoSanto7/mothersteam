@@ -12,7 +12,7 @@ import { CategoriesPage } from './pages/CategoriesPage';
 export type AdminRoute = 'dashboard' | 'products' | 'products/new' | `products/${string}/edit` | 'categories'
 
 function AdminLoginForm() {
-  const [email, setEmail] = useState('');
+  const [identifier, setIdentifier] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -24,7 +24,7 @@ function AdminLoginForm() {
     try {
       const data = await apiFetch<{ accessToken: string; refreshToken: string; user: ApiUser }>('/auth/login', {
         method: 'POST',
-        body: JSON.stringify({ email: email.trim(), password }),
+        body: JSON.stringify({ identifier: identifier.trim(), password }),
       });
       useAppStore.getState().setAuth(data.accessToken, data.user, data.refreshToken);
     } catch {
@@ -44,16 +44,16 @@ function AdminLoginForm() {
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-xs font-medium text-gray-600 mb-1.5" htmlFor="admin-email">
-              Email
+            <label className="block text-xs font-medium text-gray-600 mb-1.5" htmlFor="admin-identifier">
+              Email ou usuário
             </label>
             <input
-              id="admin-email"
-              type="email"
-              autoComplete="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="seu@email.com"
+              id="admin-identifier"
+              type="text"
+              autoComplete="username"
+              value={identifier}
+              onChange={(e) => setIdentifier(e.target.value)}
+              placeholder="seu@email.com ou seunome"
               className="w-full px-3 py-2.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent"
               required
             />
@@ -81,7 +81,7 @@ function AdminLoginForm() {
 
           <button
             type="submit"
-            disabled={!email || !password || loading}
+            disabled={!identifier || !password || loading}
             className="w-full py-2.5 text-sm font-medium text-white bg-gray-900 rounded-lg hover:bg-gray-800 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
           >
             {loading ? 'Entrando...' : 'Entrar'}
