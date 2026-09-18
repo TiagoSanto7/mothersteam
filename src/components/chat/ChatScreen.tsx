@@ -181,7 +181,14 @@ export function ChatScreen({ chat, onBack, onOpenProfile }: ChatScreenProps) {
   });
 
   const sendMutation = useMutation({
-    mutationFn: (payload: { content?: string; audioUrl?: string; imageUrl?: string }) =>
+    mutationFn: (payload: {
+      content?: string;
+      audioUrl?: string;
+      imageUrl?: string;
+      replyToId?: string;
+      replyToSenderName?: string;
+      replyToExcerpt?: string;
+    }) =>
       apiFetch<ApiMessage>(`/chats/${chat.id}/messages`, {
         method: 'POST',
         body: JSON.stringify(payload),
@@ -240,10 +247,14 @@ export function ChatScreen({ chat, onBack, onOpenProfile }: ChatScreenProps) {
 
   function handleSend() {
     if (!text.trim()) return;
-    const content = replyingTo
-      ? `↪ ${replyingTo.senderName}: "${replyingTo.excerpt}"\n${text.trim()}`
-      : text.trim();
-    sendMutation.mutate({ content });
+    sendMutation.mutate({
+      content: text.trim(),
+      ...(replyingTo ? {
+        replyToId: replyingTo.id,
+        replyToSenderName: replyingTo.senderName,
+        replyToExcerpt: replyingTo.excerpt,
+      } : {}),
+    });
     setText('');
     setReplyingTo(null);
   }
@@ -576,6 +587,7 @@ export function ChatScreen({ chat, onBack, onOpenProfile }: ChatScreenProps) {
           return (
             <div
               key={msg.id}
+              id={`msg-${msg.id}`}
               className={`flex flex-col ${isMe ? 'items-end' : 'items-start'} transition-transform duration-150`}
               style={isBeingSwiped ? { transform: 'translateX(-40px)' } : undefined}
               onClick={() => setVisibleTimestampId((id) => id === msg.id ? null : msg.id)}
@@ -604,6 +616,23 @@ export function ChatScreen({ chat, onBack, onOpenProfile }: ChatScreenProps) {
                   ? 'bg-mt-rose text-white rounded-br-sm'
                   : 'bg-white text-mt-charcoal shadow-sm rounded-bl-sm'
               }`}>
+                {msg.replyToId && (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      document.getElementById(`msg-${msg.replyToId}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    }}
+                    aria-label="Ver mensagem original"
+                    className={`w-full text-left px-3 pt-2 pb-1.5 border-b ${isMe ? 'border-white/25' : 'border-mt-linen'}`}
+                  >
+                    <p className={`text-[10px] font-semibold ${isMe ? 'text-white/80' : 'text-mt-rose'}`}>
+                      {msg.replyToSenderName}
+                    </p>
+                    <p className={`text-[11px] truncate ${isMe ? 'text-white/70' : 'text-mt-muted'}`}>
+                      {msg.replyToExcerpt}
+                    </p>
+                  </button>
+                )}
                 {msg.imageUrl ? (
                   <img
                     src={resolveMediaUrl(msg.imageUrl) ?? msg.imageUrl}

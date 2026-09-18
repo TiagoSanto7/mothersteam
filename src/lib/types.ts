@@ -126,6 +126,9 @@ export interface ApiMessage {
   sharedPostId?: string | null
   sharedPostAuthor?: string | null
   sharedPostExcerpt?: string | null
+  replyToId?: string | null
+  replyToSenderName?: string | null
+  replyToExcerpt?: string | null
   audioUrl?: string | null
   imageUrl?: string | null
   read: boolean
