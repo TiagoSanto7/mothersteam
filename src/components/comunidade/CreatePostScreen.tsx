@@ -1,11 +1,15 @@
 import { useState, useRef, useEffect } from 'react';
-import { ImagePlus, X } from 'lucide-react';
+import { ImagePlus, X, Users, ChevronDown, Check } from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';
 import type { CommunityPost } from '../../types';
+import type { ApiCommunity } from '../../lib/types';
+import { apiFetch } from '../../lib/api';
 import { MentionInput } from '../shared/MentionInput';
 import { ImageSourceSheet } from '../shared/ImageSourceSheet';
 import { usePublishPost } from './publishing';
 
 type PostCategory = CommunityPost['category'];
+type ApiCommunityWithMember = ApiCommunity & { isMember?: boolean };
 
 const CATEGORIES: { value: PostCategory; label: string }[] = [
   { value: 'gestação',      label: 'Gestação' },
@@ -13,6 +17,14 @@ const CATEGORIES: { value: PostCategory; label: string }[] = [
   { value: 'amamentação',  label: 'Amamentação' },
   { value: 'saúde mental', label: 'Saúde Mental' },
 ];
+
+const COLOR_MAP: Record<string, string> = {
+  gold:       'bg-mt-rose',
+  terracotta: 'bg-mt-rose-dark',
+  warm:       'bg-mt-muted',
+  linen:      'bg-mt-linen',
+  cream:      'bg-mt-cream',
+};
 
 interface CreatePostScreenProps {
   onBack: () => void;
@@ -27,8 +39,20 @@ export function CreatePostScreen({ onBack, autoOpenImage, initialCommunityId, in
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreviewUrl, setImagePreviewUrl] = useState<string | null>(null);
   const [showImageSheet, setShowImageSheet] = useState(false);
+  // undefined = feed geral (sem comunidade). Pré-selecionada quando aberto de
+  // dentro de uma comunidade, mas sempre trocável — ver TIA-69.
+  const [selectedCommunityId, setSelectedCommunityId] = useState<string | undefined>(initialCommunityId);
+  const [showCommunityPicker, setShowCommunityPicker] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
+
+  // Mesma queryKey/queryFn de ComunidadesScreen — reaproveita o cache.
+  const { data: apiCommunities = [] } = useQuery({
+    queryKey: ['communities'],
+    queryFn: () => apiFetch<ApiCommunityWithMember[]>('/communities?includeMember=1'),
+  });
+  const myCommunities = apiCommunities.filter((c) => c.isMember);
+  const selectedCommunity = myCommunities.find((c) => c.id === selectedCommunityId);
 
   useEffect(() => {
     if (autoOpenImage) {
@@ -63,15 +87,15 @@ export function CreatePostScreen({ onBack, autoOpenImage, initialCommunityId, in
   // top with its own "Publicando…" state, so the composer never makes her wait.
   function handlePublish() {
     if (!content.trim() && !imageFile) return;
-    publish({ content: content.trim(), category, communityId: initialCommunityId, imageFile });
+    publish({ content: content.trim(), category, communityId: selectedCommunityId, imageFile });
     onBack();
   }
 
   const canPublish = Boolean(content.trim() || imageFile);
 
   return (
-    <div className="flex flex-col gap-4 pb-6 h-full">
-      <div className="flex items-center justify-between px-4 pt-4 pb-2">
+    <div className="flex flex-col h-full">
+      <div className="flex items-center justify-between px-4 pt-4 pb-2 flex-shrink-0">
         <button
           onClick={onBack}
           className="text-sm text-mt-muted font-medium px-1 py-1"
@@ -79,23 +103,18 @@ export function CreatePostScreen({ onBack, autoOpenImage, initialCommunityId, in
           Cancelar
         </button>
         <h1 className="text-sm font-semibold text-mt-charcoal">Publicação</h1>
-        <button
-          onClick={handlePublish}
-          disabled={!canPublish}
-          className="text-sm font-semibold text-mt-rose disabled:opacity-40 px-1 py-1"
-        >
-          Publicar
-        </button>
+        {/* Invisible twin do "Cancelar" — mantém o título centralizado agora que
+            "Publicar" saiu do header e foi pro rodapé (ver TIA-69). */}
+        <span aria-hidden="true" className="invisible text-sm font-medium px-1 py-1">Cancelar</span>
       </div>
 
-      <div className="px-4 flex flex-col gap-3 flex-1">
+      <div className="px-4 flex flex-col gap-3 flex-1 overflow-y-auto">
         <MentionInput
           value={content}
           onChange={setContent}
           placeholder="O que você está sentindo? Este é um espaço seguro 💜"
           rows={7}
           aria-label="Conteúdo do post"
-          autoFocus
           className="w-full px-4 py-3 rounded-2xl bg-white border border-mt-linen text-sm text-mt-charcoal placeholder:text-mt-muted leading-relaxed resize-none focus:outline-none focus:border-mt-rose"
         />
 
@@ -171,6 +190,65 @@ export function CreatePostScreen({ onBack, autoOpenImage, initialCommunityId, in
         </div>
       </div>
 
+      <div className="px-4 pt-3 pb-6 flex-shrink-0 flex flex-col gap-2">
+        <div className="relative">
+          {showCommunityPicker && (
+            <div
+              role="listbox"
+              aria-label="Escolher comunidade de destino"
+              className="absolute bottom-full left-0 right-0 mb-2 bg-white border border-mt-linen rounded-2xl shadow-mt-lg p-2 max-h-56 overflow-y-auto z-10"
+            >
+              <p className="text-[10px] font-semibold uppercase tracking-wide text-mt-muted px-2 pt-1 pb-1.5">Comunidades</p>
+              <button
+                type="button"
+                role="option"
+                aria-selected={!selectedCommunityId}
+                onClick={() => { setSelectedCommunityId(undefined); setShowCommunityPicker(false); }}
+                className="w-full flex items-center gap-2 px-2 py-2 rounded-xl text-left hover:bg-mt-cream"
+              >
+                <span className="w-5 h-5 rounded-full bg-mt-linen flex-shrink-0" />
+                <span className="text-sm flex-1 text-mt-charcoal">Feed geral</span>
+                {!selectedCommunityId && <Check size={15} className="text-mt-rose" />}
+              </button>
+              {myCommunities.map((c) => (
+                <button
+                  key={c.id}
+                  type="button"
+                  role="option"
+                  aria-selected={selectedCommunityId === c.id}
+                  onClick={() => { setSelectedCommunityId(c.id); setShowCommunityPicker(false); }}
+                  className="w-full flex items-center gap-2 px-2 py-2 rounded-xl text-left hover:bg-mt-cream"
+                >
+                  <span className={`w-5 h-5 rounded-full flex-shrink-0 ${COLOR_MAP[c.colorKey] ?? 'bg-mt-rose'}`} />
+                  <span className="text-sm flex-1 text-mt-charcoal truncate">{c.name}</span>
+                  {selectedCommunityId === c.id && <Check size={15} className="text-mt-rose flex-shrink-0" />}
+                </button>
+              ))}
+            </div>
+          )}
+
+          <button
+            type="button"
+            onClick={() => setShowCommunityPicker((v) => !v)}
+            aria-expanded={showCommunityPicker}
+            className="w-full flex items-center justify-between gap-2 text-xs font-medium text-mt-muted px-3 py-2 rounded-full bg-mt-cream"
+          >
+            <span className="flex items-center gap-1.5 min-w-0">
+              <Users size={13} className="flex-shrink-0" />
+              <span className="truncate">Publicar em {selectedCommunity ? selectedCommunity.name : 'Feed geral'}</span>
+            </span>
+            <ChevronDown size={14} className="flex-shrink-0" />
+          </button>
+        </div>
+
+        <button
+          onClick={handlePublish}
+          disabled={!canPublish}
+          className="w-full py-3 rounded-2xl bg-mt-rose text-white text-sm font-semibold active:scale-95 transition-transform disabled:opacity-50"
+        >
+          Publicar
+        </button>
+      </div>
     </div>
   );
 }

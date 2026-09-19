@@ -29,15 +29,20 @@ beforeEach(() => {
   Object.defineProperty(URL, 'createObjectURL', { writable: true, configurable: true, value: createObjectURLMock });
   Object.defineProperty(URL, 'revokeObjectURL', { writable: true, configurable: true, value: revokeObjectURLMock });
   createObjectURLMock.mockReturnValue(FAKE_OBJECT_URL);
-  mockApiFetch.mockResolvedValue({
-    id: 'new-post',
-    content: 'test',
-    category: 'saúde mental',
-    author: { id: 'u1', name: 'Mariana' },
-    _count: { likes: 0, comments: 0 },
-    createdAt: new Date().toISOString(),
-    authorId: 'u1',
-    isRepost: false,
+  // O compositor agora também busca ['communities'] (seletor "Publicar em") —
+  // apiFetch precisa responder por rota, não só o payload fixo do POST /posts.
+  mockApiFetch.mockImplementation((path: string) => {
+    if (path.startsWith('/communities')) return Promise.resolve([]);
+    return Promise.resolve({
+      id: 'new-post',
+      content: 'test',
+      category: 'saúde mental',
+      author: { id: 'u1', name: 'Mariana' },
+      _count: { likes: 0, comments: 0 },
+      createdAt: new Date().toISOString(),
+      authorId: 'u1',
+      isRepost: false,
+    });
   });
   mockUploadImage.mockResolvedValue('https://cdn.example.com/uploaded.png');
 });
@@ -48,7 +53,7 @@ describe('CreatePostScreen', () => {
   it('renders textarea and publish button', () => {
     render(<CreatePostScreen onBack={vi.fn()} />, { wrapper });
     expect(screen.getByRole('textbox')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /publicar/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Publicar' })).toBeInTheDocument();
   });
 
   it('renders Adicionar foto button', () => {
@@ -76,9 +81,10 @@ describe('CreatePostScreen', () => {
   it('calls apiFetch with content and category on publish', async () => {
     render(<CreatePostScreen onBack={vi.fn()} />, { wrapper });
     fireEvent.change(screen.getByRole('textbox'), { target: { value: 'Meu desabafo' } });
-    await act(async () => { fireEvent.click(screen.getByRole('button', { name: /publicar/i })); });
+    await act(async () => { fireEvent.click(screen.getByRole('button', { name: 'Publicar' })); });
     expect(mockApiFetch).toHaveBeenCalledWith('/posts', expect.objectContaining({ method: 'POST' }));
-    const body = JSON.parse(mockApiFetch.mock.calls[0][1].body);
+    const postCall = mockApiFetch.mock.calls.find(([path]) => path === '/posts')!;
+    const body = JSON.parse(postCall[1].body);
     expect(body.content).toBe('Meu desabafo');
   });
 
@@ -88,18 +94,21 @@ describe('CreatePostScreen', () => {
     const file = new File(['img'], 'photo.png', { type: 'image/png' });
     await act(async () => { fireEvent.change(input, { target: { files: [file] } }); });
     fireEvent.change(screen.getByRole('textbox'), { target: { value: 'Com imagem' } });
-    await act(async () => { fireEvent.click(screen.getByRole('button', { name: /publicar/i })); });
+    await act(async () => { fireEvent.click(screen.getByRole('button', { name: 'Publicar' })); });
     expect(mockUploadImage).toHaveBeenCalledWith(file, 'token123', expect.any(Function));
-    const body = JSON.parse(mockApiFetch.mock.calls[0][1].body);
+    const postCall = mockApiFetch.mock.calls.find(([path]) => path === '/posts')!;
+    const body = JSON.parse(postCall[1].body);
     expect(body.imageUrl).toBe('https://cdn.example.com/uploaded.png');
   });
 
   it('fecha o compositor na hora ao publicar, sem esperar a API', async () => {
-    mockApiFetch.mockReturnValue(new Promise(() => {}));
+    mockApiFetch.mockImplementation((path: string) =>
+      path.startsWith('/communities') ? Promise.resolve([]) : new Promise(() => {})
+    );
     const onBack = vi.fn();
     render(<CreatePostScreen onBack={onBack} />, { wrapper });
     fireEvent.change(screen.getByRole('textbox'), { target: { value: 'Sem espera' } });
-    fireEvent.click(screen.getByRole('button', { name: /publicar/i }));
+    fireEvent.click(screen.getByRole('button', { name: 'Publicar' }));
     expect(onBack).toHaveBeenCalled();
   });
 
@@ -112,7 +121,58 @@ describe('CreatePostScreen', () => {
     render(<CreatePostScreen onBack={() => {}} />, { wrapper });
     const input = screen.getByTestId('file-input');
     await act(async () => { fireEvent.change(input, { target: { files: [new File(['img'], 'photo.png', { type: 'image/png' })] } }); });
-    expect(screen.getAllByRole('button', { name: /publicar/i })[0]).not.toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Publicar' })).not.toBeDisabled();
+  });
+
+  describe('seletor de comunidade ("Publicar em")', () => {
+    const myCommunity = { id: 'c1', name: 'Gestantes de 2027', colorKey: 'gold', description: '', category: 'gestação', creatorId: 'u1', isPrivate: false, isOpen: true, _count: { members: 3 }, createdAt: new Date().toISOString(), isMember: true };
+
+    it('publica no feed geral por padrão quando aberto sem initialCommunityId', async () => {
+      mockApiFetch.mockImplementation((path: string) =>
+        path.startsWith('/communities') ? Promise.resolve([myCommunity]) : Promise.resolve({ id: 'new-post' })
+      );
+      render(<CreatePostScreen onBack={vi.fn()} />, { wrapper });
+      expect(screen.getByRole('button', { name: /publicar em feed geral/i })).toBeInTheDocument();
+
+      fireEvent.change(screen.getByRole('textbox'), { target: { value: 'Sem comunidade' } });
+      await act(async () => { fireEvent.click(screen.getByRole('button', { name: 'Publicar' })); });
+      const postCall = mockApiFetch.mock.calls.find(([path]) => path === '/posts')!;
+      const body = JSON.parse(postCall[1].body);
+      expect(body.communityId).toBeUndefined();
+    });
+
+    it('pré-seleciona a comunidade quando initialCommunityId é passado, mas permite trocar pro feed geral', async () => {
+      mockApiFetch.mockImplementation((path: string) =>
+        path.startsWith('/communities') ? Promise.resolve([myCommunity]) : Promise.resolve({ id: 'new-post' })
+      );
+      render(<CreatePostScreen onBack={vi.fn()} initialCommunityId="c1" />, { wrapper });
+      expect(await screen.findByRole('button', { name: /publicar em gestantes de 2027/i })).toBeInTheDocument();
+
+      fireEvent.click(screen.getByRole('button', { name: /publicar em gestantes de 2027/i }));
+      fireEvent.click(await screen.findByRole('option', { name: /feed geral/i }));
+      expect(screen.getByRole('button', { name: /publicar em feed geral/i })).toBeInTheDocument();
+
+      fireEvent.change(screen.getByRole('textbox'), { target: { value: 'Mudei de ideia' } });
+      await act(async () => { fireEvent.click(screen.getByRole('button', { name: 'Publicar' })); });
+      const postCall = mockApiFetch.mock.calls.find(([path]) => path === '/posts')!;
+      const body = JSON.parse(postCall[1].body);
+      expect(body.communityId).toBeUndefined();
+    });
+
+    it('envia o communityId escolhido no balão ao publicar do feed geral', async () => {
+      mockApiFetch.mockImplementation((path: string) =>
+        path.startsWith('/communities') ? Promise.resolve([myCommunity]) : Promise.resolve({ id: 'new-post' })
+      );
+      render(<CreatePostScreen onBack={vi.fn()} />, { wrapper });
+      fireEvent.click(await screen.findByRole('button', { name: /publicar em feed geral/i }));
+      fireEvent.click(await screen.findByRole('option', { name: /gestantes de 2027/i }));
+
+      fireEvent.change(screen.getByRole('textbox'), { target: { value: 'Quero postar lá' } });
+      await act(async () => { fireEvent.click(screen.getByRole('button', { name: 'Publicar' })); });
+      const postCall = mockApiFetch.mock.calls.find(([path]) => path === '/posts')!;
+      const body = JSON.parse(postCall[1].body);
+      expect(body.communityId).toBe('c1');
+    });
   });
 
   describe('initialContent', () => {
