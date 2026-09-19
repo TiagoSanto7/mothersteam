@@ -119,6 +119,7 @@ export function ImageCropModal({ imageSrc, aspectRatio, onConfirm, onCancel, onE
 
       <div className="flex gap-3 w-full max-w-xs">
         <button
+          type="button"
           onClick={onCancel}
           aria-label="Cancelar"
           className="flex-1 py-3 rounded-2xl bg-white/20 text-white font-semibold text-sm"
@@ -126,6 +127,7 @@ export function ImageCropModal({ imageSrc, aspectRatio, onConfirm, onCancel, onE
           Cancelar
         </button>
         <button
+          type="button"
           onClick={handleConfirm}
           aria-label="Confirmar"
           disabled={!loaded}

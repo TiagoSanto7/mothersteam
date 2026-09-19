@@ -8,11 +8,27 @@ import * as api from '../../lib/api';
 vi.mock('../../lib/api', async () => ({
   ...(await vi.importActual('../../lib/api')),
   apiFetch: vi.fn(),
+  uploadImage: vi.fn(),
 }));
 
 vi.mock('../../store/useAppStore', () => ({
-  useAppStore: (sel: (s: { currentUserId: string }) => unknown) =>
-    sel({ currentUserId: 'self-user' }),
+  useAppStore: (sel: (s: { currentUserId: string; accessToken: string }) => unknown) =>
+    sel({ currentUserId: 'self-user', accessToken: 'token123' }),
+}));
+
+// Mesmo padrão de EditProfileScreen/CreateCommunityScreen: a foto de perfil
+// usa useAvatarPicker (escolher → recortar 1:1 → enviar) — o crop modal tem
+// sua própria suíte de testes, aqui só precisamos do blob que ele devolve.
+vi.mock('../shared/ImageCropModal', () => ({
+  ImageCropModal: ({ onConfirm }: { onConfirm: (b: Blob) => void }) => (
+    <button type="button" onClick={() => onConfirm(new Blob(['fake-jpeg-bytes'], { type: 'image/jpeg' }))}>
+      mock-confirm-crop
+    </button>
+  ),
+}));
+
+vi.mock('../../lib/imageUtils', () => ({
+  resizeImage: vi.fn((file: File) => Promise.resolve(file)),
 }));
 
 function renderScreen(id = 'c1', onBack = vi.fn()) {
@@ -78,6 +94,39 @@ describe('CommunityDetailScreen', () => {
     await user.click(screen.getByRole('button', { name: 'Entrar' }));
     await waitFor(() =>
       expect(api.apiFetch).toHaveBeenCalledWith('/communities/c1/join', { method: 'POST' })
+    );
+  });
+});
+
+describe('CommunityDetailScreen — foto de perfil (admin)', () => {
+  beforeEach(() => {
+    Object.defineProperty(URL, 'createObjectURL', { writable: true, configurable: true, value: vi.fn(() => 'blob:http://localhost/fake') });
+    Object.defineProperty(URL, 'revokeObjectURL', { writable: true, configurable: true, value: vi.fn() });
+    vi.mocked(api.apiFetch).mockImplementation(async (path: string, options?: { method?: string }) => {
+      if (path.includes('/posts')) return { items: [], hasMore: false };
+      if (path.includes('/members')) return mockMembers;
+      if (options?.method === 'PATCH') return { ...mockCommunity, role: 'owner', avatarUrl: '/uploads/community-avatar.jpg' };
+      return { ...mockCommunity, role: 'owner' };
+    });
+  });
+
+  it('opens the crop flow and PATCHes avatarUrl on confirm — same picker as EditProfileScreen', async () => {
+    vi.mocked(api.uploadImage).mockResolvedValue('/uploads/community-avatar.jpg');
+    const user = userEvent.setup();
+    renderScreen();
+    await waitFor(() => screen.getByLabelText('Trocar foto da comunidade'));
+
+    await user.click(screen.getByLabelText('Trocar foto da comunidade'));
+    const file = new File(['img'], 'avatar.png', { type: 'image/png' });
+    const input = screen.getByTestId('avatar-picker-gallery-input') as HTMLInputElement;
+    await user.upload(input, file);
+    await user.click(screen.getByText('mock-confirm-crop'));
+
+    await waitFor(() =>
+      expect(api.apiFetch).toHaveBeenCalledWith(
+        '/communities/c1',
+        expect.objectContaining({ method: 'PATCH', body: JSON.stringify({ avatarUrl: '/uploads/community-avatar.jpg' }) })
+      )
     );
   });
 });

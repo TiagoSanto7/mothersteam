@@ -26,10 +26,10 @@ vi.mock('../../lib/imageUtils', () => ({
 vi.mock('../shared/ImageCropModal', () => ({
   ImageCropModal: ({ onConfirm, onError }: { onConfirm: (b: Blob) => void; onError?: () => void }) => (
     <div>
-      <button onClick={() => onConfirm(new Blob(['fake-jpeg-bytes'], { type: 'image/jpeg' }))}>
+      <button type="button" onClick={() => onConfirm(new Blob(['fake-jpeg-bytes'], { type: 'image/jpeg' }))}>
         mock-confirm-crop
       </button>
-      <button onClick={() => onError?.()}>mock-crop-error</button>
+      <button type="button" onClick={() => onError?.()}>mock-crop-error</button>
     </div>
   ),
 }));

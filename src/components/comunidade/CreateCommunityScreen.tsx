@@ -1,10 +1,11 @@
 ﻿import { useState, useRef, useEffect, type FormEvent } from 'react';
-import { ChevronLeft, ImagePlus, X } from 'lucide-react';
+import { ChevronLeft, ImagePlus, Camera, Loader2, X } from 'lucide-react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { apiFetch, uploadImage } from '../../lib/api';
+import { apiFetch, resolveMediaUrl, uploadImage } from '../../lib/api';
 import { resizeImage } from '../../lib/imageUtils';
 import { useAppStore } from '../../store/useAppStore';
 import { ImageSourceSheet } from '../shared/ImageSourceSheet';
+import { useAvatarPicker } from '../../hooks/useAvatarPicker';
 
 type Category = 'gestação' | 'pós-parto' | 'amamentação' | 'saúde mental';
 type ColorKey = 'gold' | 'terracotta' | 'warm' | 'linen' | 'cream';
@@ -68,11 +69,26 @@ export function CreateCommunityScreen({ onCreated, onBack }: CreateCommunityScre
   const [isOpen, setIsOpen] = useState(true);
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreviewUrl, setImagePreviewUrl] = useState<string | null>(null);
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [uploadError, setUploadError] = useState<string | null>(null);
-  const [showImageSheet, setShowImageSheet] = useState(false);
+  const [activePicker, setActivePicker] = useState<'cover' | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
   const queryClient = useQueryClient();
+
+  // Foto de perfil da comunidade: mesmo fluxo (escolher → recortar 1:1 → enviar)
+  // usado no perfil da própria mãe — sobe assim que confirmado o recorte, antes
+  // mesmo de a comunidade existir (upload não depende disso; a URL só entra no
+  // POST /communities no submit). A capa continua com fluxo próprio (sem crop,
+  // proporção diferente) — só a definição de "foto de perfil" precisa ser igual.
+  const { openPicker: openAvatarPicker, pickerElements: avatarPickerElements, isUploading: isUploadingAvatar } = useAvatarPicker({
+    accessToken,
+    onError: setUploadError,
+    onUploaded: (url) => {
+      setUploadError(null);
+      setAvatarUrl(url);
+    },
+  });
 
   // Revoke object URL on unmount
   useEffect(() => {
@@ -90,7 +106,7 @@ export function CreateCommunityScreen({ onCreated, onBack }: CreateCommunityScre
       }
       return apiFetch<{ id: string }>('/communities', {
         method: 'POST',
-        body: JSON.stringify({ name: name.trim(), description: description.trim(), category, colorKey, imageUrl, isPrivate, isOpen }),
+        body: JSON.stringify({ name: name.trim(), description: description.trim(), category, colorKey, imageUrl, avatarUrl: avatarUrl ?? undefined, isPrivate, isOpen }),
       });
     },
     onSuccess: (data) => {
@@ -135,54 +151,93 @@ export function CreateCommunityScreen({ onCreated, onBack }: CreateCommunityScre
 
       <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto px-4 pb-4 flex flex-col gap-4">
 
-        {/* Cover photo picker */}
-        <div className="flex flex-col gap-1">
+        {/* Cover + avatar picker — mesma composição visual do CommunityDetailScreen,
+            pra já pré-visualizar como a comunidade vai aparecer depois de criada. */}
+        <div className="flex flex-col gap-1 pb-6">
           <p className="text-xs font-medium text-mt-muted">Foto de capa (opcional)</p>
-          <div className="relative w-full h-28 rounded-2xl overflow-hidden bg-white border border-mt-linen">
-            {imagePreviewUrl ? (
-              <>
-                <img
-                  src={imagePreviewUrl}
-                  alt="Pré-visualização da capa"
-                  className="w-full h-full object-cover"
+          {/* Wrapper sem overflow-hidden — o avatar precisa sobrepor a borda
+              inferior da capa, e um container clipado cortaria esse overhang. */}
+          <div className="relative w-full h-28">
+            <div className="w-full h-full rounded-2xl overflow-hidden bg-white border border-mt-linen">
+              {imagePreviewUrl ? (
+                <>
+                  <img
+                    src={imagePreviewUrl}
+                    alt="Pré-visualização da capa"
+                    className="w-full h-full object-cover"
+                  />
+                  <button
+                    type="button"
+                    onClick={handleRemoveImage}
+                    aria-label="Remover foto de capa"
+                    className="absolute top-2 right-2 bg-black/50 text-white rounded-full p-1"
+                  >
+                    <X size={14} />
+                  </button>
+                </>
+              ) : (
+                <div
+                  className={`w-full h-full flex flex-col items-center justify-center gap-1 cursor-pointer ${COLOR_MAP[colorKey]} opacity-30`}
                 />
+              )}
+              {/* Overlay button to open picker when no image */}
+              {!imagePreviewUrl && (
                 <button
                   type="button"
-                  onClick={handleRemoveImage}
-                  aria-label="Remover foto de capa"
-                  className="absolute top-2 right-2 bg-black/50 text-white rounded-full p-1"
+                  onClick={() => setActivePicker('cover')}
+                  className="absolute inset-0 flex flex-col items-center justify-center gap-1 text-mt-muted hover:text-mt-charcoal transition-colors"
+                  aria-label="Selecionar foto de capa"
                 >
-                  <X size={14} />
+                  <ImagePlus size={24} />
+                  <span className="text-xs font-medium">Adicionar foto</span>
                 </button>
-              </>
-            ) : (
-              <div
-                className={`w-full h-full flex flex-col items-center justify-center gap-1 cursor-pointer ${COLOR_MAP[colorKey]} opacity-30`}
-              />
-            )}
-            {/* Overlay button to open picker when no image */}
-            {!imagePreviewUrl && (
+              )}
+            </div>
+
+            {/* Avatar da comunidade — sobreposto à capa, canto inferior esquerdo */}
+            <div className="absolute left-4 -bottom-6 w-12 h-12 rounded-full border-4 border-white bg-white overflow-hidden shadow-sm">
+              <div className={`w-full h-full flex items-center justify-center ${COLOR_MAP[colorKey]}`}>
+                {avatarUrl ? (
+                  <img src={resolveMediaUrl(avatarUrl)} alt="Pré-visualização do perfil da comunidade" className="w-full h-full object-cover" />
+                ) : (
+                  <span className="text-white text-base font-bold">{name.trim().charAt(0).toUpperCase() || '?'}</span>
+                )}
+              </div>
               <button
                 type="button"
-                onClick={() => setShowImageSheet(true)}
-                className="absolute inset-0 flex flex-col items-center justify-center gap-1 text-mt-muted hover:text-mt-charcoal transition-colors"
-                aria-label="Selecionar foto de capa"
+                onClick={openAvatarPicker}
+                disabled={isUploadingAvatar}
+                aria-label="Selecionar foto de perfil da comunidade"
+                className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 hover:opacity-100 active:opacity-100 transition-opacity disabled:opacity-100 disabled:cursor-wait"
               >
-                <ImagePlus size={24} />
-                <span className="text-xs font-medium">Adicionar foto</span>
+                {isUploadingAvatar ? <Loader2 size={13} className="text-white animate-spin" /> : <Camera size={13} className="text-white" />}
+              </button>
+            </div>
+          </div>
+          {/* mt-6 (não mt-0.5): o avatar sobrepõe 24px abaixo da capa (-bottom-6);
+              sem essa margem essa linha renderiza escondida atrás do círculo. */}
+          <div className="flex items-center gap-3 mt-6">
+            {imagePreviewUrl && (
+              <button
+                type="button"
+                onClick={() => setActivePicker('cover')}
+                className="flex items-center gap-1.5 text-xs text-mt-rose font-medium"
+              >
+                <ImagePlus size={14} />
+                Trocar capa
+              </button>
+            )}
+            {avatarUrl && (
+              <button
+                type="button"
+                onClick={() => setAvatarUrl(null)}
+                className="flex items-center gap-1.5 text-xs text-mt-muted font-medium"
+              >
+                <X size={14} />
+                Remover foto de perfil
               </button>
             )}
           </div>
-          {imagePreviewUrl && (
-            <button
-              type="button"
-              onClick={() => setShowImageSheet(true)}
-              className="flex items-center gap-1.5 text-xs text-mt-rose font-medium mt-0.5"
-            >
-              <ImagePlus size={14} />
-              Trocar foto
-            </button>
-          )}
           <input
             ref={fileInputRef}
             type="file"
@@ -199,11 +254,11 @@ export function CreateCommunityScreen({ onCreated, onBack }: CreateCommunityScre
             className="hidden"
             onChange={handleFileChange}
           />
-          {showImageSheet && (
+          {activePicker === 'cover' && (
             <ImageSourceSheet
-              onCamera={() => { setShowImageSheet(false); cameraInputRef.current?.click(); }}
-              onGallery={() => { setShowImageSheet(false); fileInputRef.current?.click(); }}
-              onClose={() => setShowImageSheet(false)}
+              onCamera={() => { setActivePicker(null); cameraInputRef.current?.click(); }}
+              onGallery={() => { setActivePicker(null); fileInputRef.current?.click(); }}
+              onClose={() => setActivePicker(null)}
             />
           )}
           {uploadError && (
@@ -312,6 +367,7 @@ export function CreateCommunityScreen({ onCreated, onBack }: CreateCommunityScre
           {isPending ? 'Criando…' : 'Criar comunidade'}
         </button>
       </form>
+      {avatarPickerElements}
     </div>
   );
 }
