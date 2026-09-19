@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect, useLayoutEffect } from 'react';
 import { ArrowUp, Plus } from 'lucide-react';
 import { SaraPullIndicator } from '../shared/SaraPullIndicator';
-import { motion, AnimatePresence, useReducedMotion, useDragControls } from 'framer-motion';
+import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import { useInfiniteQuery, useQuery, useQueryClient } from '@tanstack/react-query';
 import { usePullToRefresh } from '../../lib/usePullToRefresh';
 import { useAppStore } from '../../store/useAppStore';
@@ -172,8 +172,6 @@ export function ComunidadeScreen() {
   const [activeCategory, setActiveCategory] = useState<Category>('todos');
   const [showCreate, setShowCreate] = useState(false);
   const [showCreateWithImage, setShowCreateWithImage] = useState(false);
-  const composerDragControls = useDragControls();
-
   function closeComposer() {
     setShowCreate(false);
     setShowCreateWithImage(false);
@@ -506,9 +504,12 @@ export function ComunidadeScreen() {
               role="dialog"
               aria-modal="true"
               aria-label="Nova publicação"
+              // Arrasta a partir de qualquer ponto do sheet — não só da alça —
+              // pra funcionar com uma mão só (ex.: mãe segurando o bebê no colo).
+              // MentionInput e o balão de comunidades param propagação do próprio
+              // pointerdown (onPointerDownCapture), então continuam recebendo
+              // toque normal pra cursor/seleção/scroll em vez de virar arraste.
               drag="y"
-              dragControls={composerDragControls}
-              dragListener={false}
               dragConstraints={{ top: 0, bottom: 0 }}
               dragElastic={{ top: 0, bottom: 0.5 }}
               onDragEnd={(_, info) => {
@@ -517,13 +518,9 @@ export function ComunidadeScreen() {
               className="w-full max-w-[390px] mx-auto h-[90%] bg-mt-cream rounded-t-3xl flex flex-col overflow-hidden"
               onClick={(e) => e.stopPropagation()}
             >
-              {/* Alça de arrastar — só ela inicia o drag (dragListener={false} acima),
-                  pra não capturar gestos de scroll/seleção de texto dentro do formulário. */}
-              <div
-                onPointerDown={(e) => composerDragControls.start(e)}
-                className="flex justify-center pt-2 pb-1 flex-shrink-0 touch-none cursor-grab active:cursor-grabbing"
-                aria-hidden="true"
-              >
+              {/* Alça — só um indício visual de que dá pra arrastar; o gesto
+                  já funciona no sheet inteiro (drag="y" acima). */}
+              <div className="flex justify-center pt-2 pb-1 flex-shrink-0" aria-hidden="true">
                 <div className="w-10 h-1.5 rounded-full bg-mt-linen" />
               </div>
               <CreatePostScreen

@@ -12,6 +12,7 @@ interface Props {
   className?: string;
   autoFocus?: boolean;
   'aria-label'?: string;
+  onPointerDownCapture?: (e: React.PointerEvent<HTMLTextAreaElement>) => void;
 }
 
 interface MentionCandidate {
