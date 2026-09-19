@@ -173,6 +173,20 @@ describe('CreatePostScreen', () => {
       const body = JSON.parse(postCall[1].body);
       expect(body.communityId).toBe('c1');
     });
+
+    it('fecha o balão ao tocar fora, sem trocar a comunidade selecionada', async () => {
+      mockApiFetch.mockImplementation((path: string) =>
+        path.startsWith('/communities') ? Promise.resolve([myCommunity]) : Promise.resolve({ id: 'new-post' })
+      );
+      render(<CreatePostScreen onBack={vi.fn()} />, { wrapper });
+      fireEvent.click(await screen.findByRole('button', { name: /publicar em feed geral/i }));
+      expect(await screen.findByRole('listbox')).toBeInTheDocument();
+
+      fireEvent.mouseDown(screen.getByRole('textbox'));
+
+      expect(screen.queryByRole('listbox')).not.toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /publicar em feed geral/i })).toBeInTheDocument();
+    });
   });
 
   describe('initialContent', () => {

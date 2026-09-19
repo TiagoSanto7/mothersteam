@@ -45,6 +45,21 @@ export function CreatePostScreen({ onBack, autoOpenImage, initialCommunityId, in
   const [showCommunityPicker, setShowCommunityPicker] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
+  const communityPickerRef = useRef<HTMLDivElement>(null);
+
+  // Fecha o balão ao tocar fora — mesmo padrão do dropdown de @menções em
+  // MentionInput.tsx. O ref cobre o botão-gatilho junto com o balão, então
+  // tocar no próprio botão não soma um segundo toggle vindo deste listener.
+  useEffect(() => {
+    if (!showCommunityPicker) return;
+    function handler(e: MouseEvent) {
+      if (communityPickerRef.current && !communityPickerRef.current.contains(e.target as Node)) {
+        setShowCommunityPicker(false);
+      }
+    }
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [showCommunityPicker]);
 
   // Mesma queryKey/queryFn de ComunidadesScreen — reaproveita o cache.
   const { data: apiCommunities = [] } = useQuery({
@@ -115,6 +130,10 @@ export function CreatePostScreen({ onBack, autoOpenImage, initialCommunityId, in
           placeholder="O que você está sentindo? Este é um espaço seguro 💜"
           rows={7}
           aria-label="Conteúdo do post"
+          // Impede que o toque vire o gesto de arrastar-pra-fechar do sheet
+          // (ComunidadeScreen) — sem isso, tocar no texto pra posicionar o
+          // cursor ou selecionar às vezes iniciava o fechamento do modal.
+          onPointerDownCapture={(e: React.PointerEvent) => e.stopPropagation()}
           className="w-full px-4 py-3 rounded-2xl bg-white border border-mt-linen text-sm text-mt-charcoal placeholder:text-mt-muted leading-relaxed resize-none focus:outline-none focus:border-mt-rose"
         />
 
@@ -191,11 +210,12 @@ export function CreatePostScreen({ onBack, autoOpenImage, initialCommunityId, in
       </div>
 
       <div className="px-4 pt-3 pb-6 flex-shrink-0 flex flex-col gap-2">
-        <div className="relative">
+        <div className="relative" ref={communityPickerRef}>
           {showCommunityPicker && (
             <div
               role="listbox"
               aria-label="Escolher comunidade de destino"
+              onPointerDownCapture={(e) => e.stopPropagation()}
               className="absolute bottom-full left-0 right-0 mb-2 bg-white border border-mt-linen rounded-2xl shadow-mt-lg p-2 max-h-56 overflow-y-auto z-10"
             >
               <p className="text-[10px] font-semibold uppercase tracking-wide text-mt-muted px-2 pt-1 pb-1.5">Comunidades</p>
