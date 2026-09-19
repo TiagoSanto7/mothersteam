@@ -79,7 +79,7 @@ export function PostCard({ post, onOpen, onOpenProfile, onOpenUser, onOpenCommun
             type="button"
             onClick={(e) => { e.stopPropagation(); onOpenProfile(); }}
             aria-label={`Ver perfil de ${post.author}`}
-            className="flex items-center gap-2.5 text-left"
+            className="flex items-center gap-2.5 text-left min-w-0 flex-1"
           >
             <div data-testid="post-avatar">
               <UserAvatar
@@ -89,7 +89,7 @@ export function PostCard({ post, onOpen, onOpenProfile, onOpenUser, onOpenCommun
                 size={40}
               />
             </div>
-            <div className="flex flex-col gap-0.5">
+            <div className="flex flex-col gap-0.5 min-w-0">
               <div className="flex items-center gap-1">
                 <p className="text-sm font-semibold text-mt-charcoal">{post.author}</p>
                 {post.authorRole === 'OFFICIAL' && (
@@ -105,20 +105,27 @@ export function PostCard({ post, onOpen, onOpenProfile, onOpenUser, onOpenCommun
                 </span>
               )}
               {post.communityName && (
-                onOpenCommunity && post.communityId ? (
-                  <button
-                    type="button"
-                    onClick={(e) => { e.stopPropagation(); onOpenCommunity(post.communityId!); }}
-                    aria-label={`Ver comunidade ${post.communityName}`}
-                    className="text-[10px] font-medium px-2 py-0.5 rounded-full w-fit bg-mt-cream text-mt-muted"
-                  >
-                    Em {post.communityName}
-                  </button>
-                ) : (
-                  <span className="text-[10px] font-medium px-2 py-0.5 rounded-full w-fit bg-mt-cream text-mt-muted">
-                    Em {post.communityName}
-                  </span>
-                )
+                <div className="flex items-center -mt-0.5 min-w-0">
+                  {/* Linha descendo do nome e virando à direita — sem seta, só o traço */}
+                  <svg width="16" height="12" viewBox="0 0 16 12" aria-hidden="true" className="flex-shrink-0 text-mt-linen">
+                    <path d="M1 0 V5 Q1 8 4 8 H13" fill="none" stroke="currentColor" strokeWidth="1.5" />
+                  </svg>
+                  <span className="text-[10px] text-mt-muted/80 -ml-0.5 flex-shrink-0 whitespace-nowrap">Publicado em</span>
+                  {onOpenCommunity && post.communityId ? (
+                    <button
+                      type="button"
+                      onClick={(e) => { e.stopPropagation(); onOpenCommunity(post.communityId!); }}
+                      aria-label={`Ver comunidade ${post.communityName}`}
+                      className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-mt-cream text-mt-muted ml-1.5 truncate min-w-0"
+                    >
+                      {post.communityName}
+                    </button>
+                  ) : (
+                    <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-mt-cream text-mt-muted ml-1.5 truncate min-w-0">
+                      {post.communityName}
+                    </span>
+                  )}
+                </div>
               )}
             </div>
           </button>

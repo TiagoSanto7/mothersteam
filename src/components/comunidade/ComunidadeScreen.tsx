@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect, useLayoutEffect } from 'react';
 import { ArrowUp, Plus } from 'lucide-react';
 import { SaraPullIndicator } from '../shared/SaraPullIndicator';
-import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
+import { motion, AnimatePresence, useReducedMotion, useDragControls } from 'framer-motion';
 import { useInfiniteQuery, useQuery, useQueryClient } from '@tanstack/react-query';
 import { usePullToRefresh } from '../../lib/usePullToRefresh';
 import { useAppStore } from '../../store/useAppStore';
@@ -172,6 +172,12 @@ export function ComunidadeScreen() {
   const [activeCategory, setActiveCategory] = useState<Category>('todos');
   const [showCreate, setShowCreate] = useState(false);
   const [showCreateWithImage, setShowCreateWithImage] = useState(false);
+  const composerDragControls = useDragControls();
+
+  function closeComposer() {
+    setShowCreate(false);
+    setShowCreateWithImage(false);
+  }
 
   // Bridge from MtQuickActionSheet: when M-CTA's "Novo post" fires, open the composer here.
   useEffect(() => {
@@ -490,7 +496,7 @@ export function ComunidadeScreen() {
             exit={{ opacity: 0 }}
             transition={{ duration: 0.2 }}
             className="fixed inset-0 z-50 bg-black/40 flex items-end"
-            onClick={() => { setShowCreate(false); setShowCreateWithImage(false); }}
+            onClick={closeComposer}
           >
             <motion.div
               initial={{ y: 40, opacity: 0 }}
@@ -500,11 +506,28 @@ export function ComunidadeScreen() {
               role="dialog"
               aria-modal="true"
               aria-label="Nova publicação"
+              drag="y"
+              dragControls={composerDragControls}
+              dragListener={false}
+              dragConstraints={{ top: 0, bottom: 0 }}
+              dragElastic={{ top: 0, bottom: 0.5 }}
+              onDragEnd={(_, info) => {
+                if (info.offset.y > 120 || info.velocity.y > 600) closeComposer();
+              }}
               className="w-full max-w-[390px] mx-auto h-[90%] bg-mt-cream rounded-t-3xl flex flex-col overflow-hidden"
               onClick={(e) => e.stopPropagation()}
             >
+              {/* Alça de arrastar — só ela inicia o drag (dragListener={false} acima),
+                  pra não capturar gestos de scroll/seleção de texto dentro do formulário. */}
+              <div
+                onPointerDown={(e) => composerDragControls.start(e)}
+                className="flex justify-center pt-2 pb-1 flex-shrink-0 touch-none cursor-grab active:cursor-grabbing"
+                aria-hidden="true"
+              >
+                <div className="w-10 h-1.5 rounded-full bg-mt-linen" />
+              </div>
               <CreatePostScreen
-                  onBack={() => { setShowCreate(false); setShowCreateWithImage(false); }}
+                  onBack={closeComposer}
                   autoOpenImage={showCreateWithImage}
                 />
             </motion.div>
