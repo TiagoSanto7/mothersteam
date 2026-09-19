@@ -32,6 +32,14 @@ export class ApiError extends Error {
   }
 }
 
+/**
+ * Resposta de POST /auth/refresh. O servidor rotaciona o refresh token a cada
+ * chamada (apaga o antigo e devolve um novo), então quem chama precisa salvar
+ * os dois — ver setTokens na store (TIA-67). No web o cookie httpOnly também é
+ * atualizado; no iOS/Android o app depende do token salvo.
+ */
+type RefreshResponse = { accessToken: string; refreshToken?: string }
+
 let refreshPromise: Promise<string | null> | null = null
 
 async function doRefresh(): Promise<string | null> {
@@ -46,8 +54,8 @@ async function doRefresh(): Promise<string | null> {
       } : {}),
     })
     if (!res.ok) return null
-    const { accessToken } = (await res.json()) as { accessToken: string }
-    useAppStore.getState().setAccessToken(accessToken)
+    const { accessToken, refreshToken } = (await res.json()) as RefreshResponse
+    useAppStore.getState().setTokens(accessToken, refreshToken)
     return accessToken
   } catch {
     return null
@@ -99,13 +107,12 @@ async function withOneRetry<T>(fn: () => Promise<T>, label: string): Promise<Ret
   }
 }
 
-async function attemptRefresh(): Promise<string> {
+async function attemptRefresh(): Promise<RefreshResponse> {
   const storedRefreshToken = useAppStore.getState().refreshToken
-  const { accessToken } = await apiFetch<{ accessToken: string }>('/auth/refresh', {
+  return apiFetch<RefreshResponse>('/auth/refresh', {
     method: 'POST',
     body: storedRefreshToken ? JSON.stringify({ refreshToken: storedRefreshToken }) : undefined,
   })
-  return accessToken
 }
 
 export type RestoreSessionResult =
@@ -119,14 +126,17 @@ async function doRestoreSession(): Promise<RestoreSessionResult> {
   const refreshResult = await withOneRetry(attemptRefresh, 'refresh')
   if (!refreshResult.ok) return { ok: false, reason: refreshResult.reason }
 
-  const accessToken = refreshResult.value
-  useAppStore.getState().setAccessToken(accessToken)
+  const { accessToken, refreshToken } = refreshResult.value
+  // Salva o par novo ANTES do /auth/me: a rotação já commitou no servidor e o
+  // token antigo não vale mais. Se o /auth/me falhar, o token novo continua
+  // salvo e a próxima abertura do app consegue restaurar a sessão.
+  useAppStore.getState().setTokens(accessToken, refreshToken)
 
   const meResult = await withOneRetry(() => apiFetch<ApiUser>('/auth/me'), 'auth/me')
   if (!meResult.ok) {
-    // O refresh já rotacionou/commitou — isso não se desfaz. Só limpamos o
-    // accessToken pra não deixar a store com token setado e isLoggedIn ainda
-    // false (estado órfão até o próximo login).
+    // Só limpamos o accessToken pra não deixar a store com token setado e
+    // isLoggedIn ainda false (estado órfão até o próximo login). O refresh
+    // token novo fica salvo.
     useAppStore.getState().setAccessToken(null)
     return { ok: false, reason: meResult.reason }
   }

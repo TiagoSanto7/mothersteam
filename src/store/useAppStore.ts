@@ -57,10 +57,11 @@ interface AppState {
   babySheetMode: 'amamentacao' | 'sono' | 'fralda' | null;
   // Auth actions
   setAccessToken: (token: string | null) => void;
+  /** Saves the pair returned by POST /auth/refresh. The server rotates the refresh token on every call, so the new one must replace the old (TIA-67). */
+  setTokens: (accessToken: string, refreshToken?: string) => void;
   setAuth: (token: string, user: ApiUser, refreshToken?: string) => void;
   clearAuth: () => void;
   logout: () => void;
-  refreshAccessToken: () => Promise<void>;
   // Profile actions
   completeOnboarding: (answers: OnboardingAnswers) => void;
   completeReception: () => void;
@@ -195,6 +196,9 @@ export const useAppStore = create<AppState>()(
       babySheetMode: null,
       // Auth actions
       setAccessToken: (token) => set({ accessToken: token }),
+      // A response without refreshToken keeps the stored one instead of erasing it.
+      setTokens: (accessToken, refreshToken) =>
+        set((s) => ({ accessToken, refreshToken: refreshToken ?? s.refreshToken })),
       setAuth: (token, user, refreshTok) =>
         set((s) => {
           // Consolidate __legacy__ verse bucket into this user's bucket on login.
@@ -210,7 +214,8 @@ export const useAppStore = create<AppState>()(
           }
           return {
             accessToken: token,
-            // Preserve existing refreshToken if a new one is not provided (session restore path)
+            // Preserve existing refreshToken if a new one is not provided (session restore path:
+            // restoreSession() already saved the rotated token via setTokens)
             refreshToken: refreshTok !== undefined ? refreshTok : s.refreshToken,
             currentUserId: user.id,
             isLoggedIn: true,
@@ -237,19 +242,6 @@ export const useAppStore = create<AppState>()(
         const { refreshToken } = get()
         apiFetch('/auth/logout', { method: 'POST', body: JSON.stringify({ refreshToken }) }).catch(() => {})
         get().clearAuth()
-      },
-      refreshAccessToken: async () => {
-        const { refreshToken } = get()
-        if (!refreshToken) return
-        try {
-          const data = await apiFetch<{ accessToken: string }>('/auth/refresh', {
-            method: 'POST',
-            body: JSON.stringify({ refreshToken }),
-          })
-          set({ accessToken: data.accessToken, isLoggedIn: true })
-        } catch {
-          get().clearAuth()
-        }
       },
       // Profile actions
       completeOnboarding: (answers) => {

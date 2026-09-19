@@ -11,9 +11,6 @@ vi.mock('../lib/api', () => ({
   },
 }))
 
-import { apiFetch } from '../lib/api'
-const mockFetch = apiFetch as ReturnType<typeof vi.fn>
-
 const mockUser = {
   id: 'u1', name: 'Ana', email: 'ana@test.com', username: null,
   pregnancyStage: 'pregnant' as const, onboardingDone: true,
@@ -36,19 +33,26 @@ describe('refreshToken persistence', () => {
     expect(stored.state?.refreshToken).toBe('refresh-abc')
   })
 
-  it('uses stored refreshToken in body when calling refreshAccessToken', async () => {
+  it('setTokens replaces both tokens and persists the rotated refreshToken', async () => {
+    const { useAppStore } = await import('./useAppStore')
+    useAppStore.setState({ refreshToken: 'refresh-old', accessToken: 'access-old' } as never)
+
+    useAppStore.getState().setTokens('access-new', 'refresh-new')
+
+    expect(useAppStore.getState().accessToken).toBe('access-new')
+    expect(useAppStore.getState().refreshToken).toBe('refresh-new')
+    const stored = JSON.parse(localStorage.getItem('mothers-team-v3') ?? '{}')
+    expect(stored.state?.refreshToken).toBe('refresh-new')
+  })
+
+  it('setTokens keeps the stored refreshToken when the response has none', async () => {
     const { useAppStore } = await import('./useAppStore')
     useAppStore.setState({ refreshToken: 'refresh-abc', accessToken: null } as never)
 
-    mockFetch.mockResolvedValueOnce({ accessToken: 'new-access-456' })
+    useAppStore.getState().setTokens('access-new')
 
-    await useAppStore.getState().refreshAccessToken()
-
-    expect(mockFetch).toHaveBeenCalledWith('/auth/refresh', {
-      method: 'POST',
-      body: JSON.stringify({ refreshToken: 'refresh-abc' }),
-    })
-    expect(useAppStore.getState().accessToken).toBe('new-access-456')
+    expect(useAppStore.getState().accessToken).toBe('access-new')
+    expect(useAppStore.getState().refreshToken).toBe('refresh-abc')
   })
 
   it('clears refreshToken on clearAuth', async () => {

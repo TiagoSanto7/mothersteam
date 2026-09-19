@@ -27,7 +27,7 @@ describe('restoreSession', () => {
 
   it('succeeds on first try when refresh + /auth/me both work', async () => {
     const fetchMock = vi.fn(async (url: string) => {
-      if (url.toString().includes('/auth/refresh')) return jsonResponse(200, { accessToken: 'access-1' })
+      if (url.toString().includes('/auth/refresh')) return jsonResponse(200, { accessToken: 'access-1', refreshToken: 'refresh-1' })
       if (url.toString().includes('/auth/me')) return jsonResponse(200, mockUser)
       throw new Error(`unexpected fetch: ${url}`)
     })
@@ -38,6 +38,26 @@ describe('restoreSession', () => {
 
     expect(result).toEqual({ ok: true, accessToken: 'access-1', user: mockUser })
     expect(fetchMock).toHaveBeenCalledTimes(2)
+  })
+
+  it('persists the rotated refresh token returned by /auth/refresh (TIA-67)', async () => {
+    const fetchMock = vi.fn(async (url: string, _init?: RequestInit) => {
+      if (url.toString().includes('/auth/refresh')) return jsonResponse(200, { accessToken: 'access-1', refreshToken: 'refresh-rotated' })
+      if (url.toString().includes('/auth/me')) return jsonResponse(200, mockUser)
+      throw new Error(`unexpected fetch: ${url}`)
+    })
+    vi.stubGlobal('fetch', fetchMock)
+
+    const { useAppStore } = await import('../store/useAppStore')
+    useAppStore.setState({ refreshToken: 'refresh-old' } as never)
+    const { restoreSession } = await import('./api')
+    await restoreSession()
+
+    const refreshBody = JSON.parse(fetchMock.mock.calls[0][1]!.body as string)
+    expect(refreshBody).toEqual({ refreshToken: 'refresh-old' })
+    expect(useAppStore.getState().refreshToken).toBe('refresh-rotated')
+    const stored = JSON.parse(localStorage.getItem('mothers-team-v3') ?? '{}')
+    expect(stored.state?.refreshToken).toBe('refresh-rotated')
   })
 
   it('gives up immediately on a definitive 401 — no retry', async () => {
@@ -136,10 +156,10 @@ describe('restoreSession', () => {
     expect(meCalls).toBe(2)
   })
 
-  it('clears the access token when /auth/me fails after exhausting its retry', async () => {
+  it('clears the access token but keeps the rotated refresh token when /auth/me fails after exhausting its retry', async () => {
     vi.useFakeTimers()
     const fetchMock = vi.fn(async (url: string) => {
-      if (url.toString().includes('/auth/refresh')) return jsonResponse(200, { accessToken: 'access-6' })
+      if (url.toString().includes('/auth/refresh')) return jsonResponse(200, { accessToken: 'access-6', refreshToken: 'refresh-6' })
       if (url.toString().includes('/auth/me')) throw new TypeError('Failed to fetch')
       throw new Error(`unexpected fetch: ${url}`)
     })
@@ -153,6 +173,8 @@ describe('restoreSession', () => {
 
     expect(result).toEqual({ ok: false, reason: 'transient' })
     expect(useAppStore.getState().accessToken).toBeNull()
+    // A rotação já commitou no servidor — o token novo precisa sobreviver pra próxima abertura.
+    expect(useAppStore.getState().refreshToken).toBe('refresh-6')
   })
 
   it('does not fire a second POST /auth/refresh for concurrent restoreSession calls', async () => {
