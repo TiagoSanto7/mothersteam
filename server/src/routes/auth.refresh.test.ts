@@ -99,17 +99,17 @@ describe('POST /auth/refresh', () => {
   // A rotação é atômica ($transaction): um erro inesperado de banco antes de
   // ela commitar não é o mesmo tipo de falha que um token inválido — não deve
   // virar 401 (que o cliente trataria como "sessão encerrada, sem retry").
-  // Precisa propagar como erro não tratado (500 pelo handler padrão do
-  // Fastify) para que o cliente saiba que é seguro tentar de novo com o mesmo
-  // refresh token, já que ele continua intacto no banco.
-  it('não retorna 401 quando o banco falha de forma inesperada durante a rotação — falha transitória', async () => {
+  // Precisa virar 500 pra que o cliente saiba que é seguro tentar de novo com
+  // o mesmo refresh token, já que ele continua intacto no banco. A mensagem
+  // do erro real não pode vazar na resposta (rota sem autenticação).
+  it('não retorna 401 quando o banco falha de forma inesperada durante a rotação — falha transitória, sem vazar detalhe do erro', async () => {
     mockVerifyRefreshToken.mockReturnValueOnce({ userId: 'user-1' })
     const findUnique = vi.fn().mockResolvedValue({
       token: 'old-token',
       userId: 'user-1',
       expiresAt: new Date(Date.now() + 1000 * 60 * 60),
     })
-    const transaction = vi.fn().mockRejectedValue(new Error('connection lost'))
+    const transaction = vi.fn().mockRejectedValue(new Error('connection string: postgres://internal-secret'))
     const app = await buildApp({ findUnique, transaction })
 
     const response = await app.inject({
@@ -120,6 +120,7 @@ describe('POST /auth/refresh', () => {
 
     expect(response.statusCode).not.toBe(401)
     expect(response.statusCode).toBe(500)
+    expect(response.body).not.toContain('internal-secret')
     await app.close()
   })
 

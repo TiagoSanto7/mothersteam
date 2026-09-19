@@ -63,10 +63,40 @@ const RESTORE_RETRY_DELAY_MS = 1200
  * commitou e o token antigo continua válido. Erro de rede (fetch nunca
  * chegou a ter resposta): também seguro tentar de novo.
  * 401/403: o servidor checou o token e recusou — definitivo, não repete.
+ *
+ * Limitação conhecida e aceita: se o servidor rotacionar com sucesso mas a
+ * resposta se perder em trânsito, um retry reenviaria o refresh token antigo
+ * (já apagado) e receberia um 401 — classificado (corretamente, do ponto de
+ * vista do servidor) como definitivo, derrubando uma sessão que era válida.
+ * Essa janela é estreita e não eliminável sem replay/idempotência no
+ * servidor; fora do escopo desta correção (TIA-55).
  */
-function isTransientRefreshFailure(err: unknown): boolean {
+function isTransientApiFailure(err: unknown): boolean {
   if (err instanceof ApiError) return err.status >= 500
   return true
+}
+
+type RetryOutcome<T> = { ok: true; value: T } | { ok: false; reason: 'transient' | 'definitive' }
+
+/** Tenta `fn` uma vez; se falhar por motivo transitório, espera um backoff curto e tenta mais uma vez. */
+async function withOneRetry<T>(fn: () => Promise<T>, label: string): Promise<RetryOutcome<T>> {
+  try {
+    return { ok: true, value: await fn() }
+  } catch (err) {
+    if (!isTransientApiFailure(err)) {
+      console.info(`[session-restore] ${label}: falha definitiva`)
+      return { ok: false, reason: 'definitive' }
+    }
+    console.warn(`[session-restore] ${label}: falha transitória, tentando novamente em`, RESTORE_RETRY_DELAY_MS, 'ms')
+    await new Promise((resolve) => setTimeout(resolve, RESTORE_RETRY_DELAY_MS))
+    try {
+      return { ok: true, value: await fn() }
+    } catch (err2) {
+      const reason = isTransientApiFailure(err2) ? 'transient' : 'definitive'
+      console.warn(`[session-restore] ${label}: falha definitiva após retry`)
+      return { ok: false, reason }
+    }
+  }
 }
 
 async function attemptRefresh(): Promise<string> {
@@ -86,33 +116,22 @@ export type RestoreSessionResult =
   | { ok: false; reason: 'transient' | 'definitive' }
 
 async function doRestoreSession(): Promise<RestoreSessionResult> {
-  let accessToken: string
-  try {
-    accessToken = await attemptRefresh()
-  } catch (err) {
-    if (!isTransientRefreshFailure(err)) {
-      console.info('[session-restore] token inválido/expirado — sessão encerrada')
-      return { ok: false, reason: 'definitive' }
-    }
-    console.warn('[session-restore] falha transitória no refresh, tentando novamente em', RESTORE_RETRY_DELAY_MS, 'ms')
-    await new Promise((resolve) => setTimeout(resolve, RESTORE_RETRY_DELAY_MS))
-    try {
-      accessToken = await attemptRefresh()
-    } catch (err2) {
-      const reason = isTransientRefreshFailure(err2) ? 'transient' : 'definitive'
-      console.warn('[session-restore] falha definitiva após retry:', err2 instanceof ApiError ? `status ${err2.status}` : 'network error')
-      return { ok: false, reason }
-    }
+  const refreshResult = await withOneRetry(attemptRefresh, 'refresh')
+  if (!refreshResult.ok) return { ok: false, reason: refreshResult.reason }
+
+  const accessToken = refreshResult.value
+  useAppStore.getState().setAccessToken(accessToken)
+
+  const meResult = await withOneRetry(() => apiFetch<ApiUser>('/auth/me'), 'auth/me')
+  if (!meResult.ok) {
+    // O refresh já rotacionou/commitou — isso não se desfaz. Só limpamos o
+    // accessToken pra não deixar a store com token setado e isLoggedIn ainda
+    // false (estado órfão até o próximo login).
+    useAppStore.getState().setAccessToken(null)
+    return { ok: false, reason: meResult.reason }
   }
 
-  useAppStore.getState().setAccessToken(accessToken)
-  try {
-    const user = await apiFetch<ApiUser>('/auth/me')
-    return { ok: true, accessToken, user }
-  } catch (err) {
-    console.warn('[session-restore] refresh ok mas /auth/me falhou:', err instanceof ApiError ? `status ${err.status}` : 'network error')
-    return { ok: false, reason: isTransientRefreshFailure(err) ? 'transient' : 'definitive' }
-  }
+  return { ok: true, accessToken, user: meResult.value }
 }
 
 let restorePromise: Promise<RestoreSessionResult> | null = null

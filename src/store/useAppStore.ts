@@ -56,7 +56,7 @@ interface AppState {
   /** null = sheet closed; string = which tab the QuickRegisterSheet should open on. */
   babySheetMode: 'amamentacao' | 'sono' | 'fralda' | null;
   // Auth actions
-  setAccessToken: (token: string) => void;
+  setAccessToken: (token: string | null) => void;
   setAuth: (token: string, user: ApiUser, refreshToken?: string) => void;
   clearAuth: () => void;
   logout: () => void;

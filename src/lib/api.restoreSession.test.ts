@@ -113,6 +113,48 @@ describe('restoreSession', () => {
     expect(fetchMock).toHaveBeenCalledTimes(2)
   })
 
+  it('retries /auth/me once after a transient failure, then succeeds', async () => {
+    vi.useFakeTimers()
+    let meCalls = 0
+    const fetchMock = vi.fn(async (url: string) => {
+      if (url.toString().includes('/auth/refresh')) return jsonResponse(200, { accessToken: 'access-5' })
+      if (url.toString().includes('/auth/me')) {
+        meCalls++
+        if (meCalls === 1) throw new TypeError('Failed to fetch')
+        return jsonResponse(200, mockUser)
+      }
+      throw new Error(`unexpected fetch: ${url}`)
+    })
+    vi.stubGlobal('fetch', fetchMock)
+
+    const { restoreSession } = await import('./api')
+    const promise = restoreSession()
+    await vi.advanceTimersByTimeAsync(2000)
+    const result = await promise
+
+    expect(result).toEqual({ ok: true, accessToken: 'access-5', user: mockUser })
+    expect(meCalls).toBe(2)
+  })
+
+  it('clears the access token when /auth/me fails after exhausting its retry', async () => {
+    vi.useFakeTimers()
+    const fetchMock = vi.fn(async (url: string) => {
+      if (url.toString().includes('/auth/refresh')) return jsonResponse(200, { accessToken: 'access-6' })
+      if (url.toString().includes('/auth/me')) throw new TypeError('Failed to fetch')
+      throw new Error(`unexpected fetch: ${url}`)
+    })
+    vi.stubGlobal('fetch', fetchMock)
+
+    const { restoreSession } = await import('./api')
+    const { useAppStore } = await import('../store/useAppStore')
+    const promise = restoreSession()
+    await vi.advanceTimersByTimeAsync(2000)
+    const result = await promise
+
+    expect(result).toEqual({ ok: false, reason: 'transient' })
+    expect(useAppStore.getState().accessToken).toBeNull()
+  })
+
   it('does not fire a second POST /auth/refresh for concurrent restoreSession calls', async () => {
     const fetchMock = vi.fn(async (url: string) => {
       if (url.toString().includes('/auth/refresh')) return jsonResponse(200, { accessToken: 'access-4' })
