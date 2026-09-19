@@ -222,9 +222,22 @@ export default async function authRoutes(fastify: FastifyInstance) {
 
     if (!token) return reply.status(401).send({ error: 'No refresh token' })
 
+    // Só a verificação do JWT é um motivo definitivo de 401 (token
+    // criptograficamente inválido/expirado).
+    let userId: string
     try {
-      const { userId } = verifyRefreshToken(token)
+      ;({ userId } = verifyRefreshToken(token))
+    } catch {
+      return reply.status(401).send({ error: 'Invalid refresh token' })
+    }
 
+    // Erro inesperado de banco a partir daqui (findUnique, $transaction) não é
+    // 401: a rotação é atômica, então se a transação não commitou o refresh
+    // token antigo continua válido — seguro pro cliente tentar de novo. Por
+    // isso viram 500, não 401 (que o cliente trataria como sessão encerrada).
+    // A mensagem do erro fica só no log — não é enviada na resposta, pra não
+    // vazar detalhe interno numa rota que não exige autenticação.
+    try {
       const stored = await fastify.prisma.refreshToken.findUnique({ where: { token } })
       if (!stored || stored.expiresAt < new Date()) {
         await fastify.prisma.refreshToken.deleteMany({ where: { token } })
@@ -244,8 +257,9 @@ export default async function authRoutes(fastify: FastifyInstance) {
       reply
         .setCookie(REFRESH_COOKIE, newRefreshToken, COOKIE_OPTS)
         .send({ accessToken, refreshToken: newRefreshToken })
-    } catch {
-      reply.status(401).send({ error: 'Invalid refresh token' })
+    } catch (err) {
+      fastify.log.error(err, 'Erro inesperado ao processar /auth/refresh')
+      reply.status(500).send({ error: 'Internal server error' })
     }
   })
 

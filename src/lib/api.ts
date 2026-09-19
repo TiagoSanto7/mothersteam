@@ -1,4 +1,5 @@
 import { useAppStore } from '../store/useAppStore'
+import type { ApiUser } from './types'
 
 // Em dev: VITE_API_URL undefined → BASE = '/api', batendo no Vite proxy que
 // redireciona pra localhost:3001 (strippa o /api antes).
@@ -51,6 +52,105 @@ async function doRefresh(): Promise<string | null> {
   } catch {
     return null
   }
+}
+
+const RESTORE_RETRY_DELAY_MS = 1200
+
+/**
+ * Distingue falha transitória (vale a pena tentar de novo) de falha definitiva.
+ * 5xx: erro inesperado no servidor — a rotação do refresh token é atômica
+ * (ver server/src/routes/auth.ts), então um 500 aqui significa que ela não
+ * commitou e o token antigo continua válido. Erro de rede (fetch nunca
+ * chegou a ter resposta): também seguro tentar de novo.
+ * 401/403: o servidor checou o token e recusou — definitivo, não repete.
+ *
+ * Limitação conhecida e aceita: se o servidor rotacionar com sucesso mas a
+ * resposta se perder em trânsito, um retry reenviaria o refresh token antigo
+ * (já apagado) e receberia um 401 — classificado (corretamente, do ponto de
+ * vista do servidor) como definitivo, derrubando uma sessão que era válida.
+ * Essa janela é estreita e não eliminável sem replay/idempotência no
+ * servidor; fora do escopo desta correção (TIA-55).
+ */
+function isTransientApiFailure(err: unknown): boolean {
+  if (err instanceof ApiError) return err.status >= 500
+  return true
+}
+
+type RetryOutcome<T> = { ok: true; value: T } | { ok: false; reason: 'transient' | 'definitive' }
+
+/** Tenta `fn` uma vez; se falhar por motivo transitório, espera um backoff curto e tenta mais uma vez. */
+async function withOneRetry<T>(fn: () => Promise<T>, label: string): Promise<RetryOutcome<T>> {
+  try {
+    return { ok: true, value: await fn() }
+  } catch (err) {
+    if (!isTransientApiFailure(err)) {
+      console.info(`[session-restore] ${label}: falha definitiva`)
+      return { ok: false, reason: 'definitive' }
+    }
+    console.warn(`[session-restore] ${label}: falha transitória, tentando novamente em`, RESTORE_RETRY_DELAY_MS, 'ms')
+    await new Promise((resolve) => setTimeout(resolve, RESTORE_RETRY_DELAY_MS))
+    try {
+      return { ok: true, value: await fn() }
+    } catch (err2) {
+      const reason = isTransientApiFailure(err2) ? 'transient' : 'definitive'
+      console.warn(`[session-restore] ${label}: falha definitiva após retry`)
+      return { ok: false, reason }
+    }
+  }
+}
+
+async function attemptRefresh(): Promise<string> {
+  const storedRefreshToken = useAppStore.getState().refreshToken
+  const { accessToken } = await apiFetch<{ accessToken: string }>('/auth/refresh', {
+    method: 'POST',
+    body: storedRefreshToken ? JSON.stringify({ refreshToken: storedRefreshToken }) : undefined,
+  })
+  return accessToken
+}
+
+export type RestoreSessionResult =
+  | { ok: true; accessToken: string; user: ApiUser }
+  // 'transient': todas as tentativas falharam por rede/5xx — vale mostrar um
+  // aviso de conexão. 'definitive': token ausente/inválido/expirado — fluxo
+  // normal de "faça login", sem aviso extra.
+  | { ok: false; reason: 'transient' | 'definitive' }
+
+async function doRestoreSession(): Promise<RestoreSessionResult> {
+  const refreshResult = await withOneRetry(attemptRefresh, 'refresh')
+  if (!refreshResult.ok) return { ok: false, reason: refreshResult.reason }
+
+  const accessToken = refreshResult.value
+  useAppStore.getState().setAccessToken(accessToken)
+
+  const meResult = await withOneRetry(() => apiFetch<ApiUser>('/auth/me'), 'auth/me')
+  if (!meResult.ok) {
+    // O refresh já rotacionou/commitou — isso não se desfaz. Só limpamos o
+    // accessToken pra não deixar a store com token setado e isLoggedIn ainda
+    // false (estado órfão até o próximo login).
+    useAppStore.getState().setAccessToken(null)
+    return { ok: false, reason: meResult.reason }
+  }
+
+  return { ok: true, accessToken, user: meResult.value }
+}
+
+let restorePromise: Promise<RestoreSessionResult> | null = null
+
+/**
+ * Restaura a sessão no boot do app: renova o access token com o refresh token
+ * salvo e busca o usuário. Faz até 1 retry com backoff curto quando a falha é
+ * transitória (rede ou 5xx); desiste imediatamente em falha definitiva
+ * (401/403) para não mascarar uma sessão realmente expirada como indisponível.
+ * Chamadas concorrentes (ex.: StrictMode em dev disparando o efeito 2x)
+ * reaproveitam a mesma tentativa em vez de duplicar o POST /auth/refresh.
+ */
+export function restoreSession(): Promise<RestoreSessionResult> {
+  if (!restorePromise) {
+    restorePromise = doRestoreSession().finally(() => {
+      restorePromise = null
+    })
+  }
+  return restorePromise
 }
 
 export async function apiFetch<T>(path: string, init: RequestInit = {}): Promise<T> {

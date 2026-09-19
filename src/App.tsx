@@ -5,8 +5,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useAppStore } from './store/useAppStore';
 import type { TabId } from './types';
 import type { ApiNotification, ApiChat, ApiPost } from './lib/types';
-import { apiFetch } from './lib/api';
-import type { ApiUser } from './lib/types';
+import { apiFetch, restoreSession } from './lib/api';
 import { apiPostToCommunityPost } from './lib/helpers';
 import { MobileShell } from './components/layout/MobileShell';
 import { WebLayout } from './components/layout/WebLayout';
@@ -40,7 +39,6 @@ export default function App() {
   const socialOnboardingDone = useAppStore((s) => s.socialOnboardingDone);
   const activeTab      = useAppStore((s) => s.activeTab);
   const currentUserId  = useAppStore((s) => s.currentUserId);
-  const setAccessToken          = useAppStore((s) => s.setAccessToken);
   const completeSocialOnboarding = useAppStore((s) => s.completeSocialOnboarding);
   const pendingShareContent = useAppStore((s) => s.pendingShareContent)
   const pendingShareCommunityId = useAppStore((s) => s.pendingShareCommunityId)
@@ -70,6 +68,7 @@ export default function App() {
   }, [isLoggedIn])
 
   const [restoring,         setRestoring]         = useState(true);
+  const [restoreConnFailed, setRestoreConnFailed] = useState(false);
   const [drawerOpen,        setDrawerOpen]        = useState(false);
   const [showSettings,      setShowSettings]      = useState(false);
   const [showSavedVerses,   setShowSavedVerses]   = useState(false);
@@ -108,28 +107,24 @@ export default function App() {
     setOpenReviews(null);
   }, [closeOverlaysTick]);
 
-  // Session restore: try refresh on first load (cookie for web, body token for Capacitor)
+  // Session restore: try refresh on first load (cookie for web, body token for Capacitor).
+  // restoreSession() já resolve retry/backoff e classificação transitória vs
+  // definitiva — ver src/lib/api.ts. `restoring` fica true até o resultado
+  // final (sucesso ou falha após todas as tentativas), então a UI não pisca
+  // pra tela de login por causa de uma falha de rede passageira.
   useEffect(() => {
     if (useAppStore.getState().isLoggedIn) {
       setRestoring(false);
       return;
     }
     (async () => {
-      try {
-        const storedRefreshToken = useAppStore.getState().refreshToken;
-        const { accessToken } = await apiFetch<{ accessToken: string }>('/auth/refresh', {
-          method: 'POST',
-          body: storedRefreshToken ? JSON.stringify({ refreshToken: storedRefreshToken }) : undefined,
-        });
-        setAccessToken(accessToken);
-        const user = await apiFetch<ApiUser>('/auth/me');
-        useAppStore.getState().setAuth(accessToken, user);
-      } catch (err) {
-        // Visible in remote debugger; helps diagnose session-restore failures
-        console.warn('[session-restore] failed:', err);
-      } finally {
-        setRestoring(false);
+      const result = await restoreSession();
+      if (result.ok) {
+        useAppStore.getState().setAuth(result.accessToken, result.user);
+      } else if (result.reason === 'transient') {
+        setRestoreConnFailed(true);
       }
+      setRestoring(false);
     })();
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -157,7 +152,7 @@ export default function App() {
   const pendingPost = pendingApiPost ? apiPostToCommunityPost(pendingApiPost) : null;
 
   if (restoring) return null;
-  if (!isLoggedIn) return <LoginScreen />;
+  if (!isLoggedIn) return <LoginScreen connectionNotice={restoreConnFailed} />;
   if (!onboardingDone) return <ReceptionFlow />;
 
   const unreadNotifs = (notifications ?? []).filter((n) => !n.read).length;

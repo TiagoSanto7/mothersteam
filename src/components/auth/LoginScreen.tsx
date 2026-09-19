@@ -12,7 +12,12 @@ import { Wordmark } from '../brand/Wordmark';
 import { Mark } from '../brand/Mark';
 import tagline from '../../assets/brand/tagline-mt-rose.svg';
 
-export function LoginScreen() {
+interface LoginScreenProps {
+  /** true quando o restore automático de sessão esgotou as tentativas por um problema de conexão (não por credenciais). */
+  connectionNotice?: boolean;
+}
+
+export function LoginScreen({ connectionNotice = false }: LoginScreenProps) {
   const setAuth = useAppStore((s) => s.setAuth);
   const [identifier, setIdentifier] = useState('');
   const [password, setPassword] = useState('');
@@ -67,6 +72,12 @@ export function LoginScreen() {
                 className="w-[115px] h-auto mt-1"
               />
             </div>
+
+            {connectionNotice && (
+              <p role="status" className="text-xs text-mt-muted text-center bg-mt-linen rounded-xl px-3 py-2 w-full">
+                Não foi possível conectar para restaurar sua sessão. Verifique sua internet e faça login novamente.
+              </p>
+            )}
 
             {/* Form */}
             <form onSubmit={handleSubmit} className="w-full flex flex-col gap-3">
