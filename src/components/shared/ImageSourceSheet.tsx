@@ -20,6 +20,7 @@ export function ImageSourceSheet({ onCamera, onGallery, onClose }: Props) {
       >
         <div className="w-10 h-1 bg-gray-200 rounded-full mx-auto mb-2" />
         <button
+          type="button"
           onClick={onCamera}
           className="flex items-center gap-3 w-full px-4 py-4 rounded-2xl hover:bg-mt-linen active:bg-mt-linen transition-colors text-left"
         >
@@ -32,6 +33,7 @@ export function ImageSourceSheet({ onCamera, onGallery, onClose }: Props) {
           </div>
         </button>
         <button
+          type="button"
           onClick={onGallery}
           className="flex items-center gap-3 w-full px-4 py-4 rounded-2xl hover:bg-mt-linen active:bg-mt-linen transition-colors text-left"
         >

@@ -1,10 +1,11 @@
 ﻿import { useState, useRef, useEffect, type FormEvent } from 'react';
-import { ChevronLeft, ImagePlus, Camera, X } from 'lucide-react';
+import { ChevronLeft, ImagePlus, Camera, Loader2, X } from 'lucide-react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { apiFetch, uploadImage } from '../../lib/api';
+import { apiFetch, resolveMediaUrl, uploadImage } from '../../lib/api';
 import { resizeImage } from '../../lib/imageUtils';
 import { useAppStore } from '../../store/useAppStore';
 import { ImageSourceSheet } from '../shared/ImageSourceSheet';
+import { useAvatarPicker } from '../../hooks/useAvatarPicker';
 
 type Category = 'gestação' | 'pós-parto' | 'amamentação' | 'saúde mental';
 type ColorKey = 'gold' | 'terracotta' | 'warm' | 'linen' | 'cream';
@@ -68,23 +69,33 @@ export function CreateCommunityScreen({ onCreated, onBack }: CreateCommunityScre
   const [isOpen, setIsOpen] = useState(true);
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreviewUrl, setImagePreviewUrl] = useState<string | null>(null);
-  const [avatarFile, setAvatarFile] = useState<File | null>(null);
-  const [avatarPreviewUrl, setAvatarPreviewUrl] = useState<string | null>(null);
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [uploadError, setUploadError] = useState<string | null>(null);
-  const [activePicker, setActivePicker] = useState<'cover' | 'avatar' | null>(null);
+  const [activePicker, setActivePicker] = useState<'cover' | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
-  const avatarFileInputRef = useRef<HTMLInputElement>(null);
-  const avatarCameraInputRef = useRef<HTMLInputElement>(null);
   const queryClient = useQueryClient();
 
-  // Revoke object URLs on unmount
+  // Foto de perfil da comunidade: mesmo fluxo (escolher → recortar 1:1 → enviar)
+  // usado no perfil da própria mãe — sobe assim que confirmado o recorte, antes
+  // mesmo de a comunidade existir (upload não depende disso; a URL só entra no
+  // POST /communities no submit). A capa continua com fluxo próprio (sem crop,
+  // proporção diferente) — só a definição de "foto de perfil" precisa ser igual.
+  const { openPicker: openAvatarPicker, pickerElements: avatarPickerElements, isUploading: isUploadingAvatar } = useAvatarPicker({
+    accessToken,
+    onError: setUploadError,
+    onUploaded: (url) => {
+      setUploadError(null);
+      setAvatarUrl(url);
+    },
+  });
+
+  // Revoke object URL on unmount
   useEffect(() => {
     return () => {
       if (imagePreviewUrl) URL.revokeObjectURL(imagePreviewUrl);
-      if (avatarPreviewUrl) URL.revokeObjectURL(avatarPreviewUrl);
     };
-  }, [imagePreviewUrl, avatarPreviewUrl]);
+  }, [imagePreviewUrl]);
 
   const { mutate, isPending } = useMutation({
     mutationFn: async () => {
@@ -93,14 +104,9 @@ export function CreateCommunityScreen({ onCreated, onBack }: CreateCommunityScre
         const resized = await resizeImage(imageFile, 1200, 800, 0.85);
         imageUrl = await uploadImage(resized, accessToken);
       }
-      let avatarUrl: string | undefined;
-      if (avatarFile) {
-        const resized = await resizeImage(avatarFile, 400, 400, 0.85);
-        avatarUrl = await uploadImage(resized, accessToken);
-      }
       return apiFetch<{ id: string }>('/communities', {
         method: 'POST',
-        body: JSON.stringify({ name: name.trim(), description: description.trim(), category, colorKey, imageUrl, avatarUrl, isPrivate, isOpen }),
+        body: JSON.stringify({ name: name.trim(), description: description.trim(), category, colorKey, imageUrl, avatarUrl: avatarUrl ?? undefined, isPrivate, isOpen }),
       });
     },
     onSuccess: (data) => {
@@ -127,21 +133,6 @@ export function CreateCommunityScreen({ onCreated, onBack }: CreateCommunityScre
     setImageFile(null);
     setImagePreviewUrl(null);
     if (fileInputRef.current) fileInputRef.current.value = '';
-  }
-
-  function handleAvatarFileChange(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0] ?? null;
-    setUploadError(null);
-    setAvatarFile(file);
-    if (avatarPreviewUrl) URL.revokeObjectURL(avatarPreviewUrl);
-    setAvatarPreviewUrl(file ? URL.createObjectURL(file) : null);
-  }
-
-  function handleRemoveAvatar() {
-    if (avatarPreviewUrl) URL.revokeObjectURL(avatarPreviewUrl);
-    setAvatarFile(null);
-    setAvatarPreviewUrl(null);
-    if (avatarFileInputRef.current) avatarFileInputRef.current.value = '';
   }
 
   function handleSubmit(e: FormEvent) {
@@ -206,19 +197,20 @@ export function CreateCommunityScreen({ onCreated, onBack }: CreateCommunityScre
             {/* Avatar da comunidade — sobreposto à capa, canto inferior esquerdo */}
             <div className="absolute left-4 -bottom-6 w-12 h-12 rounded-full border-4 border-white bg-white overflow-hidden shadow-sm">
               <div className={`w-full h-full flex items-center justify-center ${COLOR_MAP[colorKey]}`}>
-                {avatarPreviewUrl ? (
-                  <img src={avatarPreviewUrl} alt="Pré-visualização do perfil da comunidade" className="w-full h-full object-cover" />
+                {avatarUrl ? (
+                  <img src={resolveMediaUrl(avatarUrl)} alt="Pré-visualização do perfil da comunidade" className="w-full h-full object-cover" />
                 ) : (
                   <span className="text-white text-base font-bold">{name.trim().charAt(0).toUpperCase() || '?'}</span>
                 )}
               </div>
               <button
                 type="button"
-                onClick={() => setActivePicker('avatar')}
+                onClick={openAvatarPicker}
+                disabled={isUploadingAvatar}
                 aria-label="Selecionar foto de perfil da comunidade"
-                className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 hover:opacity-100 active:opacity-100 transition-opacity"
+                className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 hover:opacity-100 active:opacity-100 transition-opacity disabled:opacity-100 disabled:cursor-wait"
               >
-                <Camera size={13} className="text-white" />
+                {isUploadingAvatar ? <Loader2 size={13} className="text-white animate-spin" /> : <Camera size={13} className="text-white" />}
               </button>
             </div>
           </div>
@@ -235,10 +227,10 @@ export function CreateCommunityScreen({ onCreated, onBack }: CreateCommunityScre
                 Trocar capa
               </button>
             )}
-            {avatarPreviewUrl && (
+            {avatarUrl && (
               <button
                 type="button"
-                onClick={handleRemoveAvatar}
+                onClick={() => setAvatarUrl(null)}
                 className="flex items-center gap-1.5 text-xs text-mt-muted font-medium"
               >
                 <X size={14} />
@@ -262,34 +254,10 @@ export function CreateCommunityScreen({ onCreated, onBack }: CreateCommunityScre
             className="hidden"
             onChange={handleFileChange}
           />
-          <input
-            ref={avatarFileInputRef}
-            type="file"
-            accept="image/*"
-            className="hidden"
-            onChange={handleAvatarFileChange}
-            data-testid="avatar-file-input"
-          />
-          <input
-            ref={avatarCameraInputRef}
-            type="file"
-            accept="image/*"
-            capture="environment"
-            className="hidden"
-            onChange={handleAvatarFileChange}
-          />
-          {activePicker && (
+          {activePicker === 'cover' && (
             <ImageSourceSheet
-              onCamera={() => {
-                const target = activePicker;
-                setActivePicker(null);
-                (target === 'cover' ? cameraInputRef : avatarCameraInputRef).current?.click();
-              }}
-              onGallery={() => {
-                const target = activePicker;
-                setActivePicker(null);
-                (target === 'cover' ? fileInputRef : avatarFileInputRef).current?.click();
-              }}
+              onCamera={() => { setActivePicker(null); cameraInputRef.current?.click(); }}
+              onGallery={() => { setActivePicker(null); fileInputRef.current?.click(); }}
               onClose={() => setActivePicker(null)}
             />
           )}
@@ -399,6 +367,7 @@ export function CreateCommunityScreen({ onCreated, onBack }: CreateCommunityScre
           {isPending ? 'Criando…' : 'Criar comunidade'}
         </button>
       </form>
+      {avatarPickerElements}
     </div>
   );
 }

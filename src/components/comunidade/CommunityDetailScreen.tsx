@@ -13,6 +13,7 @@ import { CreatePostScreen } from './CreatePostScreen';
 import { PostCard } from './PostCard';
 import { JustPublishedHighlight, PendingPostCard } from './PendingPostCard';
 import { useJustPublishedIds, usePendingPosts, usePublishPost } from './publishing';
+import { useAvatarPicker } from '../../hooks/useAvatarPicker';
 import type { CommunityPost } from '../../types';
 
 interface CommunityDetailScreenProps {
@@ -172,9 +173,7 @@ export function CommunityDetailScreen({ communityId, onBack, onOpenProfile }: Co
   const [showAllMembers, setShowAllMembers] = useState(false);
   const [followedMap, setFollowedMap] = useState<MemberFollowedMap>({});
   const [uploadingCover, setUploadingCover] = useState(false);
-  const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const coverInputRef  = useRef<HTMLInputElement>(null);
-  const avatarInputRef = useRef<HTMLInputElement>(null);
 
   const [sentinelRef, isAtBottom] = useIntersection(PREFETCH_MARGIN);
 
@@ -256,17 +255,15 @@ export function CommunityDetailScreen({ communityId, onBack, onOpenProfile }: Co
     } catch { /* silently discard */ } finally { setUploadingCover(false); }
   }
 
-  async function handleAvatarUpload(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    if (e.target) (e.target as HTMLInputElement).value = '';
-    if (!file) return;
-    setUploadingAvatar(true);
-    try {
-      const resized = await resizeImage(file, 400, 400, 0.85);
-      const url = await uploadImage(resized, accessToken);
-      updateCommunityMutation.mutate({ avatarUrl: url });
-    } catch { /* silently discard */ } finally { setUploadingAvatar(false); }
-  }
+  // Foto de perfil da comunidade: mesmo useAvatarPicker (escolher → recortar 1:1
+  // → enviar) do perfil da própria mãe e da criação de comunidade — antes disso,
+  // essa tela fazia upload direto sem recorte, divergindo das outras duas telas
+  // pra exatamente o mesmo conceito de "foto de perfil".
+  const { openPicker: openAvatarPicker, pickerElements: avatarPickerElements, isUploading: uploadingAvatar } = useAvatarPicker({
+    accessToken,
+    onError: () => { /* falha silenciosa, mesmo padrão que a capa já tinha */ },
+    onUploaded: (url) => updateCommunityMutation.mutate({ avatarUrl: url }),
+  });
 
   function handleFollow(memberId: string) {
     if (!followedMap[memberId]) {
@@ -315,12 +312,10 @@ export function CommunityDetailScreen({ communityId, onBack, onOpenProfile }: Co
         <div className="w-8" />
       </div>
 
-      {/* Hidden file inputs for admins */}
+      {/* Hidden file input for admins — capa. A foto de perfil usa avatarPickerElements
+          (useAvatarPicker), que já traz seus próprios inputs escondidos. */}
       {isAdmin && (
-        <>
-          <input ref={coverInputRef}  type="file" accept="image/*" className="hidden" onChange={handleCoverUpload} />
-          <input ref={avatarInputRef} type="file" accept="image/*" className="hidden" onChange={handleAvatarUpload} />
-        </>
+        <input ref={coverInputRef} type="file" accept="image/*" className="hidden" onChange={handleCoverUpload} />
       )}
 
       <div className="relative flex-shrink-0">
@@ -351,7 +346,8 @@ export function CommunityDetailScreen({ communityId, onBack, onOpenProfile }: Co
           )}
           {isAdmin && (
             <button
-              onClick={() => avatarInputRef.current?.click()}
+              type="button"
+              onClick={openAvatarPicker}
               disabled={uploadingAvatar}
               aria-label="Trocar foto da comunidade"
               className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 hover:opacity-100 active:opacity-100 transition-opacity rounded-full"
@@ -498,6 +494,7 @@ export function CommunityDetailScreen({ communityId, onBack, onOpenProfile }: Co
           isPending={followMutation.isPending}
         />
       )}
+      {isAdmin && avatarPickerElements}
     </div>
   );
 }
