@@ -499,21 +499,24 @@ export function ComunidadeScreen() {
             <motion.div
               initial={{ y: 40, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
-              exit={{ y: 40, opacity: 0 }}
+              exit={{ y: '100%', opacity: 0 }}
               transition={{ type: 'spring', duration: 0.35, bounce: 0.1 }}
               role="dialog"
               aria-modal="true"
               aria-label="Nova publicação"
               // Arrasta a partir de qualquer ponto do sheet — não só da alça —
               // pra funcionar com uma mão só (ex.: mãe segurando o bebê no colo).
+              // bottom: 1 = acompanha o dedo 1:1 ao puxar pra baixo (nada de
+              // resistência elástica reduzindo o movimento — era isso que fazia
+              // parecer que "fingia" descer). top: 0 trava, não sobe além do topo.
               // MentionInput e o balão de comunidades param propagação do próprio
               // pointerdown (onPointerDownCapture), então continuam recebendo
               // toque normal pra cursor/seleção/scroll em vez de virar arraste.
               drag="y"
               dragConstraints={{ top: 0, bottom: 0 }}
-              dragElastic={{ top: 0, bottom: 0.5 }}
+              dragElastic={{ top: 0, bottom: 1 }}
               onDragEnd={(_, info) => {
-                if (info.offset.y > 120 || info.velocity.y > 600) closeComposer();
+                if (info.offset.y > 100 || info.velocity.y > 500) closeComposer();
               }}
               className="w-full max-w-[390px] mx-auto h-[90%] bg-mt-cream rounded-t-3xl flex flex-col overflow-hidden"
               onClick={(e) => e.stopPropagation()}
