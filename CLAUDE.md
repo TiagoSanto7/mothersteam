@@ -42,17 +42,27 @@ const EMPTY_ITEMS: Item[] = []
 const items = useAppStore((s) => s.items ?? EMPTY_ITEMS)
 ```
 
-## Deploy do frontend
+## Servidor de produção e deploy
 
-Backend em `api.santoti.com` (VPS Hostinger, SSH na porta **443** — sempre `-p 443` / `-P 443`). Frontend estático servido do path `/var/www/mothersteam/` (sem hífen).
+Produção é a VPS dos donos do produto: **`https://srv1944647.hstgr.cloud`** (é o `VITE_API_URL` do `.env.production`). `api.santoti.com` (e o IP `2.25.137.78` / `srv1708006.hstgr.cloud`) era a VPS pessoal do Tiago no começo do projeto — **não usar**.
+
+O deploy é **automático**: todo push na `main` (inclusive merge de PR) roda `.github/workflows/deploy-vps-donos.yml`, que atualiza o backend (git pull + rebuild do container `api` em `/opt/mothersteam`) e publica o frontend web em `/var/www/mothersteam/`. Host, usuário e chave ficam nos secrets do GitHub. Conferir o resultado na aba **Actions**.
+
+- Merge na `main` = deploy em produção. Mudança de servidor sem migração é segura; migração de banco não é aplicada pelo workflow (passo manual, combinar com o Tiago).
+- O deploy publica **só web e servidor**. iOS e Android levam o código web dentro do app: a mudança só chega às usuárias com novo build nas lojas.
+
+## Apps nativos (Capacitor)
+
+Após rebuild do frontend (`npm run build`), rodar `npx cap sync ios` e/ou `npx cap sync android` para copiar os assets para os projetos nativos. Não precisa reabrir o Xcode/Android Studio — o Run seguinte já pega os novos arquivos.
+
+- O build do app usa o `.env.production`, então o app no simulador/aparelho fala com a **produção**. Testar com conta de teste.
+- iOS: o projeto adota o ciclo de vida UIScene (`SceneDelegate.swift`), obrigatório para compilar com o SDK do iOS 27 (TIA-70). Não voltar para janela no `AppDelegate`.
+- O cookie `refresh_token` não chega ao servidor no app nativo (origem `https://localhost`, `sameSite: 'strict'`); lá a sessão depende do refresh token salvo na store. Toda resposta de `/auth/refresh` deve passar por `setTokens` (TIA-67). Teste de sessão no simulador: entrar → fechar o app → abrir → fechar → abrir.
+
+## Testes
 
 ```bash
-npm run build
-scp -P 443 -r dist/. root@2.25.137.78:/var/www/mothersteam/
+npm test
 ```
 
-Estrutura completa do VPS documentada em `~/.claude/.../memory/project-vps-deploy-2026-07-23.md`.
-
-## Android (Capacitor)
-
-Após rebuild do frontend, rodar `npx cap sync android` para copiar os assets pro projeto Android. Não precisa reabrir o Android Studio — o Run subsequente já pega os novos arquivos.
+No Node 26+, rodar com `NODE_OPTIONS=--no-experimental-webstorage npm test` — senão o `localStorage` embutido do Node se sobrepõe ao do jsdom e os testes que usam storage quebram.
