@@ -65,4 +65,4 @@ Após rebuild do frontend (`npm run build`), rodar `npx cap sync ios` e/ou `npx 
 npm test
 ```
 
-No Node 26+, rodar com `NODE_OPTIONS=--no-experimental-webstorage npm test` — senão o `localStorage` embutido do Node se sobrepõe ao do jsdom e os testes que usam storage quebram.
+No Node 26+, o `localStorage` embutido do Node se sobrepõe ao do jsdom; `src/setupTests.ts` recoloca o storage do jsdom, então não precisa de flag. Se aparecer `Cannot read properties of undefined (reading 'clear')` em teste que usa storage, é esse conflito.
