@@ -1,5 +1,5 @@
 ﻿import { useState, useRef, useEffect, type FormEvent } from 'react';
-import { ChevronLeft, ImagePlus, X } from 'lucide-react';
+import { ChevronLeft, ImagePlus, Camera, X } from 'lucide-react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiFetch, uploadImage } from '../../lib/api';
 import { resizeImage } from '../../lib/imageUtils';
@@ -68,18 +68,23 @@ export function CreateCommunityScreen({ onCreated, onBack }: CreateCommunityScre
   const [isOpen, setIsOpen] = useState(true);
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreviewUrl, setImagePreviewUrl] = useState<string | null>(null);
+  const [avatarFile, setAvatarFile] = useState<File | null>(null);
+  const [avatarPreviewUrl, setAvatarPreviewUrl] = useState<string | null>(null);
   const [uploadError, setUploadError] = useState<string | null>(null);
-  const [showImageSheet, setShowImageSheet] = useState(false);
+  const [activePicker, setActivePicker] = useState<'cover' | 'avatar' | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
+  const avatarFileInputRef = useRef<HTMLInputElement>(null);
+  const avatarCameraInputRef = useRef<HTMLInputElement>(null);
   const queryClient = useQueryClient();
 
-  // Revoke object URL on unmount
+  // Revoke object URLs on unmount
   useEffect(() => {
     return () => {
       if (imagePreviewUrl) URL.revokeObjectURL(imagePreviewUrl);
+      if (avatarPreviewUrl) URL.revokeObjectURL(avatarPreviewUrl);
     };
-  }, [imagePreviewUrl]);
+  }, [imagePreviewUrl, avatarPreviewUrl]);
 
   const { mutate, isPending } = useMutation({
     mutationFn: async () => {
@@ -88,9 +93,14 @@ export function CreateCommunityScreen({ onCreated, onBack }: CreateCommunityScre
         const resized = await resizeImage(imageFile, 1200, 800, 0.85);
         imageUrl = await uploadImage(resized, accessToken);
       }
+      let avatarUrl: string | undefined;
+      if (avatarFile) {
+        const resized = await resizeImage(avatarFile, 400, 400, 0.85);
+        avatarUrl = await uploadImage(resized, accessToken);
+      }
       return apiFetch<{ id: string }>('/communities', {
         method: 'POST',
-        body: JSON.stringify({ name: name.trim(), description: description.trim(), category, colorKey, imageUrl, isPrivate, isOpen }),
+        body: JSON.stringify({ name: name.trim(), description: description.trim(), category, colorKey, imageUrl, avatarUrl, isPrivate, isOpen }),
       });
     },
     onSuccess: (data) => {
@@ -119,6 +129,21 @@ export function CreateCommunityScreen({ onCreated, onBack }: CreateCommunityScre
     if (fileInputRef.current) fileInputRef.current.value = '';
   }
 
+  function handleAvatarFileChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0] ?? null;
+    setUploadError(null);
+    setAvatarFile(file);
+    if (avatarPreviewUrl) URL.revokeObjectURL(avatarPreviewUrl);
+    setAvatarPreviewUrl(file ? URL.createObjectURL(file) : null);
+  }
+
+  function handleRemoveAvatar() {
+    if (avatarPreviewUrl) URL.revokeObjectURL(avatarPreviewUrl);
+    setAvatarFile(null);
+    setAvatarPreviewUrl(null);
+    if (avatarFileInputRef.current) avatarFileInputRef.current.value = '';
+  }
+
   function handleSubmit(e: FormEvent) {
     e.preventDefault();
     if (valid) mutate();
@@ -135,54 +160,92 @@ export function CreateCommunityScreen({ onCreated, onBack }: CreateCommunityScre
 
       <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto px-4 pb-4 flex flex-col gap-4">
 
-        {/* Cover photo picker */}
-        <div className="flex flex-col gap-1">
+        {/* Cover + avatar picker — mesma composição visual do CommunityDetailScreen,
+            pra já pré-visualizar como a comunidade vai aparecer depois de criada. */}
+        <div className="flex flex-col gap-1 pb-6">
           <p className="text-xs font-medium text-mt-muted">Foto de capa (opcional)</p>
-          <div className="relative w-full h-28 rounded-2xl overflow-hidden bg-white border border-mt-linen">
-            {imagePreviewUrl ? (
-              <>
-                <img
-                  src={imagePreviewUrl}
-                  alt="Pré-visualização da capa"
-                  className="w-full h-full object-cover"
+          {/* Wrapper sem overflow-hidden — o avatar precisa sobrepor a borda
+              inferior da capa, e um container clipado cortaria esse overhang. */}
+          <div className="relative w-full h-28">
+            <div className="w-full h-full rounded-2xl overflow-hidden bg-white border border-mt-linen">
+              {imagePreviewUrl ? (
+                <>
+                  <img
+                    src={imagePreviewUrl}
+                    alt="Pré-visualização da capa"
+                    className="w-full h-full object-cover"
+                  />
+                  <button
+                    type="button"
+                    onClick={handleRemoveImage}
+                    aria-label="Remover foto de capa"
+                    className="absolute top-2 right-2 bg-black/50 text-white rounded-full p-1"
+                  >
+                    <X size={14} />
+                  </button>
+                </>
+              ) : (
+                <div
+                  className={`w-full h-full flex flex-col items-center justify-center gap-1 cursor-pointer ${COLOR_MAP[colorKey]} opacity-30`}
                 />
+              )}
+              {/* Overlay button to open picker when no image */}
+              {!imagePreviewUrl && (
                 <button
                   type="button"
-                  onClick={handleRemoveImage}
-                  aria-label="Remover foto de capa"
-                  className="absolute top-2 right-2 bg-black/50 text-white rounded-full p-1"
+                  onClick={() => setActivePicker('cover')}
+                  className="absolute inset-0 flex flex-col items-center justify-center gap-1 text-mt-muted hover:text-mt-charcoal transition-colors"
+                  aria-label="Selecionar foto de capa"
                 >
-                  <X size={14} />
+                  <ImagePlus size={24} />
+                  <span className="text-xs font-medium">Adicionar foto</span>
                 </button>
-              </>
-            ) : (
-              <div
-                className={`w-full h-full flex flex-col items-center justify-center gap-1 cursor-pointer ${COLOR_MAP[colorKey]} opacity-30`}
-              />
-            )}
-            {/* Overlay button to open picker when no image */}
-            {!imagePreviewUrl && (
+              )}
+            </div>
+
+            {/* Avatar da comunidade — sobreposto à capa, canto inferior esquerdo */}
+            <div className="absolute left-4 -bottom-6 w-12 h-12 rounded-full border-4 border-white bg-white overflow-hidden shadow-sm">
+              <div className={`w-full h-full flex items-center justify-center ${COLOR_MAP[colorKey]}`}>
+                {avatarPreviewUrl ? (
+                  <img src={avatarPreviewUrl} alt="Pré-visualização do perfil da comunidade" className="w-full h-full object-cover" />
+                ) : (
+                  <span className="text-white text-base font-bold">{name.trim().charAt(0).toUpperCase() || '?'}</span>
+                )}
+              </div>
               <button
                 type="button"
-                onClick={() => setShowImageSheet(true)}
-                className="absolute inset-0 flex flex-col items-center justify-center gap-1 text-mt-muted hover:text-mt-charcoal transition-colors"
-                aria-label="Selecionar foto de capa"
+                onClick={() => setActivePicker('avatar')}
+                aria-label="Selecionar foto de perfil da comunidade"
+                className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 hover:opacity-100 active:opacity-100 transition-opacity"
               >
-                <ImagePlus size={24} />
-                <span className="text-xs font-medium">Adicionar foto</span>
+                <Camera size={13} className="text-white" />
+              </button>
+            </div>
+          </div>
+          {/* mt-6 (não mt-0.5): o avatar sobrepõe 24px abaixo da capa (-bottom-6);
+              sem essa margem essa linha renderiza escondida atrás do círculo. */}
+          <div className="flex items-center gap-3 mt-6">
+            {imagePreviewUrl && (
+              <button
+                type="button"
+                onClick={() => setActivePicker('cover')}
+                className="flex items-center gap-1.5 text-xs text-mt-rose font-medium"
+              >
+                <ImagePlus size={14} />
+                Trocar capa
+              </button>
+            )}
+            {avatarPreviewUrl && (
+              <button
+                type="button"
+                onClick={handleRemoveAvatar}
+                className="flex items-center gap-1.5 text-xs text-mt-muted font-medium"
+              >
+                <X size={14} />
+                Remover foto de perfil
               </button>
             )}
           </div>
-          {imagePreviewUrl && (
-            <button
-              type="button"
-              onClick={() => setShowImageSheet(true)}
-              className="flex items-center gap-1.5 text-xs text-mt-rose font-medium mt-0.5"
-            >
-              <ImagePlus size={14} />
-              Trocar foto
-            </button>
-          )}
           <input
             ref={fileInputRef}
             type="file"
@@ -199,11 +262,35 @@ export function CreateCommunityScreen({ onCreated, onBack }: CreateCommunityScre
             className="hidden"
             onChange={handleFileChange}
           />
-          {showImageSheet && (
+          <input
+            ref={avatarFileInputRef}
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={handleAvatarFileChange}
+            data-testid="avatar-file-input"
+          />
+          <input
+            ref={avatarCameraInputRef}
+            type="file"
+            accept="image/*"
+            capture="environment"
+            className="hidden"
+            onChange={handleAvatarFileChange}
+          />
+          {activePicker && (
             <ImageSourceSheet
-              onCamera={() => { setShowImageSheet(false); cameraInputRef.current?.click(); }}
-              onGallery={() => { setShowImageSheet(false); fileInputRef.current?.click(); }}
-              onClose={() => setShowImageSheet(false)}
+              onCamera={() => {
+                const target = activePicker;
+                setActivePicker(null);
+                (target === 'cover' ? cameraInputRef : avatarCameraInputRef).current?.click();
+              }}
+              onGallery={() => {
+                const target = activePicker;
+                setActivePicker(null);
+                (target === 'cover' ? fileInputRef : avatarFileInputRef).current?.click();
+              }}
+              onClose={() => setActivePicker(null)}
             />
           )}
           {uploadError && (

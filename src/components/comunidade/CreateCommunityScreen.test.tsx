@@ -84,4 +84,41 @@ describe('CreateCommunityScreen', () => {
     await vi.waitFor(() => expect(api.uploadImage).toHaveBeenCalledWith(file, 'token123'));
     await vi.waitFor(() => expect(onCreated).toHaveBeenCalledWith('new2'));
   });
+
+  it('shows avatar preview after avatar file selected', async () => {
+    renderScreen();
+    const input = screen.getByTestId('avatar-file-input') as HTMLInputElement;
+    const file = new File(['img'], 'avatar.png', { type: 'image/png' });
+    await act(async () => { fireEvent.change(input, { target: { files: [file] } }); });
+    expect(screen.getByRole('img', { name: /perfil da comunidade/i })).toHaveAttribute('src', FAKE_OBJECT_URL);
+  });
+
+  it('uploads avatar and sends avatarUrl when form submitted', async () => {
+    vi.mocked(api.apiFetch).mockResolvedValue({ id: 'new3', name: 'x' });
+    vi.mocked(api.uploadImage).mockResolvedValue('/uploads/avatar.jpg');
+    const onCreated = vi.fn();
+    const user = userEvent.setup();
+    renderScreen(onCreated);
+    const input = screen.getByTestId('avatar-file-input') as HTMLInputElement;
+    const file = new File(['img'], 'avatar.png', { type: 'image/png' });
+    await act(async () => { fireEvent.change(input, { target: { files: [file] } }); });
+    await user.type(screen.getByLabelText('Nome'), 'Gestantes 2027');
+    await user.type(screen.getByLabelText('Descrição'), 'Um lugar seguro');
+    await user.click(screen.getByRole('button', { name: 'Criar comunidade' }));
+    await vi.waitFor(() => expect(api.uploadImage).toHaveBeenCalledWith(file, 'token123'));
+    await vi.waitFor(() => expect(onCreated).toHaveBeenCalledWith('new3'));
+    const body = JSON.parse(vi.mocked(api.apiFetch).mock.calls[0][1]!.body as string);
+    expect(body.avatarUrl).toBe('/uploads/avatar.jpg');
+  });
+
+  it('removes the avatar preview when "Remover foto de perfil" is clicked', async () => {
+    renderScreen();
+    const input = screen.getByTestId('avatar-file-input') as HTMLInputElement;
+    const file = new File(['img'], 'avatar.png', { type: 'image/png' });
+    await act(async () => { fireEvent.change(input, { target: { files: [file] } }); });
+    expect(screen.getByRole('img', { name: /perfil da comunidade/i })).toBeInTheDocument();
+
+    await act(async () => { fireEvent.click(screen.getByRole('button', { name: 'Remover foto de perfil' })); });
+    expect(screen.queryByRole('img', { name: /perfil da comunidade/i })).not.toBeInTheDocument();
+  });
 });
