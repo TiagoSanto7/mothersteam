@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { apiFetch } from '../lib/api';
+import { apiFetch, restoreSession } from '../lib/api';
 import { useAppStore } from '../store/useAppStore';
 import type { ApiUser } from '../lib/types';
 import { AdminSidebar } from './components/AdminSidebar';
@@ -94,7 +94,6 @@ function AdminLoginForm() {
 
 export function AdminApp() {
   const isLoggedIn = useAppStore((s) => s.isLoggedIn);
-  const setAccessToken = useAppStore((s) => s.setAccessToken);
   const [restoring, setRestoring] = useState(true);
   const [route, setRoute] = useState<AdminRoute>('dashboard');
   const [editProductId, setEditProductId] = useState<string | null>(null);
@@ -104,21 +103,13 @@ export function AdminApp() {
       setRestoring(false);
       return;
     }
+    // Mesmo restore do app (src/lib/api.ts): retry em falha transitória e
+    // persistência do refresh token rotacionado (TIA-67). Sem sessão válida,
+    // cai no formulário de login.
     (async () => {
-      try {
-        const storedRefreshToken = useAppStore.getState().refreshToken;
-        const { accessToken } = await apiFetch<{ accessToken: string }>('/auth/refresh', {
-          method: 'POST',
-          body: storedRefreshToken ? JSON.stringify({ refreshToken: storedRefreshToken }) : undefined,
-        });
-        setAccessToken(accessToken);
-        const user = await apiFetch<ApiUser>('/auth/me');
-        useAppStore.getState().setAuth(accessToken, user);
-      } catch {
-        // no valid session — show login form
-      } finally {
-        setRestoring(false);
-      }
+      const result = await restoreSession();
+      if (result.ok) useAppStore.getState().setAuth(result.accessToken, result.user);
+      setRestoring(false);
     })();
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
